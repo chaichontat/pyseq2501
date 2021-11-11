@@ -9,3 +9,11 @@
   - Need [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/). Installed with default settings.
   - Somehow `scikit-learn` is set to compile from scratch which took quite a while (~30 minutes).
 - `pip install pyqt5-tools`
+
+### Nov 11st
+
+```sh
+conda create -n hiseq python=3.8 pywin32
+conda activate hiseq
+pip install pyseq2500 wmi pyqt5-tools
+```
