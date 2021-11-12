@@ -10,10 +10,14 @@
   - Somehow `scikit-learn` is set to compile from scratch which took quite a while (~30 minutes).
 - `pip install pyqt5-tools`
 
-### Nov 11st
+### Nov 12nd
 
 ```sh
-conda create -n hiseq python=3.8 pywin32
+conda create -n hiseq python=3.8
 conda activate hiseq
-pip install pyseq2500 wmi pyqt5-tools
+pip install pyseq2500 --user
+pip install wmi --user
+pip install pyqt5-tools --user
+pip uninstall pywin32
+conda install pywin32
 ```
