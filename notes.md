@@ -21,3 +21,5 @@ pip install pyqt5-tools --user
 pip uninstall pywin32
 conda install pywin32
 ```
+
+A lot of problems with `win32api DLL`. Probably from different versions
