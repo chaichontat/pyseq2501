@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import time
-from typing import Callable
+from typing import Callable, Optional
 
 from pyseq import HiSeq
 
 
 class FriendlyHiSeq(HiSeq):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, logger=None) -> None:
+        super().__init__(Logger=logger)
 
     def gen_initialize_seq(self) -> dict[str, Callable[[], None]]:
         def fpga() -> None:
@@ -54,3 +54,7 @@ class FriendlyHiSeq(HiSeq):
             "Initialize temperature control": lambda: self.T.initialize(),
             "Sync TDI encoder with y-stage": sync_tdi,
         }
+        
+    def move(*, x: Optional[int]=None, y: Optional[int] = None, z: Optional[int] = None):
+        
+    
