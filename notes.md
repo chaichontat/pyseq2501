@@ -32,4 +32,6 @@ A lot of problems with `win32api DLL`. Probably from different versions
   - Node.js v15.8.0 (see [this](https://stackoverflow.com/questions/62212754/nodejs-for-windows-7))
   - OpenSSH-[win32](https://github.com/PowerShell/Win32-OpenSSH/releases). Don't forget to open port 22 for `sshd`. Default password is `sbs123`.
   - VSCode Server
-    - Set `AllowTcpForwarding yes` in `sshd_config`.
+    - Set `AllowTcpForwarding yes` in `%ALLUSERSPROFILE%\ssh\sshd_config`.
+    - See https://superuser.com/questions/1451241/command-to-copy-client-public-key-to-windows-openssh-sftp-ssh-server-authorized to set public key authentication.
+      - TL;DR Copy your `id_rsa.pub` to `%ALLUSERSPROFILE%\ssh\administrators_authorized_keys`.
