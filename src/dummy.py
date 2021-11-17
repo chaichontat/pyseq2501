@@ -5,7 +5,7 @@ from typing import Callable
 
 
 class FriendlyHiSeq:
-    def __init__(self, logger=None) -> None:
+    def __init__(self, console, logger=None) -> None:
         super().__init__()
 
     def gen_initialize_seq(self) -> dict[str, Callable[[], None]]:
