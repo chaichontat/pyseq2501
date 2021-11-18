@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import logging
 import time
 from enum import Enum, IntEnum, auto
-from logging import Logger
 from os import getcwd
 from typing import Callable, Optional
 
@@ -21,6 +21,8 @@ from rich.console import Console
 
 from stage import BetterYstage
 
+# from stage import BetterYstage
+
 
 class Components(IntEnum):
     CAMERAS = auto()
@@ -36,22 +38,24 @@ class Components(IntEnum):
     SYNC_TDI = auto()
 
 
+Logger = logging.getLogger(__name__)
+
+
 class FriendlyHiSeq(HiSeq):
-    def __init__(self, console: Console, name: str = "HiSeq2500", logger: Optional[Logger] = None) -> None:
+    def __init__(self, console: Console, name: str = "HiSeq2500") -> None:
         self.com_ports = get_com_ports("HiSeq2500")
         self.console = console
-        self.logger = Logger = logger
 
-        self.y = BetterYstage(self.com_ports["ystage"], logger=self.logger)
+        self.y = BetterYstage(self.com_ports["ystage"])
         self.f = FPGA(self.com_ports["fpgacommand"], self.com_ports["fpgaresponse"], logger=Logger)
         self.x = Xstage(self.com_ports["xstage"], logger=Logger)
         self.lasers = {
             "green": Laser(self.com_ports["laser1"], color="green", logger=Logger),
             "red": Laser(self.com_ports["laser2"], color="red", logger=Logger),
         }
-        self.z = Zstage(self.f.serial_port, logger=Logger)
-        self.obj = OBJstage(self.f.serial_port, logger=Logger)
-        self.optics = Optics(self.f.serial_port, logger=Logger)
+        self.z = Zstage(self.f, logger=Logger)
+        self.obj = OBJstage(self.f, logger=Logger)
+        self.optics = Optics(self.f, logger=Logger)
         self.cam1 = None
         self.cam2 = None
         self.p = {
@@ -84,7 +88,7 @@ class FriendlyHiSeq(HiSeq):
         self.scan_flag = False  # imaging/scanning flag
         self.current_view = None  # latest images
         self.name = name
-        self.check_COM()
+        # self.check_COM()
 
     def gen_initialize_seq(self, skip: Optional[list[Components]] = None) -> dict[str, Callable[[], None]]:
         if skip is None:
@@ -234,7 +238,7 @@ class FriendlyHiSeq(HiSeq):
         ################################
         # Close laser shutter
         f.command("SWLSRSHUT 0")
-        time.sleep(1)
+        time.sleep(0.1)
 
         # Stop Cameras
         cam1.stopAcquisition()
