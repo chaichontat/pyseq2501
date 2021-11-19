@@ -48,7 +48,7 @@ class COM:
     port_tx: str
     port_rx: Optional[str] = None
     logger: Optional[Logger] = None
-    formatter: Callable[[str], str] = lambda x: x
+    formatter: Callable[[COM, str], str] = lambda _, x: x
     timeout: int = 1
 
     def __post_init__(self) -> None:

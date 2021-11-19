@@ -59,6 +59,10 @@ class FriendlyHiSeq(HiSeq):
         # self.cams = [HamamatsuCamera(i, logger=Logger) for i in range(2)]
         self.cam1 = HamamatsuCamera(0, logger=Logger)
         self.cam2 = HamamatsuCamera(1, logger=Logger)
+        self.cam1.left_emission = 687
+        self.cam1.right_emission = 558
+        self.cam2.left_emission = 610
+        self.cam2.right_emission = 740
         self.cams = {0: self.cam1, 1: self.cam2}
         self.p = {
             "A": Pump(self.com_ports["pumpa"], "pumpA", logger=Logger),

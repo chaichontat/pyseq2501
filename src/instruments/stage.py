@@ -43,14 +43,14 @@ class YCmd(Command):
     VELO = staticmethod(lambda x: f"V{x}")
 
 
-class YCommandVerify:
-    SET_POS = CmdVerify(YCmd.SET_POS, lambda ver, cmd: ver == cmd)
-    GO = CmdVerify()
+# class YCommandVerify:
+#     SET_POS = CmdVerify(YCmd.SET_POS, lambda ver, cmd: ver == cmd)
+#     GO = CmdVerify()
 
 
 class BetterYstage(Movable):
     BAUD_RATE = 9600
-    SERIAL_FORMATTER = lambda x: f"1{x}\r\n"
+    SERIAL_FORMATTER = lambda _, x: f"1{x}\r\n"
 
     HOME = 0
     RANGE = (int(-7e6), int(7.5e6))
@@ -75,7 +75,9 @@ class BetterYstage(Movable):
 
     @property
     def position(self) -> int:
-        return int(self.send(YCmd.READ_POS)[1:])
+        while not (resp := self.send(YCmd.READ_POS)):
+            ...
+        return int(resp[1:])
 
     @position.setter
     def position(self, pos: int) -> None:
