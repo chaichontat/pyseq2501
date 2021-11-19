@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import logging
 import time
+from contextlib import contextmanager
 from enum import Enum, IntEnum, auto
 from os import getcwd
-from typing import Callable, Optional
+from typing import Callable, Generator, Iterable, Iterator, Optional
 
 from pyseq import HiSeq, get_com_ports
+from pyseq.dcam import HamamatsuCamera
 from pyseq.fpga import FPGA
 from pyseq.laser import Laser
 from pyseq.objstage import OBJstage
@@ -19,9 +21,7 @@ from pyseq.ystage import Ystage
 from pyseq.zstage import Zstage
 from rich.console import Console
 
-from stage import BetterYstage
-
-# from stage import BetterYstage
+from instruments.stage import BetterYstage
 
 
 class Components(IntEnum):
@@ -56,8 +56,10 @@ class FriendlyHiSeq(HiSeq):
         self.z = Zstage(self.f, logger=Logger)
         self.obj = OBJstage(self.f, logger=Logger)
         self.optics = Optics(self.f, logger=Logger)
-        self.cam1 = None
-        self.cam2 = None
+        # self.cams = [HamamatsuCamera(i, logger=Logger) for i in range(2)]
+        self.cam1 = HamamatsuCamera(0, logger=Logger)
+        self.cam2 = HamamatsuCamera(1, logger=Logger)
+        self.cams = {0: self.cam1, 1: self.cam2}
         self.p = {
             "A": Pump(self.com_ports["pumpa"], "pumpA", logger=Logger),
             "B": Pump(self.com_ports["pumpb"], "pumpB", logger=Logger),
@@ -100,8 +102,8 @@ class FriendlyHiSeq(HiSeq):
             self.f.LED(2, "green")
 
         def xy_stage() -> None:
-            self.y.command("OFF")
-            homed = self.x.initialize()
+            self.y.send("OFF")
+            self.x.initialize()
             self.y.initialize()
 
         def lasers() -> None:
@@ -119,9 +121,8 @@ class FriendlyHiSeq(HiSeq):
             self.v24["B"].initialize()
 
         def sync_tdi() -> None:
-            while not self.y.check_position():
+            while not self.y.is_in_position:
                 time.sleep(1)
-            self.y.position = self.y.read_position()
             self.f.write_position(0)
 
         seq = {
@@ -150,7 +151,7 @@ class FriendlyHiSeq(HiSeq):
         """
         with self.console.status("[bold green]Moving...") as status:
             if y is not None:
-                self.y.move(y)
+                self.y.position = y
                 self.console.log("y complete")
             if x is not None:
                 self.x.move(x)
@@ -159,21 +160,15 @@ class FriendlyHiSeq(HiSeq):
                 self.z.move([z, z, z])
                 self.console.log("z complete")
 
-    def take_picture(self, n_frames, image_name=None):
+    def take_picture(self, n_frames, image_name) -> bool:
         y = self.y
-        x = self.x
-        obj = self.obj
         f = self.f
-        op = self.optics
         cam1 = self.cam1
         cam2 = self.cam2
 
-        if image_name is None:
-            image_name = time.strftime("%Y%m%d_%H%M%S")
-
         msg = "HiSeq::TakePicture::"
         # Make sure TDI is synced with Ystage
-        y_pos = self.y.read_position()
+        y_pos = self.y.position
         if abs(y_pos - f.read_position()) > 10:
             self.message(msg + "Attempting to sync TDI and stage")
             f.write_position(y_pos)
@@ -181,10 +176,7 @@ class FriendlyHiSeq(HiSeq):
             self.message(False, msg + "TDI and stage are synced")
 
         # TO DO, double check gains and velocity are set
-        # Set gains and velocity of image scanning for ystage
-        y.set_mode("imaging")
-        # response = y.command('GAINS(5,10,5,2,0)')
-        # response = y.command('V0.15400')
+        y._mode = "IMAGING"
 
         # Make sure cameras are ready (status = 3)
         while cam1.get_status() != 3:
@@ -215,7 +207,7 @@ class FriendlyHiSeq(HiSeq):
         #
         # TODO check trigger y values are reasonable
         n_triggers = n_frames * self.bundle_height
-        end_y_pos = int(y_pos - n_triggers * self.resolution * y.spum - 300000)
+        end_y_pos = int(y_pos - n_triggers * self.resolution * y.STEPS_PER_UM - 300000)
         f.TDIYPOS(y_pos)
         f.TDIYARM3(n_triggers, y_pos)
 
@@ -231,14 +223,14 @@ class FriendlyHiSeq(HiSeq):
         # Open laser shutter
         f.command("SWLSRSHUT 1")
         # move ystage (blocking)
-        y.move(end_y_pos)
+        y.position = end_y_pos
 
         ################################
         ### Stop Imaging ###############
         ################################
         # Close laser shutter
         f.command("SWLSRSHUT 0")
-        time.sleep(0.1)
+        time.sleep(0.01)
 
         # Stop Cameras
         cam1.stopAcquisition()
@@ -275,11 +267,48 @@ class FriendlyHiSeq(HiSeq):
         cam1.freeFrames()
         cam2.freeFrames()
 
-        # Reset gains & velocity for ystage
-        y.set_mode("moving")
-        # y.command('GAINS(5,10,7,1.5,0)')
-        # y.command('V1')
+        y._mode = "MOVING"
 
         meta_f.close()
 
         return image_complete == 2
+
+    @contextmanager
+    def _capture_context(self, y_pos: int, n_frames: int) -> Iterator[None]:
+        self.f.write_position(y_pos)  # TODO: Verify
+        self.f.TDIYPOS(y_pos)
+        self.f.TDIYARM3(n_frames * 128, y_pos)
+
+        for c in self.cams.values():
+            if c.get_status() != 3:
+                raise Exception("Invalid camera state. What have you done!?")
+            c.captureSetup()
+            c.allocFrame(n_frames)
+
+        yield
+
+        for c in self.cams.values():
+            c.freeFrames()
+
+    @contextmanager
+    def _acquire(self) -> Iterator[None]:
+        [c.startAcquisition() for c in self.cams.values()]
+        self.f.command("SWLSRSHUT 1")
+        yield
+        self.f.command("SWLSRSHUT 0")
+        time.sleep(0.01)
+        [c.stopAcquisition() for c in self.cams.values()]
+
+    def better_take_image(self, n_frames: int, image_name: str) -> None:
+        y_pos = self.y.position
+        with self._capture_context(y_pos, n_frames):
+            with self._acquire():
+                self.y.move_slowly(
+                    int(y_pos - n_frames * 128 * self.resolution * self.y.STEPS_PER_UM - 300000)
+                )
+
+            for c in self.cams.values():
+                if c.getFrameCount() == n_frames:
+                    c.saveImage(image_name, self.image_path)  # TODO: Don't write image right away.
+                else:
+                    raise Exception("Image not captured.")

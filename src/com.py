@@ -4,9 +4,11 @@ import io
 from dataclasses import dataclass
 from enum import Enum, unique
 from logging import Logger
-from typing import Optional
+from typing import Callable, Optional
 
-import serial
+from serial import Serial
+
+# from exceptions import InvalidResponse
 
 # @dataclass(frozen=True)
 # class CmdNoArg:
@@ -20,37 +22,50 @@ import serial
 #     verify: Optional[Callable[[str, str], bool]] = None
 
 
-# class InvalidResponse(Exception):
-#     ...
-
 
 @unique
 class Command(Enum):
     def __str__(self) -> str:
         return self.value
 
+class InvalidResponse(Exception):
+    def __init__(self, tx: str | Command, rx: str):
+        self.tx = tx
+        self.rx = rx
 
 @dataclass
 class COM:
-    port: str
     baud: int
+    port_tx: str
+    port_rx: Optional[str] = None
     logger: Optional[Logger] = None
     timeout: int = 1
     prefix: str = ""
     suffix: str = ""
 
     def __post_init__(self) -> None:
-        s = serial.Serial(self.port, self.baud, timeout=self.timeout)
+        s_tx = Serial(self.port_tx, self.baud, timeout=self.timeout)
+        s_rx = s_tx if self.port_rx is None else Serial(self.port_rx, self.baud, timeout=self.timeout)
         # Text wrapper around serial port
-        self.sp = io.TextIOWrapper(io.BufferedRWPair(s, s), encoding="ascii", errors="strict")  # type: ignore[arg-type]
+        self.sp = io.TextIOWrapper(io.BufferedRWPair(s_tx, s_rx), encoding="ascii", errors="strict")  # type: ignore[arg-type]
 
     def send(self, cmd: str | Command) -> str:
-        cmd = str(cmd)
-        self.sp.write(self.prefix + cmd + self.suffix)
+        self.sp.write(self.prefix + str(cmd) + self.suffix)
         self.sp.flush()
         resp = self.sp.readline().strip()
         if self.logger is not None:
+            if isinstance(cmd, Command):
+                cmd = cmd.name
             self.logger.debug(f"Tx: {cmd:10} Rx: {resp:10}")
+        return resp
+
+    def send_verify(self, cmd: str | Command, verify: Callable[[str], bool], attempts: int = 2) -> str:
+        for _ in range(attempts):
+            resp = self.send(cmd)
+            if verify(resp):
+                break
+        else:
+            raise InvalidResponse(cmd, resp)
         return resp
 
     # @overload
