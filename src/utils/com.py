@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import io
-from dataclasses import dataclass
+from contextlib import contextmanager
+from dataclasses import dataclass, field
 from enum import Enum, unique
 from logging import Logger
+from threading import Thread
 from typing import Callable, Optional
 
 from serial import Serial
@@ -33,7 +35,7 @@ class Command(Enum):
 @dataclass
 class CmdVerify:
     cmd: str | Command
-    verify: Callable[[str, str], bool]
+    expected: Callable[[str], str]
 
 
 class InvalidResponse(Exception):
@@ -42,26 +44,46 @@ class InvalidResponse(Exception):
         self.rx = rx
 
 
+class SerialWriteFailed(Exception):
+    ...
+
+
 @dataclass
 class COM:
     baud: int
     port_tx: str
     port_rx: Optional[str] = None
     logger: Optional[Logger] = None
-    formatter: Callable[[COM, str], str] = lambda _, x: x
+    formatter: Optional[Callable[[str], str]] = None
     timeout: int = 1
+    serial: io.TextIOWrapper = field(init=False)
 
     def __post_init__(self) -> None:
+        if self.formatter is None:
+            self.formatter = lambda x: x
+
         s_tx = Serial(self.port_tx, self.baud, timeout=self.timeout)
         s_rx = s_tx if self.port_rx is None else Serial(self.port_rx, self.baud, timeout=self.timeout)
         # Text wrapper around serial port
         self.serial = io.TextIOWrapper(io.BufferedRWPair(s_tx, s_rx), encoding="ascii", errors="strict")  # type: ignore[arg-type]
 
-    def send(self, cmd: str | Command) -> None:
-        self.serial.write(self.formatter(str(cmd)))
+    def send(self, cmd: str | Command, timeout: float = 2, debug: bool = True) -> None:
+        def f():
+            assert self.formatter is not None
+            self.serial.write(self.formatter(str(cmd)))
+
+        # Protect against SIG and interrupts.
+        t = Thread(target=f)
+        t.start()
+        t.join(timeout)
+        if t.is_alive():
+            raise SerialWriteFailed
+
+        if debug and self.logger is not None:
+            self.logger.debug(f"Tx: {cmd:10}")
 
     def repl(self, cmd: str | Command) -> str:
-        self.send(cmd)
+        self.send(cmd, debug=False)
         self.serial.flush()
         resp = self.serial.readline().strip()
         if self.logger is not None:
@@ -70,11 +92,18 @@ class COM:
             self.logger.debug(f"Tx: {cmd:10} Rx: {resp:10}")
         return resp
 
+    # @contextmanager
+    # def _repl(self):
+    #     yield
+
     def repl_verify(self, cmdver: CmdVerify, attempts: int = 2) -> str:
+        expected = cmdver.expected(str(cmdver.cmd))
         for _ in range(attempts):
             resp = self.repl(cmdver.cmd)
-            if cmdver.verify(resp, str(cmdver.cmd)):
+            if resp == expected:
                 break
+            if self.logger is not None:
+                self.logger.debug(f"Verification failed for {cmdver.cmd}. Expected {expected} Got {resp}.")
         else:
             raise InvalidResponse(cmdver.cmd, resp)
         return resp
