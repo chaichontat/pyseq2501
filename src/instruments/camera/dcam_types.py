@@ -1,11 +1,17 @@
 from __future__ import annotations
 
-from ctypes import Structure, WinDLL, _NamedFuncPointer, c_double, c_int32, c_void_p, sizeof
+from ctypes import Structure, WinDLL, c_double, c_int32, c_void_p, sizeof
+from dataclasses import dataclass
 from enum import IntEnum
 from functools import wraps
+from logging import getLogger
 from typing import Callable, Literal, TypedDict, TypeVar, cast, get_args
 
 FBool = TypeVar("FBool", bound=Callable[..., bool])
+logger = getLogger("DCAM")
+DCAMPROP_TYPE_MASK = 0x0000000F
+DCAMPROP_OPTION_NEXT = 0x01000000
+DCAMPROP_OPTION_NEAREST = 0x80000000
 
 
 class DCAMException(Exception):
@@ -23,6 +29,7 @@ def check_if_failed(f: FBool) -> FBool:
         # Literally the only function that returns int32 instead of BOOL.
         if res == 0 and f.__name__ != "dcam_getlasterror":
             raise DCAMReturnedZero(f"{f.__name__} did not return NOERR.")
+        logger.debug(f"{f.__name__} [green]OK")
         return res
 
     return cast(FBool, wrapper)
@@ -32,7 +39,7 @@ class CheckedDCAMAPI(WinDLL):
     def __init__(self) -> None:
         super().__init__("dcamapi.dll")
 
-    def __getitem__(self, name: str) -> _NamedFuncPointer:
+    def __getitem__(self, name: str) -> Callable[..., bool]:
         return check_if_failed(super().__getitem__(name))
 
 
@@ -130,11 +137,84 @@ class PropertyDict(TypedDict):
 assert PropertyDict({name: 0 for name in get_args(Props)})  # type: ignore[misc]
 
 
-class DCAMPROP_TYPES(IntEnum):
+class PropTypes(IntEnum):
     NONE = 0b00
     MODE = 0b01
     LONG = 0b10
     REAL = 0b11
+
+
+PrecomputedPropTypes: dict[Props, PropTypes] = dict(
+    sensor_mode=PropTypes.MODE,
+    sensor_mode_line_bundle_height=PropTypes.LONG,
+    colortype=PropTypes.MODE,
+    bit_per_channel=PropTypes.LONG,
+    trigger_source=PropTypes.MODE,
+    trigger_mode=PropTypes.MODE,
+    trigger_active=PropTypes.MODE,
+    trigger_polarity=PropTypes.MODE,
+    trigger_connector=PropTypes.MODE,
+    exposure_time=PropTypes.REAL,
+    contrast_gain=PropTypes.LONG,
+    primary_buffer_mode=PropTypes.MODE,
+    binning=PropTypes.MODE,
+    subarray_hpos=PropTypes.LONG,
+    subarray_hsize=PropTypes.LONG,
+    subarray_vpos=PropTypes.LONG,
+    subarray_vsize=PropTypes.LONG,
+    subarray_mode=PropTypes.MODE,
+    number_of_partial_area=PropTypes.LONG,
+    partial_area_vpos=PropTypes.LONG,
+    partial_area_vsize=PropTypes.LONG,
+    timing_readout_time=PropTypes.REAL,
+    timing_cyclic_trigger_period=PropTypes.REAL,
+    timing_min_trigger_blanking=PropTypes.REAL,
+    timing_min_trigger_interval=PropTypes.REAL,
+    timing_exposure=PropTypes.MODE,
+    internal_frame_rate=PropTypes.REAL,
+    internal_frame_interval=PropTypes.REAL,
+    internal_line_rate=PropTypes.REAL,
+    internal_line_speed=PropTypes.REAL,
+    image_width=PropTypes.LONG,
+    image_height=PropTypes.LONG,
+    image_rowbytes=PropTypes.LONG,
+    image_framebytes=PropTypes.LONG,
+    image_top_offset_bytes=PropTypes.LONG,
+    image_bit_depth_alignment=PropTypes.MODE,
+    system_alive=PropTypes.MODE,
+    cc2_on_framegrabber=PropTypes.MODE,
+    number_of_channel=PropTypes.LONG,
+    attach_buffer_target=PropTypes.MODE,
+    number_of_target_per_attachbuffer=PropTypes.LONG,
+)
+
+
+@dataclass(frozen=True)
+class DCAMParamPropertyAttr:
+    # /* input parameters */
+    cbSize: int
+    iProp: int
+    option: int
+    iReserved1: int
+    # /* output parameters */
+    attribute: int
+    iGroup: int
+    iUnit: int
+    attribute2: int
+    valuemin: float
+    valuemax: float
+    valuestep: float
+    valuedefault: float
+    nMaxChannel: int
+    iReserved3: int
+    nMaxView: int
+    iProp_NumberOfElement: int
+    iProp_ArrayBase: int
+    iPropStep_Element: int
+
+    @property
+    def type_(self) -> PropTypes:
+        return PropTypes(self.attribute & DCAMPROP_TYPE_MASK)
 
 
 class DCAM_PARAM_PROPERTYATTR(Structure):
@@ -167,3 +247,7 @@ class DCAM_PARAM_PROPERTYATTR(Structure):
         attr.cbSize = sizeof(attr)
         attr.iProp = id_
         return attr
+
+    def to_dataclass(self) -> DCAMParamPropertyAttr:
+        dic = {f: getattr(self, f) for f, _ in self._fields_}
+        return DCAMParamPropertyAttr(**dic)
