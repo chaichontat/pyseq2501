@@ -1,15 +1,13 @@
 from __future__ import annotations
 
 import io
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed, wait
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum, unique
 from logging import Logger
-from queue import Queue
-from threading import Thread
-from typing import Any, Callable, Final, NoReturn, Optional, Union
+from typing import Any, Callable, Final, Optional, Union
 
-# from concurrent.futures import ThreadPoolExecutor
 from serial import Serial
 
 # from exceptions import InvalidResponse
@@ -70,9 +68,6 @@ class COM:
     logger: Optional[Logger] = None
     formatter: Optional[Callable[[str], str]] = None
     timeout: int = 1
-    thread: Thread = field(init=False)
-    _q_tx: Queue[COMJob | Callable[[], Any]] = field(init=False)
-    _q_rx: Queue[str] = field(init=False)
     _executor: ThreadPoolExecutor = field(init=False)
 
     def __post_init__(self) -> None:
@@ -83,66 +78,43 @@ class COM:
         s_rx = s_tx if self.port_rx is None else Serial(self.port_rx, self.baud, timeout=self.timeout)
         # Text wrapper around serial port
         self._serial = io.TextIOWrapper(io.BufferedRWPair(s_tx, s_rx), encoding="ascii", errors="strict")  # type: ignore[arg-type]
-
-        self._q_tx = Queue()
-        self._q_rx = Queue(maxsize=1)  # Block if waiting for a response.
-
-        # self._executor = ThreadPoolExecutor(max_workers=1)
-
-        def worker(self) -> NoReturn:
-            while True:
-                f = self._q_tx.get()
-                if isinstance(f, COMJob):
-                    if (resp := f.f()) is not None and f.waiting:
-                        self._q_rx.put(resp)
-                elif callable(f):
-                    f()
-                else:
-                    raise TypeError("Invalid command sent to thread.")
-                self._q_tx.task_done()
-
-        self._thread = Thread(target=worker, args=(self,), daemon=True)
-        self._thread.start()
+        self._executor = ThreadPoolExecutor(max_workers=1)
 
     def put_job(self, f: Callable[[], Any]) -> None:
-        self._q_tx.put(f)
+        self._executor.submit(f)
 
     def _send_for_thread(self, cmd: StrCmd) -> None:
         assert self.formatter is not None
         self._serial.write(self.formatter(str(cmd)))
 
-    def send(self, cmd: StrCmd) -> None:
+    def send(self, cmd: StrCmd) -> Future[None]:
         def work() -> None:
             self._send_for_thread(cmd)
             if self.logger is not None:
                 self.logger.debug(f"Tx: {cmd:10}")
 
-        self._q_tx.put(COMJob(work))
+        return self._executor.submit(work)
 
     def send_blocking(self, cmd: StrCmd) -> None:
-        self.send(cmd)
-        self._q_tx.join()
+        future = self.send(cmd)
+        future.result()
 
     def _repl_for_thread(self, cmd: StrCmd) -> str:
         self._send_for_thread(cmd)
         self._serial.flush()
         return self._serial.readline().strip()
 
-    def repl(self, cmd: str | Command, waiting: bool = False) -> Optional[str]:
+    def repl(self, cmd: str | Command) -> Future[str]:
         def work() -> str:
             resp = self._repl_for_thread(cmd)
             if self.logger is not None:
                 self.logger.debug(f"Tx: {cmd:10} Rx: {resp:10}")
             return resp
 
-        self._q_tx.put(COMJob(work, waiting))
-        if waiting:
-            # self._q_tx.join()  # Shouldn't be necessary but just in case.
-            return self._q_rx.get()
-        return None
+        return self._executor.submit(work)
 
     def join(self) -> None:
-        self._q_tx.join()
+        self._executor.submit(lambda: None).result()
 
     # def repl_verify(self, cmdver: CmdVerify, waiting: bool = False, attempts: int = 2) -> str:
     #     def work() -> str:
