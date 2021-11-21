@@ -1,21 +1,15 @@
 from __future__ import annotations
 
 import io
-from concurrent.futures import Future, ThreadPoolExecutor, as_completed, wait
-from contextlib import contextmanager
+import threading
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from enum import Enum, unique
+from functools import wraps
 from logging import Logger
-from typing import Any, Callable, Final, Optional, Union
+from typing import Callable, Optional, TypeVar, Union, overload
 
 from serial import Serial
-
-# from exceptions import InvalidResponse
-
-# @dataclass(frozen=True)
-# class CmdNoArg:
-#     cmd: str
-#     verify: Optional[Callable[[str], bool]] = None
 
 try:
     profile  # type: ignore[has-type]
@@ -45,7 +39,7 @@ class CmdVerify:
 
 
 class InvalidResponse(Exception):
-    def __init__(self, tx: str | Command, rx: str):
+    def __init__(self, tx: StrCmd, rx: str):
         self.tx = tx
         self.rx = rx
 
@@ -54,10 +48,46 @@ class SerialWriteFailed(Exception):
     ...
 
 
-class COMJob:
-    def __init__(self, f: Callable[[], Optional[str]], waiting: bool = False) -> None:
-        self.f: Final = f
-        self.waiting: Final = waiting
+# TERRIBLE HORRIBLE NO GOOD VERY BAD HACK
+# TODO: Wait for Python 3.10 and use PEP-612 ParamSpec.
+
+A = TypeVar("A")
+B = TypeVar("B")
+C = TypeVar("C")
+S = TypeVar("S")
+Z = TypeVar("Z")
+
+
+@overload
+def run_in_executor(f: Callable[[A], Z]) -> Callable[[A], Future[Z]]:
+    ...
+
+
+@overload
+def run_in_executor(f: Callable[[A, B], Z]) -> Callable[[A, B], Future[Z]]:
+    ...
+
+
+@overload
+def run_in_executor(f: Callable[[A, B, C], Z]) -> Callable[[A, B, C], Future[Z]]:
+    ...
+
+
+def run_in_executor(f: Callable[..., Z]) -> Callable[..., Future[Z]]:
+    """
+    Prevents a race condition in which a result from the running object is dependent on object in the queue.
+    """
+
+    @wraps(f)
+    def inner(self: COM, *args, **kwargs) -> Future:
+        if threading.current_thread() not in self._executor._threads:  # type: ignore[attr-defined]
+            return self._executor.submit(lambda: f(self, *args, **kwargs))
+        else:
+            future: Future[Z] = Future()
+            future.set_result(f(self, *args, **kwargs))
+            return future
+
+    return inner
 
 
 @dataclass
@@ -76,45 +106,38 @@ class COM:
 
         s_tx = Serial(self.port_tx, self.baud, timeout=self.timeout)
         s_rx = s_tx if self.port_rx is None else Serial(self.port_rx, self.baud, timeout=self.timeout)
-        # Text wrapper around serial port
         self._serial = io.TextIOWrapper(io.BufferedRWPair(s_tx, s_rx), encoding="ascii", errors="strict")  # type: ignore[arg-type]
         self._executor = ThreadPoolExecutor(max_workers=1)
 
-    def put_job(self, f: Callable[[], Any]) -> None:
-        self._executor.submit(f)
+    @run_in_executor
+    def put(self, f: Callable[[], S]) -> S:
+        return f()
 
     def _send_for_thread(self, cmd: StrCmd) -> None:
         assert self.formatter is not None
         self._serial.write(self.formatter(str(cmd)))
 
-    def send(self, cmd: StrCmd) -> Future[None]:
-        def work() -> None:
-            self._send_for_thread(cmd)
-            if self.logger is not None:
-                self.logger.debug(f"Tx: {cmd:10}")
-
-        return self._executor.submit(work)
-
-    def send_blocking(self, cmd: StrCmd) -> None:
-        future = self.send(cmd)
-        future.result()
+    @run_in_executor
+    def send(self, cmd: StrCmd) -> None:
+        self._send_for_thread(cmd)
+        if self.logger is not None:
+            self.logger.debug(f"Tx: {cmd:10}")
 
     def _repl_for_thread(self, cmd: StrCmd) -> str:
         self._send_for_thread(cmd)
         self._serial.flush()
         return self._serial.readline().strip()
 
-    def repl(self, cmd: str | Command) -> Future[str]:
-        def work() -> str:
-            resp = self._repl_for_thread(cmd)
-            if self.logger is not None:
-                self.logger.debug(f"Tx: {cmd:10} Rx: {resp:10}")
-            return resp
+    @run_in_executor
+    def repl(self, cmd: StrCmd) -> str:
+        resp = self._repl_for_thread(cmd)
+        if self.logger is not None:
+            self.logger.debug(f"Tx: {cmd:10} Rx: {resp:10}")
+        return resp
 
-        return self._executor.submit(work)
-
-    def join(self) -> None:
-        self._executor.submit(lambda: None).result()
+    @run_in_executor
+    def is_done(self) -> None:
+        return None
 
     # def repl_verify(self, cmdver: CmdVerify, waiting: bool = False, attempts: int = 2) -> str:
     #     def work() -> str:
@@ -128,43 +151,3 @@ class COM:
     #         else:
     #             raise InvalidResponse(cmdver.cmd, resp)
     #         return resp
-
-    #     self._q_tx.put(Job(work, waiting))
-
-    # @overload
-    # def send(self, cmd: CmdNoArg, arg: None, rep: int) -> str:
-    #     ...
-
-    # @overload
-    # def send(self, cmd: CmdWithArg, arg: str, rep: int) -> str:
-    #     ...
-
-    # def send(self, cmd: CmdNoArg | CmdWithArg, arg: None | str, rep: int = 10) -> str:
-    #     if isinstance(cmd, CmdNoArg):
-    #         to_send = cmd.cmd
-    #     elif isinstance(cmd, CmdWithArg):
-    #         # See https://github.com/python/mypy/issues/5485
-    #         to_send = cmd.cmd(arg)  # type:ignore[misc,operator]
-    #     else:
-    #         raise TypeError
-
-    #     self.sp.write(self.prefix + to_send + self.suffix)  # Write to serial port
-    #     self.sp.flush()  # Flush serial port
-    #     resp = self.sp.readline()
-
-    #     if cmd.verify is not None:
-    #         for _ in range(rep):
-    #             if isinstance(cmd, CmdNoArg):
-    #                 if cmd.verify(resp):
-    #                     break
-
-    #             elif isinstance(cmd, CmdWithArg):
-    #                 assert arg is not None
-    #                 if cmd.verify(resp, arg):
-    #                     break
-    #         else:
-    #             raise InvalidResponse
-
-    #     if self.logger is not None:
-    #         self.logger.debug(f"Tx: {arg:10} Rx: {resp:10}")
-    #     return resp
