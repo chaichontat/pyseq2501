@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from enum import Enum, unique
 from functools import wraps
 from logging import Logger
-from typing import Callable, Optional, TypeVar, Union, overload
+from typing import Callable, Optional, TypeVar, Union, cast, overload
 
 from serial import Serial
 
@@ -26,6 +26,19 @@ except NameError:
 class Command(Enum):
     def __str__(self) -> str:
         return self.value
+
+
+T = TypeVar("T", bound=Callable[..., str])
+
+
+def is_between(f: T, min_: int, max_: int) -> T:
+    @wraps
+    def wrapper(x: int) -> str:
+        if not (min_ <= x <= max_) or x != int(x):
+            raise ValueError(f"Invalid value for {f.__name__}: Got {x}. Expected [{min_}, {max_}].")
+        return f(x)
+
+    return cast(T, wrapper)
 
 
 Str2Bool = Callable[[str], bool]
@@ -75,7 +88,7 @@ def run_in_executor(f: Callable[[A, B, C], Z]) -> Callable[[A, B, C], Future[Z]]
 
 def run_in_executor(f: Callable[..., Z]) -> Callable[..., Future[Z]]:
     """
-    Prevents a race condition in which a result from the running object is dependent on object in the queue.
+    Prevents a race condition in which a result from the running object is dependent on an object in the queue.
     """
 
     @wraps(f)
