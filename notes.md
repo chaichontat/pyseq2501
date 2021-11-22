@@ -39,3 +39,9 @@ A lot of problems with `win32api DLL`. Probably from different versions
 
 ### Nov 17th
 - Forum https://forum.hackteria.org/c/reseq/19
+
+Bring back Windows 10 Users must enter password box in `control userpasswords2`
+
+```
+reg ADD “HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device” /v DevicePasswordLessBuildVersion /t REG_DWORD /d 0 /f
+```
