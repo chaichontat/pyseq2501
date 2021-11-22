@@ -1,17 +1,14 @@
 from __future__ import annotations
 
-from ctypes import Structure, addressof, byref, c_char_p, c_double, c_int32, create_string_buffer, sizeof
+from ctypes import (Structure, addressof, byref, c_char_p, c_double, c_int32,
+                    create_string_buffer, sizeof)
 from logging import getLogger
 from typing import Optional
 
-from src.instruments.camera.dcam_types import (
-    DCAMPROP_OPTION_NEXT,
-    CheckedDCAMAPI,
-    DCAMParamPropertyAttr,
-    DCAMReturnedZero,
-    Handle,
-    Props,
-)
+from src.imaging.camera.dcam_types import (DCAMPROP_OPTION_NEXT,
+                                           CheckedDCAMAPI,
+                                           DCAMParamPropertyAttr,
+                                           DCAMReturnedZero, Handle, Props)
 
 logger = getLogger("DCAMmodekey")
 

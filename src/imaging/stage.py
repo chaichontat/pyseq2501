@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import logging
 import time
+from concurrent.futures import Future
 from contextlib import contextmanager
 from typing import Dict, Iterator, Literal, Optional
 
 from src.utils.com import COM, CmdVerify, Command
 
-from instruments.instruments import Movable
+from imaging.instruments import Movable
 
 logger = logging.getLogger(__name__)
 
@@ -58,60 +59,61 @@ class BetterYstage(Movable):
 
     def __init__(self, com_port: str, range_tol: int = 10) -> None:
         self.com = COM(self.BAUD_RATE, com_port, logger=logger, formatter=self.SERIAL_FORMATTER)
-        self.send = self.com.repl
 
         self.__mode: Optional[ModeName] = None
         self.range_tol = range_tol
 
     def initialize(self) -> None:
-        self.send("Z")  # Initialize Stage
-        time.sleep(2)
-        self.send("W(EX,0)")  # Turn off echo
+        self.com.repl("Z")  # Initialize Stage
+        self.com.put(lambda: time.sleep(2))
+        self.com.repl("W(EX,0)")  # Turn off echo
         self._mode = "MOVING"
-        [self.send(x) for x in ["MA", "ON", "GH"]]
+        [self.com.repl(x) for x in ["MA", "ON, GH"]]
+        return self.com.is_done()
         # Set to absolute position mode
         # Turn Motor ON
         # Home Stage
 
-    @property
-    def position(self) -> int:
-        while not (resp := self.send(YCmd.READ_POS)):
-            ...
-        return int(resp[1:])
-
-    @position.setter
-    def position(self, pos: int) -> None:
+    def move(self, pos: int) -> Future[int]:
         if not (self.RANGE[0] <= pos <= self.RANGE[1]):
             raise ValueError(f"YSTAGE can only be between {self.RANGE[0]} and {self.RANGE[1]}")
 
-        while abs(self.position - pos) > self.range_tol:
-            self.send(YCmd.SET_POS(pos))  # type: ignore[operator]
-            self.send(YCmd.GO)
-            while not self.is_in_position:
-                time.sleep(0.1)
+        def work() -> int:
+            self.com.repl(YCmd.SET_POS(pos))  # type: ignore[operator]
+            while abs((curr := self.position.result()) - pos) > self.range_tol:
+                self.com.repl(YCmd.GO)
+                while not self.is_in_position:
+                    time.sleep(0.1)
+            return curr
+
+        return self.com.put(work)
 
     @property
-    def is_in_position(self) -> bool:
-        return self.com.repl(YCmd.CHECK_POS)[1:] == "1"
+    def position(self) -> Future[int]:
+        return self.com.put(lambda: int(self.com.repl(YCmd.READ_POS).result()[1:]))
+
+    @property
+    def is_in_position(self) -> Future[bool]:
+        return self.com.put(lambda: self.com.repl(YCmd.CHECK_POS)[1:] == "1")
 
     @property
     def _mode(self) -> Optional[ModeName]:
         return self.__mode
 
     @_mode.setter
-    def _mode(self, mode: ModeName) -> bool:
+    def _mode(self, mode: ModeName) -> None:
         if self.__mode == mode:
-            return True
-        self.send(YCmd.GAINS(MODES[mode]["GAINS"]))  # type: ignore[operator]
-        self.send(YCmd.VELO(MODES[mode]["VELO"]))  # type: ignore[operator]
-        return True
+            return
+        self.com.repl(YCmd.GAINS(MODES[mode]["GAINS"]))  # type: ignore[operator]
+        self.com.repl(YCmd.VELO(MODES[mode]["VELO"]))  # type: ignore[operator]
 
     @contextmanager
     def _imaging_mode(self) -> Iterator[None]:
         self._mode = "IMAGING"
+        self.com.is_done().result()
         yield
         self._mode = "MOVING"
 
-    def move_slowly(self, target: int) -> None:
+    def move_slowly(self, target: int) -> Future[int]:
         with self._imaging_mode():
-            self.position = target
+            return self.move(target)

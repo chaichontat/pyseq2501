@@ -1,17 +1,15 @@
+from concurrent.futures import Future
 from typing import Callable, ClassVar, Protocol, Tuple
 
 from src.utils.com import COM, Command
 
 
-class Instruments(Protocol):
+class UsesSerial(Protocol):
     COMMANDS: ClassVar[Command]
     SERIAL_FORMATTER: ClassVar[Callable[[str], str]]
     com: COM
 
-    def initialize(self) -> None:
-        ...
-
-    def send(self, msg: str) -> str:
+    def initialize(self) -> Future:
         ...
 
     @staticmethod
@@ -19,15 +17,11 @@ class Instruments(Protocol):
         ...
 
 
-class Movable(Instruments):
+class Movable(UsesSerial):
     STEPS_PER_UM: ClassVar[float]
     RANGE: ClassVar[Tuple[int, int]]
     HOME: ClassVar[int]
 
     @property
-    def position(self) -> int:
-        ...
-
-    @position.setter
-    def position(self, p: int) -> None:
+    def position(self) -> Future[int]:
         ...

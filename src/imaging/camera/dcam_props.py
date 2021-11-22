@@ -6,19 +6,15 @@ from dataclasses import dataclass
 from logging import getLogger
 from typing import Optional, get_args
 
-from src.instruments.camera.dcam_mode_key import MODE_KEY, get_mode_key
-from src.instruments.camera.dcam_types import (
-    DCAM_PARAM_PROPERTYATTR,
-    DCAMPROP_OPTION_NEAREST,
-    DCAMPROP_OPTION_NEXT,
-    CheckedDCAMAPI,
-    DCAMParamPropertyAttr,
-    DCAMReturnedZero,
-    Handle,
-    PrecomputedPropTypes,
-    Props,
-    PropTypes,
-)
+from src.imaging.camera.dcam_mode_key import MODE_KEY, get_mode_key
+from src.imaging.camera.dcam_types import (DCAM_PARAM_PROPERTYATTR,
+                                           DCAMPROP_OPTION_NEAREST,
+                                           DCAMPROP_OPTION_NEXT,
+                                           CheckedDCAMAPI,
+                                           DCAMParamPropertyAttr,
+                                           DCAMReturnedZero, Handle,
+                                           PrecomputedPropTypes, Props,
+                                           PropTypes)
 
 # /* DCAM-API 3.0 */
 # BOOL DCAMAPI dcam_getpropertyattr	( HDCAM h, DCAM_PROPERTYATTR* param );
@@ -56,6 +52,9 @@ class DCAMProperty:
     def mode_key(self) -> Optional[dict[bytes, int]]:
         return MODE_KEY[self.name]
 
+    def __str__(self) -> str:
+        return f"{self.name}: {self.value}"
+
 
 class DCAMDict:
     _TYPES = PrecomputedPropTypes
@@ -70,22 +69,19 @@ class DCAMDict:
     def __setitem__(self, key: Props, item: int | float) -> None:
         prop = self._dict[key]
         # TODO: Check writable.
-        min_val: float = prop.attr.valuemin.value
-        max_val: float = prop.attr.valuemax.value
+        min_val: float = prop.attr.valuemin
+        max_val: float = prop.attr.valuemax
         if not (min_val <= item <= max_val):
             raise ValueError(f"Out of range for {key}. Given {item}, range is [{min_val}, {max_val}].")
 
         value = ctypes.c_double(item)
         API.dcam_setgetpropertyvalue(self.handle, prop.id_, byref(value), c_int32(DCAM_DEFAULT_ARG))
-        assert value == prop.value  # Function returns previously stored value.
+        # assert value == prop.value  # Function returns previously stored value.
 
         prop.value = ctypes.c_double(item).value
 
     def __str__(self) -> str:
-        return self._dict.__str__()
-
-    def __repr__(self) -> str:
-        return self._dict.__repr__()
+        return f"Properties: {{{', '.join(map(str, self._dict.values()))}}}"
 
     @staticmethod
     def to_snake_case(s: bytes):
