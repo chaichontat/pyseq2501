@@ -1,43 +1,40 @@
-from __future__ import annotations
-
+from abc import ABCMeta, abstractmethod
 from concurrent.futures import Future
-from logging import Logger
-from typing import Callable, ClassVar, Optional, Protocol, Tuple
+from typing import Annotated, Any, ClassVar, Literal, Tuple, Union
 
-from src.utils.com import COM, Command
+from src.utils.com import COM
 
 
-class UsesSerial(Protocol):
-    BAUD_RATE: ClassVar[int]
-    CMDS: ClassVar[Command]
-    SERIAL_FORMATTER: ClassVar[Callable[[str], str]]
+class UsesSerial(metaclass=ABCMeta):
     com: COM
 
-    def __init__(self, port_tx: str, port_rx: Optional[str] = None, logger: Optional[Logger] = None) -> None:
-        super().__init__()
-        self.com = COM(self.BAUD_RATE, port_tx, port_rx, logger=logger, formatter=self.SERIAL_FORMATTER)
-
-    def initialize(self) -> Future:
-        raise NotImplementedError
-
-    @staticmethod
-    def _serial_formatter(s: str) -> str:
+    @abstractmethod
+    def initialize(self) -> Future[Any]:
         ...
 
 
-class Movable(Protocol):
+class Movable(metaclass=ABCMeta):
     STEPS_PER_UM: ClassVar[int | float]
     RANGE: ClassVar[Tuple[int, int]]
     HOME: ClassVar[int]
 
     @property
+    @abstractmethod
     def position(self) -> Future[int]:
         raise NotImplementedError
 
+    # Mypy bug. https://github.com/python/mypy/issues/10872
+    def convert(self, p: Annotated[float, "mm"]) -> int:  # type: ignore[name-defined]
+        return int(p * 1000 * self.STEPS_PER_UM)
 
-class FPGAControlled(Protocol):
-    fpga_com: COM
+
+class FPGAControlled:
+    fcom: COM
 
     def __init__(self, fpga_com: COM) -> None:
-        super().__init__()
-        self.fpga_com = fpga_com
+        self.fcom = fpga_com
+
+
+SerialInstruments = Literal["fpga", "laser_r", "laser_g", "x", "y"]
+FPGAInstruments = Literal["z", "optics", "objective"]
+Instruments = Union[SerialInstruments, FPGAInstruments]
