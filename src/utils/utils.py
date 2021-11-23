@@ -18,6 +18,19 @@ X_SPUM = 0.4096
 Y_SPUM = 100
 
 
+class FakeLogger:
+    """To avoid `if logger is None` from appearing everywhere."""
+
+    def debug(self, _: str) -> None:
+        ...
+
+    def warning(self, _: str) -> None:
+        ...
+
+    def error(self, _: str) -> None:
+        ...
+
+
 class Pos(TypedDict):
     x_center: int
     y_center: int

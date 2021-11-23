@@ -2,7 +2,9 @@
 import sys
 from pathlib import Path
 
+
 sys.path.append("c:\\Users\\sbsuser\\Desktop\\goff-rotation")
+from src.imaging.laser import Laser
 
 ports = {
     "xstage": "COM20",
@@ -35,8 +37,17 @@ logging.basicConfig(
     handlers=[RichHandler(rich_tracebacks=True, markup=True)],
 )
 
-from src.imaging.ystage import BetterYstage
+from src.imaging.ystage import YStage
 
-test = BetterYstage("COM21")
+test = YStage("COM21")
 test.move(0)
+# %%
+logger = logging.getLogger()
+from src.utils.com import COM
+
+fpga = COM("fpga", "COM14", "COM23", logger=logger)
+# %%
+
+laser = Laser("COM15")
+laser.status
 # %%

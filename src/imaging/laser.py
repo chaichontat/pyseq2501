@@ -2,27 +2,35 @@ import time
 from concurrent.futures import Future
 from dataclasses import dataclass
 from logging import getLogger
-from typing import Callable
+from typing import Callable, Literal
 
+from returns.result import Failure, ResultE, Success
 from src.instruments import UsesSerial
-from src.utils.com import COM, is_between
+from src.utils.com import COM, CmdVerify, is_between
 
 logger = getLogger("laser")
 
 
 class LaserCmd:
+    @staticmethod
+    def v_get_status(s: str) -> ResultE[bool]:
+        try:
+            return Success({"DISABLED": False, "ENABLED": True}[s])
+        except KeyError:
+            return Failure(Exception("Invalid laser response"))
+
     ON = "ON"
     OFF = "OFF"
     GET_POWER = "POWER?"
     SET_POWER: Callable[[int], str] = lambda x: f"POWER={x}"
-    GET_STATUS = "STAT?"
+    GET_STATUS = CmdVerify("STAT?", v_get_status)
 
 
 class Laser(UsesSerial):
     POWER_RANGE = (0, 500)
 
     def __init__(self, port_tx: str) -> None:
-        self.com = COM("laser", port_tx=port_tx, logger=logger)
+        self.com = COM("laser_r", port_tx=port_tx, logger=logger)  # Doesn't matter if laser_r or g.
 
     def initialize(self) -> Future[str]:
         self.com.repl(LaserCmd.ON)
@@ -39,6 +47,10 @@ class Laser(UsesSerial):
     @property
     def power(self) -> Future[int]:
         return self.com.repl(LaserCmd.GET_POWER)
+
+    @property
+    def status(self) -> Future[bool]:
+        return self.com.repl_verify(LaserCmd.GET_STATUS)
 
 
 @dataclass

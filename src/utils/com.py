@@ -7,11 +7,13 @@ from functools import wraps
 from logging import Logger
 from typing import Any, Callable, Optional, ParamSpec, Protocol, TypeVar, cast
 
+from returns.pipeline import is_successful
 from returns.result import Failure, Result, Success
 from serial import Serial
 from src.instruments_types import SerialInstruments
 
 from .fakeserial import FakeSerial
+from .utils import FakeLogger
 
 T = TypeVar("T", bound=Callable[..., str])
 
@@ -54,7 +56,7 @@ def run_in_executor(f: Callable[P, Z]) -> Callable[P, Future[Z]]:  # type: ignor
 @dataclass(frozen=True)
 class CmdVerify:
     cmd: str | Callable[[str], str]
-    is_valid: str | Callable[[str], bool]
+    process: Callable[[str], Result[Any, Any]]
 
 
 Formatter = Callable[[str], str]
@@ -75,7 +77,7 @@ class COM:
     name: SerialInstruments
     port_tx: str
     port_rx: Optional[str] = None
-    logger: Optional[Logger] = None
+    logger: Logger | FakeLogger = FakeLogger()
     timeout: int = 1
     _formatter: Formatter = field(init=False)
     _executor: ThreadPoolExecutor = field(init=False)
@@ -106,44 +108,54 @@ class COM:
         assert self.formatter is not None
         self._serial.write(self.formatter(cmd))
 
+    def _send(self, cmd: str) -> None:
+        self._send_for_thread(cmd)
+        self.logger.debug(f"Tx: {cmd:10}")
+
     @run_in_executor
     def send(self, cmd: str) -> None:
-        self._send_for_thread(cmd)
-        if self.logger is not None:
-            self.logger.debug(f"Tx: {cmd:10}")
+        return self._send(cmd)
 
     def _repl_for_thread(self, cmd: str) -> str:
         self._send_for_thread(cmd)
         self._serial.flush()
         return self._serial.readline().strip()
 
+    def _repl(self, cmd: str) -> str:
+        resp = self._repl_for_thread(cmd)
+        self.logger.debug(f"Tx: {cmd:10} Rx: {resp:10}")
+        return resp
+
     @run_in_executor
     def repl(self, cmd: str) -> str:
-        resp = self._repl_for_thread(cmd)
-        if self.logger is not None:
-            self.logger.debug(f"Tx: {cmd:10} Rx: {resp:10}")
-        return resp
+        return self._repl(cmd)
+
+    def _repl_verify(self, cmdver: CmdVerify, arg: Optional[str] = None, attempts: int = 2) -> Any:
+
+        assert attempts > 0
+        if isinstance(x := cmdver.cmd, str):
+            send = x
+        elif arg is None:
+            raise TypeError("Command needs argument but argument is None.")
+        else:
+            send = x(arg)
+
+        resp: Result[Any, Any]
+        for i in range(attempts):
+            raw = self._repl_for_thread(send)
+            resp = cmdver.process(raw)  # type: ignore[misc,operator]
+            if is_successful(resp):
+                self.logger.debug(f"Tx: {send:10} Rx: {raw:10} [green]Verified")
+                break
+            self.logger.warning(f"Verification failed for {send}. Got {resp.failure()}. Attempt {i}")
+        else:
+            self.logger.error(f"Verification failed for {send}. Max attempts reached.")
+        return resp.unwrap()
+
+    @run_in_executor
+    def repl_verify(self, cmdver: CmdVerify, arg: Optional[str] = None, attempts: int = 2) -> Any:
+        return self._repl_verify(cmdver, arg, attempts)
 
     @run_in_executor
     def is_done(self) -> None:
         return None
-
-    @run_in_executor
-    def repl_verify(self, cmdver: CmdVerify, arg: str, attempts: int = 2) -> Result[str, str]:
-        send = x if isinstance(x := cmdver.cmd, str) else x(arg)
-        if isinstance(cmdver.is_valid, str):
-            valid: Callable[[str], bool] = lambda res: res == cmdver.is_valid
-        else:
-            valid = cmdver.is_valid
-
-        for _ in range(attempts):
-            resp = self._repl_for_thread(send)  # type:ignore[misc, operator]
-            if valid(resp):
-                break
-            if self.logger is not None:
-                self.logger.debug(
-                    f"Verification failed for {send}. Got {resp}."  # type: ignore[misc, operator]
-                )
-        else:
-            return Failure(resp)
-        return Success(resp)
