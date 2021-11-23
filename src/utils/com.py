@@ -1,25 +1,21 @@
 import io
 import os
-import threading
-from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from functools import wraps
 from logging import Logger
-from typing import Any, Callable, Generic, Optional, ParamSpec, Protocol, TypeVar, cast
+from typing import Callable, Generic, Optional, TypeVar, cast
 
-from returns.maybe import Some
 from returns.pipeline import is_successful
 from returns.result import Result
 from serial import Serial
 from src.instruments_types import SerialInstruments
 
 from .fakeserial import FakeSerial
-from .utils import FakeLogger
+from .utils import FakeLogger, run_in_executor
 
 ReturnsStr = TypeVar("ReturnsStr", bound=Callable[..., str])
 T = TypeVar("T")
 F = TypeVar("F")
-P = ParamSpec("P")
 
 
 def is_between(f: ReturnsStr, min_: int, max_: int) -> ReturnsStr:
@@ -29,28 +25,6 @@ def is_between(f: ReturnsStr, min_: int, max_: int) -> ReturnsStr:
         return f(x)
 
     return cast(ReturnsStr, wrapper)
-
-
-class Threaded(Protocol):
-    _executor: ThreadPoolExecutor
-
-
-# TODO Wait until mypy supports ParamSpec.
-def run_in_executor(f: Callable[P, T]) -> Callable[P, Future[T]]:
-    """
-    Prevents a race condition in which a result from the running object is dependent on an object in the queue.
-    """
-
-    @wraps(f)
-    def inner(self: Threaded, *args: Any, **kwargs: Any) -> Future[T]:
-        if threading.current_thread() not in self._executor._threads:
-            return cast(Future[T], self._executor.submit(lambda: f(self, *args, **kwargs)))  # type: ignore
-        else:
-            future: Future[T] = Future()
-            future.set_result(f(self, *args, **kwargs))  # type: ignore
-            return future
-
-    return inner
 
 
 @dataclass(frozen=True)

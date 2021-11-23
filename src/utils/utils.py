@@ -1,9 +1,22 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from enum import Enum
+import threading
+from concurrent.futures import Future, ThreadPoolExecutor
+from functools import wraps
 from math import ceil
-from typing import Dict, List, Literal, Optional, Tuple, TypedDict
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    ParamSpec,
+    Protocol,
+    Tuple,
+    TypedDict,
+    TypeVar,
+)
 
 TILE_WIDTH = 0.769  # mm
 RESOLUTION = 0.375  # µm / px
@@ -16,6 +29,30 @@ FLOWCELL_ORIGIN: Dict[FlowCell, Tuple[int, int]] = {"A": (17571, -180000), "B": 
 # TODO: Move this
 X_SPUM = 0.4096
 Y_SPUM = 100
+
+T, P = TypeVar("T"), ParamSpec("P")
+
+
+class Threaded(Protocol):
+    _executor: ThreadPoolExecutor
+
+
+# TODO Wait until mypy supports ParamSpec.
+def run_in_executor(f: Callable[P, T]) -> Callable[P, Future[T]]:
+    """
+    Prevents a race condition in which a result from the running object is dependent on an object in the queue.
+    """
+
+    @wraps(f)
+    def inner(self: Threaded, *args: Any, **kwargs: Any) -> Future[T]:
+        if threading.current_thread() not in self._executor._threads:
+            return cast(Future[T], self._executor.submit(lambda: f(self, *args, **kwargs)))  # type: ignore
+        else:
+            future: Future[T] = Future()
+            future.set_result(f(self, *args, **kwargs))  # type: ignore
+            return future
+
+    return inner
 
 
 class FakeLogger:
