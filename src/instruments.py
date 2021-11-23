@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from concurrent.futures import Future
-from typing import Annotated, Any, ClassVar, Literal, Tuple, Union
+from typing import Annotated, Any, ClassVar
 
 from src.utils.com import COM
 
@@ -15,7 +15,7 @@ class UsesSerial(metaclass=ABCMeta):
 
 class Movable(metaclass=ABCMeta):
     STEPS_PER_UM: ClassVar[int | float]
-    RANGE: ClassVar[Tuple[int, int]]
+    RANGE: ClassVar[tuple[int, int]]
     HOME: ClassVar[int]
 
     @property
@@ -33,8 +33,3 @@ class FPGAControlled:
 
     def __init__(self, fpga_com: COM) -> None:
         self.fcom = fpga_com
-
-
-SerialInstruments = Literal["fpga", "laser_r", "laser_g", "x", "y"]
-FPGAInstruments = Literal["z", "optics", "objective"]
-Instruments = Union[SerialInstruments, FPGAInstruments]

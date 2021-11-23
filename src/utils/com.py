@@ -9,7 +9,7 @@ from typing import Any, Callable, Optional, ParamSpec, TypeVar, cast
 
 from returns.result import Failure, Result, Success
 from serial import Serial
-from src.instruments import SerialInstruments
+from src.instruments_types import SerialInstruments
 
 from .fakeserial import FakeSerial
 
