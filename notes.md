@@ -45,3 +45,8 @@ Bring back Windows 10 Users must enter password box in `control userpasswords2`
 ```
 reg ADD “HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device” /v DevicePasswordLessBuildVersion /t REG_DWORD /d 0 /f
 ```
+
+Deal with intermittent SSH connectivity issues
+```json
+"remote.SSH.enableDynamicForwarding": false
+```
