@@ -4,17 +4,21 @@ import ctypes
 from ctypes import byref, c_double, c_int32
 from dataclasses import dataclass
 from logging import getLogger
-from typing import Optional, get_args
+from typing import Optional, Type, cast, get_args
 
 from src.imaging.camera.dcam_mode_key import MODE_KEY, get_mode_key
-from src.imaging.camera.dcam_types import (DCAM_PARAM_PROPERTYATTR,
-                                           DCAMPROP_OPTION_NEAREST,
-                                           DCAMPROP_OPTION_NEXT,
-                                           CheckedDCAMAPI,
-                                           DCAMParamPropertyAttr,
-                                           DCAMReturnedZero, Handle,
-                                           PrecomputedPropTypes, Props,
-                                           PropTypes)
+from src.imaging.camera.dcam_types import (
+    DCAM_PARAM_PROPERTYATTR,
+    DCAMPROP_OPTION_NEAREST,
+    DCAMPROP_OPTION_NEXT,
+    CheckedDCAMAPI,
+    DCAMParamPropertyAttr,
+    DCAMReturnedZero,
+    Handle,
+    PrecomputedPropTypes,
+    Props,
+    PropTypes,
+)
 
 # /* DCAM-API 3.0 */
 # BOOL DCAMAPI dcam_getpropertyattr	( HDCAM h, DCAM_PROPERTYATTR* param );
@@ -84,11 +88,11 @@ class DCAMDict:
         return f"Properties: {{{', '.join(map(str, self._dict.values()))}}}"
 
     @staticmethod
-    def to_snake_case(s: bytes):
+    def to_snake_case(s: bytes) -> str:
         return s.lower().decode("utf-8").replace(" ", "_")
 
     @classmethod
-    def from_dcam(cls, h: Handle, check_precomputed=True):
+    def from_dcam(cls: Type[DCAMDict], h: Handle, check_precomputed: bool = True) -> DCAMDict:
         c_buf_len = 64
         dcam_props: dict[Props, DCAMProperty] = {}
 
@@ -116,7 +120,7 @@ class DCAMDict:
             # Get value.
             this_value = c_double(0)
             API.dcam_getpropertyvalue(h, this_id, byref(this_value))
-            name = cls.to_snake_case(this_name.value)
+            name = cast(Props, cls.to_snake_case(this_name.value))
             dcam_props[name] = DCAMProperty(name, this_attr.to_dataclass(), this_value.value)
 
             if check_precomputed:

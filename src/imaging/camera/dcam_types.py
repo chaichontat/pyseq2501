@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from ctypes import (Structure, WinDLL, _NamedFuncPointer, c_double, c_int32,
-                    c_void_p, sizeof)
+from ctypes import Structure, WinDLL, c_double, c_int32, c_void_p, sizeof  # type: ignore
 from dataclasses import dataclass
 from enum import IntEnum
 from functools import wraps
 from logging import getLogger
-from typing import Callable, Literal, TypedDict, TypeVar, cast, get_args
+from typing import Any, Callable, Literal, TypedDict, TypeVar, cast, get_args
 
 logger = getLogger("DCAM")
 
@@ -24,11 +23,13 @@ class DCAMException(Exception):
 class DCAMReturnedZero(DCAMException):
     ...
 
-F = TypeVar("F", bound=Callable)
+
+F = TypeVar("F", bound=Callable[..., bool])
+
 
 def check_if_failed(f: F) -> F:
     @wraps(f)
-    def wrapper(*args, **kwargs) -> bool:
+    def wrapper(*args: Any, **kwargs: Any) -> bool:
         res = f(*args, **kwargs)
         # Literally the only function that returns int32 instead of BOOL.
         if res == 0 and f.__name__ != "dcam_getlasterror":
@@ -39,12 +40,12 @@ def check_if_failed(f: F) -> F:
     return cast(F, wrapper)
 
 
-class CheckedDCAMAPI(WinDLL):
+class CheckedDCAMAPI(WinDLL):  # type: ignore[misc]
     def __init__(self) -> None:
         super().__init__("dcamapi.dll")
 
-    def __getitem__(self, name: str) -> _NamedFuncPointer:
-        return check_if_failed(super().__getitem__(name))
+    def __getitem__(self, name: str) -> Callable[..., bool]:
+        return cast(Callable[..., bool], check_if_failed(super().__getitem__(name)))
 
 
 Handle = c_void_p

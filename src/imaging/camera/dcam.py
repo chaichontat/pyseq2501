@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from ctypes import byref, c_int32, c_ulong, c_void_p
 from enum import IntEnum
-from typing import Literal
+from typing import Generator, Literal
 
 import numpy as np
 from src.imaging.camera.dcam_props import DCAMDict
@@ -41,13 +41,13 @@ class Camera:
         API.dcam_precapture(self.handle, DCAM_CAPTUREMODE_SNAP)
 
     @contextmanager
-    def capture(self):
+    def capture(self) -> Generator[None, None, None]:
         API.dcam_capture(self.handle)
         yield
         API.dcam_idle(self.handle)
 
     @contextmanager
-    def alloc(self, n_frames: int):
+    def alloc(self, n_frames: int) -> Generator[None, None, None]:
         API.dcam_allocframe(self.handle, c_int32(n_frames))
         yield
         API.dcam_freeframe(self.handle)
@@ -67,8 +67,8 @@ class Camera:
         b_index = c_int32(-1)
         f_count = c_int32(-1)
         API.dcam_gettransferinfo(self.handle, byref(b_index), byref(f_count))
-        assert b_index != -1
-        assert f_count != -1
+        assert b_index.value != -1
+        assert f_count.value != -1
         return int(f_count.value)
 
     def get_images(self):
