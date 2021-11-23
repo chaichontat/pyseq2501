@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from logging import Logger
 
 from returns.maybe import Maybe, Nothing, Some
-from src.instruments import Instruments
+from src.instruments_types import SerialInstruments
 
 
 def assert_(x: bool):
@@ -20,12 +20,12 @@ def y_resp(s: str) -> str:
 
 @dataclass
 class FakeSerial:
-    name: Instruments
+    name: SerialInstruments
     port_tx: str
     port_rx: Maybe[str] = Nothing
     timeout: float = 1
     logger: Maybe[Logger] = Nothing
-    _buffer: str = field("", init=False)
+    _buffer: str = field(default="", init=False)
 
     def __post_init__(self) -> None:
         print("Using fake serial!")

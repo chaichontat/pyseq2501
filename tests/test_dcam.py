@@ -2,8 +2,6 @@
 import sys
 from pathlib import Path
 
-# from src.instruments.camera.dcam_mode_key import get_mode_key
-
 sys.path.append("c:\\Users\\sbsuser\\Desktop\\goff-rotation")
 
 import logging
@@ -21,7 +19,7 @@ logging.basicConfig(
 
 log = logging.getLogger("rich")
 
-from src.imaging.camera.dcam import Camera
+from src.imaging.camera import Camera
 
 print("[green]Holding breath...")
 

@@ -1,11 +1,11 @@
 import io
 import os
 import threading
-from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent.futures import Executor, Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from functools import wraps
 from logging import Logger
-from typing import Any, Callable, Optional, ParamSpec, TypeVar, cast
+from typing import Any, Callable, Optional, ParamSpec, Protocol, TypeVar, cast
 
 from returns.result import Failure, Result, Success
 from serial import Serial
@@ -28,14 +28,19 @@ def is_between(f: T, min_: int, max_: int) -> T:
 P = ParamSpec("P")
 Z = TypeVar("Z")
 
-# Wait until mypy supports ParamSpec.
+
+class Threaded(Protocol):
+    _executor: Executor
+
+
+# TODO Wait until mypy supports ParamSpec.
 def run_in_executor(f: Callable[P, Z]) -> Callable[P, Future[Z]]:  # type: ignore[misc]
     """
     Prevents a race condition in which a result from the running object is dependent on an object in the queue.
     """
 
     @wraps(f)
-    def inner(self: COM, *args: Any, **kwargs: Any) -> Future[Z]:
+    def inner(self: Threaded, *args: Any, **kwargs: Any) -> Future[Z]:
         if threading.current_thread() not in self._executor._threads:  # type: ignore[attr-defined]
             return cast(Future[Z], self._executor.submit(lambda: f(self, *args, **kwargs)))
         else:
