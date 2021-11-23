@@ -1,4 +1,5 @@
 import io
+import os
 import threading
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -6,14 +7,11 @@ from functools import wraps
 from logging import Logger
 from typing import Any, Callable, Optional, ParamSpec, TypeVar, cast
 
+from returns.result import Failure, Result, Success
 from serial import Serial
+from src.instruments import SerialInstruments
 
-
-@dataclass(frozen=True)
-class CmdVerify:
-    cmd: str
-    expected: Callable[[str], str]
-
+from .fakeserial import FakeSerial
 
 T = TypeVar("T", bound=Callable[..., str])
 
@@ -25,19 +23,6 @@ def is_between(f: T, min_: int, max_: int) -> T:
         return f(x)
 
     return cast(T, wrapper)
-
-
-Str2Bool = Callable[[str], bool]
-
-
-class InvalidResponse(Exception):
-    def __init__(self, tx: str, rx: str):
-        self.tx = tx
-        self.rx = rx
-
-
-class SerialWriteFailed(Exception):
-    ...
 
 
 P = ParamSpec("P")
@@ -61,23 +46,44 @@ def run_in_executor(f: Callable[P, Z]) -> Callable[P, Future[Z]]:  # type: ignor
     return inner
 
 
+@dataclass(frozen=True)
+class CmdVerify:
+    cmd: Callable[[str], str]
+    expected: Callable[[str], str]
+
+
+Formatter = Callable[[str], str]
+BAUD_RATE: dict[SerialInstruments, int] = dict(fpga=115200, x=9600, y=9600, laser_g=9600, laser_r=9600)
+# fmt:off
+SERIAL_FORMATTER: dict[SerialInstruments, Callable[[str], str]] = dict(
+       fpga=lambda x:  f"{x}\n",
+          x=lambda x:  f"{x}\r",
+          y=lambda x: f"1{x}\r\n",
+    laser_g=lambda x:  f"{x}\r",
+    laser_r=lambda x:  f"{x}\r",
+)
+# fmt:on
+
+
 @dataclass
 class COM:
-    baud: int
+    name: SerialInstruments
     port_tx: str
     port_rx: Optional[str] = None
     logger: Optional[Logger] = None
-    formatter: Optional[Callable[[str], str]] = None
     timeout: int = 1
+    _formatter: Formatter = field(init=False)
     _executor: ThreadPoolExecutor = field(init=False)
 
     def __post_init__(self) -> None:
-        if self.formatter is None:
-            self.formatter = lambda x: x
+        self.formatter = SERIAL_FORMATTER[self.name]
+        if os.environ["FAKE_HISEQ"]:
+            self._serial = FakeSerial(self.port_tx, self.port_rx, self.timeout)
+        else:
+            s_tx = Serial(self.port_tx, BAUD_RATE[self.name], timeout=self.timeout)
+            s_rx = s_tx or Serial(self.port_rx, BAUD_RATE[self.name], timeout=self.timeout)
+            self._serial = io.TextIOWrapper(io.BufferedRWPair(s_tx, s_rx), encoding="ascii", errors="strict")  # type: ignore[arg-type]
 
-        s_tx = Serial(self.port_tx, self.baud, timeout=self.timeout)
-        s_rx = s_tx if self.port_rx is None else Serial(self.port_rx, self.baud, timeout=self.timeout)
-        self._serial = io.TextIOWrapper(io.BufferedRWPair(s_tx, s_rx), encoding="ascii", errors="strict")  # type: ignore[arg-type]
         self._executor = ThreadPoolExecutor(max_workers=1)
 
     S = TypeVar("S")
@@ -112,15 +118,19 @@ class COM:
     def is_done(self) -> None:
         return None
 
-    # def repl_verify(self, cmdver: CmdVerify, waiting: bool = False, attempts: int = 2) -> str:
-    #     def work() -> str:
-    #         expected = cmdver.expected(str(cmdver.cmd))
-    #         for _ in range(attempts):
-    #             resp = self._repl_for_thread(cmdver.cmd)
-    #             if resp == expected:
-    #                 break
-    #             if self.logger is not None:
-    #                 self.logger.debug(f"Verification failed for {cmdver.cmd}. Expected {expected} Got {resp}.")
-    #         else:
-    #             raise InvalidResponse(cmdver.cmd, resp)
-    #         return resp
+    @run_in_executor
+    def repl_verify(self, cmdver: CmdVerify, arg: str, attempts: int = 2) -> Result[str, str]:
+        # Mypy freaks out that an attribute is a Callable.
+        expected = cmdver.expected(arg)  # type:ignore[misc, operator]
+        for _ in range(attempts):
+            resp = self._repl_for_thread(cmdver.cmd(arg))  # type:ignore[misc, operator]
+            if resp == expected:
+                break
+            if self.logger is not None:
+                self.logger.debug(
+                    f"Verification failed for {cmdver.cmd(arg)}. Expected {expected} Got {resp}."  # type: ignore[misc, operator]
+                )
+
+        else:
+            return Failure(resp)
+        return Success(resp)
