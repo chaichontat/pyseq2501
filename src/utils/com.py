@@ -53,8 +53,8 @@ def run_in_executor(f: Callable[P, Z]) -> Callable[P, Future[Z]]:  # type: ignor
 
 @dataclass(frozen=True)
 class CmdVerify:
-    cmd: Callable[[str], str]
-    expected: Callable[[str], str]
+    cmd: str | Callable[[str], str]
+    is_valid: str | Callable[[str], bool]
 
 
 Formatter = Callable[[str], str]
@@ -82,7 +82,12 @@ class COM:
 
     def __post_init__(self) -> None:
         self.formatter = SERIAL_FORMATTER[self.name]
-        if os.environ["FAKE_HISEQ"]:
+        try:
+            use_fake = os.environ["FAKE_HISEQ"] == "1"
+        except KeyError:
+            use_fake = False
+
+        if use_fake:
             self._serial = FakeSerial(self.port_tx, self.port_rx, self.timeout)
         else:
             s_tx = Serial(self.port_tx, BAUD_RATE[self.name], timeout=self.timeout)
@@ -125,17 +130,20 @@ class COM:
 
     @run_in_executor
     def repl_verify(self, cmdver: CmdVerify, arg: str, attempts: int = 2) -> Result[str, str]:
-        # Mypy freaks out that an attribute is a Callable.
-        expected = cmdver.expected(arg)  # type:ignore[misc, operator]
+        send = x if isinstance(x := cmdver.cmd, str) else x(arg)
+        if isinstance(cmdver.is_valid, str):
+            valid: Callable[[str], bool] = lambda res: res == cmdver.is_valid
+        else:
+            valid = cmdver.is_valid
+
         for _ in range(attempts):
-            resp = self._repl_for_thread(cmdver.cmd(arg))  # type:ignore[misc, operator]
-            if resp == expected:
+            resp = self._repl_for_thread(send)  # type:ignore[misc, operator]
+            if valid(resp):
                 break
             if self.logger is not None:
                 self.logger.debug(
-                    f"Verification failed for {cmdver.cmd(arg)}. Expected {expected} Got {resp}."  # type: ignore[misc, operator]
+                    f"Verification failed for {send}. Got {resp}."  # type: ignore[misc, operator]
                 )
-
         else:
             return Failure(resp)
         return Success(resp)
