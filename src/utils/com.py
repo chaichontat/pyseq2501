@@ -1,74 +1,74 @@
 import io
 import os
 import threading
-from concurrent.futures import Executor, Future, ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from functools import wraps
 from logging import Logger
-from typing import Any, Callable, Optional, ParamSpec, Protocol, TypeVar, cast
+from typing import Any, Callable, Generic, Optional, ParamSpec, Protocol, TypeVar, cast
 
+from returns.maybe import Some
 from returns.pipeline import is_successful
-from returns.result import Failure, Result, Success
+from returns.result import Result
 from serial import Serial
 from src.instruments_types import SerialInstruments
 
 from .fakeserial import FakeSerial
 from .utils import FakeLogger
 
-T = TypeVar("T", bound=Callable[..., str])
+ReturnsStr = TypeVar("ReturnsStr", bound=Callable[..., str])
+T = TypeVar("T")
+F = TypeVar("F")
+P = ParamSpec("P")
 
 
-def is_between(f: T, min_: int, max_: int) -> T:
+def is_between(f: ReturnsStr, min_: int, max_: int) -> ReturnsStr:
     def wrapper(x: int) -> str:
         if not (min_ <= x <= max_) or x != int(x):
             raise ValueError(f"Invalid value for {f.__name__}: Got {x}. Expected [{min_}, {max_}].")
         return f(x)
 
-    return cast(T, wrapper)
-
-
-P = ParamSpec("P")
-Z = TypeVar("Z")
+    return cast(ReturnsStr, wrapper)
 
 
 class Threaded(Protocol):
-    _executor: Executor
+    _executor: ThreadPoolExecutor
 
 
 # TODO Wait until mypy supports ParamSpec.
-def run_in_executor(f: Callable[P, Z]) -> Callable[P, Future[Z]]:  # type: ignore[misc]
+def run_in_executor(f: Callable[P, T]) -> Callable[P, Future[T]]:
     """
     Prevents a race condition in which a result from the running object is dependent on an object in the queue.
     """
 
     @wraps(f)
-    def inner(self: Threaded, *args: Any, **kwargs: Any) -> Future[Z]:
-        if threading.current_thread() not in self._executor._threads:  # type: ignore[attr-defined]
-            return cast(Future[Z], self._executor.submit(lambda: f(self, *args, **kwargs)))
+    def inner(self: Threaded, *args: Any, **kwargs: Any) -> Future[T]:
+        if threading.current_thread() not in self._executor._threads:
+            return cast(Future[T], self._executor.submit(lambda: f(self, *args, **kwargs)))  # type: ignore
         else:
-            future: Future[Z] = Future()
-            future.set_result(f(self, *args, **kwargs))
+            future: Future[T] = Future()
+            future.set_result(f(self, *args, **kwargs))  # type: ignore
             return future
 
     return inner
 
 
 @dataclass(frozen=True)
-class CmdVerify:
+class CmdVerify(Generic[T, F]):
     cmd: str | Callable[[str], str]
-    process: Callable[[str], Result[Any, Any]]
+    process: Callable[[str], Result[T, F]]
 
 
 Formatter = Callable[[str], str]
-BAUD_RATE: dict[SerialInstruments, int] = dict(fpga=115200, x=9600, y=9600, laser_g=9600, laser_r=9600)
+BAUD_RATE: dict[SerialInstruments, int] = dict(fpga=115200, x=9600, y=9600, laser_g=9600, laser_r=9600)  # type: ignore
 # fmt:off
 SERIAL_FORMATTER: dict[SerialInstruments, Callable[[str], str]] = dict(
        fpga=lambda x:  f"{x}\n",
-          x=lambda x:  f"{x}\r",
-          y=lambda x: f"1{x}\r\n",
     laser_g=lambda x:  f"{x}\r",
     laser_r=lambda x:  f"{x}\r",
-)
+          x=lambda x:  f"{x}\r",
+          y=lambda x: f"1{x}\r\n",
+)  # type: ignore
 # fmt:on
 
 
@@ -90,7 +90,7 @@ class COM:
             use_fake = False
 
         if use_fake:
-            self._serial = FakeSerial(self.port_tx, self.port_rx, self.timeout)
+            self._serial = FakeSerial(self.name, self.port_tx, self.port_rx, self.timeout)
         else:
             s_tx = Serial(self.port_tx, BAUD_RATE[self.name], timeout=self.timeout)
             s_rx = s_tx or Serial(self.port_rx, BAUD_RATE[self.name], timeout=self.timeout)
@@ -98,10 +98,8 @@ class COM:
 
         self._executor = ThreadPoolExecutor(max_workers=1)
 
-    S = TypeVar("S")
-
     @run_in_executor
-    def put(self, f: Callable[[], S]) -> S:
+    def put(self, f: Callable[[], T]) -> T:
         return f()
 
     def _send_for_thread(self, cmd: str) -> None:
@@ -130,9 +128,7 @@ class COM:
     def repl(self, cmd: str) -> str:
         return self._repl(cmd)
 
-    def _repl_verify(self, cmdver: CmdVerify, arg: Optional[str] = None, attempts: int = 2) -> Any:
-
-        assert attempts > 0
+    def _repl_verify(self, cmdver: CmdVerify[T, F], arg: Optional[str] = None) -> T:
         if isinstance(x := cmdver.cmd, str):
             send = x
         elif arg is None:
@@ -140,21 +136,17 @@ class COM:
         else:
             send = x(arg)
 
-        resp: Result[Any, Any]
-        for i in range(attempts):
-            raw = self._repl_for_thread(send)
-            resp = cmdver.process(raw)  # type: ignore[misc,operator]
-            if is_successful(resp):
-                self.logger.debug(f"Tx: {send:10} Rx: {raw:10} [green]Verified")
-                break
-            self.logger.warning(f"Verification failed for {send}. Got {resp.failure()}. Attempt {i}")
+        raw = self._repl_for_thread(send)
+        resp = cmdver.process(raw)
+        if is_successful(resp):
+            self.logger.debug(f"Tx: {send:10} Rx: {raw:10} [green]Verified")
         else:
-            self.logger.error(f"Verification failed for {send}. Max attempts reached.")
+            self.logger.warning(f"Verification failed for {send}. Got {resp.failure()}. Expected {send}.")
         return resp.unwrap()
 
     @run_in_executor
-    def repl_verify(self, cmdver: CmdVerify, arg: Optional[str] = None, attempts: int = 2) -> Any:
-        return self._repl_verify(cmdver, arg, attempts)
+    def repl_verify(self, cmdver: CmdVerify[T, F], arg: Optional[str] = None) -> T:
+        return self._repl_verify(cmdver, arg)
 
     @run_in_executor
     def is_done(self) -> None:
