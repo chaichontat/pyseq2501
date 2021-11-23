@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from ctypes import byref, c_int32, c_ulong, c_void_p
+from dataclasses import dataclass
 from enum import IntEnum
 from typing import Generator, Literal
 
@@ -77,3 +78,9 @@ class Camera:
         row_bytes = c_int32(0)
         API.dcam_lockdata(self.handle, byref(addr), byref(row_bytes), c_int32(n))
         img = np.ctypeslib.as_array(addr, shape=...)
+
+
+@dataclass
+class Cameras:
+    g: Camera
+    r: Camera
