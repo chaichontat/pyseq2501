@@ -1,7 +1,8 @@
 import inspect
-import re
 from dataclasses import dataclass
-from typing import Type, TypeVar
+from typing import Type, TypeVar, cast
+
+import serial.tools.list_ports
 
 T = TypeVar("T")
 
@@ -18,7 +19,7 @@ class Ports:
     def from_raw(cls: Type[T], res: dict[str, str]) -> T:
         fpga = (res["fpgacommand"], res["fpgaresponse"])
         kwargs = {k: v for k, v in res.items() if k in inspect.signature(cls).parameters}
-        return cls(fpga=fpga, **kwargs)  # type: ignore[call-arg]
+        return cls(fpga=fpga, **kwargs)
 
 
 name_map = dict(
@@ -38,22 +39,38 @@ name_map = dict(
 )
 
 
-REGEX_COM = re.compile(r"\((COM\d{1,2})\)")
-REGEX_ID = re.compile(r"\+(\w+)\\")
-
-
 def find_ports() -> Ports:
-    import wmi
+    """
+    See https://pyserial.readthedocs.io/en/latest/tools.html for more details.
 
-    devices = wmi.WMI().CIM_LogicalDevice()
-    com_ports = {
-        REGEX_ID.search(d.deviceid).group(1): REGEX_COM.search(d.caption).group(1)  # type: ignore[union-attr]
-        for d in devices
-        if d.caption is not None and "USB Serial Port" in d.caption
+    Returns:
+        Ports: Dataclass of relevant components and their COM ports.
+    """
+    ports = {
+        dev.serial_number: dev.name
+        for dev in serial.tools.list_ports.comports()
+        if dev.serial_number is not None
     }
-
-    res = {name: com_ports[id_] for name, id_ in name_map.items()}
+    res = cast(dict[str, str], {name: ports[id_] for name, id_ in name_map.items()})
     return Ports.from_raw(res)
+
+
+# REGEX_COM = re.compile(r"\((COM\d{1,2})\)")
+# REGEX_ID = re.compile(r"\+(\w+)\\")
+
+
+# def find_ports() -> Ports:
+#     import wmi
+
+#     devices = wmi.WMI().CIM_LogicalDevice()
+#     com_ports = {
+#         REGEX_ID.search(d.deviceid).group(1): REGEX_COM.search(d.caption).group(1)  # type: ignore[union-attr]
+#         for d in devices
+#         if d.caption is not None and "USB Serial Port" in d.caption
+#     }
+
+#     res = {name: com_ports[id_] for name, id_ in name_map.items()}
+#     return Ports.from_raw(res)
 
 
 # # @unique
