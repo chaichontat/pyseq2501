@@ -2,11 +2,12 @@ import time
 from concurrent.futures import Future
 from dataclasses import dataclass
 from logging import getLogger
-from typing import Callable, Literal
+from typing import Annotated
 
 from returns.result import Failure, Result, ResultE, Success, safe
 from src.instruments import UsesSerial
-from src.utils.com import COM, CmdVerify, is_between
+from src.utils.com import COM, CmdParse, is_between
+from src.utils.utils import gen_future
 
 logger = getLogger("laser")
 
@@ -27,39 +28,45 @@ class LaserCmd:
     ON = "ON"
     OFF = "OFF"
     SET_POWER = lambda x: f"POWER={x}"
-    GET_POWER = CmdVerify("POWER?", v_get_power)
-    GET_STATUS = CmdVerify("STAT?", v_get_status)
+    GET_POWER = CmdParse("POWER?", v_get_power)
+    GET_STATUS = CmdParse("STAT?", v_get_status)
 
 
 class Laser(UsesSerial):
     POWER_RANGE = (0, 500)
-    on: bool
 
     def __init__(self, port_tx: str) -> None:
         self.com = COM("laser_r", port_tx=port_tx, logger=logger)  # Doesn't matter if laser_r or g.
-        self.on = False
-        self.com.repl(LaserCmd.GET_STATUS).add_done_callback(lambda x: setattr(self, "on", x.result()))
+        self._on = False
+        self.com.repl(LaserCmd.GET_STATUS).add_done_callback(lambda x: setattr(self, "_on", x.result()))
 
     def initialize(self) -> Future[str]:
         self.com.repl(LaserCmd.ON)
         return self.com.repl(LaserCmd.SET_POWER(1))
 
-    def set_power(self, power: int) -> Future[int]:
-        def worker() -> int:
-            self.com._repl(is_between(LaserCmd.SET_POWER, *self.POWER_RANGE)(power))
-            while self.power.result() - power > 3:
-                time.sleep(1)
-            return self.power.result()
-
-        return self.com.put(worker)
+    def set_power(self, power: Annotated[int, "mW"], tol: Annotated[int, "mW"] = 3) -> Future[int]:
+        self.com.repl(is_between(LaserCmd.SET_POWER, *self.POWER_RANGE)(power))
+        return self.com.repl(LaserCmd.GET_POWER, lambda x: abs(power - x) < 3, attempts=5)
 
     @property
     def power(self) -> Future[int]:
         return self.com.repl(LaserCmd.GET_POWER)
 
-    # @property
-    # def status(self) -> Future[bool]:
-    #     return
+    @property
+    def on(self) -> bool:
+        return self._on
+
+    @on.setter
+    def on(self, state: bool):
+        self.set_onoff(state)
+
+    def set_onoff(self, state: bool) -> Future[bool]:
+        if state == self._on:
+            return gen_future(state)
+        self.com.repl({False: LaserCmd.OFF, True: LaserCmd.ON}[state])
+        fut = self.com.repl(LaserCmd.GET_STATUS, lambda x: x == state, attempts=2)
+        fut.add_done_callback(lambda x: setattr(self, "_on", x.result()))
+        return fut
 
 
 @dataclass

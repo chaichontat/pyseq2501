@@ -1,5 +1,6 @@
 import io
 import os
+import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from logging import Logger
@@ -28,12 +29,15 @@ def is_between(f: ReturnsStr, min_: int, max_: int) -> ReturnsStr:
 
 
 @dataclass(frozen=True)
-class CmdVerify(Generic[T, F]):
+class CmdParse(Generic[T, F]):
     cmd: str | Callable[[str], str]
     process: Callable[[str], Result[T, F]]
 
     def __call__(self: T, arg: str) -> T:
-        return CmdVerify(self.cmd(arg), self.process)  # type: ignore
+        return CmdParse(self.cmd(arg), self.process)  # type: ignore
+
+    def __str__(self) -> str:
+        return str(self.cmd)
 
 
 Formatter = Callable[[str], str]
@@ -101,11 +105,11 @@ class COM:
         ...
 
     @overload
-    def _repl(self, cmd: CmdVerify[T, F]) -> T:
+    def _repl(self, cmd: CmdParse[T, F]) -> T:
         ...
 
-    def _repl(self, cmd: str | CmdVerify[T, F]) -> str | T:
-        if isinstance(cmd, CmdVerify):
+    def _repl(self, cmd: str | CmdParse[T, F]) -> str | T:
+        if isinstance(cmd, CmdParse):
             if isinstance(x := cmd.cmd, str):
                 send = x
             else:
@@ -131,12 +135,37 @@ class COM:
 
     @overload
     @run_in_executor
-    def repl(self, cmd: CmdVerify[T, F]) -> T:
+    def repl(self, cmd: str, checker: Callable[[str], bool], *, attempts: int) -> str:
+        ...
+
+    @overload
+    @run_in_executor
+    def repl(self, cmd: CmdParse[T, F]) -> T:
+        ...
+
+    @overload
+    @run_in_executor
+    def repl(self, cmd: CmdParse[T, F], checker: Callable[[T], bool], *, attempts: int) -> T:
         ...
 
     @run_in_executor
-    def repl(self, cmd: str | CmdVerify[T, F]) -> str | T:
-        return self._repl(cmd)
+    def repl(
+        self, cmd: str | CmdParse[T, F], checker: Callable[[T], bool] = lambda _: True, *, attempts: int = 2
+    ) -> str | T:
+        if attempts < 1:
+            raise ValueError("Attempts must be >= 1.")
+
+        temp = ""
+        for _ in range(attempts):
+            if checker(resp := self._repl(cmd)):
+                break
+            self.logger.warning(f"{cmd} failed check. Got {resp}.")
+            time.sleep(0.5)
+            temp = resp  # For Pylance type check.
+        else:
+            resp = temp
+            self.logger.error(f"{cmd} failed check. Giving up after {attempts} attempts.")
+        return resp
 
     @run_in_executor
     def is_done(self) -> None:
