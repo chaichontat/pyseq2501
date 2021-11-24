@@ -38,7 +38,7 @@ class Laser(UsesSerial):
     def __init__(self, port_tx: str) -> None:
         self.com = COM("laser_r", port_tx=port_tx, logger=logger)  # Doesn't matter if laser_r or g.
         self.on = False
-        self.com.repl_verify(LaserCmd.GET_STATUS).add_done_callback(lambda x: setattr(self, "on", x.result()))
+        self.com.repl(LaserCmd.GET_STATUS).add_done_callback(lambda x: setattr(self, "on", x.result()))
 
     def initialize(self) -> Future[str]:
         self.com.repl(LaserCmd.ON)
@@ -46,7 +46,7 @@ class Laser(UsesSerial):
 
     def set_power(self, power: int) -> Future[int]:
         def worker() -> int:
-            self.com.repl(is_between(LaserCmd.SET_POWER, *self.POWER_RANGE)(power))
+            self.com._repl(is_between(LaserCmd.SET_POWER, *self.POWER_RANGE)(power))
             while self.power.result() - power > 3:
                 time.sleep(1)
             return self.power.result()
@@ -55,7 +55,7 @@ class Laser(UsesSerial):
 
     @property
     def power(self) -> Future[int]:
-        return self.com.repl_verify(LaserCmd.GET_POWER)
+        return self.com.repl(LaserCmd.GET_POWER)
 
     # @property
     # def status(self) -> Future[bool]:

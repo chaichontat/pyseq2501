@@ -3,7 +3,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from logging import Logger
-from typing import Callable, Generic, Optional, TypeVar, cast
+from typing import Callable, Generic, Optional, TypeVar, cast, overload
 
 from returns.pipeline import is_successful
 from returns.result import Result
@@ -31,6 +31,9 @@ def is_between(f: ReturnsStr, min_: int, max_: int) -> ReturnsStr:
 class CmdVerify(Generic[T, F]):
     cmd: str | Callable[[str], str]
     process: Callable[[str], Result[T, F]]
+
+    def __call__(self: T, arg: str) -> T:
+        return CmdVerify(self.cmd(arg), self.process)  # type: ignore
 
 
 Formatter = Callable[[str], str]
@@ -93,34 +96,47 @@ class COM:
         self._serial.flush()
         return self._serial.readline().strip()
 
+    @overload
     def _repl(self, cmd: str) -> str:
-        resp = self._repl_for_thread(cmd)
-        self.logger.debug(f"Tx: {cmd:10} Rx: {resp:10}")
-        return resp
+        ...
 
+    @overload
+    def _repl(self, cmd: CmdVerify[T, F]) -> T:
+        ...
+
+    def _repl(self, cmd: str | CmdVerify[T, F]) -> str | T:
+        if isinstance(cmd, CmdVerify):
+            if isinstance(x := cmd.cmd, str):
+                send = x
+            else:
+                raise TypeError("This command requires an argument, call this command first.")
+
+            raw = self._repl_for_thread(send)
+            resp = cmd.process(raw)
+            if is_successful(resp):
+                self.logger.debug(f"Tx: {send:10} Rx: {raw:10} [green]Verified")
+            else:
+                self.logger.warning(f"Verification failed for {send}. Got {resp.failure()}. Expected {send}.")
+            return resp.unwrap()
+
+        else:
+            resp = self._repl_for_thread(cmd)
+            self.logger.debug(f"Tx: {cmd:10} Rx: {resp:10}")
+            return resp
+
+    @overload
     @run_in_executor
     def repl(self, cmd: str) -> str:
-        return self._repl(cmd)
+        ...
 
-    def _repl_verify(self, cmdver: CmdVerify[T, F], arg: Optional[str] = None) -> T:
-        if isinstance(x := cmdver.cmd, str):
-            send = x
-        elif arg is None:
-            raise TypeError("Command needs argument but argument is None.")
-        else:
-            send = x(arg)
-
-        raw = self._repl_for_thread(send)
-        resp = cmdver.process(raw)
-        if is_successful(resp):
-            self.logger.debug(f"Tx: {send:10} Rx: {raw:10} [green]Verified")
-        else:
-            self.logger.warning(f"Verification failed for {send}. Got {resp.failure()}. Expected {send}.")
-        return resp.unwrap()
+    @overload
+    @run_in_executor
+    def repl(self, cmd: CmdVerify[T, F]) -> T:
+        ...
 
     @run_in_executor
-    def repl_verify(self, cmdver: CmdVerify[T, F], arg: Optional[str] = None) -> T:
-        return self._repl_verify(cmdver, arg)
+    def repl(self, cmd: str | CmdVerify[T, F]) -> str | T:
+        return self._repl(cmd)
 
     @run_in_executor
     def is_done(self) -> None:
