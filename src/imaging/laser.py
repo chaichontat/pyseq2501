@@ -21,9 +21,10 @@ class LaserCmd:
             return Failure(Exception("Invalid laser response"))
 
     @staticmethod
-    def v_get_power(resp: str) -> ResultE[int]:
+    @safe
+    def v_get_power(resp: str) -> int:
         assert resp.endswith("mW")
-        return Success(int(resp[:4]))
+        return int(resp[:4])
 
     ON = "ON"
     OFF = "OFF"
@@ -46,7 +47,7 @@ class Laser(UsesSerial):
 
     def set_power(self, power: Annotated[int, "mW"], tol: Annotated[int, "mW"] = 3) -> Future[int]:
         self.com.repl(is_between(LaserCmd.SET_POWER, *self.POWER_RANGE)(power))
-        return self.com.repl(LaserCmd.GET_POWER, lambda x: abs(power - x) < 3, attempts=5)
+        return self.com.repl(LaserCmd.GET_POWER, lambda x: abs(power - x) < tol, attempts=5)
 
     @property
     def power(self) -> Future[int]:
