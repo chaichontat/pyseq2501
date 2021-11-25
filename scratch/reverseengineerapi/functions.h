@@ -1,39 +1,5 @@
-/* **************************************************************** *
-	DCAM-API v3.1 or older functions
- * **************************************************************** */
-
-/*** --- error function --- ***/
-
-int32 DCAMAPI dcam_getlasterror			( HDCAM h, char* buf DCAM_DEFAULT_ARG, _DWORD bytesize DCAM_DEFAULT_ARG );
-
-/*** --- initialize and finalize --- ***/
-
-BOOL DCAMAPI dcam_init					( void* reserved1 DCAM_DEFAULT_ARG, int32* pCount DCAM_DEFAULT_ARG, const char* option DCAMINIT_DEFAULT_ARG );
-BOOL DCAMAPI dcam_uninit				( void* reserved1 DCAM_DEFAULT_ARG, const char* reserved2 DCAM_DEFAULT_ARG );
-BOOL DCAMAPI dcam_getmodelinfo			( int32 index, int32 dwStringID, char* buf, _DWORD bytesize );
-
-BOOL DCAMAPI dcam_open					( HDCAM* ph, int32 index, const char* reserved DCAM_DEFAULT_ARG );
-BOOL DCAMAPI dcam_close					( HDCAM h);
-
-/*** --- camera infomation --- ***/
-
-BOOL DCAMAPI dcam_getstring				( HDCAM h, int32 dwStringID, char* buf, _DWORD bytesize );
-BOOL DCAMAPI dcam_getcapability			( HDCAM h, _DWORD* pCapability, _DWORD dwCapTypeID );
-
-BOOL DCAMAPI dcam_getdatatype			( HDCAM h, DCAM_DATATYPE* pType );
-BOOL DCAMAPI dcam_getbitstype			( HDCAM h, DCAM_BITSTYPE* pType );
-BOOL DCAMAPI dcam_setdatatype			( HDCAM h, DCAM_DATATYPE type );
-BOOL DCAMAPI dcam_setbitstype			( HDCAM h, DCAM_BITSTYPE type );
-
-#if defined(DCAM_TARGETOS_IS_WIN32) || defined(DCAM_TARGETOS_IS_MACOSX)
-BOOL DCAMAPI dcam_getdatasize			( HDCAM h, SIZE* pSize );
-BOOL DCAMAPI dcam_getbitssize			( HDCAM h, SIZE* pSize );
-#endif
-
-#if DCAMAPI_VER >= 3010
-BOOL DCAMAPI dcam_getdatasizeex			( HDCAM h, DCAM_SIZE* pSize );
-BOOL DCAMAPI dcam_getbitssizeex			( HDCAM h, DCAM_SIZE* pSize );
-#endif
+typedef	unsigned long		_DWORD;
+typedef unsigned int	BOOL;
 
 /*** --- parameters --- ***/
 
@@ -95,3 +61,14 @@ BOOL DCAMAPI dcam_extended				( HDCAM h, _ui32 iCmd, void* param, _DWORD size );
 /*** --- software trigger --- ***/
 BOOL DCAMAPI dcam_firetrigger			( HDCAM h );
 
+
+BOOL DCAMAPI dcam_getpropertyattr	( HDCAM h, DCAM_PROPERTYATTR* param );
+BOOL DCAMAPI dcam_getpropertyvalue	( HDCAM h, int32 iProp, double* pValue );
+BOOL DCAMAPI dcam_setpropertyvalue	( HDCAM h, int32 iProp, double  fValue );
+
+BOOL DCAMAPI dcam_setgetpropertyvalue(HDCAM h, int32 iProp, double* pValue, int32 option DCAM_DEFAULT_ARG );
+BOOL DCAMAPI dcam_querypropertyvalue( HDCAM h, int32 iProp, double* pValue, int32 option DCAM_DEFAULT_ARG );
+
+BOOL DCAMAPI dcam_getnextpropertyid	( HDCAM h, int32* pProp, int32 option DCAM_DEFAULT_ARG );
+BOOL DCAMAPI dcam_getpropertyname	( HDCAM h, int32 iProp, char* text, int32 textbytes );
+BOOL DCAMAPI dcam_getpropertyvaluetext( HDCAM h, DCAM_PROPERTYVALUETEXT* param );

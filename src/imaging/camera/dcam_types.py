@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from ctypes import (Structure, WinDLL, c_double, c_int32,  # type: ignore
-                    c_void_p, sizeof)
+from ctypes import Structure, WinDLL, c_double, c_int32, c_void_p, sizeof  # type: ignore
 from dataclasses import dataclass
 from enum import IntEnum
 from functools import wraps
 from logging import getLogger
 from typing import Any, Callable, Literal, TypedDict, TypeVar, cast, get_args
+
+from .dcam_api import DCAMAPI
 
 logger = getLogger("DCAM")
 
@@ -25,7 +26,7 @@ class DCAMReturnedZero(DCAMException):
     ...
 
 
-F = TypeVar("F", bound=Callable[..., bool])
+F = TypeVar("F", bound=Callable)
 
 
 def check_if_failed(f: F) -> F:
@@ -41,12 +42,14 @@ def check_if_failed(f: F) -> F:
     return cast(F, wrapper)
 
 
-class CheckedDCAMAPI(WinDLL):  # type: ignore[misc]
-    def __init__(self) -> None:
-        super().__init__("dcamapi.dll")
+class CheckedDCAMAPI(DCAMAPI):
+    def __getattribute__(self, __name: str) -> Any:
+        if __name.startswith("dcam"):
+            return check_if_failed(super().__getattribute__(__name))
+        return super().__getattribute__(__name)
 
-    def __getitem__(self, name: str) -> Callable[..., bool]:
-        return cast(Callable[..., bool], check_if_failed(super().__getitem__(name)))
+    # def __getitem__(self, name: str) -> Callable[..., bool]:
+    # return cast(Callable[..., bool], check_if_failed(super().__getitem__(name)))
 
 
 Handle = c_void_p

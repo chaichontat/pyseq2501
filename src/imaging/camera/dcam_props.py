@@ -6,12 +6,12 @@ from dataclasses import dataclass
 from logging import getLogger
 from typing import Optional, Type, cast, get_args
 
-from src.imaging.camera.dcam_mode_key import MODE_KEY, get_mode_key
-from src.imaging.camera.dcam_types import (
+from . import API
+from .dcam_mode_key import MODE_KEY, get_mode_key
+from .dcam_types import (
     DCAM_PARAM_PROPERTYATTR,
     DCAMPROP_OPTION_NEAREST,
     DCAMPROP_OPTION_NEXT,
-    CheckedDCAMAPI,
     DCAMParamPropertyAttr,
     DCAMReturnedZero,
     Handle,
@@ -34,7 +34,6 @@ from src.imaging.camera.dcam_types import (
 
 logger = getLogger("DCAMprops")
 
-API = CheckedDCAMAPI()
 DCAM_DEFAULT_ARG = 0
 
 
