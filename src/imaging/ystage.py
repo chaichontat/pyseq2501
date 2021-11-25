@@ -1,13 +1,12 @@
-from __future__ import annotations
-
 import logging
 import time
 from concurrent.futures import Future
 from contextlib import contextmanager
 from typing import Dict, Iterator, Literal, Optional
 
+from returns.result import Success
 from src.instruments import Movable, UsesSerial
-from src.utils.com import COM, CmdVerify, is_between
+from src.utils.com import COM, CmdParse, is_between
 
 logger = logging.getLogger(__name__)
 
@@ -23,23 +22,38 @@ MODES: Dict[ModeName, Dict[ModeParams, str]] = {
 
 
 class YCmd:
+    """
+    See https://www.parkermotion.com/manuals/Digiplan/ViX-IH_UG_7-03.pdf for more.
+    """
+
+    @staticmethod
+    def read_pos(resp: str) -> int:
+        return int(resp[2:])
+
     SET_POS = lambda x: f"D{x}"
     GO = "G"
-    CHECK_POS = "R(IP)"
-    READ_POS = "R(PA)"
+    STOP = "S"
+    CHECK_POS = CmdParse("R(IP)", lambda x: bool(int(x[1:])))
+    READ_POS = CmdParse("R(PA)", read_pos)  # Report(Position Actual)
+    TARGET_POS = CmdParse("R(PT)", read_pos)
     GAINS = lambda x: f"GAINS({x})"
     VELO = lambda x: f"V{x}"
+    DONT_ECHO = "W(EX,0)"
 
-
-# class YCommandVerify:
-#     SET_POS = CmdVerify(YCmd.SET_POS, lambda ver, cmd: ver == cmd)
-#     GO = CmdVerify()
+    ON = "ON"
+    GO_HOME = "GH"
+    MODE_ABSOLUTE = "MA"  # p.159
+    RESET = CmdParse("Z", lambda x: x == "1Z")  # p.96, 180
 
 
 class YStage(UsesSerial, Movable):
     HOME = 0
     RANGE = (int(-7e6), int(7.5e6))
     STEPS_PER_UM = 100
+
+    cmd = YCmd
+
+    # TODO: Daemon parameter checks
 
     def __init__(self, port_tx: str, tol: int = 10) -> None:
         self.com = COM("y", port_tx, logger=logger)
@@ -48,37 +62,34 @@ class YStage(UsesSerial, Movable):
         self.tol = tol
 
     def initialize(self) -> Future[None]:
-        self.com.repl("Z")  # Initialize Stage
+        self.com.repl(YCmd.RESET)  # Initialize Stage
         self.com.put(lambda: time.sleep(2))
         self.com.repl("W(EX,0)")  # Turn off echo
         self._mode = "MOVING"
-        [self.com.repl(x) for x in ["MA", "ON, GH"]]
+        [self.com.repl(x) for x in ["MA", "ON", "GH"]]
         return self.com.is_done()
-        # Set to absolute position mode
-        # Turn Motor ON
-        # Home Stage
 
-    def move(self, pos: int) -> Future[int]:
+    def move(self, pos: int) -> Future[bool]:
         if not (self.RANGE[0] <= pos <= self.RANGE[1]):
             raise ValueError(f"YSTAGE can only be between {self.RANGE[0]} and {self.RANGE[1]}")
 
-        def work() -> int:
-            self.com.repl(is_between(YCmd.SET_POS, *self.RANGE)(pos))  # type: ignore[operator]
-            while abs((curr := self.position.result()) - pos) > self.tol:
-                self.com.repl(YCmd.GO)
-                while not self.is_in_position:
-                    time.sleep(0.1)
-            return curr
+        # def work() -> int:
+        #     self.com.repl(is_between(YCmd.SET_POS, *self.RANGE)(pos))  # type: ignore[operator]
+        #     while abs((curr := self.position.result()) - pos) > self.tol:
+        #         self.com.repl(YCmd.GO)
+        #         while not self.is_in_position:
+        #             time.sleep(0.1)
+        #     return curr
 
-        return self.com.put(work)
+        return self.com.repl(YCmd.SET_POS(pos))
 
     @property
     def position(self) -> Future[int]:
-        return self.com.put(lambda: int(self.com.repl(YCmd.READ_POS).result()[1:]))
+        return self.com.repl(YCmd.READ_POS)
 
     @property
     def is_in_position(self) -> Future[bool]:
-        return self.com.put(lambda: self.com.repl(YCmd.CHECK_POS)[1:] == "1")
+        return self.com.repl(YCmd.CHECK_POS)
 
     @property
     def _mode(self) -> Optional[ModeName]:

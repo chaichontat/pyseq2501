@@ -1,4 +1,6 @@
+#%%
 import inspect
+import time
 from dataclasses import dataclass
 from typing import Type, TypeVar, cast
 
@@ -39,21 +41,32 @@ name_map = dict(
 )
 
 
-def find_ports() -> Ports:
+def find_ports(timeout: int | float = 0) -> Ports:
     """
     See https://pyserial.readthedocs.io/en/latest/tools.html for more details.
 
     Returns:
         Ports: Dataclass of relevant components and their COM ports.
     """
-    ports = {
-        dev.serial_number: dev.name
-        for dev in serial.tools.list_ports.comports()
-        if dev.serial_number is not None
-    }
-    res = cast(dict[str, str], {name: ports[id_] for name, id_ in name_map.items()})
-    return Ports.from_raw(res)
+    t0 = time.time()
+    while time.time() - t0 < timeout:
+        ports = {
+            dev.serial_number: dev.name
+            for dev in serial.tools.list_ports.comports()
+            if dev.serial_number is not None
+        }
+        try:
+            res = cast(dict[str, str], {name: ports[id_] for name, id_ in name_map.items()})
+            return Ports.from_raw(res)
+        except KeyError as e:
+            print(e)
+            time.sleep(0.5)
 
+    raise Exception(f"Cannot find ports after {timeout} seconds.")
+
+
+if "__name__" == "__main__":
+    print(find_ports())
 
 # REGEX_COM = re.compile(r"\((COM\d{1,2})\)")
 # REGEX_ID = re.compile(r"\+(\w+)\\")
@@ -122,3 +135,5 @@ def find_ports() -> Ports:
 # #     "arm9chem": "COM8",
 # # }
 # #%%
+
+# %%

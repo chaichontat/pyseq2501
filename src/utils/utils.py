@@ -8,7 +8,6 @@ from typing import (
     Any,
     Callable,
     Dict,
-    List,
     Literal,
     Optional,
     ParamSpec,
@@ -16,6 +15,7 @@ from typing import (
     Tuple,
     TypedDict,
     TypeVar,
+    cast,
 )
 
 TILE_WIDTH = 0.769  # mm
@@ -31,6 +31,12 @@ X_SPUM = 0.4096
 Y_SPUM = 100
 
 T, P = TypeVar("T"), ParamSpec("P")
+
+
+def gen_future(x: T) -> Future[T]:
+    fut = Future()
+    fut.set_result(x)
+    return fut
 
 
 class Threaded(Protocol):

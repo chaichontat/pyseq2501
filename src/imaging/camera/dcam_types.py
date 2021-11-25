@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from ctypes import Structure, WinDLL, c_double, c_int32, c_void_p, sizeof  # type: ignore
+from ctypes import (Structure, WinDLL, c_double, c_int32,  # type: ignore
+                    c_void_p, sizeof)
 from dataclasses import dataclass
 from enum import IntEnum
 from functools import wraps
@@ -191,7 +192,7 @@ PrecomputedPropTypes: dict[Props, PropTypes] = dict(
     number_of_channel=PropTypes.LONG,
     attach_buffer_target=PropTypes.MODE,
     number_of_target_per_attachbuffer=PropTypes.LONG,
-)
+)  # type: ignore
 
 
 @dataclass(frozen=True)

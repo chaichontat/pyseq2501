@@ -6,8 +6,6 @@ from src.utils.com import COM
 
 
 class UsesSerial(metaclass=ABCMeta):
-    com: COM
-
     @abstractmethod
     def initialize(self) -> Future[Any]:
         ...

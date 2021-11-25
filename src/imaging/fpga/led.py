@@ -1,13 +1,17 @@
+from enum import IntEnum, unique
 from logging import getLogger
+from typing import Literal
 
-from src.instruments import UsesSerial
-from src.utils.com import COM
+from src.instruments import FPGAControlled
+from src.utils.com import COM, CmdParse, ok_if_match
 
 logger = getLogger(__name__)
 
+ID = Literal[1, 2]
+
 
 @unique
-class LED_COLOR(IntEnum):
+class LEDColor(IntEnum):
     OFF = 0
     YELLOW = 1
     GREEN = 3
@@ -17,60 +21,20 @@ class LED_COLOR(IntEnum):
     SWEEP_BLUE = 7
 
 
+class LEDCmd:
+    SET_MODE = CmdParse(lambda i, x: f"LEDMODE{i} {x}", ok_if_match(["LEDMODE1", "LEDMODE2"]))
+    SET_SWEEP_RATE = CmdParse(lambda x: f"LEDSWPRATE {x}", ok_if_match("LEDSWPRATE"))
+    SET_PULSE_RATE = CmdParse(lambda x: f"LEDPULSRATE {x}", ok_if_match("LEDPULSRATE"))
+
+
 class LED(FPGAControlled):
-    ...
+    colors = LEDColor
+    cmd = LEDCmd
 
+    def __init__(self, fpga_com: COM) -> None:
+        super().__init__(fpga_com)
+        self._color = [LEDColor.OFF, LEDColor.OFF]
 
-def led(self, AorB, mode, **kwargs):
-    """Set front LEDs.
-
-    **Parameters:**
-        - AorB (int/str): A or 1 for the left LED, B or 2 for the right LED.
-        - mode (str): Color / mode to set the LED to, see list below.
-        - kwargs: sweep (1-255): sweep rate
-                pulse (1-255): pulse rate
-
-    **Available Colors/Modes:**
-        - off
-        - yellow
-        - green
-        - pulse green
-        - blue
-        - pulse blue
-        - sweep blue
-
-    **Returns:**
-        - bool: True if AorB and mode are valid, False if not.
-
-    """
-
-    s = None
-    if type(AorB) is str:
-        if AorB.upper() == "A":
-            s = "1"
-        elif AorB.upper() == "B":
-            s = "2"
-    elif type(AorB) is int:
-        if AorB == 1 or AorB == 2:
-            s = str(AorB)
-
-    m = None
-    if mode in self.led_dict:
-        m = self.led_dict[mode]
-
-    if s is not None and m is not None:
-        response = self.command("LEDMODE" + s + " " + m)
-        worked = True
-    else:
-        worked = False
-
-    for key, value in kwargs.items():
-        if 1 <= value <= 255:
-            value = str(int(value))
-
-            if key == "sweep":
-                response = self.command("LEDSWPRATE " + value)
-            elif key == "pulse":
-                response = self.command("LEDPULSRATE " + value)
-
-    return worked
+    @property
+    def color(self):
+        return self._color

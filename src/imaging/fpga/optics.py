@@ -1,33 +1,35 @@
 import time
 from concurrent.futures import Future
 from logging import getLogger
-from typing import Callable, ClassVar, TypedDict
+from typing import Callable, Literal, get_args
 
 from src.instruments import FPGAControlled
+from src.utils.com import CmdParse, ok_if_match
 
 logger = getLogger("optics")
 
 ID = Literal[1, 2]
 
+# Unchecked
+OD_GREEN = {"OPEN": 143, "1.0": 107, "2.0": 71, "3.5": -107, "3.8": -71, "4.0": 36, "4.5": -36, "CLOSED": 0}
+OD_RED = {"OPEN": 143, "0.2": -107, "0.5": -71, "0.6": -36, "1.0": 107, "2.4": 71, "4.0": 36, "CLOSED": 0}
+
 
 class OpticCmd:
-    EM_FILTER_IN = "EM2I"
-    EM_FILTER_OUT = "EM2O"
-    HOME: Callable[[ID], str] = lambda i: f"EX{i}HM"
-    SET_OD: Callable[[ID, int], str] = lambda i, x: f"EX{i}MV {x}"
+    EM_FILTER_DEFAULT = CmdParse("EM2I", ok_if_match("EM2I"))
+    EM_FILTER_OUT = CmdParse("EM2O", ok_if_match("EM2O"))
+    HOME_OD = CmdParse(lambda i: f"EX{i}HM", ok_if_match([f"EM{i}HM" for i in get_args(ID)]))
+    SET_OD = CmdParse(lambda i, x: f"EX{i}MV {x}", ok_if_match([f"EM{i}MV" for i in get_args(ID)]))
 
 
 class Optics(FPGAControlled):
-    ...
+    """
+    No reason to change this.
+    """
 
+    cmd = OpticCmd
 
-from typing import Dict, Literal, Set
-
-OD_GREEN = Literal["OPEN", "1.0", "2.0", "3.5", "3.8", "4.0", "4.5", "CLOSED"]
-OD_RED = Literal["OPEN", "0.2", "0.5", "0.6", "1.0", "2.4", "4.0", "CLOSED"]
-
-
-# OD: dict[ID, Set[] = {
-#     1: {"OPEN", "1.0", "2.0", "3.5", "3.8", "4.0", "4.5", "CLOSED"},
-#     2: {"OPEN", "0.2", "0.5", "0.6", "1.0", "2.4", "4.0", "CLOSED"},
-# }
+    def initialize(self):
+        self.fcom.repl(OpticCmd.EM_FILTER_DEFAULT)
+        self.fcom.repl(OpticCmd.SET_OD(1, OD_GREEN["OPEN"]))
+        self.fcom.repl(OpticCmd.SET_OD(2, OD_RED["OPEN"]))

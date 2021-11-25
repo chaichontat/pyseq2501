@@ -2,10 +2,9 @@ from concurrent.futures import Future
 from dataclasses import asdict, dataclass
 from typing import get_args
 
-from src.imaging.camera.dcam import Camera, Cameras
-from src.imaging.fpga.fpga import FPGA
+from src.imaging.camera import Camera, Cameras
+from src.imaging.fpga import FPGA
 from src.imaging.ystage import YStage
-from src.instruments import Instruments
 from src.utils.ports import Ports
 
 from .fpga.optics import Optics

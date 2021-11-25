@@ -1,13 +1,13 @@
 import io
 import os
 import time
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from logging import Logger
-from typing import Callable, Generic, Optional, TypeVar, cast, overload
+from typing import Any, Callable, Generic, Optional, TypeVar, cast, overload
 
 from returns.pipeline import is_successful
-from returns.result import Result
+from returns.result import Failure, Result, ResultE, Success
 from serial import Serial
 from src.instruments_types import SerialInstruments
 
@@ -17,6 +17,7 @@ from .utils import FakeLogger, run_in_executor
 ReturnsStr = TypeVar("ReturnsStr", bound=Callable[..., str])
 T = TypeVar("T")
 F = TypeVar("F")
+flint = int | float
 
 
 def is_between(f: ReturnsStr, min_: int, max_: int) -> ReturnsStr:
@@ -29,15 +30,36 @@ def is_between(f: ReturnsStr, min_: int, max_: int) -> ReturnsStr:
 
 
 @dataclass(frozen=True)
-class CmdParse(Generic[T, F]):
-    cmd: str | Callable[[str], str]
-    process: Callable[[str], Result[T, F]]
+class CmdParse(Generic[T]):
+    """A command with its parsing function.
 
-    def __call__(self: T, arg: str) -> T:
-        return CmdParse(self.cmd(arg), self.process)  # type: ignore
+    Args:
+        cmd: String command or a unary function that outputs a command.
+        process: A unary function that takes in raw output from the device and parse it into a useful format.
+            Uses the Result architecture.
+
+    Returns:
+        A data structure where a command and its parsing function are together.
+    """
+
+    cmd: str | Callable[..., str]
+    parser: Callable[[str], T]
+
+    def __call__(self: F, *args: ..., **kwargs: ...) -> F:
+        return CmdParse(self.cmd(*args, **kwargs), self.process)  # type: ignore
 
     def __str__(self) -> str:
         return str(self.cmd)
+
+
+def ok_if_match(target: list[str] | str) -> Callable[[str], bool]:
+    def wrapped(resp: str) -> bool:
+        if isinstance(target, list):
+            return True if resp in target else False
+        else:
+            return True if resp == target else False
+
+    return wrapped
 
 
 Formatter = Callable[[str], str]
@@ -59,12 +81,20 @@ class COM:
     port_tx: str
     port_rx: Optional[str] = None
     logger: Logger | FakeLogger = FakeLogger()
-    timeout: int = 1
+    timeout: int | float = 1
     _formatter: Formatter = field(init=False)
     _executor: ThreadPoolExecutor = field(init=False)
 
+    """
+    Serial communication middleman. Each port is designed to be run in its own thread.
+    Methods prepended with _ executes in the current thread whereas those without would
+    run in its own thread.
+    """
+
     def __post_init__(self) -> None:
         self.formatter = SERIAL_FORMATTER[self.name]
+        self.port_rx = self.port_rx or self.port_tx  # If None check.
+
         try:
             use_fake = os.environ["FAKE_HISEQ"] == "1"
         except KeyError:
@@ -73,9 +103,8 @@ class COM:
         if use_fake:
             self._serial = FakeSerial(self.name, self.port_tx, self.port_rx, self.timeout)
         else:
-            s_tx = Serial(self.port_tx, BAUD_RATE[self.name], timeout=self.timeout)
-            s_rx = s_tx or Serial(self.port_rx, BAUD_RATE[self.name], timeout=self.timeout)
-            self._serial = io.TextIOWrapper(io.BufferedRWPair(s_tx, s_rx), encoding="ascii", errors="strict")  # type: ignore[arg-type]
+            ss = (Serial(p, BAUD_RATE[self.name], timeout=self.timeout) for p in (self.port_rx, self.port_tx))
+            self._serial = io.TextIOWrapper(io.BufferedRWPair(*ss), encoding="ascii", errors="strict")  # type: ignore[arg-type]
 
         self._executor = ThreadPoolExecutor(max_workers=1)
 
@@ -95,69 +124,76 @@ class COM:
     def send(self, cmd: str) -> None:
         return self._send(cmd)
 
-    def _repl_for_thread(self, cmd: str) -> str:
+    def _repl_for_thread(self, cmd: str, oneline=True) -> str:
         self._send_for_thread(cmd)
         self._serial.flush()
-        return self._serial.readline().strip()
+        if oneline:
+            return self._serial.readline().strip()
+        return "\n".join(self._serial.readlines())
 
     @overload
-    def _repl(self, cmd: str) -> str:
+    def _repl(self, cmd: str, oneline: bool = ...) -> str:
         ...
 
     @overload
-    def _repl(self, cmd: CmdParse[T, F]) -> T:
+    def _repl(self, cmd: CmdParse[T], oneline: bool = ...) -> T:
         ...
 
-    def _repl(self, cmd: str | CmdParse[T, F]) -> str | T:
+    def _repl(self, cmd: str | CmdParse[T], oneline: bool = True) -> str | T:
         if isinstance(cmd, CmdParse):
             if isinstance(x := cmd.cmd, str):
                 send = x
             else:
                 raise TypeError("This command requires an argument, call this command first.")
 
-            raw = self._repl_for_thread(send)
-            resp = cmd.process(raw)
-            if is_successful(resp):
+            raw = self._repl_for_thread(send, oneline)
+            resp = cmd.parser(raw)
+            if bool(resp):
                 self.logger.debug(f"Tx: {send:10} Rx: {raw:10} [green]Verified")
+                return resp
             else:
-                self.logger.warning(f"Verification failed for {send}. Got {resp.failure()}. Expected {send}.")
-            return resp.unwrap()
+                self.logger.warning(f"Verification failed for {send}. Got {resp}.")
+                return resp
 
         else:
-            resp = self._repl_for_thread(cmd)
+            resp = self._repl_for_thread(cmd, oneline)
             self.logger.debug(f"Tx: {cmd:10} Rx: {resp:10}")
             return resp
 
     @overload
     @run_in_executor
-    def repl(self, cmd: str) -> str:
+    def repl(
+        self, cmd: str, checker: Callable[[str], bool] = ..., *, oneline: bool = ..., attempts: int = ...
+    ) -> str:
         ...
 
     @overload
     @run_in_executor
-    def repl(self, cmd: str, checker: Callable[[str], bool], *, attempts: int) -> str:
-        ...
-
-    @overload
-    @run_in_executor
-    def repl(self, cmd: CmdParse[T, F]) -> T:
-        ...
-
-    @overload
-    @run_in_executor
-    def repl(self, cmd: CmdParse[T, F], checker: Callable[[T], bool], *, attempts: int) -> T:
+    def repl(
+        self,
+        cmd: CmdParse[T],
+        checker: Callable[[T], bool] = ...,
+        *,
+        oneline: bool = ...,
+        attempts: int = ...,
+    ) -> T:
         ...
 
     @run_in_executor
     def repl(
-        self, cmd: str | CmdParse[T, F], checker: Callable[[T], bool] = lambda _: True, *, attempts: int = 2
+        self,
+        cmd: str | CmdParse[T],
+        oneline: bool = True,
+        checker: Callable[[T], bool] = lambda _: True,
+        *,
+        attempts: int = 2,
     ) -> str | T:
         if attempts < 1:
             raise ValueError("Attempts must be >= 1.")
 
         temp = ""
         for _ in range(attempts):
-            if checker(resp := self._repl(cmd)):
+            if checker(resp := self._repl(cmd, oneline)):
                 break
             self.logger.warning(f"{cmd} failed check. Got {resp}.")
             time.sleep(0.5)
