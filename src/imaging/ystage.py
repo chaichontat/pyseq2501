@@ -81,7 +81,8 @@ class YStage(UsesSerial, Movable):
         self.com.repl(YCmd.GAINS(MODES["MOVING"]["GAINS"]))
         return self.com.is_done()
 
-    def move(self, pos: int, slowly: bool = False) -> Future[int]:
+    def move(self, pos: int, slowly: bool = False) -> Future[str]:
+        # TODO: Parse
         if not (self.RANGE[0] <= pos <= self.RANGE[1]):
             raise ValueError(f"YSTAGE can only be between {self.RANGE[0]} and {self.RANGE[1]}")
         self._mode = "IMAGING" if slowly else "MOVING"

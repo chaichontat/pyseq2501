@@ -91,10 +91,7 @@ class COM:
 
     def __post_init__(self) -> None:
         self.formatter = SERIAL_FORMATTER[self.name]
-        try:
-            use_fake = os.environ["FAKE_HISEQ"] == "1"
-        except KeyError:
-            use_fake = False
+        use_fake = os.environ.get("FAKE_HISEQ", "0") == "1"
 
         if use_fake:
             self._serial = FakeSerial(self.name, self.port_tx, self.port_rx, self.timeout)
@@ -161,7 +158,12 @@ class COM:
     @overload
     @run_in_executor
     def repl(
-        self, cmd: str, checker: Callable[[str], bool] = ..., *, oneline: bool = ..., attempts: int = ...
+        self,
+        cmd: str,
+        checker: Callable[[str], bool] = ...,
+        *,
+        oneline: bool = ...,
+        attempts: int = ...,
     ) -> str:
         ...
 

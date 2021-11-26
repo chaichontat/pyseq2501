@@ -1,7 +1,6 @@
 from concurrent.futures.thread import ThreadPoolExecutor
 from contextlib import contextmanager
 from ctypes import c_int32, c_uint16, c_void_p, pointer
-from dataclasses import dataclass
 from enum import IntEnum
 from typing import Generator, Literal, cast, overload
 
@@ -11,8 +10,8 @@ from src.imaging.camera.dcam_api import DCAM_CAPTURE_MODE
 from src.utils.com import run_in_executor
 
 from . import API
+from .dcam_api import DCAMException
 from .dcam_props import DCAMDict
-from .dcam_types import DCAMException
 
 # DCAMAPI v3.0.301.3690
 
@@ -41,7 +40,6 @@ class Camera:
     # IMG_BYTES = IMG_WIDTH * BUNDLE_HEIGHT / 2
 
     def __init__(self, id_: ID) -> None:
-        self._executor = ThreadPoolExecutor(max_workers=1)
         self.id_ = id_
         self.initialize()
 
@@ -70,7 +68,12 @@ class Camera:
     def _lock_memory(self, bundle: int):
         addr = pointer((c_uint16 * self.IMG_WIDTH * self.BUNDLE_HEIGHT)())
         row_bytes = c_int32(0)
-        API.dcam_lockdata(self.handle, pointer(cast(c_void_p, addr)), pointer(row_bytes), c_int32(bundle))
+        API.dcam_lockdata(
+            self.handle,
+            pointer(cast(c_void_p, addr)),
+            pointer(row_bytes),
+            c_int32(bundle),
+        )
         yield addr
         API.dcam_unlockdata(self.handle)
 
@@ -128,12 +131,17 @@ class Camera:
 
 
 class Cameras:
-    """Running two cameras simultaneously crashes the cameras, necessitating HiSeq hard reset."""
+    """Running two cameras simultaneously crashes the cameras, necessitating a HiSeq hard reset."""
+
+    BUNDLE_HEIGHT = 128
+    IMG_WIDTH = 4096
+    BUNDLE_HEIGHT = 128
 
     g: Camera
     r: Camera
 
     def __init__(self) -> None:
+        self._executor = ThreadPoolExecutor(max_workers=1)
         self.g, self.r = Camera(0), Camera(1)
         self.initialize()
 
@@ -141,8 +149,6 @@ class Cameras:
     def initialize(self) -> None:
         self.g.initialize()
         return self.r.initialize()
-
-    BUNDLE_HEIGHT = 128
 
     @contextmanager
     def alloc(self, n_bundles: int):
@@ -154,6 +160,7 @@ class Cameras:
         with self.g._capture(), self.r._capture():
             yield
 
+    @run_in_executor
     def get_images(self, n_bundles: int):
         g = self.g.get_images(n_bundles)
         r = self.r.get_images(n_bundles)

@@ -24,7 +24,10 @@ BUNDLE_HEIGHT = 128  # Height of sensor
 NYQUIST_OBJ = 235  # Nyquist dist in objective steps
 
 FlowCell = Literal["A", "B"]
-FLOWCELL_ORIGIN: Dict[FlowCell, Tuple[int, int]] = {"A": (17571, -180000), "B": (43310, -180000)}
+FLOWCELL_ORIGIN: Dict[FlowCell, Tuple[int, int]] = {
+    "A": (17571, -180000),
+    "B": (43310, -180000),
+}
 
 # TODO: Move this
 X_SPUM = 0.4096

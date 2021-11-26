@@ -1,19 +1,19 @@
 from __future__ import annotations
 
 import ctypes
-from ctypes import pointer, c_double, c_int32
+from ctypes import c_double, c_int32, pointer
 from dataclasses import dataclass
 from logging import getLogger
 from typing import Optional, Type, cast, get_args
 
 from . import API
-from .dcam_mode_key import MODE_KEY, get_mode_key
+from .dcam_api import DCAMReturnedZero
+from .dcam_mode_key import MODE_KEY
 from .dcam_types import (
     DCAM_PARAM_PROPERTYATTR,
     DCAMPROP_OPTION_NEAREST,
     DCAMPROP_OPTION_NEXT,
     DCAMParamPropertyAttr,
-    DCAMReturnedZero,
     Handle,
     PrecomputedPropTypes,
     Props,

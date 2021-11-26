@@ -4,9 +4,8 @@ from typing import Callable, Generator, Optional
 
 from rich.console import Group, RenderableType
 from rich.panel import Panel
-from rich.progress import (BarColumn, Progress, ProgressBar, SpinnerColumn,
-                           Task, TimeElapsedColumn)
-from rich.spinner import Spinner
+from rich.progress import BarColumn, Progress, SpinnerColumn, Task, TimeElapsedColumn
+from rich.progress_bar import ProgressBar
 from rich.table import Table
 from rich.text import Text
 
@@ -73,11 +72,12 @@ def init_ui(sequence: dict[str, Callable[[], None]]) -> None:
             return grid
 
     with InitProgress(
-        SpinnerColumn(), "[progress.description]{task.description}", PulseBarColumn(), TimeElapsedColumn()
+        SpinnerColumn(),
+        "[progress.description]{task.description}",
+        PulseBarColumn(),
+        TimeElapsedColumn(),
     ) as progress:
         task = progress.add_task("[bold]Initializing...", total=len(sequence))
         for f in sequence.values():
             f()
             progress.advance(task)
-
-

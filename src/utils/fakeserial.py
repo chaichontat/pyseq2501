@@ -11,14 +11,16 @@ from src.utils.utils import FakeLogger
 def assert_(x: bool):
     assert x
 
-def y_resp(s: str) -> str:
-    match s:
-        case "G":
-            return "1G"
-        case x if lambda x: x.startswith("D"):
-            return int(x[1:])
-        case _:
-            return ""
+
+# def y_resp(s: str) -> str:
+#     match s:
+#         case "G":
+#             return "1G"
+#         case x if lambda x: x.startswith("D"):
+#             return int(x[1:])
+#         case _:
+#             return ""
+
 
 @dataclass
 class FakeSerial:
@@ -32,16 +34,14 @@ class FakeSerial:
     def __post_init__(self) -> None:
         print("Using fake serial!")
         assert self.port_tx.startswith("COM")
-        self.port_rx.map(lambda x: assert_(x.startswith("COM")))
-        
 
     def write(self, s: str) -> None:
-        if not isinstance(s):
+        if not isinstance(s, str):
             raise TypeError(f"{s} is not string.")
         time.sleep(0.5)
         if self.logger is not None and len(self._buffer):
             self.logger.warning(f"Writing {s} to {__name__} when buffer is not empty.")
-        
+
         # TODO Put in transformations.
         self._buffer += s
 

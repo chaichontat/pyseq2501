@@ -1,25 +1,59 @@
-from ctypes import (Array, WinDLL, c_char, c_double, c_int32, c_ubyte,
-                    c_uint32, c_void_p, pointer)
+import os
+from typing import Any, Callable, Optional, TypeVar, cast
+
+if os.name == "nt":
+    from ctypes import WinDLL
+else:
+    class WinDLL:
+        def __init__(self, name: str) -> None: ...
+        def __getitem__(self, name: str) -> Any: ...
+
+from ctypes import (
+    Array,
+    c_char,
+    c_double,
+    c_int32,
+    c_ubyte,
+    c_uint32,
+    c_void_p,
+    pointer,
+)
 from enum import IntEnum
-from typing import cast
 
 from .dcam_mode_key import DCAM_PARAM_PROPERTYVALUETEXT
 from .dcam_types import DCAM_PARAM_PROPERTYATTR
 
-
-class DCAM_CAPTURE_MODE(IntEnum):
-    SNAP = 0
-    SEQUENCE = 1
-    def __str__(self) -> str: ...
-
 DCAM_DEFAULT_ARG = c_int32(0)
 DCAM_DEFAULT_ARG_p = pointer(DCAM_DEFAULT_ARG)
+
 Handle = c_void_p
+F = TypeVar("F", bound=Callable)
+
+IGNORE = {
+    "dcam_getpropertyname",
+    "dcam_getpropertyattr",
+    "dcam_getpropertyvalue",
+    "dcam_getpropertyvaluetext",
+    "dcam_getnextpropertyid",
+    "dcam_querypropertyvalue",
+}
+
+def check_if_failed(f: F) -> F: ...
 
 class DCAMAPI(WinDLL):
+    # TODO Missing functions in dcamapi3.h
+    def dcam_open(
+        self,
+        h: pointer[Handle],
+        index: c_int32,
+        reserved: Optional[pointer[Any]] = DCAM_DEFAULT_ARG_p,
+    ): ...
     # /*** --- parameters --- ***/
     def dcam_queryupdate(
-        self, h: Handle, pFlag: pointer[c_int32], reserved: pointer[c_int32] = DCAM_DEFAULT_ARG_p
+        self,
+        h: Handle,
+        pFlag: pointer[c_int32],
+        reserved: pointer[c_int32] = DCAM_DEFAULT_ARG_p,
     ) -> bool: ...
     def dcam_getbinning(self, h: Handle, pBinning: pointer[c_int32]) -> bool:
         """This will return the current binning mode of the camera."""
@@ -41,7 +75,10 @@ class DCAMAPI(WinDLL):
     def dcam_precapture(self, h: Handle, mode: DCAM_CAPTURE_MODE) -> bool:
         """Sets the capture mode and prepares resources for capturing. This also changes the camera status to STABLE state. Create a constant or control from the Capture Mode terminal to get a list of valid IDs."""
     def dcam_getdatarange(
-        self, h: Handle, pMax: pointer[c_int32], pMin: pointer[c_int32] = DCAM_DEFAULT_ARG_p
+        self,
+        h: Handle,
+        pMax: pointer[c_int32],
+        pMin: pointer[c_int32] = DCAM_DEFAULT_ARG_p,
     ) -> bool:
         """This function will return the minimum and maximum values possible for the data pixels."""
     def dcam_getdataframebytes(self, h: Handle, pSize: pointer[c_int32]) -> bool:
@@ -64,7 +101,10 @@ class DCAMAPI(WinDLL):
     def dcam_getstatus(self, h: Handle, pStatus: pointer[c_int32]) -> bool:
         """This returns the state of the current camera operation."""
     def dcam_gettransferinfo(
-        self, h: Handle, pNewestFrameIndex: pointer[c_int32], pFrameCount: pointer[c_int32]
+        self,
+        h: Handle,
+        pNewestFrameIndex: pointer[c_int32],
+        pFrameCount: pointer[c_int32],
     ) -> bool: ...
     def dcam_freeframe(self, h: Handle) -> bool:
         """This frees up the memory allocated from DCAM_ALLOCFRAME. Also sets the status of the camera from READY state to STABLE state. This will fail if the camera is in BUSY state when called."""
@@ -75,11 +115,19 @@ class DCAMAPI(WinDLL):
         """This function works similar to DCAM_FREEFRAME except that this is used when using DCAM_ATTACHBUFFER. This will set the camera from READY to STABLE state."""
     # /*** --- data transfer --- ***/
     def dcam_lockdata(
-        self, h: Handle, pTop: pointer[c_void_p], pRowbytes: pointer[c_int32], frame: c_int32
+        self,
+        h: Handle,
+        pTop: pointer[c_void_p],
+        pRowbytes: pointer[c_int32],
+        frame: c_int32,
     ) -> bool:
         """This locks a frame in the data buffer that will be accessed by the user. When a frame is locked, the capture thread will not write to it. Calling this function will also unlock any existing locked frames. If you set the frame input as -1, you will lock the most recently received frame. Put the frame data address into pTop."""
     def dcam_lockbits(
-        self, h: Handle, pTop: pointer[c_ubyte], pRowbytes: pointer[c_int32], frame: c_int32
+        self,
+        h: Handle,
+        pTop: pointer[c_ubyte],
+        pRowbytes: pointer[c_int32],
+        frame: c_int32,
     ) -> bool:
         """This works similar to DCAM_LOCKDATA except that the buffer data has been altered for display. For example, 16 bit images are converted to 8 bit images and flipped for easy use in Windows API functions. If you set the frame input as -1, you will lock the most recently received frame."""
     def dcam_unlockdata(self, h: Handle) -> bool:
@@ -101,10 +149,18 @@ class DCAMAPI(WinDLL):
     def dcam_getpropertyvalue(self, h: Handle, iProp: c_int32, pValue: pointer[c_double]) -> bool: ...
     def dcam_setpropertyvalue(self, h: Handle, iProp: c_int32, fValue: c_double) -> bool: ...
     def dcam_setgetpropertyvalue(
-        self, h: Handle, iProp: c_int32, pValue: pointer[c_double], option: c_int32 = DCAM_DEFAULT_ARG
+        self,
+        h: Handle,
+        iProp: c_int32,
+        pValue: pointer[c_double],
+        option: c_int32 = DCAM_DEFAULT_ARG,
     ) -> bool: ...
     def dcam_querypropertyvalue(
-        self, h: Handle, iProp: c_int32, pValue: pointer[c_double], option: c_int32 = DCAM_DEFAULT_ARG
+        self,
+        h: Handle,
+        iProp: c_int32,
+        pValue: pointer[c_double],
+        option: c_int32 = DCAM_DEFAULT_ARG,
     ) -> bool: ...
     def dcam_getnextpropertyid(
         self, h: Handle, pProp: pointer[c_int32], option: c_int32 = DCAM_DEFAULT_ARG
@@ -113,3 +169,14 @@ class DCAMAPI(WinDLL):
         self, h: Handle, iProp: c_int32, text: Array[c_char], textbytes: c_int32
     ) -> bool: ...
     def dcam_getpropertyvaluetext(self, h: Handle, param: pointer[DCAM_PARAM_PROPERTYVALUETEXT]) -> bool: ...
+
+class CheckedDCAMAPI(DCAMAPI):
+    def __getitem__(self, name: str) -> Callable[..., bool]: ...
+
+class DCAMException(Exception): ...
+class DCAMReturnedZero(DCAMException): ...
+
+class DCAM_CAPTURE_MODE(IntEnum):
+    SNAP = 0
+    SEQUENCE = 1
+    def __str__(self) -> str: ...

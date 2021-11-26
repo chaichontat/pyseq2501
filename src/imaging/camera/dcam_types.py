@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-from ctypes import Structure, WinDLL, c_double, c_int32, c_void_p, sizeof  # type: ignore
+from ctypes import Structure, c_double, c_int32, c_void_p, sizeof
 from dataclasses import dataclass
 from enum import IntEnum
-from functools import wraps
 from logging import getLogger
-from typing import Any, Callable, Literal, TypedDict, TypeVar, cast, get_args
-
-from .dcam_api import DCAMAPI
+from typing import Literal, TypedDict, get_args
 
 logger = getLogger("DCAM")
 
@@ -16,46 +13,6 @@ DCAMPROP_TYPE_MASK      = 0x0000000F
 DCAMPROP_OPTION_NEXT    = 0x01000000
 DCAMPROP_OPTION_NEAREST = 0x80000000
 # fmt: on
-
-
-class DCAMException(Exception):
-    ...
-
-
-class DCAMReturnedZero(DCAMException):
-    ...
-
-
-F = TypeVar("F", bound=Callable)
-
-
-IGNORE = {
-    "dcam_getpropertyname",
-    "dcam_getpropertyattr",
-    "dcam_getpropertyvalue",
-    "dcam_getpropertyvaluetext",
-    "dcam_getnextpropertyid",
-    "dcam_querypropertyvalue",
-}
-
-
-def check_if_failed(f: F) -> F:
-    @wraps(f)
-    def wrapper(*args: Any, **kwargs: Any) -> bool:
-        res = f(*args, **kwargs)
-        # Literally the only function that returns int32 instead of BOOL.
-        if res == 0 and f.__name__ != "dcam_getlasterror":
-            raise DCAMReturnedZero(f"{f.__name__} did not return NOERR.")
-        if f.__name__ not in IGNORE:
-            logger.debug(f"{f.__name__} [green]OK")
-        return res
-
-    return cast(F, wrapper)
-
-
-class CheckedDCAMAPI(DCAMAPI):
-    def __getitem__(self, name: str) -> Callable[..., bool]:
-        return check_if_failed(super().__getitem__(name))
 
 
 Handle = c_void_p
