@@ -35,7 +35,7 @@ class Imager:
         self.y = YStage(ports.y)
         self.z = self.fpga.z
 
-        self.cams = Cameras(Camera(0), Camera(1))
+        self.cams = Cameras()
         self.lasers = Lasers(Laser(ports.laser_g), Laser(ports.laser_r))
 
     # def initialize(self) -> Future[None]:

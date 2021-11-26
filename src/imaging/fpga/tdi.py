@@ -18,11 +18,13 @@ class TDICmd:
         assert match is not None
         return int(match.group(1)) - Y_OFFSET
 
-    GET_ENCODER_Y = CmdParse("TDIYERD", read_y)
-    SET_ENCODER_Y = lambda x: f"TDIYEWR {x + Y_OFFSET}"
+    # fmt: off
+    GET_ENCODER_Y = CmdParse(              "TDIYERD"                            , read_y)
+    SET_ENCODER_Y =          lambda x:    f"TDIYEWR      {x + Y_OFFSET}"
 
-    SET_Y_POS = CmdParse(lambda x: f"TDIYPOS {x + Y_OFFSET - 80000}", ok_if_match("TDIYPOS"))
-    ARM = lambda n, y: f"TDIYARM3 {n} {y + Y_OFFSET - 10000} 1"
+    SET_Y_POS     = CmdParse(lambda x:    f"TDIYPOS      {x + Y_OFFSET - 80000}", ok_if_match("TDIYPOS"))
+    ARM                    = lambda n, y: f"TDIYARM3 {n} {y + Y_OFFSET - 10000} 1"
+    # fmt: on
 
 
 class TDI(FPGAControlled):
@@ -31,9 +33,9 @@ class TDI(FPGAControlled):
     def __init__(self, fpga_com: COM) -> None:
         super().__init__(fpga_com)
         self._position: int
-        self.fcom.repl(TDICmd.GET_ENCODER_Y).add_done_callback(
-            lambda x: setattr(self, "_position", x.result())
-        )
+        # self.fcom.repl(TDICmd.GET_ENCODER_Y).add_done_callback(
+        #     lambda x: setattr(self, "_position", x.result())
+        # )
 
     @property
     def encoder_pos(self):

@@ -45,7 +45,6 @@ class Camera:
         self.id_ = id_
         self.initialize()
 
-    @run_in_executor
     def initialize(self) -> None:
         self.handle = c_void_p(0)
         API.dcam_open(pointer(self.handle), c_int32(self.id_), None)
@@ -128,10 +127,20 @@ class Camera:
         return out
 
 
-@dataclass
 class Cameras:
+    """Running two cameras simultaneously crashes the cameras, necessitating HiSeq hard reset."""
+
     g: Camera
     r: Camera
+
+    def __init__(self) -> None:
+        self.g, self.r = Camera(0), Camera(1)
+        self.initialize()
+
+    @run_in_executor
+    def initialize(self) -> None:
+        self.g.initialize()
+        return self.r.initialize()
 
     BUNDLE_HEIGHT = 128
 

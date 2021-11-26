@@ -6,12 +6,18 @@ from src.utils.com import COM, CmdParse
 
 logger = logging.getLogger(__name__)
 
-
+# fmt: off
 class XCmd:
+    """ See manual p. 61 for summary.
+    `PR $VAR`   : Print selected data or text
+    `$VAR=$VAL` : Set $VAR to $VAL
+    """
     INIT = "\x03"
     IS_MOVING = CmdParse("PR MV", int)
-    GET_POS = CmdParse("PR P", int)
-    SET_POS = lambda x: f"MA {x}"
+    GET_POS   = CmdParse("PR P", int)
+    SET_POS       = lambda x: f"MA {x}"  # Set mode and move to abs. position.
+    SET_POS_REL   = lambda x: f"MR {x}"  # Set mode and move to rel. position.
+# fmt: on
 
 
 class XStage(UsesSerial, Movable):
@@ -39,9 +45,9 @@ class XStage(UsesSerial, Movable):
         # Enable Encoder
         response = self.com.repl("EE=1")
         # Set Initial Velocity
-        response = self.com.repl("VI=40")
+        response = self.com.repl("VI=410")  # From Illumina log Ln 5247
         # Set Max Velocity
-        response = self.com.repl("VM=1000")
+        response = self.com.repl("VM=6144")  # From Illumina log Ln 5243
         # Set Acceleration
         response = self.com.repl("A=4000")
         # Set Deceleration

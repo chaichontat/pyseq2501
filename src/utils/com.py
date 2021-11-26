@@ -44,7 +44,7 @@ class CmdParse(Generic[T]):
     parser: Callable[[str], T]
 
     def __call__(self: F, *args: ..., **kwargs: ...) -> F:
-        return CmdParse(self.cmd(*args, **kwargs), self.process)  # type: ignore
+        return CmdParse(self.cmd(*args, **kwargs), self.parser)  # type: ignore
 
     def __str__(self) -> str:
         return str(self.cmd)
@@ -79,7 +79,7 @@ class COM:
     port_tx: str
     port_rx: Optional[str] = None
     logger: Logger | FakeLogger = FakeLogger()
-    timeout: int | float = 1
+    timeout: int | float = 0.5
     _formatter: Formatter = field(init=False)
     _executor: ThreadPoolExecutor = field(init=False)
 
@@ -91,8 +91,6 @@ class COM:
 
     def __post_init__(self) -> None:
         self.formatter = SERIAL_FORMATTER[self.name]
-        self.port_rx = self.port_rx or self.port_tx  # If None check.
-
         try:
             use_fake = os.environ["FAKE_HISEQ"] == "1"
         except KeyError:
@@ -101,8 +99,10 @@ class COM:
         if use_fake:
             self._serial = FakeSerial(self.name, self.port_tx, self.port_rx, self.timeout)
         else:
-            ss = (Serial(p, BAUD_RATE[self.name], timeout=self.timeout) for p in (self.port_rx, self.port_tx))
-            self._serial = io.TextIOWrapper(io.BufferedRWPair(*ss), encoding="ascii", errors="strict")  # type: ignore[arg-type]
+            stx = srx = Serial(self.port_tx, BAUD_RATE[self.name], timeout=self.timeout)
+            if self.port_rx is not None:
+                srx = Serial(self.port_rx, BAUD_RATE[self.name], timeout=self.timeout)
+            self._serial = io.TextIOWrapper(io.BufferedRWPair(srx, stx), encoding="ascii", errors="strict")  # type: ignore[arg-type]
 
         self._executor = ThreadPoolExecutor(max_workers=1)
 
