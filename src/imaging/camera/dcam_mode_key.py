@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from ctypes import (Structure, addressof, byref, c_char_p, c_double, c_int32,
-                    create_string_buffer, sizeof)
+from ctypes import Structure, addressof, pointer, c_char_p, c_double, c_int32, create_string_buffer, sizeof
 from logging import getLogger
 from typing import Optional
 
 from . import API
-from .dcam_types import (DCAMPROP_OPTION_NEXT, DCAMParamPropertyAttr,
-                         DCAMReturnedZero, Handle, Props)
+from .dcam_types import DCAMPROP_OPTION_NEXT, DCAMParamPropertyAttr, DCAMReturnedZero, Handle, Props
 
 logger = getLogger("DCAMmodekey")
 
@@ -94,13 +92,13 @@ def get_mode_key(handle: Handle, prop_attr: DCAMParamPropertyAttr) -> Optional[d
 
     while True:
         # Get text of current value.
-        API.dcam_getpropertyvaluetext(handle, byref(prop_text))
+        API.dcam_getpropertyvaluetext(handle, pointer(prop_text))
         out[prop_text.text] = int(v.value)
 
         # Get next value.
         try:
             API.dcam_querypropertyvalue(
-                handle, c_int32(prop_attr.iProp), byref(v), c_int32(DCAMPROP_OPTION_NEXT)
+                handle, c_int32(prop_attr.iProp), pointer(v), c_int32(DCAMPROP_OPTION_NEXT)
             )
             prop_text.value = v
         except DCAMReturnedZero:  # Done

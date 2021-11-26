@@ -1,5 +1,6 @@
 import time
 from concurrent.futures import Future
+from contextlib import contextmanager
 from logging import getLogger
 from typing import Callable, Literal, get_args
 
@@ -20,6 +21,8 @@ class OpticCmd:
     EM_FILTER_OUT = CmdParse("EM2O", ok_if_match("EM2O"))
     HOME_OD = CmdParse(lambda i: f"EX{i}HM", ok_if_match([f"EM{i}HM" for i in get_args(ID)]))
     SET_OD = CmdParse(lambda i, x: f"EX{i}MV {x}", ok_if_match([f"EM{i}MV" for i in get_args(ID)]))
+    OPEN_SHUTTER = "SWLSRSHUT 1"
+    CLOSE_SHUTTER = "SWLSRSHUT 0"
 
 
 class Optics(FPGAControlled):
@@ -33,3 +36,9 @@ class Optics(FPGAControlled):
         self.fcom.repl(OpticCmd.EM_FILTER_DEFAULT)
         self.fcom.repl(OpticCmd.SET_OD(1, OD_GREEN["OPEN"]))
         self.fcom.repl(OpticCmd.SET_OD(2, OD_RED["OPEN"]))
+
+    @contextmanager
+    def open_shutter(self):
+        self.fcom.repl(OpticCmd.OPEN_SHUTTER).result()
+        yield
+        self.fcom.repl(OpticCmd.CLOSE_SHUTTER)

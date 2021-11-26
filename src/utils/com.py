@@ -1,13 +1,11 @@
 import io
 import os
 import time
-from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from logging import Logger
-from typing import Any, Callable, Generic, Optional, TypeVar, cast, overload
+from typing import Callable, Generic, Optional, TypeVar, cast, overload
 
-from returns.pipeline import is_successful
-from returns.result import Failure, Result, ResultE, Success
 from serial import Serial
 from src.instruments_types import SerialInstruments
 

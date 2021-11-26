@@ -29,6 +29,16 @@ class DCAMReturnedZero(DCAMException):
 F = TypeVar("F", bound=Callable)
 
 
+IGNORE = {
+    "dcam_getpropertyname",
+    "dcam_getpropertyattr",
+    "dcam_getpropertyvalue",
+    "dcam_getpropertyvaluetext",
+    "dcam_getnextpropertyid",
+    "dcam_querypropertyvalue",
+}
+
+
 def check_if_failed(f: F) -> F:
     @wraps(f)
     def wrapper(*args: Any, **kwargs: Any) -> bool:
@@ -36,20 +46,16 @@ def check_if_failed(f: F) -> F:
         # Literally the only function that returns int32 instead of BOOL.
         if res == 0 and f.__name__ != "dcam_getlasterror":
             raise DCAMReturnedZero(f"{f.__name__} did not return NOERR.")
-        logger.debug(f"{f.__name__} [green]OK")
+        if f.__name__ not in IGNORE:
+            logger.debug(f"{f.__name__} [green]OK")
         return res
 
     return cast(F, wrapper)
 
 
 class CheckedDCAMAPI(DCAMAPI):
-    def __getattribute__(self, __name: str) -> Any:
-        if __name.startswith("dcam"):
-            return check_if_failed(super().__getattribute__(__name))
-        return super().__getattribute__(__name)
-
-    # def __getitem__(self, name: str) -> Callable[..., bool]:
-    # return cast(Callable[..., bool], check_if_failed(super().__getitem__(name)))
+    def __getitem__(self, name: str) -> Callable[..., bool]:
+        return check_if_failed(super().__getitem__(name))
 
 
 Handle = c_void_p

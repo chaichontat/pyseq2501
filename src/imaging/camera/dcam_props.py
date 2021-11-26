@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import ctypes
-from ctypes import byref, c_double, c_int32
+from ctypes import pointer, c_double, c_int32
 from dataclasses import dataclass
 from logging import getLogger
 from typing import Optional, Type, cast, get_args
@@ -78,7 +78,7 @@ class DCAMDict:
             raise ValueError(f"Out of range for {key}. Given {item}, range is [{min_val}, {max_val}].")
 
         value = ctypes.c_double(item)
-        API.dcam_setgetpropertyvalue(self.handle, prop.id_, byref(value), c_int32(DCAM_DEFAULT_ARG))
+        API.dcam_setgetpropertyvalue(self.handle, prop.id_, pointer(value), c_int32(DCAM_DEFAULT_ARG))
         # assert value == prop.value  # Function returns previously stored value.
 
         prop.value = ctypes.c_double(item).value
@@ -100,13 +100,13 @@ class DCAMDict:
 
         try:
             # Reset counter to start.
-            API.dcam_getnextpropertyid(h, byref(this_id), c_int32(DCAMPROP_OPTION_NEAREST))
+            API.dcam_getnextpropertyid(h, pointer(this_id), c_int32(DCAMPROP_OPTION_NEAREST))
         except DCAMReturnedZero:
             pass
 
         while True:
             try:
-                API.dcam_getnextpropertyid(h, byref(this_id), c_int32(DCAMPROP_OPTION_NEXT))
+                API.dcam_getnextpropertyid(h, pointer(this_id), c_int32(DCAMPROP_OPTION_NEXT))
             except DCAMReturnedZero:
                 break  # All properties retrieved.
 
@@ -114,18 +114,18 @@ class DCAMDict:
 
             # Get attr.
             this_attr = DCAM_PARAM_PROPERTYATTR.from_id(this_id)
-            API.dcam_getpropertyattr(h, byref(this_attr))
+            API.dcam_getpropertyattr(h, pointer(this_attr))
 
             # Get value.
             this_value = c_double(0)
-            API.dcam_getpropertyvalue(h, this_id, byref(this_value))
+            API.dcam_getpropertyvalue(h, this_id, pointer(this_value))
             name = cast(Props, cls.to_snake_case(this_name.value))
             dcam_props[name] = DCAMProperty(name, this_attr.to_dataclass(), this_value.value)
 
             if check_precomputed:
                 assert dcam_props[name].type_ == dcam_props[name].attr.type_
-                print(dcam_props[name].mode_key)
-                print("gnd", gnd := get_mode_key(h, dcam_props[name].attr))
+                # print(dcam_props[name].mode_key)
+                # print("gnd", gnd := get_mode_key(h, dcam_props[name].attr))
                 # assert dcam_props[name].mode_key == gnd
 
         assert all(x in dcam_props.keys() for x in get_args(Props))

@@ -15,6 +15,15 @@ ModeParams = Literal["GAINS", "VELO"]
 ModeName = Literal["IMAGING", "MOVING"]
 
 
+"""
+SCALE '*ON/OFF 0 SCLA 1 SCLD 42000 SCLV 1 PEU 42000' p.171
+
+Somehow this is moving at 1.3e6 units/s
+From the STATUS cmd => RESOLUTION ..........1300000
+Also tested from moving, pinging and linear regression.
+
+Imaging velo == 200200 units/s.
+"""
 MODES: Dict[ModeName, Dict[ModeParams, str]] = {
     "IMAGING": {"GAINS": "5,10,7,1.5,0", "VELO": "0.154"},
     "MOVING": {"GAINS": "5,10,7,1.5,0", "VELO": "1"},
@@ -24,6 +33,8 @@ MODES: Dict[ModeName, Dict[ModeParams, str]] = {
 class YCmd:
     """
     See https://www.parkermotion.com/manuals/Digiplan/ViX-IH_UG_7-03.pdf for more.
+
+
     """
 
     @staticmethod
@@ -67,11 +78,13 @@ class YStage(UsesSerial, Movable):
         self.com.repl("W(EX,0)")  # Turn off echo
         self._mode = "MOVING"
         [self.com.repl(x) for x in ["MA", "ON", "GH"]]
+        self.com.repl(YCmd.GAINS(MODES["MOVING"]["GAINS"]))
         return self.com.is_done()
 
-    def move(self, pos: int) -> Future[bool]:
+    def move(self, pos: int, slowly: bool = False) -> Future[int]:
         if not (self.RANGE[0] <= pos <= self.RANGE[1]):
             raise ValueError(f"YSTAGE can only be between {self.RANGE[0]} and {self.RANGE[1]}")
+        self._mode = "IMAGING" if slowly else "MOVING"
 
         # def work() -> int:
         #     self.com.repl(is_between(YCmd.SET_POS, *self.RANGE)(pos))  # type: ignore[operator]
@@ -99,16 +112,4 @@ class YStage(UsesSerial, Movable):
     def _mode(self, mode: ModeName) -> None:
         if self.__mode == mode:
             return
-        self.com.repl(YCmd.GAINS(MODES[mode]["GAINS"]))  # type: ignore[operator]
         self.com.repl(YCmd.VELO(MODES[mode]["VELO"]))  # type: ignore[operator]
-
-    @contextmanager
-    def _imaging_mode(self) -> Iterator[None]:
-        self._mode = "IMAGING"
-        self.com.is_done().result()
-        yield
-        self._mode = "MOVING"
-
-    def move_slowly(self, target: int) -> Future[int]:
-        with self._imaging_mode():
-            return self.move(target)

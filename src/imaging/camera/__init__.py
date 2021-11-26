@@ -1,3 +1,3 @@
 from .dcam_types import CheckedDCAMAPI
 
-API = CheckedDCAMAPI()
+API = CheckedDCAMAPI()  # type: ignore
