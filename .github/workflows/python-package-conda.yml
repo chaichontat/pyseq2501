@@ -1,7 +1,12 @@
 name: Python Package using Conda
 
-on: [push]
-
+on:
+  push:
+    paths:
+      - .github/**
+      - scripts/**
+      - src/**
+      - tests/**
 jobs:
   build:
     runs-on: ${{ matrix.os }}
