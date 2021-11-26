@@ -4,11 +4,13 @@ on: [push]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         shell: bash -l {0}
     strategy:
+      matrix:
+        os: ["ubuntu-latest", "windows-latest"]
       max-parallel: 5
     env:
       FAKE_HISEQ: 1
