@@ -6,7 +6,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from logging import Logger
-from typing import IO, Callable, Generic, Optional, ParamSpec, TypeVar, Union, cast, overload
+from typing import IO, Any, Callable, Generic, Optional, ParamSpec, TypeGuard, TypeVar, Union, cast, overload
 
 from serial import Serial
 from src.instruments_types import SerialInstruments
@@ -117,12 +117,15 @@ class COM:
     def put(self, f: Callable[[], T]) -> T:
         return f()
 
-    def _send_for_thread(self, cmd: str) -> None:
+    def _send(self, cmd: str | CmdParse[Any], debug: bool = True) -> None:
+        if isinstance(cmd, CmdParse):
+            if isinstance(x := cmd.cmd, str):
+                cmd = x
+            else:
+                raise TypeError("This command requires an argument, call this command first.")
         self._serial.write(self.formatter(cmd))
-
-    def _send(self, cmd: str) -> None:
-        self._send_for_thread(cmd)
-        self.logger.debug(f"Tx: {cmd:10}")
+        if debug:
+            self.logger.debug(f"Tx: {cmd:10}")
 
     @run_in_executor
     def send(self, cmd: str | list[str]) -> None:
@@ -130,13 +133,6 @@ class COM:
             [self._send(c) for c in cmd]
         else:
             self._send(cmd)
-
-    def _repl_for_thread(self, cmd: str, oneline: bool = True) -> str:
-        self._send_for_thread(cmd)
-        self._serial.flush()
-        if oneline:
-            return self._serial.readline().strip()
-        return "\n".join(self._serial.readlines())
 
     @overload
     def _repl(self, cmd: str, oneline: bool = ...) -> str:
@@ -146,36 +142,42 @@ class COM:
     def _repl(self, cmd: CmdParse[T], oneline: bool = ...) -> T:
         ...
 
-    def _repl(self, cmd: str | CmdParse[T], oneline: bool = True) -> str | T:
-        if isinstance(cmd, CmdParse):
-            if isinstance(x := cmd.cmd, str):
-                send = x
-            else:
-                raise TypeError("This command requires an argument, call this command first.")
+    @overload
+    def _repl(self, cmd: list[str | CmdParse[Any]]) -> list[Any]:
+        ...
 
-            raw = self._repl_for_thread(send, oneline)
-            resp = cmd.parser(raw)
-            if bool(resp):
-                self.logger.debug(f"Tx: {send:10} Rx: {raw:10} [green]Verified")
-                return resp
-            else:
-                self.logger.warning(f"Verification failed for {send}. Got {resp}.")
-                return resp
+    def _repl(
+        self, cmd: str | CmdParse[T] | list[str | CmdParse[Any]], oneline: bool = True
+    ) -> str | T | list[Any]:
+        if not isinstance(cmd, list):
+            cmd = [cmd]
 
-        else:
-            resp = self._repl_for_thread(cmd, oneline)
-            self.logger.debug(f"Tx: {cmd:10} Rx: {resp:10}")
-            return resp
+        for c in cmd:
+            self._send(c, debug=False)
+
+        out = []
+        for c in cmd:
+            raw = self._serial.readline().strip() if oneline else "".join(self._serial.readlines())
+            if isinstance(c, CmdParse):
+                resp = c.parser(raw)
+                if bool(resp):
+                    self.logger.debug(f"Tx: {c.cmd:10} Rx: {raw:10} [green]Verified")
+                else:
+                    self.logger.warning(f"Verification failed for {c.cmd}. Got {resp}.")
+            else:
+                resp = raw
+            out += resp
+        return out
+
+    @overload
+    @run_in_executor
+    def repl(self, cmd: list[str | CmdParse[Any]]) -> list[Any]:
+        ...
 
     @overload
     @run_in_executor
     def repl(
-        self,
-        cmd: str,
-        checker: Callable[[str], bool] = ...,
-        *,
-        oneline: bool = ...,
-        attempts: int = ...,
+        self, cmd: str, checker: Callable[[str], bool] = ..., *, oneline: bool = ..., attempts: int = ...
     ) -> str:
         ...
 
@@ -194,14 +196,17 @@ class COM:
     @run_in_executor
     def repl(
         self,
-        cmd: str | CmdParse[T],
-        oneline: bool = True,
+        cmd: str | CmdParse[T] | list[str | CmdParse[Any]],
         checker: Callable[[T], bool] = lambda _: True,
         *,
-        attempts: int = 2,
-    ) -> str | T:
+        oneline: bool = True,
+        attempts: int = 1,
+    ) -> str | T | list[Any]:
         if attempts < 1:
             raise ValueError("Attempts must be >= 1.")
+
+        if isinstance(cmd, list):
+            return self._repl(cmd)
 
         temp = ""
         for _ in range(attempts):
@@ -218,3 +223,12 @@ class COM:
     @run_in_executor
     def is_done(self) -> None:
         return None
+
+    @run_in_executor
+    def readline(self) -> str:
+        return self._serial.readline()
+
+    @run_in_executor
+    def readlines(self) -> list[str]:
+        res = self._serial.readlines()
+        return res if isinstance(res, list) else [res]
