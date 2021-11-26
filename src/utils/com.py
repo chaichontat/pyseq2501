@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import io
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from logging import Logger
-from typing import Callable, Generic, Optional, TypeVar, cast, overload
+from typing import IO, Callable, Generic, Optional, ParamSpec, TypeVar, Union, cast, overload
 
 from serial import Serial
 from src.instruments_types import SerialInstruments
@@ -15,6 +17,7 @@ from .utils import FakeLogger, run_in_executor
 ReturnsStr = TypeVar("ReturnsStr", bound=Callable[..., str])
 T = TypeVar("T")
 F = TypeVar("F")
+P = ParamSpec("P")
 flint = int | float
 
 
@@ -25,6 +28,9 @@ def is_between(f: ReturnsStr, min_: int, max_: int) -> ReturnsStr:
         return f(x)
 
     return cast(ReturnsStr, wrapper)
+
+
+S = TypeVar("S", bound=Union[Callable[..., str], str])
 
 
 @dataclass(frozen=True)
@@ -43,8 +49,10 @@ class CmdParse(Generic[T]):
     cmd: str | Callable[..., str]
     parser: Callable[[str], T]
 
-    def __call__(self: F, *args: ..., **kwargs: ...) -> F:
-        return CmdParse(self.cmd(*args, **kwargs), self.parser)  # type: ignore
+    def __call__(self, *args: ..., **kwargs: ...) -> CmdParse[T]:
+        if isinstance(self.cmd, str):
+            raise TypeError("This command does not take argument(s).")
+        return CmdParse(self.cmd(*args, **kwargs), self.parser)
 
     def __str__(self) -> str:
         return str(self.cmd)
@@ -99,7 +107,9 @@ class COM:
             stx = srx = Serial(self.port_tx, BAUD_RATE[self.name], timeout=self.timeout)
             if self.port_rx is not None:
                 srx = Serial(self.port_rx, BAUD_RATE[self.name], timeout=self.timeout)
-            self._serial = io.TextIOWrapper(io.BufferedRWPair(srx, stx), encoding="ascii", errors="strict")  # type: ignore[arg-type]
+            self._serial = io.TextIOWrapper(
+                cast(IO[bytes], io.BufferedRWPair(srx, stx)), encoding="ascii", errors="strict"
+            )
 
         self._executor = ThreadPoolExecutor(max_workers=1)
 
@@ -108,7 +118,6 @@ class COM:
         return f()
 
     def _send_for_thread(self, cmd: str) -> None:
-        assert self.formatter is not None
         self._serial.write(self.formatter(cmd))
 
     def _send(self, cmd: str) -> None:
@@ -116,10 +125,13 @@ class COM:
         self.logger.debug(f"Tx: {cmd:10}")
 
     @run_in_executor
-    def send(self, cmd: str) -> None:
-        return self._send(cmd)
+    def send(self, cmd: str | list[str]) -> None:
+        if isinstance(cmd, list):
+            [self._send(c) for c in cmd]
+        else:
+            self._send(cmd)
 
-    def _repl_for_thread(self, cmd: str, oneline=True) -> str:
+    def _repl_for_thread(self, cmd: str, oneline: bool = True) -> str:
         self._send_for_thread(cmd)
         self._serial.flush()
         if oneline:

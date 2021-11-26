@@ -59,6 +59,7 @@ class DCAMProperty:
         return f"{self.name}: {self.value}"
 
 
+# TODO Get default DCAM dict.
 class DCAMDict:
     _TYPES = PrecomputedPropTypes
 

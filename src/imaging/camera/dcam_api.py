@@ -1,9 +1,12 @@
 import os
-from ctypes import cast
+from ctypes import c_int32, pointer
 from enum import IntEnum
 from functools import wraps
 from logging import getLogger
-from typing import Any, Callable, ParamSpec, TypeVar
+from typing import Callable, ParamSpec, TypeVar
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 if os.name == "nt":
     from ctypes import WinDLL
@@ -13,13 +16,19 @@ else:
         def __init__(self, _: str) -> None:
             ...
 
-        def __getitem__(self, _: str) -> Any:
-            def fake_func(*_, **__) -> bool:
-                return True
+        def __getattribute__(self, __name: str) -> Callable[P, bool]:
+            if __name.startswith("dcam"):
 
-            return fake_func
+                def fake_func(*_: P.args, **__: P.kwargs) -> bool:
+                    return True
+
+                return fake_func
+            return super().__getattribute__(__name)
+            # return fake_func
 
 
+DCAM_DEFAULT_ARG = c_int32(0)
+DCAM_DEFAULT_ARG_p = pointer(DCAM_DEFAULT_ARG)
 logger = getLogger("DCAMAPI")
 
 
@@ -31,9 +40,6 @@ IGNORE = {
     "dcam_getnextpropertyid",
     "dcam_querypropertyvalue",
 }
-
-P = ParamSpec("P")
-R = TypeVar("R")
 
 
 def check_if_failed(f: Callable[P, R]) -> Callable[P, R]:
@@ -57,7 +63,7 @@ class DCAMAPI(WinDLL):
 
 class CheckedDCAMAPI(DCAMAPI):
     def __getitem__(self, name: str) -> Callable[..., bool]:
-        return check_if_failed(super().__getitem__(name))
+        return check_if_failed(super().__getitem__(name))  # type: ignore
 
 
 class DCAMException(Exception):

@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from typing import Generator
 
 import numpy as np
+import numpy.typing as npt
 from src.imaging.camera.dcam import Cameras
 from src.utils.utils import run_in_executor
 
@@ -33,8 +34,8 @@ class FakeCameras(Cameras):
         yield
 
     @run_in_executor
-    def get_images(self, n_bundles: int):
+    def get_images(self, n_bundles: int) -> tuple[npt.NDArray[np.uint16], npt.NDArray[np.uint16]]:
         assert n_bundles == self._n_bundles
-        out = np.zeros((self.BUNDLE_HEIGHT * n_bundles, 2048), dtype=np.uint16)
+        out: npt.NDArray[np.uint16] = np.zeros((self.BUNDLE_HEIGHT * n_bundles, 2048), dtype=np.uint16)
         time.sleep(1)
         return (out, out.copy())

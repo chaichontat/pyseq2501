@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from logging import getLogger
 from typing import Annotated
 
-from returns.result import safe
 from src.instruments import UsesSerial
 from src.utils.com import COM, CmdParse, is_between
 from src.utils.utils import gen_future

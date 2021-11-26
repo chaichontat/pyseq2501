@@ -5,7 +5,6 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from functools import wraps
 from math import ceil
 from typing import (
-    Any,
     Callable,
     Dict,
     Literal,
@@ -37,7 +36,7 @@ T, P = TypeVar("T"), ParamSpec("P")
 
 
 def gen_future(x: T) -> Future[T]:
-    fut = Future()
+    fut: Future[T] = Future()
     fut.set_result(x)
     return fut
 
@@ -46,14 +45,13 @@ class Threaded(Protocol):
     _executor: ThreadPoolExecutor
 
 
-# TODO Wait until mypy supports ParamSpec.
 def run_in_executor(f: Callable[P, T]) -> Callable[P, Future[T]]:
     """
     Prevents a race condition in which a result from the running object is dependent on an object in the queue.
     """
 
     @wraps(f)
-    def inner(self: Threaded, *args: Any, **kwargs: Any) -> Future[T]:
+    def inner(self: Threaded, *args: P.args, **kwargs: P.kwargs) -> Future[T]:
         if threading.current_thread() not in self._executor._threads:
             return cast(Future[T], self._executor.submit(lambda: f(self, *args, **kwargs)))  # type: ignore
         else:

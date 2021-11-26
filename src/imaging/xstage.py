@@ -34,7 +34,7 @@ class XStage(UsesSerial, Movable):
     def position(self) -> Future:
         ...
 
-    def initialize(self):
+    def initialize(self) -> None:
         """Initialize the xstage."""
 
         # Initialize Stage

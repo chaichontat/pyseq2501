@@ -1,12 +1,10 @@
 import logging
 import time
 from concurrent.futures import Future
-from contextlib import contextmanager
-from typing import Dict, Iterator, Literal, Optional
+from typing import Dict, Literal, Optional
 
-from returns.result import Success
 from src.instruments import Movable, UsesSerial
-from src.utils.com import COM, CmdParse, is_between
+from src.utils.com import COM, CmdParse
 
 logger = logging.getLogger(__name__)
 

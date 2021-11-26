@@ -65,7 +65,7 @@ def get_ports(timeout: int | float = 0) -> Ports:
     raise Exception(f"Cannot find ports after {timeout} seconds.")
 
 
-if "__name__" == "__main__":
+if __name__ == "__main__":
     print(get_ports())
 
 # REGEX_COM = re.compile(r"\((COM\d{1,2})\)")

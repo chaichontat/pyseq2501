@@ -3,7 +3,6 @@ from dataclasses import dataclass, field
 from logging import Logger
 from typing import Optional
 
-from returns.maybe import Maybe, Nothing, Some
 from src.instruments_types import SerialInstruments
 from src.utils.utils import FakeLogger
 
@@ -36,8 +35,6 @@ class FakeSerial:
         assert self.port_tx.startswith("COM")
 
     def write(self, s: str) -> None:
-        if not isinstance(s, str):
-            raise TypeError(f"{s} is not string.")
         time.sleep(0.5)
         if self.logger is not None and len(self._buffer):
             self.logger.warning(f"Writing {s} to {__name__} when buffer is not empty.")

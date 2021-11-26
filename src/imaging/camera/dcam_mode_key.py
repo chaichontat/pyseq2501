@@ -1,15 +1,6 @@
 from __future__ import annotations
 
-from ctypes import (
-    Structure,
-    addressof,
-    c_char_p,
-    c_double,
-    c_int32,
-    create_string_buffer,
-    pointer,
-    sizeof,
-)
+from ctypes import Structure, addressof, c_char_p, c_double, c_int32, create_string_buffer, pointer, sizeof
 from logging import getLogger
 from typing import Optional
 
@@ -98,7 +89,7 @@ def get_mode_key(handle: Handle, prop_attr: DCAMParamPropertyAttr) -> Optional[d
     prop_text = DCAM_PARAM_PROPERTYVALUETEXT.from_attr(prop_attr)
     v = c_double(prop_attr.valuemin)
 
-    out = {}
+    out: dict[str, int] = {}
 
     while True:
         # Get text of current value.

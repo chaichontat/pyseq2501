@@ -1,23 +1,17 @@
 import os
-from typing import Any, Callable, Optional, TypeVar, cast
+from typing import Any, Callable, Optional, ParamSpec, TypeVar, cast
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 if os.name == "nt":
     from ctypes import WinDLL
 else:
     class WinDLL:
         def __init__(self, name: str) -> None: ...
-        def __getitem__(self, name: str) -> Any: ...
+        def __getitem__(self, _: str) -> Callable[P, bool]: ...
 
-from ctypes import (
-    Array,
-    c_char,
-    c_double,
-    c_int32,
-    c_ubyte,
-    c_uint32,
-    c_void_p,
-    pointer,
-)
+from ctypes import Array, c_char, c_double, c_int32, c_ubyte, c_uint32, c_void_p, pointer
 from enum import IntEnum
 
 from .dcam_mode_key import DCAM_PARAM_PROPERTYVALUETEXT
@@ -27,7 +21,6 @@ DCAM_DEFAULT_ARG = c_int32(0)
 DCAM_DEFAULT_ARG_p = pointer(DCAM_DEFAULT_ARG)
 
 Handle = c_void_p
-F = TypeVar("F", bound=Callable)
 
 IGNORE = {
     "dcam_getpropertyname",
@@ -38,23 +31,13 @@ IGNORE = {
     "dcam_querypropertyvalue",
 }
 
-def check_if_failed(f: F) -> F: ...
+def check_if_failed(f: Callable[P, R]) -> Callable[P, R]: ...
 
 class DCAMAPI(WinDLL):
     # TODO Missing functions in dcamapi3.h
-    def dcam_open(
-        self,
-        h: pointer[Handle],
-        index: c_int32,
-        reserved: Optional[pointer[Any]] = DCAM_DEFAULT_ARG_p,
-    ): ...
+    def dcam_open(self, h: pointer[Handle], index: c_int32, reserved: Optional[pointer[Any]]) -> bool: ...
     # /*** --- parameters --- ***/
-    def dcam_queryupdate(
-        self,
-        h: Handle,
-        pFlag: pointer[c_int32],
-        reserved: pointer[c_int32] = DCAM_DEFAULT_ARG_p,
-    ) -> bool: ...
+    def dcam_queryupdate(self, h: Handle, pFlag: pointer[c_int32], reserved: pointer[c_int32]) -> bool: ...
     def dcam_getbinning(self, h: Handle, pBinning: pointer[c_int32]) -> bool:
         """This will return the current binning mode of the camera."""
     def dcam_getexposuretime(self, h: Handle, pSec: pointer[c_double]) -> bool:
@@ -78,7 +61,7 @@ class DCAMAPI(WinDLL):
         self,
         h: Handle,
         pMax: pointer[c_int32],
-        pMin: pointer[c_int32] = DCAM_DEFAULT_ARG_p,
+        pMin: pointer[c_int32] = ...,
     ) -> bool:
         """This function will return the minimum and maximum values possible for the data pixels."""
     def dcam_getdataframebytes(self, h: Handle, pSize: pointer[c_int32]) -> bool:
@@ -95,8 +78,8 @@ class DCAMAPI(WinDLL):
         self,
         h: Handle,
         pCode: pointer[c_int32],
-        timeout: pointer[c_uint32] = cast(pointer[c_uint32], DCAM_DEFAULT_ARG_p),
-        abortsignal: pointer = cast(pointer[c_void_p], DCAM_DEFAULT_ARG_p),
+        timeout: pointer[c_uint32],
+        abortsignal: pointer[Handle],
     ) -> bool: ...
     def dcam_getstatus(self, h: Handle, pStatus: pointer[c_int32]) -> bool:
         """This returns the state of the current camera operation."""
@@ -135,12 +118,8 @@ class DCAMAPI(WinDLL):
     def dcam_unlockbits(self, h: Handle) -> bool:
         """If a framed has been locked by DCAM_LOCKBITS, this function will unlock it."""
     # /*** --- LUT --- ***/
-    def dcam_setbitsinputlutrange(
-        self, h: Handle, inMax: c_int32, inMin: c_int32 = DCAM_DEFAULT_ARG
-    ) -> bool: ...
-    def dcam_setbitsoutputlutrange(
-        self, h: Handle, outMax: c_ubyte, outMin: c_int32 = DCAM_DEFAULT_ARG
-    ) -> bool: ...
+    def dcam_setbitsinputlutrange(self, h: Handle, inMax: c_int32, inMin: c_int32 = ...) -> bool: ...
+    def dcam_setbitsoutputlutrange(self, h: Handle, outMax: c_ubyte, outMin: c_int32 = ...) -> bool: ...
     # /*** --- extended --- ***/
     def dcam_extended(self, h: Handle, iCmd: c_uint32, param: c_void_p, size: pointer[c_uint32]) -> bool: ...
     # /*** --- software trigger --- ***/
@@ -153,18 +132,16 @@ class DCAMAPI(WinDLL):
         h: Handle,
         iProp: c_int32,
         pValue: pointer[c_double],
-        option: c_int32 = DCAM_DEFAULT_ARG,
+        option: c_int32 = ...,
     ) -> bool: ...
     def dcam_querypropertyvalue(
         self,
         h: Handle,
         iProp: c_int32,
         pValue: pointer[c_double],
-        option: c_int32 = DCAM_DEFAULT_ARG,
+        option: c_int32 = ...,
     ) -> bool: ...
-    def dcam_getnextpropertyid(
-        self, h: Handle, pProp: pointer[c_int32], option: c_int32 = DCAM_DEFAULT_ARG
-    ) -> bool: ...
+    def dcam_getnextpropertyid(self, h: Handle, pProp: pointer[c_int32], option: c_int32 = ...) -> bool: ...
     def dcam_getpropertyname(
         self, h: Handle, iProp: c_int32, text: Array[c_char], textbytes: c_int32
     ) -> bool: ...

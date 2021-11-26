@@ -2,6 +2,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from contextlib import contextmanager
 from ctypes import c_int32, c_uint16, c_void_p, pointer
 from enum import IntEnum
+from itertools import chain
 from typing import Generator, Literal, cast, overload
 
 import numpy as np
@@ -30,14 +31,12 @@ ID = Literal[0, 1]
 UInt16Array = npt.NDArray[np.uint16]
 
 
-class Camera:
+class _Camera:
     TDI_EXPOSURE_TIME = 0.002568533333333333
     AREA_EXPOSURE_TIME = 0.005025378
 
     IMG_WIDTH = 4096
     BUNDLE_HEIGHT = 128
-    # FRAME_Y =
-    # IMG_BYTES = IMG_WIDTH * BUNDLE_HEIGHT / 2
 
     def __init__(self, id_: ID) -> None:
         self.id_ = id_
@@ -77,16 +76,6 @@ class Camera:
         yield addr
         API.dcam_unlockdata(self.handle)
 
-    # def capture(self, n_frames: int):
-    #     # call FPGA
-    #     with self._alloc(n_frames):
-    #         # Send laser open
-    #         # Move
-    #         with self._capture():
-    #             ...  # while moving not done or calculate translation time.
-    #         # Check frame count
-    #     # Reset Y
-
     @property
     def status(self) -> Status:
         s = c_int32(-1)
@@ -107,18 +96,15 @@ class Camera:
         return int(f_count.value)
 
     @overload
-    @run_in_executor
-    def get_images(self, n: int, split: bool = True) -> tuple[UInt16Array, UInt16Array]:
+    def get_images(self, n_bundles: int, split: Literal[True] = ...) -> tuple[UInt16Array, UInt16Array]:
         ...
 
     @overload
-    @run_in_executor
-    def get_images(self, n: int, split: bool = False) -> UInt16Array:
+    def get_images(self, n_bundles: int, split: Literal[False] = ...) -> UInt16Array:
         ...
 
-    @run_in_executor
     def get_images(self, n_bundles: int, split: bool = True) -> UInt16Array | tuple[UInt16Array, UInt16Array]:
-        out = np.empty((n_bundles * self.BUNDLE_HEIGHT, self.BUNDLE_HEIGHT), dtype=np.uint16)
+        out: npt.NDArray[np.uint16] = np.empty((n_bundles * self.BUNDLE_HEIGHT, self.BUNDLE_HEIGHT), dtype=np.uint16)
 
         for i in range(n_bundles):
             with self._lock_memory(i) as addr:
@@ -137,31 +123,34 @@ class Cameras:
     IMG_WIDTH = 4096
     BUNDLE_HEIGHT = 128
 
-    g: Camera
-    r: Camera
+    _cams: tuple[_Camera, _Camera]
+
+    def __getitem__(self, id_: ID) -> _Camera:
+        return self._cams[id_]
 
     def __init__(self) -> None:
         self._executor = ThreadPoolExecutor(max_workers=1)
-        self.g, self.r = Camera(0), Camera(1)
+        self._cams = (_Camera(0), _Camera(1))
         self.initialize()
+
+    def status(self) -> None:
+        return
 
     @run_in_executor
     def initialize(self) -> None:
-        self.g.initialize()
-        return self.r.initialize()
+        [x.initialize() for x in self]
 
     @contextmanager
-    def alloc(self, n_bundles: int):
-        with self.g._alloc(n_bundles), self.r._alloc(n_bundles):
+    def alloc(self, n_bundles: int) -> Generator[None, None, None]:
+        with self[0]._alloc(n_bundles), self[1]._alloc(n_bundles):
             yield
 
     @contextmanager
-    def capture(self):
-        with self.g._capture(), self.r._capture():
+    def capture(self) -> Generator[None, None, None]:
+        with self[0]._capture(), self[1]._capture():
             yield
 
     @run_in_executor
-    def get_images(self, n_bundles: int):
-        g = self.g.get_images(n_bundles)
-        r = self.r.get_images(n_bundles)
-        return (*(g.result()), *r.result())
+    def get_images(self, n_bundles: int) -> tuple[UInt16Array, ...]:
+        # Flatten list.
+        return (*chain(*[x.get_images(n_bundles) for x in self]),)

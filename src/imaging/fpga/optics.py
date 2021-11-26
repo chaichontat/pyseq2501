@@ -1,8 +1,6 @@
-import time
-from concurrent.futures import Future
 from contextlib import contextmanager
 from logging import getLogger
-from typing import Callable, Literal, get_args
+from typing import Literal, get_args
 
 from src.instruments import FPGAControlled
 from src.utils.com import CmdParse, ok_if_match

@@ -3,7 +3,7 @@ from __future__ import annotations
 from concurrent.futures import Future
 from functools import partial
 from logging import getLogger
-from typing import Callable, Literal, cast, get_args
+from typing import Literal, get_args
 
 from src.instruments import FPGAControlled, Movable
 from src.utils.com import CmdParse, is_between
