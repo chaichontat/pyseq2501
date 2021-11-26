@@ -16,27 +16,25 @@ else:
 
 import logging
 
-from ui import init_ui
-
 logging.basicConfig(
     level="NOTSET", format="%(message)s", datefmt="[%X]", handlers=[RichHandler(rich_tracebacks=True)]
 )
 
-log = logging.getLogger("rich")
+logger = logging.getLogger("rich")
 console = Console()
 
-hs = FriendlyHiSeq(console=console, logger=log)
+hs = FriendlyHiSeq(console=console)
 #%%
 # init_ui(hs.gen_initialize_seq(skip=[Components.PUMPS, Components.VALVES]))
 #%%
+hs.image_path = "C:\\Users\\sbsuser\\Desktop\\goff-rotation\\images\\"
 hs.initializeCams()
 
-# # %%
-hs.image_path = "C:\\Users\\sbsuser\\Desktop\\goff-rotation\\images\\"
-x_begin = 20
+#%%
+x_begin = 15
 y_begin = 15
 size = 1
-pos = hs.position("A", [x_begin, y_begin, x_begin - size, y_begin - size])
+pos = hs.position("B", [x_begin, y_begin, x_begin - size, y_begin - size])
 # hs.y.move(pos["y_initial"])
 #%%
 hs.x.move(pos["x_initial"])
@@ -46,11 +44,18 @@ hs.optics.move_ex("green", "open")
 hs.optics.move_ex("red", "open")
 hs.optics.move_em_in(True)
 #%%
-hs.y.move(pos["y_initial"], precision=10)
+hs.lasers["green"].set_power(30)
 #%%
-hs.take_picture(64, "128")
-# # %%
-# hs.initializeCams()
+hs.y.move(pos["y_initial"] + 2100000)
+#%%
+hs.take_picture(16, "128aligned")
+
 # # %%
 
+#%%
+for z in [21600, 21800]:
+    hs.z.move([z, z, z])
+    hs.y.move(pos["y_initial"] + 2200000)
+    hs.take_picture(16, f"128al{z}")
+#%%
 # %%

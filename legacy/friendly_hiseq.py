@@ -21,8 +21,6 @@ from pyseq.ystage import Ystage
 from pyseq.zstage import Zstage
 from rich.console import Console
 
-from instruments.stage import BetterYstage
-
 
 class Components(IntEnum):
     CAMERAS = auto()
@@ -43,10 +41,25 @@ Logger = logging.getLogger(__name__)
 
 class FriendlyHiSeq(HiSeq):
     def __init__(self, console: Console, name: str = "HiSeq2500") -> None:
-        self.com_ports = get_com_ports("HiSeq2500")
+        # self.com_ports = get_com_ports("HiSeq2500")
+        self.com_ports = {
+            "xstage": "COM20",
+            "ystage": "COM21",
+            "pumpa": "COM13",
+            "pumpb": "COM9",
+            "valvea24": "COM7",
+            "valvea10": "COM10",
+            "valveb24": "COM5",
+            "valveb10": "COM6",
+            "fpgacommand": "COM14",
+            "fpgaresponse": "COM23",
+            "laser1": "COM15",
+            "laser2": "COM17",
+            "arm9chem": "COM12",
+        }
         self.console = console
 
-        self.y = BetterYstage(self.com_ports["ystage"])
+        self.y = Ystage(self.com_ports["ystage"], logger=Logger)
         self.f = FPGA(self.com_ports["fpgacommand"], self.com_ports["fpgaresponse"], logger=Logger)
         self.x = Xstage(self.com_ports["xstage"], logger=Logger)
         self.lasers = {
@@ -57,12 +70,9 @@ class FriendlyHiSeq(HiSeq):
         self.obj = OBJstage(self.f, logger=Logger)
         self.optics = Optics(self.f, logger=Logger)
         # self.cams = [HamamatsuCamera(i, logger=Logger) for i in range(2)]
-        self.cam1 = HamamatsuCamera(0, logger=Logger)
-        self.cam2 = HamamatsuCamera(1, logger=Logger)
-        self.cam1.left_emission = 687
-        self.cam1.right_emission = 558
-        self.cam2.left_emission = 610
-        self.cam2.right_emission = 740
+        self.cam1 = None
+        self.cam2 = None
+
         self.cams = {0: self.cam1, 1: self.cam2}
         self.p = {
             "A": Pump(self.com_ports["pumpa"], "pumpA", logger=Logger),
@@ -180,7 +190,7 @@ class FriendlyHiSeq(HiSeq):
             self.message(False, msg + "TDI and stage are synced")
 
         # TO DO, double check gains and velocity are set
-        y._mode = "IMAGING"
+        y.set_mode("imaging")
 
         # Make sure cameras are ready (status = 3)
         while cam1.get_status() != 3:
@@ -211,7 +221,7 @@ class FriendlyHiSeq(HiSeq):
         #
         # TODO check trigger y values are reasonable
         n_triggers = n_frames * self.bundle_height
-        end_y_pos = int(y_pos - n_triggers * self.resolution * y.STEPS_PER_UM - 300000)
+        end_y_pos = int(y_pos - n_triggers * self.resolution * y.spum - 300000)
         f.TDIYPOS(y_pos)
         f.TDIYARM3(n_triggers, y_pos)
 
@@ -227,7 +237,7 @@ class FriendlyHiSeq(HiSeq):
         # Open laser shutter
         f.command("SWLSRSHUT 1")
         # move ystage (blocking)
-        y.position = end_y_pos
+        y.move(end_y_pos)
 
         ################################
         ### Stop Imaging ###############
@@ -271,7 +281,7 @@ class FriendlyHiSeq(HiSeq):
         cam1.freeFrames()
         cam2.freeFrames()
 
-        y._mode = "MOVING"
+        y.set_mode("moving")
 
         meta_f.close()
 
