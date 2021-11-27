@@ -78,8 +78,8 @@ class DCAMAPI(WinDLL):
         self,
         h: Handle,
         pCode: pointer[c_int32],
-        timeout: pointer[c_uint32],
-        abortsignal: pointer[Handle],
+        timeout: c_uint32,
+        abortsignal: Handle,
     ) -> bool: ...
     def dcam_getstatus(self, h: Handle, pStatus: pointer[c_int32]) -> bool:
         """This returns the state of the current camera operation."""
@@ -92,7 +92,7 @@ class DCAMAPI(WinDLL):
     def dcam_freeframe(self, h: Handle) -> bool:
         """This frees up the memory allocated from DCAM_ALLOCFRAME. Also sets the status of the camera from READY state to STABLE state. This will fail if the camera is in BUSY state when called."""
     # /*** --- user memory support --- ***/
-    def dcam_attachbuffer(self, h: Handle, frames: pointer[c_void_p], size: pointer[c_uint32]) -> bool:
+    def dcam_attachbuffer(self, h: Handle, frames: pointer[c_void_p], size: c_uint32) -> bool:
         """This allows the user to attach his/her own data buffer instead of using DCAM_ALLOCFRAME and using the DCAM buffer. This function accepts an array of pointers to image buffers. If used, this will take the place of DCAM_ALLOCFRAME and set the camera from STABLE to READY state."""
     def dcam_releasebuffer(self, h: Handle) -> bool:
         """This function works similar to DCAM_FREEFRAME except that this is used when using DCAM_ATTACHBUFFER. This will set the camera from READY to STABLE state."""
