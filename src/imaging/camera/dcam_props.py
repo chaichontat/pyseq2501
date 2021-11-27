@@ -9,16 +9,9 @@ from typing import Optional, Type, cast, get_args
 from . import API
 from .dcam_api import DCAMReturnedZero
 from .dcam_mode_key import MODE_KEY
-from .dcam_types import (
-    DCAM_PARAM_PROPERTYATTR,
-    DCAMPROP_OPTION_NEAREST,
-    DCAMPROP_OPTION_NEXT,
-    DCAMParamPropertyAttr,
-    Handle,
-    PrecomputedPropTypes,
-    Props,
-    PropTypes,
-)
+from .dcam_types import (DCAM_PARAM_PROPERTYATTR, DCAMPROP_OPTION_NEAREST,
+                         DCAMPROP_OPTION_NEXT, DCAMParamPropertyAttr, Handle,
+                         PrecomputedPropTypes, Props, PropTypes)
 
 # /* DCAM-API 3.0 */
 # BOOL DCAMAPI dcam_getpropertyattr	( HDCAM h, DCAM_PROPERTYATTR* param );
@@ -67,22 +60,25 @@ class DCAMDict:
         self.handle = handle
         self._dict = prop_dict
 
-    def __getitem__(self, key: Props) -> float:
-        return self._dict[key].value
+    def __getitem__(self, name: Props) -> float:
+        return self._dict[name].value
 
-    def __setitem__(self, key: Props, item: int | float) -> None:
-        prop = self._dict[key]
+    def __setitem__(self, name: Props, value: int | float) -> None:
+        prop = self._dict[name]
         # TODO: Check writable.
         min_val: float = prop.attr.valuemin
         max_val: float = prop.attr.valuemax
-        if not (min_val <= item <= max_val):
-            raise ValueError(f"Out of range for {key}. Given {item}, range is [{min_val}, {max_val}].")
+        if not (min_val <= value <= max_val):
+            raise ValueError(f"Out of range for {name}. Given {value}, range is [{min_val}, {max_val}].")
 
-        value = ctypes.c_double(item)
-        API.dcam_setgetpropertyvalue(self.handle, prop.id_, pointer(value), c_int32(DCAM_DEFAULT_ARG))
-        # assert value == prop.value  # Function returns previously stored value.
+        to_set = ctypes.c_double(value)
+        API.dcam_setgetpropertyvalue(self.handle, prop.id_, pointer(to_set), c_int32(DCAM_DEFAULT_ARG))
 
-        prop.value = ctypes.c_double(item).value
+        # check = c_double(0)
+        # API.dcam_getpropertyvalue(self.handle, prop.id_, pointer(check))
+        # prop.value = check.value
+        # assert prop.value == value
+        prop.value = ctypes.c_double(value).value
 
     def __str__(self) -> str:
         return f"Properties: {{{', '.join(map(str, self._dict.values()))}}}"

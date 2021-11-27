@@ -1,9 +1,31 @@
+from __future__ import annotations
+
+import threading
+import time
+from collections import UserDict
+from concurrent.futures import Future
 from concurrent.futures.thread import ThreadPoolExecutor
 from contextlib import contextmanager
 from ctypes import c_int32, c_uint16, c_void_p, pointer
 from enum import IntEnum
+from functools import wraps
+from inspect import Attribute
 from itertools import chain
-from typing import Generator, Literal, cast, overload
+from logging import getLogger
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    Generator,
+    Literal,
+    Optional,
+    ParamSpec,
+    Protocol,
+    TypeVar,
+    cast,
+    get_args,
+    overload,
+)
 
 import numpy as np
 import numpy.typing as npt
@@ -14,6 +36,7 @@ from . import API
 from .dcam_api import DCAMException
 from .dcam_props import DCAMDict
 
+logger = getLogger("dcam")
 # DCAMAPI v3.0.301.3690
 
 
@@ -36,6 +59,7 @@ class SensorMode(IntEnum):
 
 ID = Literal[0, 1]
 UInt16Array = npt.NDArray[np.uint16]
+FourImages = tuple[UInt16Array, UInt16Array, UInt16Array, UInt16Array]
 
 
 class _Camera:
@@ -48,40 +72,47 @@ class _Camera:
     def __init__(self, id_: ID) -> None:
         self.id_ = id_
         self.handle = c_void_p(0)
+        logger.debug("Opening cam {id_}")
         API.dcam_open(pointer(self.handle), c_int32(id_), None)
+
         self.properties = DCAMDict.from_dcam(self.handle)
-        self.initialize()
+        self._capture_mode = DCAM_CAPTURE_MODE.SNAP
 
     def initialize(self) -> None:
         self.sensor_mode = SensorMode.TDI
-        API.dcam_precapture(self.handle, DCAM_CAPTURE_MODE.SNAP)
 
     @property
-    def sensor_mode(self):
-        return self.properties["sensor_mode"]
+    def capture_mode(self) -> DCAM_CAPTURE_MODE:
+        return self._capture_mode
+
+    @capture_mode.setter
+    def capture_mode(self, m: DCAM_CAPTURE_MODE):
+        API.dcam_precapture(self.handle, m)
+
+    @property
+    def sensor_mode(self) -> SensorMode:
+        return SensorMode(int(self.properties["sensor_mode"]))
 
     @sensor_mode.setter
-    def sensor_mode(self, m: SensorMode):
-        if m == self.sensor_mode:
-            return
+    def sensor_mode(self, m: SensorMode) -> None:
         self.properties["sensor_mode"] = m.value
         self.properties["sensor_mode_line_bundle_height"] = 128 if m == SensorMode.TDI else 64
 
     @contextmanager
-    def _capture(self) -> Generator[None, None, None]:
+    def capture(self) -> Generator[None, None, None]:
         API.dcam_capture(self.handle)
         try:
-        yield
+            yield
         finally:
-        API.dcam_idle(self.handle)
+            API.dcam_idle(self.handle)
 
     @contextmanager
-    def _alloc(self, n_bundles: int) -> Generator[None, None, None]:
+    def alloc(self, n_bundles: int) -> Generator[None, None, None]:
         API.dcam_allocframe(self.handle, c_int32(n_bundles))
         try:
-        yield
+            yield
         finally:
-        API.dcam_freeframe(self.handle)
+            API.dcam_freeframe(self.handle)
 
     @contextmanager
     def _lock_memory(self, bundle: int):
@@ -89,9 +120,9 @@ class _Camera:
         row_bytes = c_int32(0)
         API.dcam_lockdata(self.handle, pointer(cast(c_void_p, addr)), pointer(row_bytes), c_int32(bundle))
         try:
-        yield addr
+            yield addr
         finally:
-        API.dcam_unlockdata(self.handle)
+            API.dcam_unlockdata(self.handle)
 
     @property
     def status(self) -> Status:
@@ -108,8 +139,6 @@ class _Camera:
         b_index = c_int32(-1)
         f_count = c_int32(-1)
         API.dcam_gettransferinfo(self.handle, pointer(b_index), pointer(f_count))
-        assert b_index.value != -1
-        assert f_count.value != -1
         return int(f_count.value)
 
     @overload
@@ -122,7 +151,7 @@ class _Camera:
 
     def get_images(self, n_bundles: int, split: bool = True) -> UInt16Array | tuple[UInt16Array, UInt16Array]:
         out: npt.NDArray[np.uint16] = np.empty(
-            (n_bundles * self.BUNDLE_HEIGHT, self.BUNDLE_HEIGHT), dtype=np.uint16
+            (n_bundles * self.BUNDLE_HEIGHT, self.IMG_WIDTH), dtype=np.uint16
         )
 
         for i in range(n_bundles):
@@ -134,13 +163,32 @@ class _Camera:
             return (out[:, :half], out[:, half:])
         return out
 
-    # def getModelInfo(self, camera_id):
-    #     c_buf_len = 20
-    #     c_buf = ctypes.create_string_buffer(c_buf_len)
-    #     dcam.dcam_getmodelinfo(
-    #         c_int32(camera_id), c_int32(DCAM_IDSTR_MODEL), c_buf, c_int(c_buf_len)
-    #     )
-    #     return c_buf.value
+
+class GetSetable(Protocol):
+    def __getitem__(self, name: Any) -> Any:
+        ...
+
+    def __setitem__(self, name: Any, value: Any) -> None:
+        ...
+
+
+class TwoProps:
+    def __init__(self, prop1: GetSetable, prop2: GetSetable) -> None:
+        self._props = (prop1, prop2)
+
+    def __getitem__(self, name: str) -> Any:
+        a, b = self._props
+        if (out := a[name]) != b[name]:
+            raise Exception("Value not equal between two props. Check each individually.")
+        return out
+
+    def __setitem__(self, name: str, value: Any) -> None:
+        for p in self._props:
+            p[name] = value
+
+    def update(self, to_change: dict[str, Any]):
+        for k, v in to_change.items():
+            self[k] = v
 
 
 class Cameras:
@@ -149,48 +197,72 @@ class Cameras:
     IMG_WIDTH = 4096
     BUNDLE_HEIGHT = 128
 
-    _cams: tuple[_Camera, _Camera]
+    _cams: Future[tuple[_Camera, _Camera]]
+    properties: TwoProps
 
     def __getitem__(self, id_: ID) -> _Camera:
-        return self._cams[id_]
+        return self._cams.result()[id_]
+
+    def __getattr__(self, name: str) -> Any:
+        if name == "properties":
+            logger.debug("Waiting for DCAM API to finish initializing.")
+            self._cams.result()
+            return self.properties
+        raise AttributeError
 
     def __init__(self) -> None:
         self._executor = ThreadPoolExecutor(max_workers=1)
-        self.post_init()
+        self._cams = self.post_init()
+        self._cams.add_done_callback(
+            lambda _: setattr(self, "properties", TwoProps(*[c.properties for c in self]))
+        )
 
     @run_in_executor
     def post_init(self):
-        API.dcam_init(None, pointer(c_void_p(0)), None)
-        self._cams = (_Camera(0), _Camera(1))
+        t0 = time.time()
+        logger.debug("Initializing DCAM API.")
+        # This is slow that I need to make sure that the thing is still running.
+        th = threading.Thread(target=lambda: API.dcam_init(None, pointer(c_void_p(0)), None))
+        th.start()
+        while th.is_alive():
+            time.sleep(0.5)
+            logger.debug(f"Still alive. dcam_init takes about 10s. Taken {time.time() - t0:.2f} s.")
+        return (_Camera(0), _Camera(1))
 
     @run_in_executor
     def initialize(self) -> None:
         [x.initialize() for x in self]
 
-    @property
-    def sensor_mode(self) -> SensorMode:
-        assert self[0].sensor_mode == self[1].sensor_mode
-        return SensorMode(int(self[0].sensor_mode))
-
-    @sensor_mode.setter
-    def sensor_mode(self, m: SensorMode):
-        self[0].sensor_mode = m
-        self[1].sensor_mode = m
-
-    def status(self) -> None:
-        return
-
-    @contextmanager
-    def alloc(self, n_bundles: int) -> Generator[None, None, None]:
-        with self[0]._alloc(n_bundles), self[1]._alloc(n_bundles):
-            yield
-
-    @contextmanager
-    def capture(self) -> Generator[None, None, None]:
-        with self[0]._capture(), self[1]._capture():
-            yield
-
     @run_in_executor
-    def get_images(self, n_bundles: int) -> tuple[UInt16Array, ...]:
+    def capture(
+        self,
+        n_bundles: int,
+        after_alloc: Callable[[], None] = lambda: None,
+        after_capture: Callable[[], None] = lambda: None,
+        polling_time: float = 0.1,
+    ) -> FourImages:
+        with self._alloc(n_bundles):
+            after_alloc()
+            with self._capture():
+                after_capture()
+                while self.n_frames_taken < n_bundles:
+                    time.sleep(polling_time)
+            return self._get_images(n_bundles)
+
+    @contextmanager
+    def _alloc(self, n_bundles: int) -> Generator[None, None, None]:
+        with self[0].alloc(n_bundles), self[1].alloc(n_bundles):
+            yield
+
+    @contextmanager
+    def _capture(self) -> Generator[None, None, None]:
+        with self[0].capture(), self[1].capture():
+            yield
+
+    def _get_images(self, n_bundles: int) -> FourImages:
         # Flatten list.
-        return (*chain(*[x.get_images(n_bundles) for x in self]),)
+        return cast(FourImages, (*chain(*[x.get_images(n_bundles) for x in self]),))
+
+    @property
+    def n_frames_taken(self) -> int:
+        return min([c.n_frames_taken for c in self])

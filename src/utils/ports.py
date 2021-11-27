@@ -41,7 +41,7 @@ name_map = dict(
 )
 
 
-def get_ports(timeout: int | float = 0) -> Ports:
+def get_ports(timeout: int | float = 0, show_all=False) -> Ports:
     """
     See https://pyserial.readthedocs.io/en/latest/tools.html for more details.
 
@@ -57,6 +57,8 @@ def get_ports(timeout: int | float = 0) -> Ports:
         }
         try:
             res = cast(dict[str, str], {name: ports[id_] for name, id_ in name_map.items()})
+            if show_all:
+                print(res)
             return Ports.from_raw(res)
         except KeyError as e:
             print(e)

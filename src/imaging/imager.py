@@ -46,9 +46,9 @@ class Imager:
         end_y_pos = pos - (delta := self.calc_delta_pos(n_px_y))
         fpga_ready = self.tdi.prepare_for_imaging(n_px_y, pos)
 
-        with self.cams.alloc(n_bundles):
+        with self.cams._alloc(n_bundles):
             fpga_ready.result()
-            with self.optics.open_shutter(), self.cams.capture():
+            with self.optics.open_shutter(), self.cams._capture():
                 self.y.move(end_y_pos, slowly=True).result()
                 # TODO: Check when exactly does y start moving. Right after receiving signal or after reply.
                 time.sleep(delta / 200200)
