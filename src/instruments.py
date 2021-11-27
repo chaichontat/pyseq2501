@@ -16,13 +16,15 @@ class Movable(metaclass=ABCMeta):
     RANGE: ClassVar[tuple[int, int]]
     HOME: ClassVar[int]
 
+    def __init__(self) -> None:
+        assert self.STEPS_PER_UM and self.RANGE and self.HOME
+
     @property
     @abstractmethod
     def position(self) -> Future[int]:
         raise NotImplementedError
 
-    # Mypy bug. https://github.com/python/mypy/issues/10872
-    def convert(self, p: Annotated[float, "mm"]) -> int:  # type: ignore[name-defined]
+    def convert(self, p: Annotated[float, "mm"]) -> int:
         return int(p * 1000 * self.STEPS_PER_UM)
 
 
