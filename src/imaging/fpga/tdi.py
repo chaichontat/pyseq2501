@@ -22,8 +22,8 @@ class TDICmd:
     GET_ENCODER_Y = CmdParse(              "TDIYERD"                            , read_y)
     SET_ENCODER_Y =          lambda x:    f"TDIYEWR      {x + Y_OFFSET}"
 
-    SET_Y_POS     = CmdParse(lambda x:    f"TDIYPOS      {x + Y_OFFSET - 80000}", ok_if_match("TDIYPOS"))
-    ARM                    = lambda n, y: f"TDIYARM3 {n} {y + Y_OFFSET - 10000} 1"
+    SET_TRIGGER   = CmdParse(lambda x:    f"TDIYPOS      {x + Y_OFFSET - 80000}", ok_if_match("TDIYPOS"))
+    ARM_TRIGGER            = lambda n, y: f"TDIYARM3 {n} {y + Y_OFFSET - 10000} 1"
     # fmt: on
 
 
@@ -48,8 +48,8 @@ class TDI(FPGAControlled):
 
     def prepare_for_imaging(self, n_px_y: int, pos: int) -> Future[str]:
         self.encoder_pos = pos
-        self.fcom.repl(TDICmd.SET_Y_POS(pos))
-        return self.fcom.repl(TDICmd.ARM(n_px_y, pos))
+        self.fcom.repl(TDICmd.SET_TRIGGER(pos))
+        return self.fcom.repl(TDICmd.ARM_TRIGGER(n_px_y, pos))
 
     # def TDIYPOS(self, y_pos) -> Future[bool]:
     #     """Set the y position for TDI imaging.

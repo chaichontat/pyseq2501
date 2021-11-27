@@ -23,6 +23,8 @@ class ObjCmd:
     SET_VELO = CmdParse(lambda x: f"ZSTEP {1288471 * x}", ok_if_match("ZSTEP"))
     SET_POS  = CmdParse(lambda x: f"ZMV {x}"            , ok_if_match("ZMV"))
     GET_POS  = CmdParse(           "ZDACR"              , get_pos)
+    SET_TRIGGER = lambda x: f"ZTRG {x}"
+    ARM_TRIGGER = "ZYT 0 3"
     # fmt: on
 
 

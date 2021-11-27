@@ -1,6 +1,8 @@
 import logging
 import time
+from collections import namedtuple
 from concurrent.futures import Future
+from dataclasses import dataclass
 from typing import Dict, Literal, Optional
 
 from src.instruments import Movable, UsesSerial
@@ -21,6 +23,7 @@ From the STATUS cmd => RESOLUTION ..........1300000
 Also tested from moving, pinging and linear regression.
 
 Imaging velo == 200200 units/s.
+
 """
 MODES: Dict[ModeName, Dict[ModeParams, str]] = {
     "IMAGING": {"GAINS": "5,10,7,1.5,0", "VELO": "0.154"},
@@ -28,11 +31,32 @@ MODES: Dict[ModeName, Dict[ModeParams, str]] = {
 }
 
 
+@dataclass
+class Gains:
+    """
+    GAINS(GF,GI,GP,GV,FT)
+    GP : Gain Proportional
+    GV : Gain Velocity feedback
+    GF : Gain Feedforward
+    GI : Gain Integral action
+    FT : Filter time constant
+    """
+
+    GP: int
+    GI: int
+    GV: float
+    GF: int
+
+    def __str__(self) -> str:
+        return f"GAINS({self.GF},{self.GI},{self.GP},{self.GV},0)"
+
+
+{"SCANNING": Gains(GP=6, GI=10, GV=1.5, GF=5), "FASTMOVE": Gains(GP=7, GI=10, GV=1.5, GF=5)}
+
+
 class YCmd:
     """
     See https://www.parkermotion.com/manuals/Digiplan/ViX-IH_UG_7-03.pdf for more.
-
-
     """
 
     @staticmethod
@@ -75,7 +99,7 @@ class YStage(UsesSerial, Movable):
         self.com.put(lambda: time.sleep(2))
         self.com.repl("W(EX,0)")  # Turn off echo
         self._mode = "MOVING"
-        [self.com.repl(x) for x in ["MA", "ON", "GH"]]
+        self.com.send(["MA", "ON", "GH"])
         self.com.repl(YCmd.GAINS(MODES["MOVING"]["GAINS"]))
         return self.com.is_done()
 

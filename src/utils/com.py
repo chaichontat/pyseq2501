@@ -154,6 +154,7 @@ class COM:
 
         for c in cmd:
             self._send(c, debug=False)
+        self._serial.flush()
 
         out = []
         for c in cmd:
