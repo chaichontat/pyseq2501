@@ -70,26 +70,27 @@ class _Camera:
     @contextmanager
     def _capture(self) -> Generator[None, None, None]:
         API.dcam_capture(self.handle)
+        try:
         yield
+        finally:
         API.dcam_idle(self.handle)
 
     @contextmanager
     def _alloc(self, n_bundles: int) -> Generator[None, None, None]:
         API.dcam_allocframe(self.handle, c_int32(n_bundles))
+        try:
         yield
+        finally:
         API.dcam_freeframe(self.handle)
 
     @contextmanager
     def _lock_memory(self, bundle: int):
         addr = pointer((c_uint16 * self.IMG_WIDTH * self.BUNDLE_HEIGHT)())
         row_bytes = c_int32(0)
-        API.dcam_lockdata(
-            self.handle,
-            pointer(cast(c_void_p, addr)),
-            pointer(row_bytes),
-            c_int32(bundle),
-        )
+        API.dcam_lockdata(self.handle, pointer(cast(c_void_p, addr)), pointer(row_bytes), c_int32(bundle))
+        try:
         yield addr
+        finally:
         API.dcam_unlockdata(self.handle)
 
     @property

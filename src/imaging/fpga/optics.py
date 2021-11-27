@@ -56,5 +56,7 @@ class Optics(FPGAControlled):
     @contextmanager
     def open_shutter(self):
         self.fcom.repl(OpticCmd.OPEN_SHUTTER).result()
-        yield
-        self.fcom.repl(OpticCmd.CLOSE_SHUTTER)
+        try:
+            yield
+        finally:
+            self.fcom.repl(OpticCmd.CLOSE_SHUTTER)
