@@ -47,12 +47,12 @@ class _Camera:
 
     def __init__(self, id_: ID) -> None:
         self.id_ = id_
+        self.handle = c_void_p(0)
+        API.dcam_open(pointer(self.handle), c_int32(id_), None)
+        self.properties = DCAMDict.from_dcam(self.handle)
         self.initialize()
 
     def initialize(self) -> None:
-        self.handle = c_void_p(0)
-        API.dcam_open(pointer(self.handle), c_int32(self.id_), None)
-        self.properties = DCAMDict.from_dcam(self.handle)
         self.sensor_mode = SensorMode.TDI
         API.dcam_precapture(self.handle, DCAM_CAPTURE_MODE.SNAP)
 
@@ -133,11 +133,18 @@ class _Camera:
             return (out[:, :half], out[:, half:])
         return out
 
+    # def getModelInfo(self, camera_id):
+    #     c_buf_len = 20
+    #     c_buf = ctypes.create_string_buffer(c_buf_len)
+    #     dcam.dcam_getmodelinfo(
+    #         c_int32(camera_id), c_int32(DCAM_IDSTR_MODEL), c_buf, c_int(c_buf_len)
+    #     )
+    #     return c_buf.value
+
 
 class Cameras:
-    """Running two cameras simultaneously crashes the cameras, necessitating a HiSeq hard reset."""
+    """Experiments indicated that dcamapi.dll is not thread-safe."""
 
-    BUNDLE_HEIGHT = 128
     IMG_WIDTH = 4096
     BUNDLE_HEIGHT = 128
 
@@ -148,8 +155,16 @@ class Cameras:
 
     def __init__(self) -> None:
         self._executor = ThreadPoolExecutor(max_workers=1)
+        self.post_init()
+
+    @run_in_executor
+    def post_init(self):
+        API.dcam_init(None, pointer(c_void_p(0)), None)
         self._cams = (_Camera(0), _Camera(1))
-        self.initialize()
+
+    @run_in_executor
+    def initialize(self) -> None:
+        [x.initialize() for x in self]
 
     @property
     def sensor_mode(self) -> SensorMode:
@@ -163,10 +178,6 @@ class Cameras:
 
     def status(self) -> None:
         return
-
-    @run_in_executor
-    def initialize(self) -> None:
-        [x.initialize() for x in self]
 
     @contextmanager
     def alloc(self, n_bundles: int) -> Generator[None, None, None]:
