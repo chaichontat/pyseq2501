@@ -95,15 +95,17 @@ class YStage(UsesSerial, Movable):
         self.tol = tol
 
     def initialize(self) -> Future[None]:
+        logger.info("Initializing y-stage.")
         self.com.repl(YCmd.RESET)  # Initialize Stage
         self.com.put(lambda: time.sleep(2))
         self.com.repl("W(EX,0)")  # Turn off echo
+        # self.com.repl("BRAKE0")
         self._mode = "MOVING"
         self.com.send(["MA", "ON", "GH"])
         self.com.repl(YCmd.GAINS(MODES["MOVING"]["GAINS"]))
         return self.com.is_done()
 
-    def move(self, pos: int, slowly: bool = False) -> Future[str]:
+    def move(self, pos: int, slowly: bool = False) -> Future[list]:
         # TODO: Parse
         if not (self.RANGE[0] <= pos <= self.RANGE[1]):
             raise ValueError(f"YSTAGE can only be between {self.RANGE[0]} and {self.RANGE[1]}")
@@ -116,8 +118,7 @@ class YStage(UsesSerial, Movable):
         #         while not self.is_in_position:
         #             time.sleep(0.1)
         #     return curr
-
-        return self.com.repl(YCmd.SET_POS(pos))
+        return self.com.repl([YCmd.SET_POS(pos), YCmd.GO])
 
     @property
     def position(self) -> Future[int]:

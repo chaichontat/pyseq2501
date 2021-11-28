@@ -6,7 +6,7 @@ from concurrent.futures import Future
 from concurrent.futures.thread import ThreadPoolExecutor
 from contextlib import contextmanager
 from ctypes import c_int32, c_uint16, c_void_p, pointer
-from enum import IntEnum
+from enum import Enum, IntEnum
 from itertools import chain
 from logging import getLogger
 from typing import Any, Callable, Generator, Literal, Protocol, cast
@@ -46,6 +46,11 @@ UInt16Array = npt.NDArray[np.uint16]
 FourImages = tuple[UInt16Array, UInt16Array, UInt16Array, UInt16Array]
 
 
+class Mode(Enum):
+    LIVE_AREA = {"sensor_mode": 1, "trigger_source": 1, "contrast_gain": 5}
+    TDI = {"sensor_mode": 4, "trigger_source": 2}
+
+
 class _Camera:
     TDI_EXPOSURE_TIME = 0.002568533333333333
     AREA_EXPOSURE_TIME = 0.005025378
@@ -61,9 +66,10 @@ class _Camera:
 
         self.properties = DCAMDict.from_dcam(self.handle)
         self._capture_mode = DCAM_CAPTURE_MODE.SNAP
+        self.properties["sensor_mode_line_bundle_height"] = 128
 
     def initialize(self) -> None:
-        self.sensor_mode = SensorMode.TDI
+        ...
 
     @property
     def capture_mode(self) -> DCAM_CAPTURE_MODE:
@@ -72,15 +78,6 @@ class _Camera:
     @capture_mode.setter
     def capture_mode(self, m: DCAM_CAPTURE_MODE):
         API.dcam_precapture(self.handle, m)
-
-    @property
-    def sensor_mode(self) -> SensorMode:
-        return SensorMode(int(self.properties["sensor_mode"]))
-
-    @sensor_mode.setter
-    def sensor_mode(self, m: SensorMode) -> None:
-        self.properties["sensor_mode"] = m.value
-        self.properties["sensor_mode_line_bundle_height"] = 128 if m == SensorMode.TDI else 64
 
     @contextmanager
     def capture(self) -> Generator[None, None, None]:
@@ -198,16 +195,6 @@ class Cameras:
     _cams: Future[tuple[_Camera, _Camera]]
     properties: TwoProps
 
-    def __getitem__(self, id_: ID) -> _Camera:
-        return self._cams.result()[id_]
-
-    def __getattr__(self, name: str) -> Any:
-        if name == "properties":
-            logger.debug("Waiting for DCAM API to finish initializing.")
-            self._cams.result()
-            return self.properties
-        raise AttributeError
-
     def __init__(self) -> None:
         self._executor = ThreadPoolExecutor(max_workers=1)
         self._cams = self.post_init()
@@ -217,44 +204,70 @@ class Cameras:
 
     @run_in_executor
     def post_init(self) -> tuple[_Camera, _Camera]:
+        if threading.current_thread() is threading.main_thread():
+            logger.warning("Running on mainthread.")
         t0 = time.time()
         logger.debug("Initializing DCAM API.")
         # This is slow that I need to make sure that the thing is still running.
         th = threading.Thread(target=lambda: API.dcam_init(None, pointer(c_void_p(0)), None))
         th.start()
         while th.is_alive():
-            time.sleep(0.5)
+            time.sleep(2)
             logger.debug(f"Still alive. dcam_init takes about 10s. Taken {time.time() - t0:.2f} s.")
         return (_Camera(0), _Camera(1))
+
+    def __getitem__(self, id_: ID) -> _Camera:
+        return self._cams.result()[id_]
+
+    def __getattr__(self, name: str) -> Any:
+        if name == "properties":
+            logger.warning(
+                "Waiting for DCAM API to finish initializing. Consider not setting properties now."
+            )
+            self._cams.result()
+            return self.properties
+        raise AttributeError
 
     @run_in_executor
     def initialize(self) -> None:
         [x.initialize() for x in self]
+        self.mode = Mode.TDI
 
     @property
     def n_frames_taken(self) -> int:
         return min([c.n_frames_taken for c in self])
 
     @contextmanager
-    def alloc(self, n_bundles: int) -> Generator[tuple[UInt16Array, UInt16Array], None, None]:
+    def _alloc(self, n_bundles: int) -> Generator[tuple[UInt16Array, UInt16Array], None, None]:
         with self[0].alloc(n_bundles) as buf1, self[1].alloc(n_bundles) as buf2:
             logger.debug(f"Allocated memory for {n_bundles} bundles.")
             yield (buf1, buf2)
 
-    def get_bundles(self, bufs: tuple[UInt16Array, UInt16Array], i: int):
+    def _get_bundles(self, bufs: tuple[UInt16Array, UInt16Array], i: int):
         for c, b in zip(self._cams.result(), bufs):
             c.get_bundle(b, i)
         logger.info(f"Retrieved bundle {i}.")
+
+    @property
+    def mode(self):
+        return self._mode
+
+    @mode.setter
+    def mode(self, m: Mode) -> None:
+        self.properties.update(m.value)
+        self._mode = m
 
     @run_in_executor
     def capture(
         self,
         n_bundles: int,
-        start_alloc: Callable[[], None] = lambda: None,
-        start_capture: Callable[[], None] = lambda: None,
+        start_alloc: Callable[[], Any] = lambda: None,
+        start_capture: Callable[[], Any] = lambda: None,
         polling_time: float = 0.1,
     ) -> FourImages:
-        with self.alloc(n_bundles) as bufs:
+        if threading.current_thread() is threading.main_thread():
+            logger.warning("Running on mainthread.")
+        with self._alloc(n_bundles) as bufs:
             taken = 0
             start_alloc()
             with self[0].capture(), self[1].capture():
@@ -262,8 +275,8 @@ class Cameras:
                 while (curr := self.n_frames_taken) < n_bundles:
                     time.sleep(polling_time)
                     if curr > taken:
-                        [self.get_bundles(bufs, i) for i in range(taken, curr)]
+                        [self._get_bundles(bufs, i) for i in range(taken, curr)]
                         taken = curr
             for i in range(taken, max(curr, n_bundles)):
-                self.get_bundles(bufs, i)
+                self._get_bundles(bufs, i)
         return cast(FourImages, (*chain(*(((x[:, :2048], x[:, 2048:]) for x in bufs))),))

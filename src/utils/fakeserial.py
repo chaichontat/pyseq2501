@@ -26,7 +26,7 @@ class FakeSerial:
     name: SerialInstruments
     port_tx: str
     port_rx: Optional[str] = None
-    timeout: float = 1
+    timeout: Optional[int | float] = 1
     logger: Logger | FakeLogger = FakeLogger()
     _buffer: str = field(default="", init=False)
 

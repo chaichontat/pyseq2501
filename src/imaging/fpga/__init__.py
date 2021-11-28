@@ -18,7 +18,7 @@ class FPGACmd:
 
 class FPGA(UsesSerial):
     def __init__(self, port_tx: str, port_rx: str) -> None:
-        self.com = COM("fpga", port_tx, port_rx, logger=logger, timeout=2)
+        self.com = COM("fpga", port_tx, port_rx, logger=logger, timeout=1)
         # self.com_tx = COM("fpga", port_tx, logger=logger)
         # self.com_rx = COM("fpga", port_rx, logger=logger)
 

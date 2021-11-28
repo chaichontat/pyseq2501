@@ -13,7 +13,7 @@ logger = getLogger("laser")
 class LaserCmd:
     @staticmethod
     def v_get_status(resp: str) -> bool:
-        return {"DISABLED": False, "ENABLED": True}[resp]
+        return {"DISABLED": False, "ENABLED": True, "Error:- 00": False}[resp]
 
     @staticmethod
     def v_get_power(resp: str) -> int:

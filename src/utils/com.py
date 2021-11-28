@@ -87,7 +87,7 @@ class COM:
     port_tx: str
     port_rx: Optional[str] = None
     logger: Logger | FakeLogger = FakeLogger()
-    timeout: int | float = 0.5
+    timeout: Optional[int | float] = 1
     _formatter: Formatter = field(init=False)
     _executor: ThreadPoolExecutor = field(init=False)
 
@@ -100,18 +100,19 @@ class COM:
     def __post_init__(self) -> None:
         self.formatter = SERIAL_FORMATTER[self.name]
         use_fake = os.environ.get("FAKE_HISEQ", "0") == "1"
+        self._executor = ThreadPoolExecutor(max_workers=1)
 
         if use_fake:
             self._serial = FakeSerial(self.name, self.port_tx, self.port_rx, self.timeout)
-        else:
-            stx = srx = Serial(self.port_tx, BAUD_RATE[self.name], timeout=self.timeout)
-            if self.port_rx is not None:
-                srx = Serial(self.port_rx, BAUD_RATE[self.name], timeout=self.timeout)
-            self._serial = io.TextIOWrapper(
-                cast(IO[bytes], io.BufferedRWPair(srx, stx)), encoding="ascii", errors="strict"
-            )
+            return
 
-        self._executor = ThreadPoolExecutor(max_workers=1)
+        stx = Serial(self.port_tx, BAUD_RATE[self.name], timeout=self.timeout)
+        if self.port_rx is not None:
+            srx = Serial(self.port_rx, BAUD_RATE[self.name], timeout=self.timeout)
+            self._serial = io.TextIOWrapper(cast(IO[bytes], io.BufferedRWPair(srx, stx)))
+        else:
+            self._serial = io.TextIOWrapper(cast(IO[bytes], stx))
+            # self._serial = io.TextIOWrapper(io.BufferedRandom(stx))
 
     @run_in_executor
     def put(self, f: Callable[[], T]) -> T:
@@ -133,6 +134,7 @@ class COM:
             [self._send(c) for c in cmd]
         else:
             self._send(cmd)
+        self._serial.flush()
 
     @overload
     def _repl(self, cmd: str, oneline: bool = ...) -> str:
@@ -166,8 +168,13 @@ class COM:
                 else:
                     self.logger.warning(f"Verification failed for {c.cmd}. Got {resp}.")
             else:
+                self.logger.debug(f"Tx: {c:10} Rx: {raw:10}")
                 resp = raw
-            out += resp
+
+            if len(cmd) == 1:  # Check if one command.
+                return resp
+            else:
+                out.append(resp)
         return out
 
     @overload
@@ -225,11 +232,9 @@ class COM:
     def is_done(self) -> None:
         return None
 
-    @run_in_executor
     def readline(self) -> str:
         return self._serial.readline()
 
-    @run_in_executor
     def readlines(self) -> list[str]:
         res = self._serial.readlines()
         return res if isinstance(res, list) else [res]
