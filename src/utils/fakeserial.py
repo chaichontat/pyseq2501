@@ -4,7 +4,6 @@ from logging import Logger
 from typing import Optional
 
 from src.instruments_types import SerialInstruments
-from src.utils.utils import FakeLogger
 
 
 def assert_(x: bool):
@@ -27,7 +26,6 @@ class FakeSerial:
     port_tx: str
     port_rx: Optional[str] = None
     timeout: Optional[int | float] = 1
-    logger: Logger | FakeLogger = FakeLogger()
     _buffer: str = field(default="", init=False)
 
     def __post_init__(self) -> None:
@@ -36,9 +34,6 @@ class FakeSerial:
 
     def write(self, s: str) -> None:
         time.sleep(0.5)
-        if self.logger is not None and len(self._buffer):
-            self.logger.warning(f"Writing {s} to {__name__} when buffer is not empty.")
-
         # TODO Put in transformations.
         self._buffer += s
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import pickle
 import threading
 import time
 from concurrent.futures import Future
@@ -9,7 +11,20 @@ from ctypes import c_char_p, c_int32, c_uint16, c_void_p, pointer
 from enum import Enum, IntEnum
 from itertools import chain
 from logging import getLogger
-from typing import Any, Callable, Generator, Literal, Protocol, cast
+from pathlib import Path
+from typing import (
+    Any,
+    Callable,
+    Generator,
+    Generic,
+    Hashable,
+    Literal,
+    MutableMapping,
+    Protocol,
+    TypeVar,
+    cast,
+    get_args,
+)
 
 import numpy as np
 import numpy.typing as npt
@@ -60,12 +75,19 @@ class _Camera:
     BUNDLE_HEIGHT = 128
 
     def __init__(self, id_: ID) -> None:
+        assert id_ in get_args(ID)
         self.id_ = id_
+
         self.handle = c_void_p(0)
         logger.debug(f"Opening cam {id_}")
         API.dcam_open(pointer(self.handle), c_int32(id_), None)
-
-        self.properties = DCAMDict.from_dcam(self.handle)
+        # Check if fake.
+        if os.environ.get("FAKE_HISEQ", "0") == "1" or os.name != "nt":
+            self.properties = DCAMDict(
+                self.handle, pickle.loads((Path(__file__).parent / "saved_props.pk").read_bytes())
+            )
+        else:
+            self.properties = DCAMDict.from_dcam(self.handle)
         self._capture_mode = DCAM_CAPTURE_MODE.SNAP
         self.properties["sensor_mode_line_bundle_height"] = 128
 
@@ -79,6 +101,7 @@ class _Camera:
     @capture_mode.setter
     def capture_mode(self, m: DCAM_CAPTURE_MODE):
         API.dcam_precapture(self.handle, m)
+        self._capture_mode = m
 
     @contextmanager
     def capture(self) -> Generator[None, None, None]:
@@ -120,7 +143,7 @@ class _Camera:
         API.dcam_getstatus(self.handle, pointer(s))
         try:
             return Status(s.value)
-        except KeyError:
+        except ValueError:
             raise DCAMException(f"Invalid status. Got {s.value}.")
 
     @property
@@ -138,29 +161,25 @@ class _Camera:
             )
 
 
-class GetSetable(Protocol):
-    def __getitem__(self, name: Any) -> Any:
-        ...
-
-    def __setitem__(self, name: Any, value: Any) -> None:
-        ...
+T = TypeVar("T", bound=Hashable)
+R = TypeVar("R")
 
 
-class TwoProps:
-    def __init__(self, prop1: GetSetable, prop2: GetSetable) -> None:
+class TwoProps(Generic[T, R]):
+    def __init__(self, prop1: MutableMapping[T, R], prop2: MutableMapping[T, R]) -> None:
         self._props = (prop1, prop2)
 
-    def __getitem__(self, name: str) -> Any:
+    def __getitem__(self, name: T) -> R:
         a, b = self._props
         if (out := a[name]) != b[name]:
             raise Exception("Value not equal between two props. Check each individually.")
         return out
 
-    def __setitem__(self, name: str, value: Any) -> None:
+    def __setitem__(self, name: T, value: R) -> None:
         for p in self._props:
             p[name] = value
 
-    def update(self, to_change: dict[str, Any]):
+    def update(self, to_change: dict[T, R]):
         for k, v in to_change.items():
             self[k] = v
 
@@ -182,17 +201,16 @@ class Cameras:
         )
 
     @run_in_executor
+    @warn_main_thread
     def post_init(self) -> tuple[_Camera, _Camera]:
-        if threading.current_thread() is threading.main_thread():
-            logger.warning("Running on mainthread.")
         t0 = time.time()
-        logger.debug("Initializing DCAM API.")
+        logger.info("Initializing DCAM API.")
         # This is slow that I need to make sure that the thing is still running.
         th = threading.Thread(target=lambda: API.dcam_init(c_void_p(0), pointer(c_int32(0)), c_char_p(0)))
         th.start()
         while th.is_alive():
             time.sleep(2)
-            logger.debug(f"Still alive. dcam_init takes about 10s. Taken {time.time() - t0:.2f} s.")
+            logger.info(f"Still alive. dcam_init takes about 10s. Taken {time.time() - t0:.2f} s.")
         return (_Camera(0), _Camera(1))
 
     def __getitem__(self, id_: ID) -> _Camera:
@@ -238,7 +256,7 @@ class Cameras:
         self._mode = m
 
     @run_in_executor
-    @warn_main_thread(logger)
+    @warn_main_thread
     def capture(
         self,
         n_bundles: int,

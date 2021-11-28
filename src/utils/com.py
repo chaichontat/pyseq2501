@@ -6,13 +6,13 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from logging import Logger, getLogger
-from typing import IO, Any, Callable, Generic, Optional, ParamSpec, TypeGuard, TypeVar, Union, cast, overload
+from typing import IO, Any, Callable, Generic, Optional, ParamSpec, TypeVar, Union, cast, overload
 
 from serial import Serial
 from src.instruments_types import SerialInstruments
 
 from .fakeserial import FakeSerial
-from .utils import FakeLogger, run_in_executor
+from .utils import run_in_executor
 
 ReturnsStr = TypeVar("ReturnsStr", bound=Callable[..., str])
 T = TypeVar("T")
@@ -99,9 +99,9 @@ class COM:
 
     def __post_init__(self) -> None:
         self.formatter = SERIAL_FORMATTER[self.name]
-        use_fake = os.environ.get("FAKE_HISEQ", "0") == "1"
+        use_fake = os.environ.get("FAKE_HISEQ", "0") == "1" or os.name != "nt"
         self._executor = ThreadPoolExecutor(max_workers=1)
-        self.logger = getLogger(f"{self.name}COM")
+        self.logger = getLogger(f"COM{self.name}")
 
         if use_fake:
             self._serial = FakeSerial(self.name, self.port_tx, self.port_rx, self.timeout)
@@ -113,7 +113,6 @@ class COM:
             self._serial = io.TextIOWrapper(cast(IO[bytes], io.BufferedRWPair(srx, stx)))
         else:
             self._serial = io.TextIOWrapper(cast(IO[bytes], stx))
-            # self._serial = io.TextIOWrapper(io.BufferedRandom(stx))
 
     @run_in_executor
     def put(self, f: Callable[[], T]) -> T:

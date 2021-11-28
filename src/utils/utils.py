@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import threading
+import warnings
 from concurrent.futures import Future, ThreadPoolExecutor
 from functools import wraps
 from logging import Logger
@@ -53,17 +54,14 @@ def run_in_executor(f: Callable[P, T]) -> Callable[P, Future[T]]:
     return inner
 
 
-def warn_main_thread(logger: Logger):
-    def product(f: Callable[P, T]) -> Callable[P, T]:
-        @wraps(f)
-        def inner(*args: P.args, **kwargs: P.kwargs) -> T:
-            if threading.current_thread() is threading.main_thread():
-                logger.warning("Running on main thread.")
-            return f(*args, **kwargs)
+def warn_main_thread(f: Callable[P, T]) -> Callable[P, T]:
+    @wraps(f)
+    def inner(*args: P.args, **kwargs: P.kwargs) -> T:
+        if threading.current_thread() is threading.main_thread():
+            warnings.warn(f"{f.__name__} is running on main thread.")
+        return f(*args, **kwargs)
 
-        return inner
-
-    return product
+    return inner
 
 
 class FakeLogger:

@@ -4,7 +4,7 @@ import ctypes
 from ctypes import c_double, c_int32, pointer
 from dataclasses import dataclass
 from logging import getLogger
-from typing import Optional, Type, cast, get_args
+from typing import Iterator, MutableMapping, Optional, Type, cast, get_args
 
 from . import API
 from .dcam_api import DCAMReturnedZero
@@ -60,7 +60,7 @@ class DCAMProperty:
 
 
 # TODO Get default DCAM dict.
-class DCAMDict:
+class DCAMDict(MutableMapping):
     _TYPES = PrecomputedPropTypes
 
     def __init__(self, handle: Handle, prop_dict: dict[Props, DCAMProperty]):
@@ -86,6 +86,15 @@ class DCAMDict:
         # prop.value = check.value
         # assert prop.value == value
         prop.value = ctypes.c_double(value).value
+
+    def __delitem__(self, _: Props):
+        raise Exception("Cannot remove properties!")
+
+    def __iter__(self) -> Iterator[Props]:
+        return iter(self._dict)
+
+    def __len__(self) -> int:
+        return len(self._dict)
 
     def __str__(self) -> str:
         return f"Properties: {{{', '.join(map(str, self._dict.values()))}}}"
