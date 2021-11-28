@@ -15,12 +15,13 @@ import numpy as np
 import numpy.typing as npt
 from src.imaging.camera.dcam_api import DCAM_CAPTURE_MODE
 from src.utils.com import run_in_executor
+from src.utils.utils import warn_main_thread
 
 from . import API
 from .dcam_api import DCAMException
 from .dcam_props import DCAMDict
 
-logger = getLogger("dcam")
+logger = getLogger("DCAM")
 # DCAMAPI v3.0.301.3690
 
 
@@ -52,8 +53,8 @@ class Mode(Enum):
 
 
 class _Camera:
-    TDI_EXPOSURE_TIME = 0.002568533333333333
-    AREA_EXPOSURE_TIME = 0.005025378
+    # TDI_EXPOSURE_TIME = 0.002568533333333333
+    # AREA_EXPOSURE_TIME = 0.005025378
 
     IMG_WIDTH = 4096
     BUNDLE_HEIGHT = 128
@@ -129,28 +130,6 @@ class _Camera:
         f_count = c_int32(-1)
         API.dcam_gettransferinfo(self.handle, pointer(b_index), pointer(f_count))
         return int(f_count.value)
-
-    # @overload
-    # def get_images(self, n_bundles: int, split: Literal[True] = ...) -> tuple[UInt16Array, UInt16Array]:
-    #     ...
-
-    # @overload
-    # def get_images(self, n_bundles: int, split: Literal[False] = ...) -> UInt16Array:
-    #     ...
-
-    # def get_images(self, n_bundles: int, split: bool = True) -> UInt16Array | tuple[UInt16Array, UInt16Array]:
-    #     out: npt.NDArray[np.uint16] = np.empty(
-    #         (n_bundles * self.BUNDLE_HEIGHT, self.IMG_WIDTH), dtype=np.uint16
-    #     )
-
-    #     for i in range(n_bundles):
-    #         with self._lock_memory(i) as addr:
-    #             out[i * self.BUNDLE_HEIGHT : (i + 1) * self.BUNDLE_HEIGHT, :] = np.asarray(addr.contents)
-
-    #     if split:
-    #         half = int(self.IMG_WIDTH / 2)
-    #         return (out[:, :half], out[:, half:])
-    #     return out
 
     def get_bundle(self, buf: UInt16Array, n_curr: int) -> None:
         with self._lock_memory(n_curr) as addr:
@@ -246,7 +225,8 @@ class Cameras:
     def _get_bundles(self, bufs: tuple[UInt16Array, UInt16Array], i: int):
         for c, b in zip(self._cams.result(), bufs):
             c.get_bundle(b, i)
-        logger.info(f"Retrieved bundle {i}.")
+        if i == 0 or i % 5 == 0:
+            logger.info(f"Retrieved bundle {i + 1}.")
 
     @property
     def mode(self):
@@ -258,25 +238,30 @@ class Cameras:
         self._mode = m
 
     @run_in_executor
+    @warn_main_thread(logger)
     def capture(
         self,
         n_bundles: int,
         start_alloc: Callable[[], Any] = lambda: None,
         start_capture: Callable[[], Any] = lambda: None,
-        polling_time: float = 0.1,
+        polling_time: float | int = 0.1,
+        timeout: float | int = 5,
     ) -> FourImages:
-        if threading.current_thread() is threading.main_thread():
-            logger.warning("Running on mainthread.")
         with self._alloc(n_bundles) as bufs:
             taken = 0
             start_alloc()
             with self[0].capture(), self[1].capture():
                 start_capture()
-                while (curr := self.n_frames_taken) < n_bundles:
+                t0 = time.time()
+                while (avail := self.n_frames_taken) < n_bundles:
                     time.sleep(polling_time)
-                    if curr > taken:
-                        [self._get_bundles(bufs, i) for i in range(taken, curr)]
-                        taken = curr
-            for i in range(taken, max(curr, n_bundles)):
+                    if avail > taken:
+                        [self._get_bundles(bufs, i) for i in range(taken, avail)]
+                        taken = avail
+                    if taken == 0 and time.time() - t0 > timeout:
+                        raise Exception(f"Did not capture a single bundle before {timeout=}s.")
+            # Done. Retrieve images.
+            for i in range(taken, max(avail, n_bundles)):
                 self._get_bundles(bufs, i)
+            logger.info(f"Retrieved bundle {n_bundles}.")
         return cast(FourImages, (*chain(*(((x[:, :2048], x[:, 2048:]) for x in bufs))),))

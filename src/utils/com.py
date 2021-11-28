@@ -5,7 +5,7 @@ import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from logging import Logger
+from logging import Logger, getLogger
 from typing import IO, Any, Callable, Generic, Optional, ParamSpec, TypeGuard, TypeVar, Union, cast, overload
 
 from serial import Serial
@@ -86,8 +86,8 @@ class COM:
     name: SerialInstruments
     port_tx: str
     port_rx: Optional[str] = None
-    logger: Logger | FakeLogger = FakeLogger()
     timeout: Optional[int | float] = 1
+    logger: Logger = field(init=False)
     _formatter: Formatter = field(init=False)
     _executor: ThreadPoolExecutor = field(init=False)
 
@@ -101,6 +101,7 @@ class COM:
         self.formatter = SERIAL_FORMATTER[self.name]
         use_fake = os.environ.get("FAKE_HISEQ", "0") == "1"
         self._executor = ThreadPoolExecutor(max_workers=1)
+        self.logger = getLogger(f"{self.name}COM")
 
         if use_fake:
             self._serial = FakeSerial(self.name, self.port_tx, self.port_rx, self.timeout)
@@ -118,15 +119,14 @@ class COM:
     def put(self, f: Callable[[], T]) -> T:
         return f()
 
-    def _send(self, cmd: str | CmdParse[Any], debug: bool = True) -> None:
+    def _send(self, cmd: str | CmdParse[Any]) -> None:
         if isinstance(cmd, CmdParse):
             if isinstance(x := cmd.cmd, str):
                 cmd = x
             else:
                 raise TypeError("This command requires an argument, call this command first.")
         self._serial.write(self.formatter(cmd))
-        if debug:
-            self.logger.debug(f"Tx: {cmd:10}")
+        self.logger.debug(f"Tx: {cmd:10}")
 
     @run_in_executor
     def send(self, cmd: str | list[str]) -> None:
@@ -155,18 +155,20 @@ class COM:
             cmd = [cmd]
 
         for c in cmd:
-            self._send(c, debug=False)
+            self._send(c)
         self._serial.flush()
 
         out = []
         for c in cmd:
             raw = self._serial.readline().strip() if oneline else "".join(self._serial.readlines())
             if isinstance(c, CmdParse):
-                resp = c.parser(raw)
-                if bool(resp):
-                    self.logger.debug(f"Tx: {c.cmd:10} Rx: {raw:10} [green]Verified")
+                try:
+                    resp = c.parser(raw)
+                except Exception as e:
+                    self.logger.warning(f"Verification failed for {c.cmd}. Got {raw} with {e}.")
+                    resp = raw
                 else:
-                    self.logger.warning(f"Verification failed for {c.cmd}. Got {resp}.")
+                    self.logger.debug(f"Tx: {c.cmd:10} Rx: {raw:10} [green]Verified")
             else:
                 self.logger.debug(f"Tx: {c:10} Rx: {raw:10}")
                 resp = raw

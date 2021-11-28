@@ -7,7 +7,7 @@ from src.instruments import UsesSerial
 from src.utils.com import COM, CmdParse, is_between
 from src.utils.utils import gen_future
 
-logger = getLogger("laser")
+logger = getLogger("Laser")
 
 
 class LaserCmd:
@@ -33,7 +33,7 @@ class Laser(UsesSerial):
     cmd = LaserCmd
 
     def __init__(self, port_tx: str) -> None:
-        self.com = COM("laser_r", port_tx=port_tx, logger=logger)  # Doesn't matter if laser_r or g.
+        self.com = COM("laser_r", port_tx=port_tx)  # Doesn't matter if laser_r or g.
         self._on = False
         self.com.repl(LaserCmd.GET_STATUS).add_done_callback(lambda x: setattr(self, "_on", x.result()))
 

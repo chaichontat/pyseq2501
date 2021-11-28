@@ -9,7 +9,7 @@ from .optics import Optics
 from .tdi import TDI
 from .zstage import ZStage
 
-logger = getLogger(__name__)
+logger = getLogger("fpga")
 
 
 class FPGACmd:
@@ -18,10 +18,7 @@ class FPGACmd:
 
 class FPGA(UsesSerial):
     def __init__(self, port_tx: str, port_rx: str) -> None:
-        self.com = COM("fpga", port_tx, port_rx, logger=logger, timeout=1)
-        # self.com_tx = COM("fpga", port_tx, logger=logger)
-        # self.com_rx = COM("fpga", port_rx, logger=logger)
-
+        self.com = COM("fpga", port_tx, port_rx, timeout=1)
         self.tdi = TDI(self.com)
         self.led = LED(self.com)
         self.optics = Optics(self.com)
@@ -30,4 +27,5 @@ class FPGA(UsesSerial):
         # assert all([x.fcom is self.com for x in (self.tdi, self.led, self.optics, self.z)])  # type: ignore[attr-defined]
 
     def initialize(self) -> Future[bool]:
+        self.com.repl(FPGACmd.RESET)
         return self.com.repl(FPGACmd.RESET)

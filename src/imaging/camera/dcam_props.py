@@ -9,9 +9,16 @@ from typing import Optional, Type, cast, get_args
 from . import API
 from .dcam_api import DCAMReturnedZero
 from .dcam_mode_key import MODE_KEY
-from .dcam_types import (DCAM_PARAM_PROPERTYATTR, DCAMPROP_OPTION_NEAREST,
-                         DCAMPROP_OPTION_NEXT, DCAMParamPropertyAttr, Handle,
-                         PrecomputedPropTypes, Props, PropTypes)
+from .dcam_types import (
+    DCAM_PARAM_PROPERTYATTR,
+    DCAMPROP_OPTION_NEAREST,
+    DCAMPROP_OPTION_NEXT,
+    DCAMParamPropertyAttr,
+    Handle,
+    PrecomputedPropTypes,
+    Props,
+    PropTypes,
+)
 
 # /* DCAM-API 3.0 */
 # BOOL DCAMAPI dcam_getpropertyattr	( HDCAM h, DCAM_PROPERTYATTR* param );

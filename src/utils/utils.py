@@ -3,19 +3,9 @@ from __future__ import annotations
 import threading
 from concurrent.futures import Future, ThreadPoolExecutor
 from functools import wraps
+from logging import Logger
 from math import ceil
-from typing import (
-    Callable,
-    Dict,
-    Literal,
-    Optional,
-    ParamSpec,
-    Protocol,
-    Tuple,
-    TypedDict,
-    TypeVar,
-    cast,
-)
+from typing import Callable, Dict, Literal, Optional, ParamSpec, Protocol, Tuple, TypedDict, TypeVar, cast
 
 TILE_WIDTH = 0.769  # mm
 RESOLUTION = 0.375  # µm / px
@@ -51,15 +41,29 @@ def run_in_executor(f: Callable[P, T]) -> Callable[P, Future[T]]:
     """
 
     @wraps(f)
-    def inner(self: Threaded, *args: P.args, **kwargs: P.kwargs) -> Future[T]:
+    def inner(*args: P.args, **kwargs: P.kwargs) -> Future[T]:
+        self = cast(Threaded, args[0])
         if threading.current_thread() not in self._executor._threads:
-            return cast(Future[T], self._executor.submit(lambda: f(self, *args, **kwargs)))  # type: ignore
+            return cast(Future[T], self._executor.submit(lambda: f(*args, **kwargs)))
         else:
             future: Future[T] = Future()
-            future.set_result(f(self, *args, **kwargs))  # type: ignore
+            future.set_result(f(*args, **kwargs))
             return future
 
     return inner
+
+
+def warn_main_thread(logger: Logger):
+    def product(f: Callable[P, T]) -> Callable[P, T]:
+        @wraps(f)
+        def inner(*args: P.args, **kwargs: P.kwargs) -> T:
+            if threading.current_thread() is threading.main_thread():
+                logger.warning("Running on main thread.")
+            return f(*args, **kwargs)
+
+        return inner
+
+    return product
 
 
 class FakeLogger:

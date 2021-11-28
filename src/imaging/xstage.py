@@ -4,7 +4,7 @@ from concurrent.futures import Future
 from src.instruments import Movable, UsesSerial
 from src.utils.com import COM, CmdParse
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("XStage")
 
 # fmt: off
 class XCmd:
@@ -28,57 +28,84 @@ class XStage(UsesSerial, Movable):
     cmd = XCmd
 
     def __init__(self, port_tx: str) -> None:
-        self.com = COM("x", port_tx, logger=logger)
+        self.com = COM("x", port_tx)
 
     @property
     def position(self) -> Future:
         ...
 
     def initialize(self) -> None:
+        logger.info("Initializing x-stage.")
         """Initialize the xstage."""
 
         # Initialize Stage
-        response = self.com.repl("\x03")
+        # self.com.repl("\x03", oneline=False)
+        self.com.send(
+            [
+                "\x03",
+                "EM=2",
+                "EE=1",
+                "VI=640",
+                "VM=6144",
+                "A=4000",
+                "D=4000",
+                "S1=1,0,0",
+                "S2=3,1,0",
+                "S3=2,1,0",
+                "SM=0",
+                "LM=1",
+                "DB=8",
+                "D1=5",
+                "HC=20",
+                "RC=100",
+                "PG 1",
+                "HM 1",
+                "H",
+                "P=30000",
+                "E",
+                "PG",
+            ]
+        ).add_done_callback(lambda _: print(self.com.readlines()))
 
-        # Change echo mode to respond only to print and list
-        response = self.com.repl("EM=2")
-        # Enable Encoder
-        response = self.com.repl("EE=1")
-        # Set Initial Velocity
-        response = self.com.repl("VI=410")  # From Illumina log Ln 5247
-        # Set Max Velocity
-        response = self.com.repl("VM=6144")  # From Illumina log Ln 5243
-        # Set Acceleration
-        response = self.com.repl("A=4000")
-        # Set Deceleration
-        response = self.com.repl("D=4000")
-        # Set Home
-        response = self.com.repl("S1=1,0,0")
-        # Set Neg. Limit
-        response = self.com.repl("S2=3,1,0")
-        # Set Pos. Limit
-        response = self.com.repl("S3=2,1,0")
-        # Set Stall Mode = stop motor
-        response = self.com.repl("SM=0")
-        # limit mode = stop if sensed
-        response = self.com.repl("LM=1")
-        # Encoder Deadband
-        response = self.com.repl("DB=8")
-        # Debounce home
-        response = self.com.repl("D1=5")
-        # Set hold current
-        response = self.com.repl("HC=20")
-        # Set run current
-        response = self.com.repl("RC=100")
+        # # Change echo mode to respond only to print and list
+        # response = self.com.repl("EM=2")
+        # # Enable Encoder
+        # response = self.com.repl("EE=1")
+        # # Set Initial Velocity
+        # response = self.com.repl("VI=410")  # From Illumina log Ln 5247
+        # # Set Max Velocity
+        # response = self.com.repl("VM=6144")  # From Illumina log Ln 5243
+        # # Set Acceleration
+        # response = self.com.repl("A=4000")
+        # # Set Deceleration
+        # response = self.com.repl("D=4000")
+        # # Set Home
+        # response = self.com.repl("S1=1,0,0")
+        # # Set Neg. Limit
+        # response = self.com.repl("S2=3,1,0")
+        # # Set Pos. Limit
+        # response = self.com.repl("S3=2,1,0")
+        # # Set Stall Mode = stop motor
+        # response = self.com.repl("SM=0")
+        # # limit mode = stop if sensed
+        # response = self.com.repl("LM=1")
+        # # Encoder Deadband
+        # response = self.com.repl("DB=8")
+        # # Debounce home
+        # response = self.com.repl("D1=5")
+        # # Set hold current
+        # response = self.com.repl("HC=20")
+        # # Set run current
+        # response = self.com.repl("RC=100")
 
-        # Home stage program
-        self.com.send("PG 1")
-        self.com.send("HM 1")
-        self.com.send("H")
-        self.com.send("P = 30000")
-        self.com.send("E")
-        self.com.send("PG")
-        self.com._serial.flush()
+        # # Home stage program
+        # self.com.send("PG 1")
+        # self.com.send("HM 1")
+        # self.com.send("H")
+        # self.com.send("P = 30000")
+        # self.com.send("E")
+        # self.com.send("PG")
+        # self.com._serial.flush()
 
         # Check if stage is homed correctly
         self.com.repl("EX 1")  # Execute home stage program

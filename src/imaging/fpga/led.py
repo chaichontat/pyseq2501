@@ -5,7 +5,7 @@ from typing import Literal
 from src.instruments import FPGAControlled
 from src.utils.com import COM, CmdParse, ok_if_match
 
-logger = getLogger(__name__)
+logger = getLogger("LED")
 
 ID = Literal[1, 2]
 
