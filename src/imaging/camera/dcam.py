@@ -5,7 +5,7 @@ import time
 from concurrent.futures import Future
 from concurrent.futures.thread import ThreadPoolExecutor
 from contextlib import contextmanager
-from ctypes import c_int32, c_uint16, c_void_p, pointer
+from ctypes import c_char_p, c_int32, c_uint16, c_void_p, pointer
 from enum import Enum, IntEnum
 from itertools import chain
 from logging import getLogger
@@ -188,7 +188,7 @@ class Cameras:
         t0 = time.time()
         logger.debug("Initializing DCAM API.")
         # This is slow that I need to make sure that the thing is still running.
-        th = threading.Thread(target=lambda: API.dcam_init(None, pointer(c_void_p(0)), None))
+        th = threading.Thread(target=lambda: API.dcam_init(c_void_p(0), pointer(c_int32(0)), c_char_p(0)))
         th.start()
         while th.is_alive():
             time.sleep(2)
