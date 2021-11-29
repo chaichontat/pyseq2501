@@ -4,5 +4,6 @@ dependencies:
   - python=3.10
   - numpy
   - pyserial
+  - pytest
   - returns
   - rich

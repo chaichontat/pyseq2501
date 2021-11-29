@@ -47,5 +47,4 @@ jobs:
           pyright --warnings src/
       - name: Test with Pytest
         run: |
-          conda install pytest
           pytest src/

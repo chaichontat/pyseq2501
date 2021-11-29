@@ -9,7 +9,7 @@ from typing import Callable, ParamSpec, TypeVar
 P = ParamSpec("P")
 R = TypeVar("R")
 
-if os.name == "nt":
+if os.name == "nt" and os.environ.get("FAKE_HISEQ", "0") != "1":
     from ctypes import WinDLL
 else:
 
@@ -58,7 +58,8 @@ def check_if_failed(f: Callable[P, R]) -> Callable[P, R]:
     return wrapper
 
 
-class DCAMAPI(WinDLL):
+# Ignore because in Windows, Pylance would complain that WinDLL is not a base class.
+class DCAMAPI(WinDLL):  # type: ignore
     def __init__(self) -> None:
         super().__init__("dcamapi.dll")
 

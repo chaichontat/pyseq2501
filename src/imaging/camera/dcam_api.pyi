@@ -4,7 +4,7 @@ from typing import Any, Callable, Optional, ParamSpec, TypeVar, cast
 P = ParamSpec("P")
 R = TypeVar("R")
 
-if os.name == "nt":
+if os.name == "nt" and os.environ.get("FAKE_HISEQ", "0") != "1":
     from ctypes import WinDLL
 else:
     class WinDLL:
