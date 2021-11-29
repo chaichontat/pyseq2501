@@ -8,7 +8,7 @@ from typing import Iterator, MutableMapping, Optional, Type, cast, get_args
 
 from . import API
 from .dcam_api import DCAMReturnedZero
-from .dcam_mode_key import MODE_KEY
+from .dcam_mode_key import MODE_KEY, get_mode_key
 from .dcam_types import (
     DCAM_PARAM_PROPERTYATTR,
     DCAMPROP_OPTION_NEAREST,
@@ -51,9 +51,8 @@ class DCAMProperty:
     def type_(self) -> PropTypes:
         return self.attr.type_
 
-    @property
-    def mode_key(self) -> Optional[dict[bytes, int]]:
-        return MODE_KEY[self.name]
+    def mode_key(self, h: Handle) -> Optional[dict[str, int]]:
+        return get_mode_key(h, self.attr)
 
     def __str__(self) -> str:
         return f"{self.name}: {self.value}"

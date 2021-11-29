@@ -63,8 +63,8 @@ FourImages = tuple[UInt16Array, UInt16Array, UInt16Array, UInt16Array]
 
 
 class Mode(Enum):
-    LIVE_AREA = {"sensor_mode": 1, "trigger_source": 1, "contrast_gain": 5}
-    TDI = {"sensor_mode": 4, "trigger_source": 2}
+    LIVE_AREA = {"sensor_mode": 1, "contrast_gain": 5}
+    TDI = {"sensor_mode": 4, "contrast_gain": 0}
 
 
 class _Camera:
@@ -82,15 +82,17 @@ class _Camera:
         logger.debug(f"Opening cam {id_}")
         API.dcam_open(pointer(self.handle), c_int32(id_), None)
         # Check if fake.
-        if os.environ.get("FAKE_HISEQ", "0") == "1" or os.name != "nt":
-            self.properties = DCAMDict(
-                self.handle, pickle.loads((Path(__file__).parent / "saved_props.pk").read_bytes())
-            )
-        else:
-            self.properties = DCAMDict.from_dcam(self.handle)
         self._capture_mode = DCAM_CAPTURE_MODE.SNAP
         self.properties["sensor_mode_line_bundle_height"] = 128
         self._mode = Mode.TDI
+
+    @property
+    def properties(self) -> DCAMDict:
+        if os.environ.get("FAKE_HISEQ", "0") == "1" or os.name != "nt":
+            return DCAMDict(
+                self.handle, pickle.loads((Path(__file__).parent / "saved_props.pk").read_bytes())
+            )
+        return DCAMDict.from_dcam(self.handle)
 
     def initialize(self) -> None:
         ...
