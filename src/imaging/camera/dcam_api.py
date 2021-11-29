@@ -51,9 +51,9 @@ def check_if_failed(f: Callable[P, R]) -> Callable[P, R]:
     return wrapper
 
 
-class CheckedDCAMAPI(DCAMAPI):
+class CheckedDCAMAPI(DCAMAPI):  # type: ignore
     def __getitem__(self, name: str) -> Callable[..., bool]:
-        return check_if_failed(super().__getitem__(name))  # type: ignore
+        return check_if_failed(super().__getitem__(name))
 
 
 class DCAMException(Exception):
