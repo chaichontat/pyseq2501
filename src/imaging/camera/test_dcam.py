@@ -1,10 +1,14 @@
+from ctypes import c_char_p, c_int32, c_void_p, pointer
+
 import pytest
 from src.imaging.camera.dcam_api import DCAM_CAPTURE_MODE, DCAMException, check_if_failed
 
+from . import API
 from .dcam import Cameras, TwoProps, _Camera
 
 
 def test_camera():
+    API.dcam_init(c_void_p(0), pointer(c_int32(0)), c_char_p(0))
     c = _Camera(0)
     assert c.capture_mode == DCAM_CAPTURE_MODE.SNAP
     c.capture_mode = DCAM_CAPTURE_MODE.SEQUENCE

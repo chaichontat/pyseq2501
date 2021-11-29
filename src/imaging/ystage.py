@@ -101,8 +101,8 @@ class YStage(UsesSerial, Movable):
         self.com.repl("W(EX,0)")  # Turn off echo
         # self.com.repl("BRAKE0")
         self._mode = "MOVING"
-        self.com.send(["MA", "ON", "GH"])
         self.com.repl(YCmd.GAINS(MODES["MOVING"]["GAINS"]))
+        self.com.send(["MA", "ON", "GH"])
         return self.com.is_done()
 
     def move(self, pos: int, slowly: bool = False, monitor: bool = False) -> Future[None]:

@@ -7,7 +7,7 @@ import time
 from concurrent.futures import Future
 from concurrent.futures.thread import ThreadPoolExecutor
 from contextlib import contextmanager
-from ctypes import c_char_p, c_int32, c_uint16, c_void_p, pointer
+from ctypes import c_char_p, c_int32, c_uint16, c_uint32, c_void_p, pointer
 from enum import Enum, IntEnum
 from itertools import chain
 from logging import getLogger
@@ -90,6 +90,7 @@ class _Camera:
             self.properties = DCAMDict.from_dcam(self.handle)
         self._capture_mode = DCAM_CAPTURE_MODE.SNAP
         self.properties["sensor_mode_line_bundle_height"] = 128
+        self._mode = Mode.TDI
 
     def initialize(self) -> None:
         ...
@@ -116,15 +117,10 @@ class _Camera:
         out: npt.NDArray[np.uint16] = np.empty(
             (n_bundles * self.BUNDLE_HEIGHT, self.IMG_WIDTH), dtype=np.uint16
         )
-        API.dcam_allocframe(self.handle, c_int32(n_bundles))
-        # Failed attempt at using attachbuffer.
-        # test = np.zeros((n_bundles * self.BUNDLE_HEIGHT, self.IMG_WIDTH), dtype=np.uint16)
-        # p = test.ctypes.data
-        # API.dcam_attachbuffer(self.handle, pointer(c_void_p(p)), c_uint32(n_bundles))
         try:
+            API.dcam_allocframe(self.handle, c_int32(n_bundles))
             yield out
         finally:
-            # API.dcam_releasebuffer(self.handle)
             API.dcam_freeframe(self.handle)
 
     @contextmanager
@@ -145,6 +141,19 @@ class _Camera:
             return Status(s.value)
         except ValueError:
             raise DCAMException(f"Invalid status. Got {s.value}.")
+
+    # @contextmanager
+    # def attach(self, n_bundles: int, arr: npt.NDArray[np.uint16]) -> Generator[None, None, None]:
+    #     # TODO Somehow stuck at 4 frames.
+    #     addr = arr.ctypes.data
+    #     ptr_arr = (c_void_p * n_bundles)()
+    #     for i in range(n_bundles):
+    #         ptr_arr[i] = 524288 * i + addr
+    #     try:
+    #         API.dcam_attachbuffer(self.handle, ptr_arr, c_uint32(n_bundles))
+    #         yield
+    #     finally:
+    #         API.dcam_releasebuffer(self.handle)
 
     @property
     def n_frames_taken(self) -> int:
@@ -240,6 +249,16 @@ class Cameras:
             logger.debug(f"Allocated memory for {n_bundles} bundles.")
             yield (buf1, buf2)
 
+    # @contextmanager
+    # def _attach(self, n_bundles: int) -> Generator[tuple[UInt16Array, UInt16Array], None, None]:
+    #     # TODO Somehow stuck at 4 frames.
+    #     buf1 = np.ones((n_bundles * 128, 4096), dtype=np.uint16)
+    #     buf2 = buf1.copy()
+    #     assert buf1.ctypes.data != buf2.ctypes.data
+    #     with self[0].attach(n_bundles, buf1), self[1].attach(n_bundles, buf2):
+    #         logger.debug(f"Allocated memory for {n_bundles} bundles.")
+    #         yield (buf1, buf2)
+
     def _get_bundles(self, bufs: tuple[UInt16Array, UInt16Array], i: int):
         for c, b in zip(self._cams.result(), bufs):
             c.get_bundle(b, i)
@@ -281,5 +300,5 @@ class Cameras:
             # Done. Retrieve images.
             for i in range(taken, max(avail, n_bundles)):
                 self._get_bundles(bufs, i)
-            logger.info(f"Retrieved bundle {n_bundles}.")
+            logger.info(f"Retrieved all {n_bundles} bundles.")
         return cast(FourImages, (*chain(*(((x[:, :2048], x[:, 2048:]) for x in bufs))),))

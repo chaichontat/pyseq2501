@@ -137,7 +137,7 @@ class FakeAPI:
         return True
 
     # /*** --- user memory support --- ***/
-    def dcam_attachbuffer(self, h: Handle, frames: pointer[c_void_p], size: c_uint32) -> bool:
+    def dcam_attachbuffer(self, h: Handle, frames: Array[c_void_p], size: c_uint32) -> bool:
         """This allows the user to attach his/her own data buffer instead of using DCAM_ALLOCFRAME and using the DCAM buffer. This function accepts an array of pointers to image buffers. If used, this will take the place of DCAM_ALLOCFRAME and set the camera from STABLE to READY state."""
         return False
 
