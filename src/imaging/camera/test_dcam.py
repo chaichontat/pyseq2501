@@ -3,8 +3,6 @@ from src.imaging.camera.dcam_api import DCAM_CAPTURE_MODE, DCAMException, check_
 
 from .dcam import Cameras, TwoProps, _Camera
 
-# TODO: Make fake DCAM more sophisticated.
-
 
 def test_camera():
     c = _Camera(0)
@@ -12,10 +10,7 @@ def test_camera():
     c.capture_mode = DCAM_CAPTURE_MODE.SEQUENCE
     assert c.capture_mode == DCAM_CAPTURE_MODE.SEQUENCE
 
-    with pytest.raises(DCAMException):
-        c.status
-
-    assert c.n_frames_taken == -1
+    assert c.n_frames_taken == 0
 
     with c.alloc(8) as buf:
         with c.capture():

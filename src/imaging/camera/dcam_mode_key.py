@@ -1,12 +1,18 @@
 from __future__ import annotations
 
-from ctypes import Structure, addressof, c_char_p, c_double, c_int32, create_string_buffer, pointer, sizeof
+from ctypes import c_double, c_int32, pointer
 from logging import getLogger
 from typing import Optional
 
 from . import API
 from .dcam_api import DCAMReturnedZero
-from .dcam_types import DCAMPROP_OPTION_NEXT, DCAMParamPropertyAttr, Handle, Props
+from .dcam_types import (
+    DCAM_PARAM_PROPERTYVALUETEXT,
+    DCAMPROP_OPTION_NEXT,
+    DCAMParamPropertyAttr,
+    Handle,
+    Props,
+)
 
 logger = getLogger("DCAMmodekey")
 
@@ -56,29 +62,6 @@ MODE_KEY: dict[Props, Optional[dict[bytes, int]]] = {
     "attach_buffer_target": {b"EACH FRAME": 1, b"EVERY CHANNEL": 2},
     "number_of_target_per_attachbuffer": None,
 }
-
-
-class DCAM_PARAM_PROPERTYVALUETEXT(Structure):
-    _fields_ = [
-        ("cbSize", c_int32),
-        ("iProp", c_int32),
-        ("value", c_double),
-        ("text", c_char_p),
-        ("textbytes", c_int32),
-    ]
-
-    @classmethod
-    def from_attr(cls, prop_attr: DCAMParamPropertyAttr) -> DCAM_PARAM_PROPERTYVALUETEXT:
-        c_buf_len = 64
-        c_buf = create_string_buffer(c_buf_len)
-
-        t = cls()
-        t.cbSize = c_int32(sizeof(t))
-        t.iProp = c_int32(prop_attr.iProp)
-        t.value = c_double(prop_attr.valuemin)
-        t.text = addressof(c_buf)
-        t.textbytes = c_buf_len
-        return t
 
 
 def get_mode_key(handle: Handle, prop_attr: DCAMParamPropertyAttr) -> Optional[dict[str, int]]:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ctypes import Structure, c_double, c_int32, c_void_p, sizeof
+from ctypes import Structure, addressof, c_char_p, c_double, c_int32, c_void_p, create_string_buffer, sizeof
 from dataclasses import dataclass
 from enum import IntEnum
 from logging import getLogger
@@ -223,3 +223,26 @@ class DCAM_PARAM_PROPERTYATTR(Structure):
     def to_dataclass(self) -> DCAMParamPropertyAttr:
         dic = {f: getattr(self, f) for f, _ in self._fields_}
         return DCAMParamPropertyAttr(**dic)
+
+
+class DCAM_PARAM_PROPERTYVALUETEXT(Structure):
+    _fields_ = [
+        ("cbSize", c_int32),
+        ("iProp", c_int32),
+        ("value", c_double),
+        ("text", c_char_p),
+        ("textbytes", c_int32),
+    ]
+
+    @classmethod
+    def from_attr(cls, prop_attr: DCAMParamPropertyAttr) -> DCAM_PARAM_PROPERTYVALUETEXT:
+        c_buf_len = 64
+        c_buf = create_string_buffer(c_buf_len)
+
+        t = cls()
+        t.cbSize = c_int32(sizeof(t))
+        t.iProp = c_int32(prop_attr.iProp)
+        t.value = c_double(prop_attr.valuemin)
+        t.text = addressof(c_buf)
+        t.textbytes = c_buf_len
+        return t

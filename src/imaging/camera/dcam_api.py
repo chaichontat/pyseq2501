@@ -11,22 +11,15 @@ R = TypeVar("R")
 
 if os.name == "nt" and os.environ.get("FAKE_HISEQ", "0") != "1":
     from ctypes import WinDLL
+
+    # Ignore because in Windows, Pylance would complain that WinDLL is not a base class.
+    class DCAMAPI(WinDLL):  # type: ignore
+        def __init__(self) -> None:
+            super().__init__("dcamapi.dll")
+
+
 else:
-
-    class WinDLL:
-        def __init__(self, _: str) -> None:
-            ...
-
-        def __getattribute__(self, __name: str) -> Callable[P, bool]:
-            if __name.startswith("dcam"):
-                t = 2 if __name == "dcam_init" else 0.05
-
-                def fake_func(*_: P.args, **__: P.kwargs) -> bool:
-                    time.sleep(t)
-                    return True
-
-                return fake_func
-            return super().__getattribute__(__name)
+    from .fake_dcam import FakeAPI as DCAMAPI
 
 
 DCAM_DEFAULT_ARG = c_int32(0)
@@ -56,12 +49,6 @@ def check_if_failed(f: Callable[P, R]) -> Callable[P, R]:
         return res
 
     return wrapper
-
-
-# Ignore because in Windows, Pylance would complain that WinDLL is not a base class.
-class DCAMAPI(WinDLL):  # type: ignore
-    def __init__(self) -> None:
-        super().__init__("dcamapi.dll")
 
 
 class CheckedDCAMAPI(DCAMAPI):
