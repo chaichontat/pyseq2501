@@ -20,6 +20,9 @@ class FakeAPI:
         self.ready = 0
         self.tm = 4
 
+    def __getitem__(self, name: str) -> Any:
+        return getattr(self, name)
+
     # TODO Missing functions in dcamapi3.h
     def dcam_init(self, reserved1: c_void_p, pCount: pointer[c_int32], option: c_char_p) -> bool:
         return True
