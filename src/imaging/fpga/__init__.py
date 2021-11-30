@@ -2,7 +2,8 @@ from concurrent.futures import Future
 from logging import getLogger
 
 from src.instruments import UsesSerial
-from src.utils.com import COM, CmdParse, ok_if_match
+from src.utils.async_com import COM, CmdParse
+from src.utils.utils import ok_if_match
 
 from .led import LED
 from .optics import Optics
@@ -13,12 +14,12 @@ logger = getLogger("fpga")
 
 
 class FPGACmd:
-    RESET = CmdParse("RESET", ok_if_match("@LOG The FPGA is now online.  Enjoy!"))
+    RESET = CmdParse("RESET", ok_if_match("@LOG The FPGA is now online.  Enjoy!\nRESET"), n_lines=2)
 
 
 class FPGA(UsesSerial):
     def __init__(self, port_tx: str, port_rx: str) -> None:
-        self.com = COM("fpga", port_tx, port_rx, timeout=1)
+        self.com = COM("fpga", port_tx, port_rx)
         self.tdi = TDI(self.com)
         self.led = LED(self.com)
         self.optics = Optics(self.com)
@@ -26,6 +27,5 @@ class FPGA(UsesSerial):
 
         # assert all([x.fcom is self.com for x in (self.tdi, self.led, self.optics, self.z)])  # type: ignore[attr-defined]
 
-    def initialize(self) -> Future[bool]:
-        self.com.repl(FPGACmd.RESET)
-        return self.com.repl(FPGACmd.RESET)
+    def initialize(self) -> Future[None | bool]:
+        return self.com.send(FPGACmd.RESET)

@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from concurrent.futures import Future
 from typing import Annotated, Any, ClassVar
 
-from src.utils.com import COM
+from src.utils.async_com import COM
 
 
 class UsesSerial(metaclass=ABCMeta):

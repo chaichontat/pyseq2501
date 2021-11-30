@@ -1,8 +1,9 @@
 #%%
 import sys
+import time
 from pathlib import Path
 
-sys.path.append("c:\\Users\\sbsuser\\Desktop\\goff-rotation")
+sys.path.append((Path(__file__).parent.parent).as_posix())
 from src.utils.ports import get_ports
 
 ports = get_ports(timeout=60)
@@ -28,9 +29,9 @@ from src.imaging.imager import Imager
 
 god = Imager(ports)
 god.fpga.initialize()
-print("Init")
-# god.y.move(0)
+god.y.move(132000)
+time.sleep(8)
 #%%
-a = god.take_image(5)
-# god.initialize()
-# %%
+god.take_image(8)
+print("Init")
+time.sleep(2)

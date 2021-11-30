@@ -3,7 +3,8 @@ from logging import getLogger
 from typing import Literal
 
 from src.instruments import FPGAControlled
-from src.utils.com import COM, CmdParse, ok_if_match
+from src.utils.async_com import COM, CmdParse
+from src.utils.utils import ok_if_match
 
 logger = getLogger("LED")
 

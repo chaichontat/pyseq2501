@@ -16,11 +16,11 @@ def test_camera():
 
     assert c.n_frames_taken == 0
 
-    with c.alloc(8) as buf:
+    with c.alloc(n_bundles=8, height=128) as buf:
         with c.capture():
             ...
         for i in range(8):
-            c._lock_memory(i)
+            c._lock_memory(n_curr=i, height=128)
 
 
 def test_two_props():

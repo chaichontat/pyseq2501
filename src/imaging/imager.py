@@ -32,7 +32,7 @@ class Imager:
         self.y = YStage(ports.y)
         self.z = self.fpga.z
 
-        self.lasers = Lasers(Laser(ports.laser_g), Laser(ports.laser_r))
+        self.lasers = Lasers(Laser("laser_g", ports.laser_g), Laser("laser_r", ports.laser_r))
         self.cams = Cameras()
 
     def initialize(self) -> None:
@@ -49,6 +49,7 @@ class Imager:
         pos = self.y.position
         self.y._mode = "IMAGING"
         pos = pos.result()
+        assert pos is not None
         n_px_y = n_bundles * self.cams.BUNDLE_HEIGHT
         end_y_pos = pos - (delta := self.calc_delta_pos(n_px_y)) - 100000
         fut = self.tdi.prepare_for_imaging(n_px_y, pos)
@@ -58,7 +59,7 @@ class Imager:
             imgs = self.cams.capture(
                 n_bundles, start_capture=lambda: self.y.move(end_y_pos, slowly=True)
             ).result()
-        self.fpga.com.repl("TDIPULSES")
+        self.fpga.tdi.n_pulses
         logger.info(f"Done taking an image.")
         return imgs
 

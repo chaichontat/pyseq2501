@@ -3,7 +3,11 @@ channels:
 dependencies:
   - python=3.10
   - numpy
+  - pillow
+  - pip
   - pyserial
   - pytest
   - returns
   - rich
+  - pip:
+    - pyserial-asyncio

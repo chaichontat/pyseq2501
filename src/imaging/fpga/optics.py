@@ -3,7 +3,8 @@ from logging import getLogger
 from typing import Literal, get_args
 
 from src.instruments import FPGAControlled
-from src.utils.com import CmdParse, ok_if_match
+from src.utils.async_com import CmdParse
+from src.utils.utils import ok_if_match
 
 logger = getLogger("optics")
 
@@ -37,8 +38,8 @@ class OpticCmd:
     EM_FILTER_OUT = CmdParse("EM2O", ok_if_match("EM2O"))
     HOME_OD = CmdParse(lambda i: f"EX{i}HM", ok_if_match([f"EM{i}HM" for i in get_args(ID)]))
     SET_OD = CmdParse(lambda i, x: f"EX{i}MV {x}", ok_if_match([f"EM{i}MV" for i in get_args(ID)]))
-    OPEN_SHUTTER = "SWLSRSHUT 1"
-    CLOSE_SHUTTER = "SWLSRSHUT 0"
+    OPEN_SHUTTER = CmdParse("SWLSRSHUT 1", ok_if_match("SWLSRSHUT"))
+    CLOSE_SHUTTER = CmdParse("SWLSRSHUT 0", ok_if_match("SWLSRSHUT"))
 
 
 class Optics(FPGAControlled):
@@ -49,14 +50,14 @@ class Optics(FPGAControlled):
     cmd = OpticCmd
 
     def initialize(self):
-        self.fcom.repl(OpticCmd.EM_FILTER_DEFAULT)
-        self.fcom.repl(OpticCmd.SET_OD(1, OD_GREEN["OPEN"]))
-        self.fcom.repl(OpticCmd.SET_OD(2, OD_RED["OPEN"]))
+        self.fcom.send(OpticCmd.EM_FILTER_DEFAULT)
+        self.fcom.send(OpticCmd.SET_OD(1, OD_GREEN["OPEN"]))
+        self.fcom.send(OpticCmd.SET_OD(2, OD_RED["OPEN"]))
 
     @contextmanager
     def open_shutter(self):
-        self.fcom.repl(OpticCmd.OPEN_SHUTTER).result()
+        self.fcom.send(OpticCmd.OPEN_SHUTTER)
         try:
             yield
         finally:
-            self.fcom.repl(OpticCmd.CLOSE_SHUTTER)
+            self.fcom.send(OpticCmd.CLOSE_SHUTTER)

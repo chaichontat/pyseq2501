@@ -6,7 +6,7 @@ from logging import getLogger
 from typing import Literal, get_args
 
 from src.instruments import FPGAControlled, Movable
-from src.utils.com import CmdParse, is_between
+from src.utils.async_com import CmdParse
 
 logger = getLogger("z")
 
@@ -32,12 +32,12 @@ class ZStage(FPGAControlled, Movable):
 
     def initialize(self):
         for i in get_args(ID):
-            self.fcom.repl(ZCmd.GO_HOME(i))
+            self.fcom.send(ZCmd.GO_HOME(i))
         for i in get_args(ID):
-            self.fcom.repl(ZCmd.CLEAR_REGISTER(i))
+            self.fcom.send(ZCmd.CLEAR_REGISTER(i))
 
     def move(self, pos: int) -> list[Future[str]]:
-        return [self.fcom.repl(is_between(partial(ZCmd.SET_POS.cmd, i), *self.RANGE)(pos)) for i in get_args(ID)]  # type: ignore
+        return [self.fcom.send(is_between(partial(ZCmd.SET_POS.cmd, i), *self.RANGE)(pos)) for i in [1, 3, 2]]  # type: ignore
 
     def position(self):
         ...

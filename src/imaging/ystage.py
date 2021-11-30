@@ -1,12 +1,12 @@
 import logging
 import time
-from collections import namedtuple
-from concurrent.futures import Future
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Dict, Literal, Optional
 
 from src.instruments import Movable, UsesSerial
-from src.utils.com import COM, CmdParse
+from src.utils.async_com import COM, CmdParse
+from src.utils.utils import ok_if_match, run_in_executor
 
 logger = logging.getLogger("YStage")
 
@@ -54,19 +54,19 @@ class Gains:
 {"SCANNING": Gains(GP=6, GI=10, GV=1.5, GF=5), "FASTMOVE": Gains(GP=7, GI=10, GV=1.5, GF=5)}
 
 
+def read_pos(resp: str) -> int:
+    return int(resp[1:])
+
+
 class YCmd:
     """
     See https://www.parkermotion.com/manuals/Digiplan/ViX-IH_UG_7-03.pdf for more.
     """
 
-    @staticmethod
-    def read_pos(resp: str) -> int:
-        return int(resp[1:])
-
     SET_POS = lambda x: f"D{x}"
     GO = "G"
     STOP = "S"
-    IS_IN_POSITION = CmdParse("R(IP)", lambda x: bool(int(x[1:])))
+    IS_IN_POSITION = CmdParse("R(IP)", lambda x: bool(read_pos(x)))
     READ_POS = CmdParse("R(PA)", read_pos)  # Report(Position Actual)
     TARGET_POS = CmdParse("R(PT)", read_pos)
     GAINS = lambda x: f"GAINS({x})"
@@ -76,7 +76,11 @@ class YCmd:
     ON = "ON"
     GO_HOME = "GH"
     MODE_ABSOLUTE = "MA"  # p.159
-    RESET = CmdParse("Z", lambda x: x == "1Z")  # p.96, 180
+    RESET = CmdParse(
+        "Z",
+        ok_if_match("*ViX250IH-Servo Drive\n*REV 2.4 Jun 29 2005 16:58:18\nCopyright 2003 Parker-Hannifin"),
+        n_lines=3,
+    )  # p.96, 180
 
 
 class YStage(UsesSerial, Movable):
@@ -89,52 +93,46 @@ class YStage(UsesSerial, Movable):
     # TODO: Daemon parameter checks
 
     def __init__(self, port_tx: str, tol: int = 10) -> None:
-        self.com = COM("y", port_tx)
+        self.com = COM("y", port_tx, min_spacing=0.1)
 
         self.__mode: Optional[ModeName] = None
         self.tol = tol
+        self._executor = ThreadPoolExecutor(max_workers=1)
 
-    def initialize(self) -> Future[None]:
+    @run_in_executor
+    def initialize(self) -> None:
         logger.info("Initializing y-stage.")
-        self.com.repl(YCmd.RESET)  # Initialize Stage
-        self.com.put(lambda: time.sleep(2))
-        self.com.repl("W(EX,0)")  # Turn off echo
-        # self.com.repl("BRAKE0")
+        self.com.send(YCmd.RESET).result()  # Initialize Stage
+        # time.sleep(3)
+        self.com.send(CmdParse(YCmd.DONT_ECHO, lambda x: x == "1W(EX,0)"))  # Turn off echo
+        self.com.send("BRAKE0")
         self._mode = "MOVING"
-        self.com.repl(YCmd.GAINS(MODES["MOVING"]["GAINS"]))
-        self.com.send(["MA", "ON", "GH"])
-        return self.com.is_done()
+        self.com.send(YCmd.GAINS(MODES["MOVING"]["GAINS"]))
+        self.com.send(["MA", "ON"])
+        return self.com.send("GH")
 
-    def move(self, pos: int, slowly: bool = False, monitor: bool = False) -> Future[None]:
+    def move(self, pos: int, slowly: bool = False):
         # TODO: Parse
         if not (self.RANGE[0] <= pos <= self.RANGE[1]):
             raise ValueError(f"YSTAGE can only be between {self.RANGE[0]} and {self.RANGE[1]}")
         self._mode = "IMAGING" if slowly else "MOVING"
         fut = self.com.send([YCmd.SET_POS(pos), YCmd.GO])
         logger.info(f"Moving to {pos} for {self._mode}")
-        if monitor:
-
-            def mon():
-                while not self.is_in_position.result():
-                    logger.info(f"At {self.position.result()} for target of {pos}.")
-
-            self.com.put(mon)
         # def work() -> int:
-        #     self.com.repl(is_between(YCmd.SET_POS, *self.RANGE)(pos))  # type: ignore[operator]
+        #     self.com.send(is_between(YCmd.SET_POS, *self.RANGE)(pos))  # type: ignore[operator]
         #     while abs((curr := self.position.result()) - pos) > self.tol:
-        #         self.com.repl(YCmd.GO)
+        #         self.com.send(YCmd.GO)
         #         while not self.is_in_position:
         #             time.sleep(0.1)
         #     return curr
-        return fut
 
     @property
-    def position(self) -> Future[int]:
-        return self.com.repl(YCmd.READ_POS)
+    def position(self) -> Future[int | None]:
+        return self.com.send(YCmd.READ_POS)
 
     @property
-    def is_in_position(self) -> Future[bool]:
-        return self.com.repl(YCmd.IS_IN_POSITION)
+    def is_in_position(self) -> Future[bool | None]:
+        return self.com.send(YCmd.IS_IN_POSITION)
 
     @property
     def _mode(self) -> Optional[ModeName]:
@@ -144,5 +142,5 @@ class YStage(UsesSerial, Movable):
     def _mode(self, mode: ModeName) -> None:
         if self.__mode == mode:
             return
-        self.com.repl(YCmd.VELO(MODES[mode]["VELO"]))  # type: ignore[operator]
+        self.com.send(YCmd.VELO(MODES[mode]["VELO"]))  # type: ignore[operator]
         self.__mode = mode

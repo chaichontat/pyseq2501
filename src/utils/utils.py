@@ -24,6 +24,27 @@ X_SPUM = 0.4096
 Y_SPUM = 100
 
 T, P = TypeVar("T"), ParamSpec("P")
+F = TypeVar("F", bound=(int | float))
+
+
+def ok_if_match(target: list[str] | str) -> Callable[[str], bool]:
+    def wrapped(resp: str) -> bool:
+        if isinstance(target, list) and resp in target:
+            return True
+        if isinstance(target, str) and resp == target:
+            return True
+        raise Exception("InvalidResponse")
+
+    return wrapped
+
+
+def is_between(f: Callable[[F], T], min_: int, max_: int) -> Callable[[F], T]:
+    def wrapper(x: F) -> T:
+        if not (min_ <= x <= max_) or x != int(x):
+            raise ValueError(f"Invalid value for {f.__name__}: Got {x}. Expected [{min_}, {max_}].")
+        return f(x)
+
+    return wrapper
 
 
 def gen_future(x: T) -> Future[T]:

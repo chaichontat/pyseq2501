@@ -41,7 +41,7 @@ name_map = dict(
 )
 
 
-def get_ports(timeout: int | float = 0, show_all=False) -> Ports:
+def get_ports(timeout: int | float = 1, show_all=False) -> Ports:
     """
     See https://pyserial.readthedocs.io/en/latest/tools.html for more details.
 

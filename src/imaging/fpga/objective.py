@@ -3,7 +3,8 @@ from concurrent.futures import Future
 from logging import getLogger
 
 from src.instruments import FPGAControlled, Movable
-from src.utils.com import CmdParse, ok_if_match
+from src.utils.async_com import CmdParse
+from src.utils.utils import ok_if_match
 
 logger = getLogger("objective")
 
@@ -36,5 +37,5 @@ class Objective(FPGAControlled, Movable):
 
     cmd = ObjCmd
 
-    def initialize(self) -> Future[bool]:
-        return self.fcom.repl(ObjCmd.SET_VELO(5))
+    def initialize(self) -> Future[bool | None]:
+        return self.fcom.send(ObjCmd.SET_VELO(5))
