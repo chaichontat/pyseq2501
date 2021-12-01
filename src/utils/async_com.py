@@ -7,7 +7,18 @@ import time
 from asyncio import StreamReader, StreamWriter
 from dataclasses import dataclass
 from logging import getLogger
-from typing import Any, Callable, Generic, NamedTuple, NoReturn, Optional, ParamSpec, TypeVar, overload
+from typing import (
+    Annotated,
+    Any,
+    Callable,
+    Generic,
+    NamedTuple,
+    NoReturn,
+    Optional,
+    ParamSpec,
+    TypeVar,
+    overload,
+)
 
 from rich.console import Console
 
@@ -75,7 +86,7 @@ class COM:
         name: SerialInstruments,
         port_tx: str,
         port_rx: Optional[str] = None,
-        min_spacing: int | float = 0,
+        min_spacing: Annotated[int | float, "s"] = 0.05,
     ) -> None:
         """
         Args:
@@ -94,7 +105,8 @@ class COM:
         self.t_lastcmd = time.time()
 
         # asyncio.Queue is not thread-safe and we're not waiting anyway.
-        self._queue: queue.Queue[tuple[CmdParse, asyncio.Future]] = queue.Queue()
+        self._read_queue: queue.Queue[tuple[CmdParse, asyncio.Future]] = queue.Queue()
+        self._write_queue: asyncio.Queue[str] = asyncio.Queue()
         if port_rx is not None:
             assert name == "fpga"
             srx = LOOP.put(open_serial_connection(url=port_rx, baudrate=115200))
@@ -105,7 +117,7 @@ class COM:
             assert name != "fpga"
             self._serial = Channel(*LOOP.put(open_serial_connection(url=port_tx, baudrate=9600)).result())
             logger.info(f"{self.name}Started listening to port {port_tx}.")
-        self.task = LOOP.put(self._read_forever())
+        self.tasks = (LOOP.put(self._read_forever()), LOOP.put(self._write_forever()))
         time.sleep(0.1)  # Give time for read_forever to purge channel.
 
     async def _read_forever(self) -> NoReturn:
@@ -114,7 +126,7 @@ class COM:
             if not resp:  # len == 0
                 continue
             try:
-                cmd, fut = self._queue.get_nowait()
+                cmd, fut = self._read_queue.get_nowait()
             except queue.Empty:
                 logger.warning(f"{self.name}Got mysterious return '{resp}'.")
                 continue
@@ -132,7 +144,17 @@ class COM:
                 logger.debug(f"{self.name}Rx: {resp} [green] Verified")
                 fut.set_result(parsed)
             finally:
-                self._queue.task_done()
+                self._read_queue.task_done()
+
+    async def _write_forever(self) -> NoReturn:
+        while True:
+            msg = await self._write_queue.get()
+            if self.min_spacing:
+                await asyncio.sleep(max(0, self.min_spacing - (time.time() - self.t_lastcmd)))
+            self._serial.writer.write(self.formatter(msg).encode())
+            self.t_lastcmd = time.time()
+            self._write_queue.task_done()
+            logger.debug(f"{self.name}Tx: {msg}")
 
     def _write(self, msg: str) -> None:
         if self.min_spacing:
@@ -143,14 +165,14 @@ class COM:
 
     async def _send(self, msg: str | CmdParse[T, P]) -> None | T:
         if isinstance(msg, str):
-            self._write(msg)
+            self._write_queue.put_nowait(msg)
             return
 
         if not isinstance(msg.cmd, str):
             raise ValueError("This command needs argument(s), call it first.")
 
-        self._write(msg.cmd)
-        self._queue.put_nowait((msg, fut := asyncio.Future()))
+        self._write_queue.put_nowait(msg.cmd)
+        self._read_queue.put_nowait((msg, fut := asyncio.Future()))
         return await fut
 
     @overload
