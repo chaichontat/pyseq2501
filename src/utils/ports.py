@@ -48,8 +48,8 @@ def get_ports(timeout: int | float = 1, show_all=False) -> Ports:
     Returns:
         Ports: Dataclass of relevant components and their COM ports.
     """
-    t0 = time.time()
-    while time.time() - t0 < timeout:
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < timeout:
         ports = {
             dev.serial_number: dev.name
             for dev in serial.tools.list_ports.comports()

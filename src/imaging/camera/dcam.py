@@ -209,14 +209,14 @@ class Cameras:
     @run_in_executor
     @warn_main_thread
     def post_init(self) -> tuple[_Camera, _Camera]:
-        t0 = time.time()
+        t0 = time.monotonic()
         logger.info("Initializing DCAM API.")
         # This is slow that I need to make sure that the thing is still running.
         th = threading.Thread(target=lambda: API.dcam_init(c_void_p(0), pointer(c_int32(0)), c_char_p(0)))
         th.start()
         while th.is_alive():
             time.sleep(2)
-            logger.info(f"Still alive. dcam_init takes about 10s. Taken {time.time() - t0:.2f} s.")
+            logger.info(f"Still alive. dcam_init takes about 10s. Taken {time.monotonic() - t0:.2f} s.")
         return (_Camera(0), _Camera(1))
 
     def __getitem__(self, id_: ID) -> _Camera:
@@ -286,13 +286,13 @@ class Cameras:
             start_alloc()
             with self[0].capture(), self[1].capture():
                 start_capture()
-                t0 = time.time()
+                t0 = time.monotonic()
                 while (avail := self.n_frames_taken) < n_bundles:
                     time.sleep(polling_time)
                     if avail > taken:
                         [self._get_bundles(bufs=bufs, height=128, i=i) for i in range(taken, avail)]
                         taken = avail
-                    if taken == 0 and time.time() - t0 > timeout:
+                    if taken == 0 and time.monotonic() - t0 > timeout:
                         raise Exception(f"Did not capture a single bundle before {timeout=}s.")
             # Done. Retrieve images.
             for i in range(taken, max(avail, n_bundles)):

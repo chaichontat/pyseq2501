@@ -7,18 +7,8 @@ import time
 from asyncio import StreamReader, StreamWriter
 from dataclasses import dataclass
 from logging import getLogger
-from typing import (
-    Annotated,
-    Any,
-    Callable,
-    Generic,
-    NamedTuple,
-    NoReturn,
-    Optional,
-    ParamSpec,
-    TypeVar,
-    overload,
-)
+from typing import (Annotated, Any, Callable, Generic, NamedTuple, NoReturn,
+                    Optional, ParamSpec, TypeVar, overload)
 
 from rich.console import Console
 
@@ -102,7 +92,7 @@ class COM:
         self.formatter = FORMATTER[name]
 
         self.min_spacing = min_spacing
-        self.t_lastcmd = time.time()
+        self.t_lastcmd = time.monotonic()
 
         # asyncio.Queue is not thread-safe and we're not waiting anyway.
         self._read_queue: queue.Queue[tuple[CmdParse, asyncio.Future]] = queue.Queue()
@@ -150,17 +140,17 @@ class COM:
         while True:
             msg = await self._write_queue.get()
             if self.min_spacing:
-                await asyncio.sleep(max(0, self.min_spacing - (time.time() - self.t_lastcmd)))
+                await asyncio.sleep(max(0, self.min_spacing - (time.monotonic() - self.t_lastcmd)))
             self._serial.writer.write(self.formatter(msg).encode())
-            self.t_lastcmd = time.time()
+            self.t_lastcmd = time.monotonic()
             self._write_queue.task_done()
             logger.debug(f"{self.name}Tx: {msg}")
 
     def _write(self, msg: str) -> None:
         if self.min_spacing:
-            time.sleep(max(0, self.min_spacing - (time.time() - self.t_lastcmd)))
+            time.sleep(max(0, self.min_spacing - (time.monotonic() - self.t_lastcmd)))
         self._serial.writer.write(self.formatter(msg).encode())
-        self.t_lastcmd = time.time()
+        self.t_lastcmd = time.monotonic()
         logger.debug(f"{self.name}Tx: {msg}")
 
     async def _send(self, msg: str | CmdParse[T, P]) -> None | T:
