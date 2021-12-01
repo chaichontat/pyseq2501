@@ -19,7 +19,7 @@ class FPGACmd:
 
 class FPGA(UsesSerial):
     def __init__(self, port_tx: str, port_rx: str) -> None:
-        self.com = COM("fpga", port_tx, port_rx)
+        self.com = COM("fpga", port_tx, port_rx, min_spacing=0)
         self.tdi = TDI(self.com)
         self.led = LED(self.com)
         self.optics = Optics(self.com)

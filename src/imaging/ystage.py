@@ -93,7 +93,7 @@ class YStage(UsesSerial, Movable):
     # TODO: Daemon parameter checks
 
     def __init__(self, port_tx: str, tol: int = 10) -> None:
-        self.com = COM("y", port_tx, min_spacing=0.1)
+        self.com = COM("y", port_tx, min_spacing=0.05)
 
         self.__mode: Optional[ModeName] = None
         self.tol = tol

@@ -80,7 +80,6 @@ class _Camera:
         self.handle = c_void_p(0)
         logger.debug(f"Opening cam {id_}")
         API.dcam_open(pointer(self.handle), c_int32(id_), None)
-        # Check if fake.
         self._capture_mode = DCAM_CAPTURE_MODE.SNAP
         self.properties["sensor_mode_line_bundle_height"] = 128
         self._mode = Mode.TDI
@@ -200,11 +199,12 @@ class Cameras:
     properties: TwoProps
 
     def __init__(self) -> None:
+        self.ready = Future()
         self._executor = ThreadPoolExecutor(max_workers=1)
-        self._cams = self.post_init()
-        self._cams.add_done_callback(
-            lambda _: setattr(self, "properties", TwoProps(*[c.properties for c in self]))
-        )
+        self._cams = self.post_init()  # self.properties set in here.
+        # self._cams.add_done_callback(
+        #     lambda _: setattr(self, "properties", TwoProps(*[c.properties for c in self]))
+        # )
 
     @run_in_executor
     @warn_main_thread
@@ -217,7 +217,9 @@ class Cameras:
         while th.is_alive():
             time.sleep(2)
             logger.info(f"Still alive. dcam_init takes about 10s. Taken {time.monotonic() - t0:.2f} s.")
-        return (_Camera(0), _Camera(1))
+        cams = (_Camera(0), _Camera(1))
+        self.properties = TwoProps(*[c.properties for c in cams])
+        return cams
 
     def __getitem__(self, id_: ID) -> _Camera:
         return self._cams.result()[id_]

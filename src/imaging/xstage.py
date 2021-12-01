@@ -28,7 +28,7 @@ class XStage(UsesSerial, Movable):
     cmd = XCmd
 
     def __init__(self, port_tx: str) -> None:
-        self.com = COM("x", port_tx)
+        self.com = COM("x", port_tx, min_spacing=0.09)
 
     @property
     def position(self) -> Future:

@@ -1,19 +1,16 @@
 #%%
+import logging
 import sys
 import time
 from pathlib import Path
 
-sys.path.append((Path(__file__).parent.parent).as_posix())
-from src.utils.ports import get_ports
-
-ports = get_ports(timeout=60)
-
-from rich import print
 from rich.logging import RichHandler
 
-print("[green]Holding breath...")
+sys.path.append((Path(__file__).parent.parent).as_posix())
 
-import logging
+
+from src.imaging.imager import Imager
+from src.utils.ports import get_ports
 
 logging.basicConfig(
     level="NOTSET",
@@ -23,15 +20,12 @@ logging.basicConfig(
 )
 
 logging.getLogger("DCAMAPI").setLevel(logging.INFO)
+ports = get_ports(timeout=60)
 
 
-from src.imaging.imager import Imager
-
-god = Imager(ports)
-god.fpga.initialize()
-god.y.move(132000)
-time.sleep(8)
+imager = Imager(ports)
+imager.fpga.initialize()
+imager.y.move(132000)
 #%%
-god.take_image(8)
-print("Init")
+imager.take_image(8)
 time.sleep(2)
