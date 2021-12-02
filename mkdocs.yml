@@ -3,8 +3,14 @@ theme:
   name: material
   features:
     - navigation.instant
+    - toc.integrate
+    - navigation.top
 docs_dir: .
 site_dir: ../site
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/chaichontat/goff-rotation
 
 nav:
   - Home: index.md
