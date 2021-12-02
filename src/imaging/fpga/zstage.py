@@ -5,7 +5,7 @@ from functools import partial
 from logging import getLogger
 from typing import Literal, get_args
 
-from src.instruments import FPGAControlled, Movable
+from src.base.instruments import FPGAControlled, Movable
 from src.utils.async_com import CmdParse
 
 logger = getLogger("z")

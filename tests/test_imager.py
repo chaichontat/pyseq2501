@@ -9,7 +9,7 @@ from rich.logging import RichHandler
 sys.path.append((Path(__file__).parent.parent).as_posix())
 
 
-from src.imaging.imager import Imager
+from src.imager import Imager
 from src.utils.ports import get_ports
 
 logging.basicConfig(

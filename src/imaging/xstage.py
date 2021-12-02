@@ -1,7 +1,7 @@
 import logging
 from concurrent.futures import Future
 
-from src.instruments import Movable, UsesSerial
+from src.base.instruments import Movable, UsesSerial
 from src.utils.async_com import COM, CmdParse
 
 logger = logging.getLogger("XStage")

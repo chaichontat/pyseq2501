@@ -10,12 +10,9 @@ from logging import getLogger
 from typing import (Annotated, Any, Callable, Generic, NamedTuple, NoReturn,
                     Optional, ParamSpec, TypeVar, overload)
 
-from rich.console import Console
-
-console = Console()
 from serial_asyncio import open_serial_connection
-from src.eventloop import LOOP
-from src.instruments_types import SerialInstruments
+from src.base.instruments_types import SerialInstruments
+from src.utils.eventloop import LOOP
 
 logger = getLogger("COM")
 # fmt:off
@@ -30,7 +27,7 @@ COLOR: dict[SerialInstruments, str] = dict(
 FORMATTER: dict[SerialInstruments, Callable[[str], str]] = dict(
        fpga=lambda x:  f"{x}\n",
           x=lambda x:  f"{x}\r",
-          y=lambda x: f"1{x}\r\n",
+          y=lambda x: f"1{x}\r\n",  # Axis 1
     laser_g=lambda x:  f"{x}\r",
     laser_r=lambda x:  f"{x}\r",
 )  # type: ignore
@@ -79,12 +76,17 @@ class COM:
         min_spacing: Annotated[int | float, "s"] = 0.05,
     ) -> None:
         """
+        Necessary conditions:
+        - Commands are executed in FIFO order.
+        - Response from an instrument is in FIFO order.
+        - All responses are accounted for.
+
         Args:
-            name (SerialInstruments): [description]
-            port_tx (str): [description]
-            port_rx (Optional[str], optional): [description]. Defaults to None.
-            min_spacing (int, optional): Blocks calling thread between consecutive commands. Defaults to 0.
-                Do not use this on the main thread.
+            name (SerialInstruments): Name of the instrument.
+            port_tx (str): COM port.
+            port_rx (Optional[str], optional): Receiving port if different from port_tx.
+                Only the FPGA uses separate channels.
+            min_spacing (int, optional): Minimum time between commands. Defaults to 0.05s.
         """
         assert port_tx.startswith("COM")
         self.port = port_tx
@@ -107,7 +109,10 @@ class COM:
             assert name != "fpga"
             self._serial = Channel(*LOOP.put(open_serial_connection(url=port_tx, baudrate=9600)).result())
             logger.info(f"{self.name}Started listening to port {port_tx}.")
-        self.tasks = (LOOP.put(self._read_forever()), LOOP.put(self._write_forever()))
+        self.tasks = (
+            LOOP.put(self._read_forever()),
+            LOOP.put(self._write_forever()),
+        )  # Prevent garbage collection.
         time.sleep(0.1)  # Give time for read_forever to purge channel.
 
     async def _read_forever(self) -> NoReturn:
@@ -146,13 +151,6 @@ class COM:
             self._write_queue.task_done()
             logger.debug(f"{self.name}Tx: {msg}")
 
-    def _write(self, msg: str) -> None:
-        if self.min_spacing:
-            time.sleep(max(0, self.min_spacing - (time.monotonic() - self.t_lastcmd)))
-        self._serial.writer.write(self.formatter(msg).encode())
-        self.t_lastcmd = time.monotonic()
-        logger.debug(f"{self.name}Tx: {msg}")
-
     async def _send(self, msg: str | CmdParse[T, P]) -> None | T:
         if isinstance(msg, str):
             self._write_queue.put_nowait(msg)
@@ -170,16 +168,25 @@ class COM:
         ...
 
     @overload
-    def send(self, msg: CmdParse[T, P]) -> concurrent.futures.Future[None | T]:
+    def send(self, msg: CmdParse[T, Any]) -> concurrent.futures.Future[None | T]:
         ...
 
     @overload
-    def send(self, msg: list[str | CmdParse[Any, P]]) -> list[None | concurrent.futures.Future[None | Any]]:
+    def send(self, msg: list[str | CmdParse[Any, Any]]) -> list[None | concurrent.futures.Future[None | Any]]:
         ...
 
     def send(
-        self, msg: str | CmdParse[T, P] | list[str | CmdParse[T, P]]
-    ) -> None | concurrent.futures.Future[None | Any] | list[None | concurrent.futures.Future[None | Any]]:
+        self, msg: str | CmdParse[T, Any] | list[str | CmdParse[Any, Any]]
+    ) -> None | concurrent.futures.Future[None | T] | list[None | concurrent.futures.Future[None | Any]]:
+        """Send command to instrument.
+        If msg is string   => no responses expected.
+        If msg is CmdParse => response expected and parsed by CmdParse.parser.
+            Unexpected response triggers a warning and returns Future[None].
+        If msg is a list of either above, map this function to all elements.
+
+        Returns:
+            None for msg, Future of a CmdParse result.
+        """
         if isinstance(msg, str):
             LOOP.put(self._send(msg))
             return

@@ -2,7 +2,7 @@ from contextlib import contextmanager
 from logging import getLogger
 from typing import Literal, get_args
 
-from src.instruments import FPGAControlled
+from src.base.instruments import FPGAControlled
 from src.utils.async_com import CmdParse
 from src.utils.utils import ok_if_match
 

@@ -1,14 +1,13 @@
 from dataclasses import dataclass
 from logging import getLogger
 
-from src.imaging.camera.dcam import Cameras, FourImages, Mode
-from src.imaging.fpga import FPGA
-from src.imaging.xstage import XStage
-from src.imaging.ystage import YStage
-from src.utils.ports import Ports
-
-from .fpga.optics import Optics
-from .laser import Laser, Lasers
+from .imaging.camera.dcam import Cameras, FourImages, Mode
+from .imaging.fpga import FPGA
+from .imaging.fpga.optics import Optics
+from .imaging.laser import Laser, Lasers
+from .imaging.xstage import XStage
+from .imaging.ystage import YStage
+from .utils.ports import Ports
 
 logger = getLogger("Imager")
 

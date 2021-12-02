@@ -4,7 +4,6 @@ import threading
 import warnings
 from concurrent.futures import Future, ThreadPoolExecutor
 from functools import wraps
-from logging import Logger
 from math import ceil
 from typing import Callable, Dict, Literal, Optional, ParamSpec, Protocol, Tuple, TypedDict, TypeVar, cast
 
@@ -65,6 +64,10 @@ def run_in_executor(f: Callable[P, T]) -> Callable[P, Future[T]]:
     @wraps(f)
     def inner(*args: P.args, **kwargs: P.kwargs) -> Future[T]:
         self = cast(Threaded, args[0])
+        try:
+            self._executor
+        except NameError:
+            self._executor = ThreadPoolExecutor(max_workers=1)
         if threading.current_thread() not in self._executor._threads:
             return cast(Future[T], self._executor.submit(lambda: f(*args, **kwargs)))
         else:
@@ -83,19 +86,6 @@ def warn_main_thread(f: Callable[P, T]) -> Callable[P, T]:
         return f(*args, **kwargs)
 
     return inner
-
-
-class FakeLogger:
-    """To avoid `if logger is None` from appearing everywhere."""
-
-    def debug(self, _: str) -> None:
-        ...
-
-    def warning(self, _: str) -> None:
-        ...
-
-    def error(self, _: str) -> None:
-        ...
 
 
 class Pos(TypedDict):

@@ -2,7 +2,7 @@ import re
 from concurrent.futures import Future
 from logging import getLogger
 
-from src.instruments import FPGAControlled, Movable
+from src.base.instruments import FPGAControlled, Movable
 from src.utils.async_com import CmdParse
 from src.utils.utils import ok_if_match
 

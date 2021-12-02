@@ -1,7 +1,7 @@
 from concurrent.futures import Future
 from logging import getLogger
 
-from src.instruments import UsesSerial
+from src.base.instruments import UsesSerial
 from src.utils.async_com import COM, CmdParse
 from src.utils.utils import ok_if_match
 

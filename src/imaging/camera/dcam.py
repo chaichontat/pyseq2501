@@ -7,7 +7,7 @@ import time
 from concurrent.futures import Future
 from concurrent.futures.thread import ThreadPoolExecutor
 from contextlib import contextmanager
-from ctypes import c_char_p, c_int32, c_uint16, c_uint32, c_void_p, pointer
+from ctypes import c_char_p, c_int32, c_uint16, c_void_p, pointer
 from enum import Enum, IntEnum
 from itertools import chain
 from logging import getLogger
@@ -20,7 +20,6 @@ from typing import (
     Hashable,
     Literal,
     MutableMapping,
-    Protocol,
     TypeVar,
     cast,
     get_args,

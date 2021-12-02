@@ -1,10 +1,9 @@
-import time
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from logging import getLogger
 from typing import Annotated, Literal
 
-from src.instruments import UsesSerial
+from src.base.instruments import UsesSerial
 from src.utils.async_com import COM, CmdParse
 from src.utils.utils import gen_future, is_between, run_in_executor
 

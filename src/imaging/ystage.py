@@ -4,7 +4,7 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Dict, Literal, Optional
 
-from src.instruments import Movable, UsesSerial
+from src.base.instruments import Movable, UsesSerial
 from src.utils.async_com import COM, CmdParse
 from src.utils.utils import ok_if_match, run_in_executor
 
@@ -103,7 +103,7 @@ class YStage(UsesSerial, Movable):
     def initialize(self) -> None:
         logger.info("Initializing y-stage.")
         self.com.send(YCmd.RESET).result()  # Initialize Stage
-        # time.sleep(3)
+        time.sleep(3)
         self.com.send(CmdParse(YCmd.DONT_ECHO, lambda x: x == "1W(EX,0)"))  # Turn off echo
         self.com.send("BRAKE0")
         self._mode = "MOVING"
