@@ -7,8 +7,18 @@ import time
 from asyncio import StreamReader, StreamWriter
 from dataclasses import dataclass
 from logging import getLogger
-from typing import (Annotated, Any, Callable, Generic, NamedTuple, NoReturn,
-                    Optional, ParamSpec, TypeVar, overload)
+from typing import (
+    Annotated,
+    Any,
+    Callable,
+    Generic,
+    NamedTuple,
+    NoReturn,
+    Optional,
+    ParamSpec,
+    TypeVar,
+    overload,
+)
 
 from serial_asyncio import open_serial_connection
 from src.base.instruments_types import SerialInstruments
