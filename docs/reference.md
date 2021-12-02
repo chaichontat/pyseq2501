@@ -1,3 +1,0 @@
-# Reference
-
-::: src.imaging.laser

@@ -3,6 +3,8 @@ theme:
   name: material
   features:
     - navigation.instant
+docs_dir: .
+site_dir: ../site
 
 nav:
   - Home: index.md
