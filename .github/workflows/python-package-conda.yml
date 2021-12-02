@@ -1,12 +1,12 @@
-name: Python Package using Conda
+name: Python Package using Conda and Docs Deployment
 
 on:
   push:
-    paths:
-      - .github/**
-      - scripts/**
-      - src/**
-      - tests/**
+    branches:
+      - main
+  pull_request:
+  release:
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
