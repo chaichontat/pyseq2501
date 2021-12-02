@@ -1,0 +1,41 @@
+site_name: PySeq 2501
+theme:
+  name: material
+  features:
+    - navigation.instant
+docs_dir: .
+site_dir: ../site
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - HiSeq:
+      - Overview: hiseq.md
+      - Programs: programs.md
+  - Reference: reference.md
+
+markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
+  - abbr
+  - pymdownx.snippets
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.snippets
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          setup_commands:
+            - import sys
+            - sys.path.append('../')
+          rendering:
+            members_order: source

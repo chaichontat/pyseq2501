@@ -9,7 +9,7 @@ from logging import Logger, getLogger
 from typing import IO, Any, Callable, Generic, Optional, ParamSpec, TypeVar, Union, cast, overload
 
 from serial import Serial
-from src.instruments_types import SerialInstruments
+from src.base.instruments_types import SerialInstruments
 
 from .fakeserial import FakeSerial
 from .utils import run_in_executor

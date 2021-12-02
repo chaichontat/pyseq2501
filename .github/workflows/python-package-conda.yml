@@ -22,6 +22,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
       - name: Cache conda
         uses: actions/cache@v2
         env:
@@ -31,20 +32,36 @@ jobs:
           path: ~/conda_pkgs_dir
           key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
             hashFiles('environment.yml') }}
+
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniforge-version: latest
           environment-file: environment.yml
           activate-environment: pyseq
           use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+
       - name: Autoformat with Black
         run: |
           conda install black
           black --line-length 110 --check src/
+
       - name: Type check with Pyright
         run: |
           npm i -g pyright
           pyright --warnings src/
+
       - name: Test with Pytest
         run: |
           pytest src/
+
+      - name: Build docs
+        run: |
+          conda install mkdocs mkdocs-material mkdocstrings
+          mkdocs build -f docs/mkdocs.yml
+
+      - name: Deploy docs
+        uses: peaceiris/actions-gh-pages@v3
+        if: ${{ github.ref == 'refs/heads/main' && matrix.os == 'ubuntu-latest'}}
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site

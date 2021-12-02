@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from logging import Logger
 from typing import Optional
 
-from src.instruments_types import SerialInstruments
+from src.base.instruments_types import SerialInstruments
 
 
 def assert_(x: bool):
