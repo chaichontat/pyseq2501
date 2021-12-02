@@ -24,12 +24,17 @@ class Movable(metaclass=ABCMeta):
     def position(self) -> Future[int]:
         raise NotImplementedError
 
+    @property
+    @abstractmethod
+    def is_moving(self) -> Future[bool]:
+        raise NotImplementedError
+
     def convert(self, p: Annotated[float, "mm"]) -> int:
         return int(p * 1000 * self.STEPS_PER_UM)
 
 
 class FPGAControlled:
-    fcom: COM
+    com: COM
 
     def __init__(self, fpga_com: COM) -> None:
-        self.fcom = fpga_com
+        self.com = fpga_com

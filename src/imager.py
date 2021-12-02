@@ -1,5 +1,8 @@
 from dataclasses import dataclass
 from logging import getLogger
+import time
+
+from src.utils.utils import run_in_executor
 
 from .imaging.camera.dcam import Cameras, FourImages, Mode
 from .imaging.fpga import FPGA
@@ -39,14 +42,21 @@ class Imager:
         self.y.initialize()
         self.lasers.initialize()
 
+    @property
+    @run_in_executor
+    def all_still(self) -> bool:
+        x, y, z = self.x.is_moving, self.y.is_moving, self.z.is_moving
+        return not any((x.result(), y.result(), z.result()))
+
     # TODO add more ready checks.
     def take_image(self, n_bundles: int) -> FourImages:
         logger.info(f"Taking image with {n_bundles} bundles.")
-        while not self.y.is_in_position.result():
+        while not self.all_still.result():
             logger.warning("Started taking an image while y-stage is not in position. Waiting.")
+            time.sleep(0.2)
 
-        pos = self.y.position
         self.y._mode = "IMAGING"
+        pos = self.y.position
         pos = pos.result()
         assert pos is not None
         n_px_y = n_bundles * self.cams.BUNDLE_HEIGHT

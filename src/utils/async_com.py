@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-import concurrent.futures
+from concurrent.futures import Future
 import queue
 import time
 from asyncio import StreamReader, StreamWriter
@@ -19,6 +19,7 @@ from typing import (
     TypeVar,
     overload,
 )
+from returns.result import Result, Success, Failure
 
 from serial_asyncio import open_serial_connection
 from src.base.instruments_types import SerialInstruments
@@ -42,7 +43,7 @@ FORMATTER: dict[SerialInstruments, Callable[[str], str]] = dict(
     laser_r=lambda x:  f"{x}\r",
 )  # type: ignore
 # fmt:on
-T = TypeVar("T")
+T = TypeVar("T", covariant=True)
 P = ParamSpec("P")
 
 
@@ -161,7 +162,15 @@ class COM:
             self._write_queue.task_done()
             logger.debug(f"{self.name}Tx: {msg}")
 
-    async def _send(self, msg: str | CmdParse[T, P]) -> None | T:
+    @overload
+    async def _send(self, msg: str) -> None:
+        ...
+
+    @overload
+    async def _send(self, msg: CmdParse[T, Any]) -> Optional[T]:
+        ...
+
+    async def _send(self, msg: str | CmdParse[T, Any]) -> None | Optional[T]:
         if isinstance(msg, str):
             self._write_queue.put_nowait(msg)
             return
@@ -178,16 +187,28 @@ class COM:
         ...
 
     @overload
-    def send(self, msg: CmdParse[T, Any]) -> concurrent.futures.Future[None | T]:
+    def send(self, msg: CmdParse[T, Any]) -> Future[Optional[T]]:
         ...
 
     @overload
-    def send(self, msg: list[str | CmdParse[Any, Any]]) -> list[None | concurrent.futures.Future[None | Any]]:
+    def send(self, msg: tuple[str, ...]) -> tuple[None, ...]:
+        ...
+
+    @overload
+    def send(self, msg: tuple[str | CmdParse[Any, Any], ...]) -> tuple[None | Future[Optional[Any]], ...]:
+        ...
+
+    @overload
+    def send(self, msg: tuple[CmdParse[Any, Any], ...]) -> tuple[Future[Optional[Any]], ...]:
+        ...
+
+    @overload
+    def send(self, msg: tuple[CmdParse[T, Any], ...]) -> tuple[Future[Optional[T]], ...]:
         ...
 
     def send(
-        self, msg: str | CmdParse[T, Any] | list[str | CmdParse[Any, Any]]
-    ) -> None | concurrent.futures.Future[None | T] | list[None | concurrent.futures.Future[None | Any]]:
+        self, msg: str | CmdParse[T, Any] | tuple[str | CmdParse[Any, Any], ...]
+    ) -> None | Future[Optional[T]] | tuple[None | Future[Optional[Any]], ...]:
         """Send command to instrument.
         If msg is string   => no responses expected.
         If msg is CmdParse => response expected and parsed by CmdParse.parser.
@@ -203,7 +224,7 @@ class COM:
         if isinstance(msg, CmdParse):
             return LOOP.put(self._send(msg))
 
-        return [self.send(x) for x in msg]
+        return tuple(self.send(x) for x in msg)
 
 
 if __name__ == "__main__":

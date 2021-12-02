@@ -1,5 +1,6 @@
 import logging
 from concurrent.futures import Future
+from typing import Optional
 
 from src.base.instruments import Movable, UsesSerial
 from src.utils.async_com import COM, CmdParse
@@ -13,10 +14,10 @@ class XCmd:
     `$VAR=$VAL` : Set $VAR to $VAL
     """
     INIT = "\x03"
-    IS_MOVING = CmdParse("PR MV", int)
-    GET_POS   = CmdParse("PR P", int)
-    SET_POS       = lambda x: f"MA {x}"  # Set mode and move to abs. position.
-    SET_POS_REL   = lambda x: f"MR {x}"  # Set mode and move to rel. position.
+    IS_MOVING   = CmdParse("PR MV", bool)
+    GET_POS     = CmdParse("PR P" , int)
+    SET_POS     = lambda x: f"MA {x}"  # Set mode and move to abs. position.
+    SET_POS_REL = lambda x: f"MR {x}"  # Set mode and move to rel. position.
 # fmt: on
 
 
@@ -31,17 +32,19 @@ class XStage(UsesSerial, Movable):
         self.com = COM("x", port_tx, min_spacing=0.09)
 
     @property
-    def position(self) -> Future:
-        ...
+    def position(self) -> Future[Optional[int]]:
+        return self.com.send(XCmd.GET_POS)
 
-    def initialize(self) -> None:
+    @property
+    def is_moving(self) -> Future[Optional[bool]]:
+        return self.com.send(XCmd.IS_MOVING)
+
+    def initialize(self) -> tuple[None, ...]:
         logger.info("Initializing x-stage.")
         """Initialize the xstage."""
-
         # Initialize Stage
-        # self.com.send("\x03", oneline=False)
-        self.com.send(
-            [
+        return self.com.send(
+            (
                 "\x03",
                 "EM=2",
                 "EE=1",
@@ -64,7 +67,7 @@ class XStage(UsesSerial, Movable):
                 "P=30000",
                 "E",
                 "PG",
-            ]
+            )
         )
 
         # # Change echo mode to respond only to print and list

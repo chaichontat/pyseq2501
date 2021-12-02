@@ -66,7 +66,7 @@ class YCmd:
     SET_POS = lambda x: f"D{x}"
     GO = "G"
     STOP = "S"
-    IS_IN_POSITION = CmdParse("R(IP)", lambda x: bool(read_pos(x)))
+    IS_MOVING = CmdParse("R(IP)", lambda x: not bool(read_pos(x)))  # Intentional inversion.
     READ_POS = CmdParse("R(PA)", read_pos)  # Report(Position Actual)
     TARGET_POS = CmdParse("R(PT)", read_pos)
     GAINS = lambda x: f"GAINS({x})"
@@ -90,10 +90,8 @@ class YStage(UsesSerial, Movable):
 
     cmd = YCmd
 
-    # TODO: Daemon parameter checks
-
     def __init__(self, port_tx: str, tol: int = 10) -> None:
-        self.com = COM("y", port_tx, min_spacing=0.05)
+        self.com = COM("y", port_tx)
 
         self.__mode: Optional[ModeName] = None
         self.tol = tol
@@ -102,13 +100,13 @@ class YStage(UsesSerial, Movable):
     @run_in_executor
     def initialize(self) -> None:
         logger.info("Initializing y-stage.")
-        self.com.send(YCmd.RESET).result()  # Initialize Stage
+        self.com.send(YCmd.RESET)  # Initialize Stage
         time.sleep(3)
         self.com.send(CmdParse(YCmd.DONT_ECHO, lambda x: x == "1W(EX,0)"))  # Turn off echo
         self.com.send("BRAKE0")
         self._mode = "MOVING"
         self.com.send(YCmd.GAINS(MODES["MOVING"]["GAINS"]))
-        self.com.send(["MA", "ON"])
+        self.com.send(("MA", "ON"))
         return self.com.send("GH")
 
     def move(self, pos: int, slowly: bool = False):
@@ -116,7 +114,7 @@ class YStage(UsesSerial, Movable):
         if not (self.RANGE[0] <= pos <= self.RANGE[1]):
             raise ValueError(f"YSTAGE can only be between {self.RANGE[0]} and {self.RANGE[1]}")
         self._mode = "IMAGING" if slowly else "MOVING"
-        fut = self.com.send([YCmd.SET_POS(pos), YCmd.GO])
+        fut = self.com.send((YCmd.SET_POS(pos), YCmd.GO))
         logger.info(f"Moving to {pos} for {self._mode}")
         # def work() -> int:
         #     self.com.send(is_between(YCmd.SET_POS, *self.RANGE)(pos))  # type: ignore[operator]
@@ -127,12 +125,12 @@ class YStage(UsesSerial, Movable):
         #     return curr
 
     @property
-    def position(self) -> Future[int | None]:
+    def position(self) -> Future[Optional[int]]:
         return self.com.send(YCmd.READ_POS)
 
     @property
-    def is_in_position(self) -> Future[bool | None]:
-        return self.com.send(YCmd.IS_IN_POSITION)
+    def is_moving(self) -> Future[Optional[bool]]:
+        return self.com.send(YCmd.IS_MOVING)
 
     @property
     def _mode(self) -> Optional[ModeName]:
@@ -142,5 +140,5 @@ class YStage(UsesSerial, Movable):
     def _mode(self, mode: ModeName) -> None:
         if self.__mode == mode:
             return
-        self.com.send(YCmd.VELO(MODES[mode]["VELO"]))  # type: ignore[operator]
+        self.com.send(YCmd.VELO(MODES[mode]["VELO"]))
         self.__mode = mode

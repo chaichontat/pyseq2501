@@ -52,6 +52,11 @@ def gen_future(x: T) -> Future[T]:
     return fut
 
 
+def not_none(x: Optional[T]) -> T:
+    assert x is not None
+    return x
+
+
 class Threaded(Protocol):
     _executor: ThreadPoolExecutor
 

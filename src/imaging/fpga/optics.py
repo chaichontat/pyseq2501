@@ -50,14 +50,14 @@ class Optics(FPGAControlled):
     cmd = OpticCmd
 
     def initialize(self):
-        self.fcom.send(OpticCmd.EM_FILTER_DEFAULT)
-        self.fcom.send(OpticCmd.SET_OD(1, OD_GREEN["OPEN"]))
-        self.fcom.send(OpticCmd.SET_OD(2, OD_RED["OPEN"]))
+        self.com.send(OpticCmd.EM_FILTER_DEFAULT)
+        self.com.send(OpticCmd.SET_OD(1, OD_GREEN["OPEN"]))
+        self.com.send(OpticCmd.SET_OD(2, OD_RED["OPEN"]))
 
     @contextmanager
     def open_shutter(self):
-        self.fcom.send(OpticCmd.OPEN_SHUTTER)
+        self.com.send(OpticCmd.OPEN_SHUTTER)
         try:
             yield
         finally:
-            self.fcom.send(OpticCmd.CLOSE_SHUTTER)
+            self.com.send(OpticCmd.CLOSE_SHUTTER)

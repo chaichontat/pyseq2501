@@ -38,4 +38,4 @@ class Objective(FPGAControlled, Movable):
     cmd = ObjCmd
 
     def initialize(self) -> Future[bool | None]:
-        return self.fcom.send(ObjCmd.SET_VELO(5))
+        return self.com.send(ObjCmd.SET_VELO(5))
