@@ -68,10 +68,11 @@ def run_in_executor(f: Callable[P, T]) -> Callable[P, Future[T]]:
 
     @wraps(f)
     def inner(*args: P.args, **kwargs: P.kwargs) -> Future[T]:
+        assert isinstance(args[0], object)
         self = cast(Threaded, args[0])
         try:
             self._executor
-        except NameError:
+        except AttributeError:
             self._executor = ThreadPoolExecutor(max_workers=1)
         if threading.current_thread() not in self._executor._threads:
             return cast(Future[T], self._executor.submit(lambda: f(*args, **kwargs)))

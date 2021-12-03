@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from concurrent.futures import Future
+from concurrent.futures import Future, ThreadPoolExecutor
 from functools import partial
 from logging import getLogger
 from typing import Literal, cast, get_args
@@ -31,6 +31,10 @@ class ZStage(FPGAControlled, Movable):
 
     cmd = ZCmd
 
+    def __init__(self, fpga_com: COM) -> None:
+        super().__init__(fpga_com)
+        self._executor = ThreadPoolExecutor(max_workers=1)
+
     def initialize(self):
         for i in get_args(ID):
             self.com.send(ZCmd.GO_HOME(i))
@@ -43,11 +47,18 @@ class ZStage(FPGAControlled, Movable):
     @property
     @run_in_executor
     def position(self) -> tuple[int, int, int]:
-        zs = tuple(self.com.send(ZCmd.READ_POS(i)) for i in get_args(ID))
-        zs = tuple(x.result() for x in zs)
-        return cast(tuple[int, int, int], zs)
+        out = tuple(x.result() for x in self._position)
+        assert all(map(not_none, out))
+        return cast(tuple[int, int, int], out)
+
+    @property
+    def _position(self) -> tuple[Future[int], Future[int], Future[int]]:
+        """Weird bug. Calling two self.position.result() under run_in_executor hangs thread.
+        Bug disappears in a a debug process"""
+        res = self.com.send(tuple(ZCmd.READ_POS(i) for i in get_args(ID)))
+        return cast(tuple[Future[int], Future[int], Future[int]], res)
 
     @property
     @run_in_executor
     def is_moving(self):
-        return self.position.result() == self.position.result()
+        return any(a.result() != b.result() for a, b in zip(self._position, self._position))

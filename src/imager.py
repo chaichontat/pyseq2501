@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from logging import getLogger
 import time
@@ -22,7 +23,6 @@ class Channel:
 
 
 class Imager:
-    fpga: FPGA
     UM_PER_PX = 0.375
 
     def __init__(self, ports: Ports) -> None:
@@ -36,6 +36,7 @@ class Imager:
 
         self.lasers = Lasers(Laser("laser_g", ports.laser_g), Laser("laser_r", ports.laser_r))
         self.cams = Cameras()
+        self._executor = ThreadPoolExecutor(max_workers=1)
 
     def initialize(self) -> None:
         self.x.initialize()
@@ -43,16 +44,25 @@ class Imager:
         self.lasers.initialize()
 
     @property
-    @run_in_executor
     def all_still(self) -> bool:
         x, y, z = self.x.is_moving, self.y.is_moving, self.z.is_moving
         return not any((x.result(), y.result(), z.result()))
 
+    # def wait_all_still(self):  DOES NOT WORK
+    #     while True:
+    #         remaining = [self.x.is_moving, self.y.is_moving, self.z.is_moving]
+    #         for i in range(len(remaining) - 1, -1, -1):  # Reversed
+    #             if not remaining[i].result():
+    #                 del remaining[i]
+    #             else:
+    #                 logger.warning("Started taking an image while stage is moving. Waiting.")
+    #                 time.sleep(0.2)
+
     # TODO add more ready checks.
     def take_image(self, n_bundles: int) -> FourImages:
         logger.info(f"Taking image with {n_bundles} bundles.")
-        while not self.all_still.result():
-            logger.warning("Started taking an image while y-stage is not in position. Waiting.")
+        while not self.all_still:
+            logger.warning("Started taking an image while stage is moving. Waiting.")
             time.sleep(0.2)
 
         self.y._mode = "IMAGING"

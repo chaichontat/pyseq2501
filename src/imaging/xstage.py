@@ -4,6 +4,9 @@ from typing import Optional
 
 from src.base.instruments import Movable, UsesSerial
 from src.utils.async_com import COM, CmdParse
+import re
+
+from src.utils.utils import not_none
 
 logger = logging.getLogger("XStage")
 
@@ -14,7 +17,7 @@ class XCmd:
     `$VAR=$VAL` : Set $VAR to $VAL
     """
     INIT = "\x03"
-    IS_MOVING   = CmdParse("PR MV", bool)
+    IS_MOVING   = CmdParse("PR MV", lambda x: int(not_none(re.search(r"PR MV\n(-?\d+)", x)).group(1)) == 1, n_lines=2)
     GET_POS     = CmdParse("PR P" , int)
     SET_POS     = lambda x: f"MA {x}"  # Set mode and move to abs. position.
     SET_POS_REL = lambda x: f"MR {x}"  # Set mode and move to rel. position.

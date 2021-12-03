@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import asyncio
 from concurrent.futures import Future
 import queue
@@ -109,7 +108,6 @@ class COM:
 
         # asyncio.Queue is not thread-safe and we're not waiting anyway.
         self._read_queue: queue.Queue[tuple[CmdParse, asyncio.Future]] = queue.Queue()
-        self._write_queue: asyncio.Queue[str] = asyncio.Queue()
         if port_rx is not None:
             assert name == "fpga"
             srx = LOOP.put(open_serial_connection(url=port_rx, baudrate=115200))
@@ -120,10 +118,8 @@ class COM:
             assert name != "fpga"
             self._serial = Channel(*LOOP.put(open_serial_connection(url=port_tx, baudrate=9600)).result())
             logger.info(f"{self.name}Started listening to port {port_tx}.")
-        self.tasks = (
-            LOOP.put(self._read_forever()),
-            LOOP.put(self._write_forever()),
-        )  # Prevent garbage collection.
+        self.tasks = LOOP.put(self._read_forever())
+        # Prevent garbage collection.
         time.sleep(0.1)  # Give time for read_forever to purge channel.
 
     async def _read_forever(self) -> NoReturn:
@@ -147,40 +143,32 @@ class COM:
                 # console.print_exception()
                 fut.set_result(None)
             else:
-                logger.debug(f"{self.name}Rx: {resp} [green] Verified")
+                r = resp.replace("\n", " ")
+                logger.debug(f"{self.name}Rx: '{r:10s}', [green]Parsed: {parsed}")
                 fut.set_result(parsed)
             finally:
                 self._read_queue.task_done()
 
-    async def _write_forever(self) -> NoReturn:
-        while True:
-            msg = await self._write_queue.get()
-            if self.min_spacing:
-                await asyncio.sleep(max(0, self.min_spacing - (time.monotonic() - self.t_lastcmd)))
-            self._serial.writer.write(self.formatter(msg).encode())
-            self.t_lastcmd = time.monotonic()
-            self._write_queue.task_done()
-            logger.debug(f"{self.name}Tx: {msg}")
+    # @overload
+    # async def _send(self, msg: str) -> None:
+    #     ...
 
-    @overload
-    async def _send(self, msg: str) -> None:
-        ...
+    # @overload
+    # async def _send(self, msg: CmdParse[T, Any]) -> Optional[T]:
+    #     ...
 
-    @overload
-    async def _send(self, msg: CmdParse[T, Any]) -> Optional[T]:
-        ...
+    # async def _send(self, msg: str | CmdParse[T, Any]) -> None | Optional[T]:
+    #     print(f"Adding {msg} to queue.")
+    #     if isinstance(msg, str):
+    #         self._write_queue.put_nowait(msg)
+    #         return
 
-    async def _send(self, msg: str | CmdParse[T, Any]) -> None | Optional[T]:
-        if isinstance(msg, str):
-            self._write_queue.put_nowait(msg)
-            return
+    #     if not isinstance(msg.cmd, str):
+    #         raise ValueError("This command needs argument(s), call it first.")
 
-        if not isinstance(msg.cmd, str):
-            raise ValueError("This command needs argument(s), call it first.")
-
-        self._write_queue.put_nowait(msg.cmd)
-        self._read_queue.put_nowait((msg, fut := asyncio.Future()))
-        return await fut
+    #     self._write_queue.put_nowait(msg.cmd)
+    #     self._read_queue.put_nowait((msg, fut := asyncio.Future()))
+    #     return await fut
 
     @overload
     def send(self, msg: str) -> None:
@@ -219,12 +207,35 @@ class COM:
             None for msg, Future of a CmdParse result.
         """
         if isinstance(msg, str):
-            LOOP.put(self._send(msg))
+            self._send(msg)
             return
+
         if isinstance(msg, CmdParse):
-            return LOOP.put(self._send(msg))
+            if not isinstance(msg.cmd, str):
+                raise ValueError("This command needs argument(s), call it first.")
+
+            self._read_queue.put_nowait((msg, fut := asyncio.Future(loop=LOOP.loop)))
+            self._send(msg.cmd)
+            return LOOP.put(self.async_wrapper(fut))
 
         return tuple(self.send(x) for x in msg)
+
+    def _send(self, msg: str) -> None:
+        """This needs to be synchronous to maintain order of execution.
+        asyncio.Queue is not thread-safe and using an asynchronous function to queue things does not guarantee order.
+
+        Args:
+            msg (str): [description]
+        """
+        if self.min_spacing:
+            time.sleep(max(0, self.min_spacing - (time.monotonic() - self.t_lastcmd)))
+        self._serial.writer.write(self.formatter(msg).encode())
+        self.t_lastcmd = time.monotonic()
+        logger.debug(f"{self.name}Tx: {msg}")
+
+    @staticmethod
+    async def async_wrapper(fut):
+        return await fut
 
 
 if __name__ == "__main__":
