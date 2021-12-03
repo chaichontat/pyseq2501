@@ -46,7 +46,7 @@ class ZStage(FPGAControlled, Movable):
 
         for i in get_args(ID):
             fut = self.com.send(tuple(ZCmd.CLEAR_REGISTER(i) for i in get_args(ID)))
-        [f.result() for f in fut]
+        [f.result() for f in fut]  # type: ignore
 
         for i in get_args(ID):
             self.com.send(ZCmd.GO_HOME(i))
