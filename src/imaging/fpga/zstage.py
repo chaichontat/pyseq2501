@@ -6,8 +6,8 @@ from logging import getLogger
 from typing import Literal, cast, get_args
 
 from src.base.instruments import FPGAControlled, Movable
-from src.utils.async_com import COM, CmdParse
-from src.utils.utils import run_in_executor, not_none
+from src.com.async_com import COM, CmdParse
+from src.utils.utils import run_in_executor, not_none, is_between
 
 logger = getLogger("z")
 
@@ -21,6 +21,8 @@ class ZCmd:
     READ_POS = CmdParse(lambda i:       f"T{i}RD",         lambda x: int(not_none(re.search(r"^T[123]RD (\d+)$", x)).group(1)))
     SET_POS  = CmdParse(lambda i, x:    f"T{i}MOVETO {x}", lambda x: re.search(r"^T[123]MOVETO \d+$", x))
     CLEAR_REGISTER = CmdParse(lambda i: f"T{i}CR",         lambda x: re.search(r"^T[123]CR$", x))
+    SET_VELO = CmdParse(lambda i, x:    f"T{i}VL {x}",     lambda x: re.search(r"^T[123]VL$", x))
+    SET_CURRENT = CmdParse(lambda i, x: f"T{i}CUR {x}",    lambda x: re.search(r"^T[123]CUR$", x))
 # fmt:on
 
 
@@ -36,10 +38,18 @@ class ZStage(FPGAControlled, Movable):
         self._executor = ThreadPoolExecutor(max_workers=1)
 
     def initialize(self):
+        self.com.send("TDIZ_PI_STAGE")
+        for i in get_args(ID):
+            self.com.send(ZCmd.SET_CURRENT(i, 35))
+            self.com.send(ZCmd.SET_VELO(i, 62500))
+        # TODO
+
+        for i in get_args(ID):
+            fut = self.com.send(tuple(ZCmd.CLEAR_REGISTER(i) for i in get_args(ID)))
+        [f.result() for f in fut]
+
         for i in get_args(ID):
             self.com.send(ZCmd.GO_HOME(i))
-        for i in get_args(ID):
-            self.com.send(ZCmd.CLEAR_REGISTER(i))
 
     def move(self, pos: int) -> list[Future[str]]:
         return [self.com.send(is_between(partial(ZCmd.SET_POS.cmd, i), *self.RANGE)(pos)) for i in get_args(ID)]  # type: ignore
@@ -49,6 +59,8 @@ class ZStage(FPGAControlled, Movable):
     def position(self) -> tuple[int, int, int]:
         out = tuple(x.result() for x in self._position)
         assert all(map(not_none, out))
+        if not all(map(lambda x: x > 0, out)):
+            raise Exception("Invalid Z position. Clear register first.")
         return cast(tuple[int, int, int], out)
 
     @property

@@ -139,5 +139,5 @@ class DCAMDict(MutableMapping):
                 # print(dcam_props[name].mode_key)
                 # print("gnd", gnd := get_mode_key(h, dcam_props[name].attr))
                 # assert dcam_props[name].mode_key == gnd
-        assert all(x in dcam_props.keys() for x in set(get_args(Props)))
+        # assert all(x in dcam_props.keys() for x in set(get_args(Props)))
         return DCAMDict(h, dcam_props)

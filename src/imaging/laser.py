@@ -6,7 +6,7 @@ from logging import getLogger
 from typing import Annotated, Any, Literal
 
 from src.base.instruments import UsesSerial
-from src.utils.async_com import COM, CmdParse
+from src.com.async_com import COM, CmdParse
 from src.utils.utils import is_between, run_in_executor
 
 logger = getLogger("Laser")

@@ -22,9 +22,11 @@ from returns.result import Result, Success, Failure
 
 from serial_asyncio import open_serial_connection
 from src.base.instruments_types import SerialInstruments
-from src.utils.eventloop import LOOP
+from src.com.eventloop import LOOP
 
 logger = getLogger("COM")
+# © is not in ASCII. Looking at you Schneider Electrics (x-stage).
+ENCODING_KW = {"encoding": "ISO-8859-1", "errors": "replace"}
 # fmt:off
 # Pick from ANSI colors.
 COLOR: dict[SerialInstruments, str] = dict(
@@ -124,9 +126,10 @@ class COM:
 
     async def _read_forever(self) -> NoReturn:
         while True:
-            resp = (await self._serial.reader.readline()).decode().strip()
+            resp = (await self._serial.reader.readline()).decode(**ENCODING_KW).strip()
             if not resp:  # len == 0
                 continue
+            logger.debug(f"{self.name}Raw: '{resp:10s}'")
             try:
                 cmd, fut = self._read_queue.get_nowait()
             except queue.Empty:
@@ -135,7 +138,7 @@ class COM:
 
             try:
                 for _ in range(1, cmd.n_lines):
-                    resp += "\n" + (await self._serial.reader.readline()).decode().strip()
+                    resp += " " + (await self._serial.reader.readline()).decode(**ENCODING_KW).strip()
                 parsed = cmd.parser(resp)
 
             except:
@@ -143,8 +146,7 @@ class COM:
                 # console.print_exception()
                 fut.set_result(None)
             else:
-                r = resp.replace("\n", " ")
-                logger.debug(f"{self.name}Rx: '{r:10s}', [green]Parsed: {parsed}")
+                logger.debug(f"{self.name}Rx: '{resp:10s}', [green]Parsed: {parsed}")
                 fut.set_result(parsed)
             finally:
                 self._read_queue.task_done()
@@ -207,7 +209,7 @@ class COM:
             None for msg, Future of a CmdParse result.
         """
         if isinstance(msg, str):
-            self._send(msg)
+            self._send(self.formatter(msg).encode(**ENCODING_KW))
             return
 
         if isinstance(msg, CmdParse):
@@ -215,12 +217,12 @@ class COM:
                 raise ValueError("This command needs argument(s), call it first.")
 
             self._read_queue.put_nowait((msg, fut := asyncio.Future(loop=LOOP.loop)))
-            self._send(msg.cmd)
+            self._send(self.formatter(msg.cmd).encode(**ENCODING_KW))
             return LOOP.put(self.async_wrapper(fut))
 
         return tuple(self.send(x) for x in msg)
 
-    def _send(self, msg: str) -> None:
+    def _send(self, msg: bytes) -> None:
         """This needs to be synchronous to maintain order of execution.
         asyncio.Queue is not thread-safe and using an asynchronous function to queue things does not guarantee order.
 
@@ -229,7 +231,7 @@ class COM:
         """
         if self.min_spacing:
             time.sleep(max(0, self.min_spacing - (time.monotonic() - self.t_lastcmd)))
-        self._serial.writer.write(self.formatter(msg).encode())
+        self._serial.writer.write(msg)
         self.t_lastcmd = time.monotonic()
         logger.debug(f"{self.name}Tx: {msg}")
 

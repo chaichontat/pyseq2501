@@ -3,7 +3,7 @@ from logging import getLogger
 from typing import Literal, get_args
 
 from src.base.instruments import FPGAControlled
-from src.utils.async_com import CmdParse
+from src.com.async_com import CmdParse
 from src.utils.utils import ok_if_match
 
 logger = getLogger("optics")

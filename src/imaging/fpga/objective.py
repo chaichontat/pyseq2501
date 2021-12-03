@@ -3,7 +3,7 @@ from concurrent.futures import Future
 from logging import getLogger
 
 from src.base.instruments import FPGAControlled, Movable
-from src.utils.async_com import CmdParse
+from src.com.async_com import CmdParse
 from src.utils.utils import ok_if_match
 
 logger = getLogger("objective")

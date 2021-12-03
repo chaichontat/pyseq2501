@@ -2,7 +2,7 @@ from concurrent.futures import Future
 from logging import getLogger
 
 from src.base.instruments import UsesSerial
-from src.utils.async_com import COM, CmdParse
+from src.com.async_com import COM, CmdParse
 from src.utils.utils import ok_if_match
 
 from .led import LED
@@ -19,7 +19,7 @@ class FPGACmd:
 
 class FPGA(UsesSerial):
     def __init__(self, port_tx: str, port_rx: str) -> None:
-        self.com = COM("fpga", port_tx, port_rx, min_spacing=0)
+        self.com = COM("fpga", port_tx, port_rx, min_spacing=0.05)
         self.tdi = TDI(self.com)
         self.led = LED(self.com)
         self.optics = Optics(self.com)

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Dict, Literal, Optional
 
 from src.base.instruments import Movable, UsesSerial
-from src.utils.async_com import COM, CmdParse
+from src.com.async_com import COM, CmdParse
 from src.utils.utils import ok_if_match, run_in_executor
 
 logger = logging.getLogger("YStage")
@@ -26,8 +26,8 @@ Imaging velo == 200200 units/s.
 
 """
 MODES: Dict[ModeName, Dict[ModeParams, str]] = {
-    "IMAGING": {"GAINS": "5,10,7,1.5,0", "VELO": "0.154"},
-    "MOVING": {"GAINS": "5,10,7,1.5,0", "VELO": "1"},
+    "IMAGING": {"GAINS": "6,10,7,1.5,0", "VELO": "0.154"},
+    "MOVING": {"GAINS": "7,10,7,1.5,0", "VELO": "1"},
 }
 
 

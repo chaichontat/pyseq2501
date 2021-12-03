@@ -1,8 +1,8 @@
 from abc import ABCMeta, abstractmethod
 from concurrent.futures import Future
-from typing import Annotated, Any, ClassVar
+from typing import Annotated, Any, ClassVar, ParamSpec, Protocol, TypeVar, cast
 
-from src.utils.async_com import COM
+from src.com.async_com import COM
 
 
 class UsesSerial(metaclass=ABCMeta):

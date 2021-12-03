@@ -25,7 +25,7 @@ class Channel:
 class Imager:
     UM_PER_PX = 0.375
 
-    def __init__(self, ports: Ports) -> None:
+    def __init__(self, ports: Ports, init_cam: bool = True) -> None:
         self.fpga = FPGA(*ports.fpga)
         self.tdi = self.fpga.tdi
         self.optics = self.fpga.optics
@@ -35,7 +35,8 @@ class Imager:
         self.z = self.fpga.z
 
         self.lasers = Lasers(Laser("laser_g", ports.laser_g), Laser("laser_r", ports.laser_r))
-        self.cams = Cameras()
+        if init_cam:
+            self.cams = Cameras()
         self._executor = ThreadPoolExecutor(max_workers=1)
 
     def initialize(self) -> None:
