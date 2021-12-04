@@ -36,14 +36,12 @@ class ZStage(FPGAControlled, Movable):
 
     def __init__(self, fpga_com: COM) -> None:
         super().__init__(fpga_com)
-        self._executor = ThreadPoolExecutor(max_workers=1)
 
     def initialize(self):
         self.com.send("TDIZ_PI_STAGE")
         for i in get_args(ID):
             self.com.send(ZCmd.SET_CURRENT(i, 35))
             self.com.send(ZCmd.SET_VELO(i, 62500))
-        # TODO
 
         for i in get_args(ID):
             fut = self.com.send(tuple(ZCmd.CLEAR_REGISTER(i) for i in get_args(ID)))

@@ -96,7 +96,6 @@ class YStage(UsesSerial, Movable):
 
         self.__mode: Optional[ModeName] = None
         self.tol = tol
-        self._executor = ThreadPoolExecutor(max_workers=1)
 
     @run_in_executor
     def initialize(self) -> None:

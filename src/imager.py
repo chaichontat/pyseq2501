@@ -36,7 +36,6 @@ class Imager:
         self.lasers = Lasers(Laser("laser_g", ports.laser_g), Laser("laser_r", ports.laser_r))
         if init_cam:
             self.cams = Cameras()
-        self._executor = ThreadPoolExecutor(max_workers=1)
 
     def initialize(self) -> None:
         self.x.initialize()

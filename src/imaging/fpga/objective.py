@@ -1,6 +1,7 @@
 import re
 from concurrent.futures import Future
 from logging import getLogger
+from typing import Optional
 
 from src.base.instruments import FPGAControlled, Movable
 from src.com.async_com import CmdParse
@@ -22,7 +23,7 @@ class ObjCmd:
     # Callable[[Annotated[int, "mm/s"]], str]
     # fmt: off
     SET_VELO = CmdParse(lambda x: f"ZSTEP {1288471 * x}", ok_if_match("ZSTEP"))
-    SET_POS  = CmdParse(lambda x: f"ZMV {x}"            , ok_if_match("ZMV"))
+    SET_POS  = CmdParse(lambda x: f"ZADCW {x}"          , ok_if_match("ZADCW"))
     GET_POS  = CmdParse(           "ZDACR"              , get_pos)
     
     SET_TRIGGER = lambda x: f"ZTRG {x}"
@@ -39,3 +40,9 @@ class Objective(FPGAControlled, Movable):
 
     def initialize(self) -> Future[bool | None]:
         return self.com.send(ObjCmd.SET_VELO(5))
+
+    def position(self) -> Future[Optional[int]]:
+        return self.com.send(ObjCmd.GET_POS)
+
+    def move(self, x: int) -> Future[None | bool]:
+        return self.com.send(ObjCmd.SET_POS(x))

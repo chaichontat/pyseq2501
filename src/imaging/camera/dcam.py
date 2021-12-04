@@ -199,7 +199,7 @@ class Cameras:
 
     def __init__(self) -> None:
         self.ready = Future()
-        self._executor = ThreadPoolExecutor(max_workers=1)
+        self._executor = ThreadPoolExecutor(max_workers=1)  # Only case of Executor outside COM.
         self._cams = self.post_init()  # self.properties set in here.
         # self._cams.add_done_callback(
         #     lambda _: setattr(self, "properties", TwoProps(*[c.properties for c in self]))

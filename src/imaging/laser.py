@@ -38,7 +38,7 @@ class LaserCmd:
     SET_POWER = lambda x: f"POWER={x}"
     GET_POWER = CmdParse("POWER?", v_get_power)
     GET_STATUS = CmdParse("STAT?", v_get_status)
-    VERSION = CmdParse("VERSION?", lambda x: {"SMD-G-1.1.2": True}[x])
+    VERSION = CmdParse("VERSION?", lambda x: {"SMD-G-1.1.2": True, "SMD-G-1.1.1": True}[x])
 
 
 class Laser(UsesSerial):
@@ -47,7 +47,6 @@ class Laser(UsesSerial):
 
     def __init__(self, name: Literal["laser_r", "laser_g"], port_tx: str) -> None:
         self.com = COM(name, port_tx=port_tx, min_spacing=0.1)
-        self._executor = ThreadPoolExecutor(max_workers=1)
         self.initialize()
 
     @run_in_executor
@@ -58,6 +57,25 @@ class Laser(UsesSerial):
     @property
     def power(self) -> Future[None | int]:
         return self.com.send(LaserCmd.GET_POWER)
+
+    @run_in_executor
+    def set_onoff(self, state: bool, attempts: int = 3) -> bool:
+        if state == self._on:
+            return state
+        for i in range(attempts):
+            if i > 0:
+                logger.warning(f"Laser did not switch to {state}, Trying again.")
+            self.com.send({False: LaserCmd.OFF, True: LaserCmd.ON}[state])
+            while (resp := self.com.send(LaserCmd.GET_STATUS).result()) is None:
+                ...
+            if resp == state:
+                break
+        else:
+            raise LaserException(
+                f"Laser did not switch to {state} after {attempts} attempts. Check if all doors are 'closed'."
+            )
+        self._on = state
+        return resp
 
     @run_in_executor
     def set_power(
@@ -91,25 +109,6 @@ class Laser(UsesSerial):
     @on.setter
     def on(self, state: bool):
         self.set_onoff(state)
-
-    @run_in_executor
-    def set_onoff(self, state: bool, attempts: int = 3) -> bool:
-        if state == self._on:
-            return state
-        for i in range(attempts):
-            if i > 0:
-                logger.warning(f"Laser did not switch to {state}, Trying again.")
-            self.com.send({False: LaserCmd.OFF, True: LaserCmd.ON}[state])
-            while (resp := self.com.send(LaserCmd.GET_STATUS).result()) is None:
-                ...
-            if resp == state:
-                break
-        else:
-            raise LaserException(
-                f"Laser did not switch to {state} after {attempts} attempts. Check if all doors are 'closed'."
-            )
-        self._on = state
-        return resp
 
 
 @dataclass
