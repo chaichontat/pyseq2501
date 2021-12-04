@@ -142,8 +142,10 @@ class COM:
                     resp += " " + (await self._serial.reader.readline()).decode(**ENCODING_KW).strip()
                 parsed = cmd.parser(resp)
 
-            except:
-                logger.error(f"{self.name}Exception while parsing '{resp}' from '{cmd.cmd}'.")
+            except BaseException as e:
+                logger.error(
+                    f"{self.name}Exception {type(e).__name__} while parsing '{resp}' from '{cmd.cmd}'."
+                )
                 # console.print_exception()
                 fut.set_result(None)
             else:
@@ -210,7 +212,7 @@ class COM:
         Returns:
             None for msg, Future of a CmdParse result.
         """
-        with self.lock:  # Only one thread should use this function but just in case.
+        with self.lock:  # Main thread and COM-specific thread can use this function at the same time.
             if isinstance(msg, str):
                 self._send(self.formatter(msg).encode(**ENCODING_KW))
                 return
@@ -231,11 +233,12 @@ class COM:
         Args:
             msg (str): [description]
         """
-        if self.min_spacing:
-            time.sleep(max(0, self.min_spacing - (time.monotonic() - self.t_lastcmd)))
-        self._serial.writer.write(msg)
-        self.t_lastcmd = time.monotonic()
-        logger.debug(f"{self.name}Tx: {msg}")
+        with self.lock:
+            if self.min_spacing:
+                time.sleep(max(0, self.min_spacing - (time.monotonic() - self.t_lastcmd)))
+            self._serial.writer.write(msg)
+            self.t_lastcmd = time.monotonic()
+            logger.debug(f"{self.name}Tx: {msg}")
 
     @staticmethod
     async def async_wrapper(fut):

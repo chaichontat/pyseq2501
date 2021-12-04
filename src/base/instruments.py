@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from concurrent.futures import Future
-from typing import Annotated, Any, ClassVar, ParamSpec, Protocol, TypeVar, cast
+from typing import Annotated, Any, ClassVar, NoReturn
 
 from src.com.async_com import COM
 
@@ -9,6 +9,10 @@ class UsesSerial(metaclass=ABCMeta):
     @abstractmethod
     def initialize(self) -> Future[Any]:
         ...
+
+    @property
+    def _executor(self) -> NoReturn:
+        raise AttributeError  # Prevents executor outside COM.
 
 
 class Movable(metaclass=ABCMeta):
@@ -38,3 +42,7 @@ class FPGAControlled:
 
     def __init__(self, fpga_com: COM) -> None:
         self.com = fpga_com
+
+    @property
+    def _executor(self) -> NoReturn:
+        raise AttributeError
