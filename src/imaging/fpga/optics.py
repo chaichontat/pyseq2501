@@ -1,6 +1,7 @@
+from concurrent.futures import Future
 from contextlib import contextmanager
 from logging import getLogger
-from typing import Literal, get_args
+from typing import Literal, Optional, get_args
 
 from src.base.instruments import FPGAControlled
 from src.com.async_com import CmdParse
@@ -56,14 +57,14 @@ class Optics(FPGAControlled):
 
     @contextmanager
     def open_shutter(self):
-        self.com.send(OpticCmd.OPEN_SHUTTER)
+        self._open().result()
         try:
             yield
         finally:
-            self.com.send(OpticCmd.CLOSE_SHUTTER)
+            self._close()
 
-    def _open(self) -> None:
-        self.com.send(OpticCmd.OPEN_SHUTTER)
+    def _open(self) -> Future[Optional[bool]]:
+        return self.com.send(OpticCmd.OPEN_SHUTTER)
 
-    def _close(self) -> None:
-        self.com.send(OpticCmd.CLOSE_SHUTTER)
+    def _close(self) -> Future[Optional[bool]]:
+        return self.com.send(OpticCmd.CLOSE_SHUTTER)

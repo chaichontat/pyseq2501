@@ -8,7 +8,8 @@ from src.utils.utils import ok_if_match
 from .led import LED
 from .optics import Optics
 from .tdi import TDI
-from .zstage import ZStage
+from .tiltstage import TiltStage
+from .objstage import ObjStage
 
 logger = getLogger("fpga")
 
@@ -23,7 +24,8 @@ class FPGA(UsesSerial):
         self.tdi = TDI(self.com)
         self.led = LED(self.com)
         self.optics = Optics(self.com)
-        self.z = ZStage(self.com)
+        self.z = ObjStage(self.com)
+        self.tilt = TiltStage(self.com)
 
         # assert all([x.fcom is self.com for x in (self.tdi, self.led, self.optics, self.z)])  # type: ignore[attr-defined]
 

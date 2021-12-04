@@ -132,7 +132,6 @@ class COM:
             resp = (await self._serial.reader.readline()).decode(**ENCODING_KW).strip()
             if not resp:  # len == 0
                 continue
-            logger.debug(f"{self.name}Raw: '{resp:10s}'")
             try:
                 cmd, fut = self._read_queue.get_nowait()
             except queue.Empty:

@@ -54,19 +54,13 @@ class Laser(UsesSerial):
         self.com.send(LaserCmd.VERSION)
         self.set_onoff(True)
 
-    @property
-    def power(self) -> Future[None | int]:
-        return self.com.send(LaserCmd.GET_POWER)
-
     @run_in_executor
     def set_onoff(self, state: bool, attempts: int = 3) -> bool:
-        if state == self._on:
-            return state
         for i in range(attempts):
             if i > 0:
                 logger.warning(f"Laser did not switch to {state}, Trying again.")
             self.com.send({False: LaserCmd.OFF, True: LaserCmd.ON}[state])
-            while (resp := self.com.send(LaserCmd.GET_STATUS).result()) is None:
+            while (resp := self.on) is None:
                 ...
             if resp == state:
                 break
@@ -79,7 +73,7 @@ class Laser(UsesSerial):
 
     @run_in_executor
     def set_power(
-        self, power: Annotated[int, "mW"], tol: Annotated[int, "mW"] = 3, timeout: Annotated[int, "s"] = 10
+        self, power: Annotated[int, "mW"], tol: Annotated[int, "mW"] = 3, timeout: Annotated[int, "s"] = 30
     ):
         """Laser can take a while to warm up.
 
@@ -87,28 +81,31 @@ class Laser(UsesSerial):
             power (int): [description]
             tol (int): [description]. Defaults to 3.
         """
-        p = None
         assert all((int(power) == power and power > 0, timeout > 0, tol > 0))
         if not self.on:
-            self.set_onoff(True)
+            self.on = True
         self.com.send(is_between(LaserCmd.SET_POWER, *self.POWER_RANGE)(power))
 
-        for _ in range(2 * timeout):
-            time.sleep(1 / 2)
-            p = self.com.send(LaserCmd.GET_POWER).result()
-            assert p is not None
-            if abs(power - p) < tol:
-                return
+        for _ in range(timeout):
+            time.sleep(1)
+            if abs(power - self.power) < tol:
+                return True
         else:
-            raise LaserException(f"Laser power not {power} mW after {timeout} seconds. Currently at {p} mW.")
+            return False
 
     @property
     def on(self) -> None | bool:
-        return self._on
+        assert (out := self.com.send(LaserCmd.GET_STATUS).result()) is not None
+        return out
 
     @on.setter
     def on(self, state: bool):
         self.set_onoff(state)
+
+    @property
+    def power(self) -> int:
+        assert (out := self.com.send(LaserCmd.GET_POWER).result()) is not None
+        return out
 
 
 @dataclass

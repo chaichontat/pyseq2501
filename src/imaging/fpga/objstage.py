@@ -5,6 +5,7 @@ from typing import Optional
 
 from src.base.instruments import FPGAControlled, Movable
 from src.com.async_com import CmdParse
+from src.com.thread_mgt import run_in_executor
 from src.utils.utils import ok_if_match
 
 logger = getLogger("objective")
@@ -31,7 +32,7 @@ class ObjCmd:
     # fmt: on
 
 
-class Objective(FPGAControlled, Movable):
+class ObjStage(FPGAControlled, Movable):
     STEPS_PER_UM = 262
     RANGE = (0, 65535)
     HOME = 65535
@@ -41,8 +42,14 @@ class Objective(FPGAControlled, Movable):
     def initialize(self) -> Future[bool | None]:
         return self.com.send(ObjCmd.SET_VELO(5))
 
+    @property
     def position(self) -> Future[Optional[int]]:
         return self.com.send(ObjCmd.GET_POS)
 
     def move(self, x: int) -> Future[None | bool]:
         return self.com.send(ObjCmd.SET_POS(x))
+
+    @property
+    @run_in_executor
+    def is_moving(self) -> bool:
+        return self.position.result() != self.position.result()
