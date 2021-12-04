@@ -7,7 +7,8 @@ from typing import Literal, cast, get_args
 
 from src.base.instruments import FPGAControlled, Movable
 from src.com.async_com import COM, CmdParse
-from src.utils.utils import run_in_executor, not_none, is_between
+from src.utils.utils import not_none, is_between
+from src.com.thread_mgt import run_in_executor
 
 logger = getLogger("z")
 

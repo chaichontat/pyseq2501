@@ -1,7 +1,8 @@
 from __future__ import annotations
 import asyncio
-from concurrent.futures import Future
+from concurrent.futures import Future, ThreadPoolExecutor
 import queue
+import threading
 import time
 from asyncio import StreamReader, StreamWriter
 from dataclasses import dataclass
@@ -107,6 +108,8 @@ class COM:
 
         self.min_spacing = min_spacing
         self.t_lastcmd = time.monotonic()
+        self.lock = threading.RLock()
+        self._executor = ThreadPoolExecutor(max_workers=1)
 
         # asyncio.Queue is not thread-safe and we're not waiting anyway.
         self._read_queue: queue.Queue[tuple[CmdParse, asyncio.Future]] = queue.Queue()
@@ -208,19 +211,19 @@ class COM:
         Returns:
             None for msg, Future of a CmdParse result.
         """
-        if isinstance(msg, str):
-            self._send(self.formatter(msg).encode(**ENCODING_KW))
-            return
+        with self.lock:  # Only one thread should use this function but just in case.
+            if isinstance(msg, str):
+                self._send(self.formatter(msg).encode(**ENCODING_KW))
+                return
 
-        if isinstance(msg, CmdParse):
-            if not isinstance(msg.cmd, str):
-                raise ValueError("This command needs argument(s), call it first.")
+            if isinstance(msg, CmdParse):
+                if not isinstance(msg.cmd, str):
+                    raise ValueError("This command needs argument(s), call it first.")
 
-            self._read_queue.put_nowait((msg, fut := asyncio.Future(loop=LOOP.loop)))
-            self._send(self.formatter(msg.cmd).encode(**ENCODING_KW))
-            return LOOP.put(self.async_wrapper(fut))
-
-        return tuple(self.send(x) for x in msg)
+                self._read_queue.put_nowait((msg, fut := asyncio.Future(loop=LOOP.loop)))
+                self._send(self.formatter(msg.cmd).encode(**ENCODING_KW))
+                return LOOP.put(self.async_wrapper(fut))
+            return tuple(self.send(x) for x in msg)
 
     def _send(self, msg: bytes) -> None:
         """This needs to be synchronous to maintain order of execution.

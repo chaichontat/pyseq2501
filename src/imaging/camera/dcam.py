@@ -28,7 +28,7 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 from src.imaging.camera.dcam_api import DCAM_CAPTURE_MODE
-from src.utils.utils import run_in_executor, warn_main_thread
+from src.com.thread_mgt import run_in_executor, warn_main_thread
 
 from . import API
 from .dcam_api import DCAMException

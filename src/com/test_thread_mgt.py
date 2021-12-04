@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from .utils import run_in_executor, warn_main_thread
+from .thread_mgt import run_in_executor, warn_main_thread
 
 
 class Fake:

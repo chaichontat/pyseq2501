@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from logging import getLogger
 import time
 
-from src.utils.utils import run_in_executor
 
 from .imaging.camera.dcam import Cameras, FourImages, Mode
 from .imaging.fpga import FPGA

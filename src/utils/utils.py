@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import threading
-import warnings
-from concurrent.futures import Future, ThreadPoolExecutor
-from functools import wraps
+from concurrent.futures import Future
 from math import ceil
-from typing import Callable, Dict, Literal, Optional, ParamSpec, Protocol, Tuple, TypedDict, TypeVar, cast
+from typing import Callable, Dict, Literal, Optional, ParamSpec, Tuple, TypedDict, TypeVar, cast
 
 TILE_WIDTH = 0.769  # mm
 RESOLUTION = 0.375  # µm / px
@@ -55,39 +52,6 @@ def gen_future(x: T) -> Future[T]:
 def not_none(x: Optional[T]) -> T:
     assert x is not None
     return x
-
-
-class Threaded(Protocol):
-    _executor: ThreadPoolExecutor
-
-
-def run_in_executor(f: Callable[P, T]) -> Callable[P, Future[T]]:
-    """
-    Prevents a race condition in which a result from the running object is dependent on an object in the queue.
-    """
-
-    @wraps(f)
-    def inner(*args: P.args, **kwargs: P.kwargs) -> Future[T]:
-        assert isinstance(args[0], object)
-        self = cast(Threaded, args[0])
-        if threading.current_thread() not in self._executor._threads:
-            return cast(Future[T], self._executor.submit(lambda: f(*args, **kwargs)))
-        else:
-            future: Future[T] = Future()
-            future.set_result(f(*args, **kwargs))
-            return future
-
-    return inner
-
-
-def warn_main_thread(f: Callable[P, T]) -> Callable[P, T]:
-    @wraps(f)
-    def inner(*args: P.args, **kwargs: P.kwargs) -> T:
-        if threading.current_thread() is threading.main_thread():
-            warnings.warn(f"{f.__name__} is running on main thread.")
-        return f(*args, **kwargs)
-
-    return inner
 
 
 class Pos(TypedDict):

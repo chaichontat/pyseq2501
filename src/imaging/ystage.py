@@ -6,7 +6,8 @@ from typing import Dict, Literal, Optional
 
 from src.base.instruments import Movable, UsesSerial
 from src.com.async_com import COM, CmdParse
-from src.utils.utils import ok_if_match, run_in_executor
+from src.utils.utils import ok_if_match
+from src.com.thread_mgt import run_in_executor
 
 logger = logging.getLogger("YStage")
 
