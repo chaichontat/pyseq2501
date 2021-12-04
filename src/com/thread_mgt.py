@@ -1,5 +1,6 @@
 from concurrent.futures import Future, ThreadPoolExecutor
 from functools import wraps
+from logging import getLogger
 import threading
 from typing import Callable, ParamSpec, Protocol, TypeVar, cast
 import warnings
@@ -27,7 +28,15 @@ def run_in_executor(f: Callable[P, T]) -> Callable[P, Future[T]]:
             exc = self.com._executor  # type: ignore
 
         if threading.current_thread() not in exc._threads:
-            return cast(Future[T], exc.submit(lambda: f(*args, **kwargs)))
+
+            def g() -> T:
+                try:
+                    return f(*args, **kwargs)
+                except BaseException as e:
+                    getLogger(type(self).__name__).critical(f"Uncaught exception {e} in thread.")
+                    raise e
+
+            return exc.submit(g)
         else:
             future: Future[T] = Future()
             future.set_result(f(*args, **kwargs))

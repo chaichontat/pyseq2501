@@ -225,9 +225,7 @@ class Cameras:
 
     def __getattr__(self, name: str) -> Any:
         if name == "properties":
-            logger.info(
-                "Waiting for DCAM API to finish initializing. Consider not setting properties now."
-            )
+            logger.info("Waiting for DCAM API to finish initializing. Consider not setting properties now.")
             self._cams.result()
             return self.properties
         raise AttributeError
