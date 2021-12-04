@@ -19,7 +19,6 @@ from typing import (
     TypeVar,
     overload,
 )
-from returns.result import Result, Success, Failure
 
 from serial_asyncio import open_serial_connection
 from src.base.instruments_types import SerialInstruments
@@ -35,7 +34,7 @@ COLOR: dict[SerialInstruments, str] = dict(
     x="purple",
     y="yellow",
     laser_g="green",
-    laser_r="red"
+    laser_r="magenta"
 ) # type: ignore
 FORMATTER: dict[SerialInstruments, Callable[[str], str]] = dict(
        fpga=lambda x:  f"{x}\n",
@@ -148,7 +147,8 @@ class COM:
                 # console.print_exception()
                 fut.set_result(None)
             else:
-                logger.debug(f"{self.name}Rx: '{resp:10s}', [green]Parsed: {parsed}")
+                r = f"'{resp}'"
+                logger.debug(f"{self.name}Rx:  {r:20s} [green]Parsed: '{parsed}'")
                 fut.set_result(parsed)
             finally:
                 self._read_queue.task_done()
