@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from ctypes import c_double, c_int32, pointer
 from logging import getLogger
-from typing import Optional
+from typing import Optional, cast
 
 from . import API
 from .dcam_api import DCAMReturnedZero
@@ -19,25 +19,25 @@ logger = getLogger("DCAMmodekey")
 DCAMPROP_ATTR_HASVALUETEXT = int("0x10000000", 0)
 
 
-MODE_KEY: dict[Props, Optional[dict[bytes, int]]] = {
-    "sensor_mode": {b"AREA": 1, b"LINE": 3, b"TDI": 4, b"PARTIAL AREA": 6},
+MODE_KEY: dict[Props, Optional[dict[str, int]]] = {
+    "sensor_mode": {"AREA": 1, "LINE": 3, "TDI": 4, "PARTIAL AREA": 6},
     "sensor_mode_line_bundle_height": None,
-    "colortype": {b"B/W": 1},
+    "colortype": {"B/W": 1},
     "bit_per_channel": None,
-    "trigger_source": {b"INTERNAL": 1, b"EXTERNAL": 2},
-    "trigger_mode": {b"NORMAL": 1},
-    "trigger_active": {b"SYNCREADOUT": 3},
-    "trigger_polarity": {b"NEGATIVE": 1, b"POSITIVE": 2},
-    "trigger_connector": {b"INTERFACE": 1, b"BNC": 2},
+    "trigger_source": {"INTERNAL": 1, "EXTERNAL": 2},
+    "trigger_mode": {"NORMAL": 1},
+    "trigger_active": {"SYNCREADOUT": 3},
+    "trigger_polarity": {"NEGATIVE": 1, "POSITIVE": 2},
+    "trigger_connector": {"INTERFACE": 1, "BNC": 2},
     "exposure_time": None,
     "contrast_gain": None,
-    "primary_buffer_mode": {b"AUTO": 1, b"DIRECT": 2},
-    "binning": {b"1x1": 1, b"2x2": 2},
+    "primary_buffer_mode": {"AUTO": 1, "DIRECT": 2},
+    "binning": {"1x1": 1, "2x2": 2},
     "subarray_hpos": None,
     "subarray_hsize": None,
     "subarray_vpos": None,
     "subarray_vsize": None,
-    "subarray_mode": {b"OFF": 1, b"ON": 2},
+    "subarray_mode": {"OFF": 1, "ON": 2},
     "number_of_partial_area": None,
     "partial_area_vpos": None,
     "partial_area_vsize": None,
@@ -45,7 +45,7 @@ MODE_KEY: dict[Props, Optional[dict[bytes, int]]] = {
     "timing_cyclic_trigger_period": None,
     "timing_min_trigger_blanking": None,
     "timing_min_trigger_interval": None,
-    "timing_exposure": {b"AFTER READOUT": 1, b"OVERLAP READOUT": 2},
+    "timing_exposure": {"AFTER READOUT": 1, "OVERLAP READOUT": 2},
     "internal_frame_rate": None,
     "internal_frame_interval": None,
     "internal_line_rate": None,
@@ -55,21 +55,20 @@ MODE_KEY: dict[Props, Optional[dict[bytes, int]]] = {
     "image_rowbytes": None,
     "image_framebytes": None,
     "image_top_offset_bytes": None,
-    "image_bit_depth_alignment": {b"LSB": 1, b"MSB": 2},
-    "system_alive": {b"OFFLINE": 1, b"ONLINE": 2},
-    "cc2_on_framegrabber": {b"OFF": 1, b"ON": 2},
+    "image_bit_depth_alignment": {"LS": 1, "MS": 2},
+    "system_alive": {"OFFLINE": 1, "ONLINE": 2},
+    "cc2_on_framegrabber": {"OFF": 1, "ON": 2},
     "number_of_channel": None,
-    "attach_buffer_target": {b"EACH FRAME": 1, b"EVERY CHANNEL": 2},
+    "attach_buffer_target": {"EACH FRAME": 1, "EVERY CHANNEL": 2},
     "number_of_target_per_attachbuffer": None,
 }
 
 
 def get_mode_key(handle: Handle, prop_attr: DCAMParamPropertyAttr) -> Optional[dict[str, int]]:
-    # TODO: Weird bug Output: {b'LFF': 1, b'ON': 2} Real:{b'OFF': 1, b'ON': 2} 1st char shifted by 3.
     if not (prop_attr.attribute & DCAMPROP_ATTR_HASVALUETEXT):
         return None
 
-    prop_text = DCAM_PARAM_PROPERTYVALUETEXT.from_attr(prop_attr)
+    prop_text = DCAM_PARAM_PROPERTYVALUETEXT(prop_attr)
     v = c_double(prop_attr.valuemin)
 
     out: dict[str, int] = {}
@@ -77,7 +76,7 @@ def get_mode_key(handle: Handle, prop_attr: DCAMParamPropertyAttr) -> Optional[d
     while True:
         # Get text of current value.
         API.dcam_getpropertyvaluetext(handle, pointer(prop_text))
-        out[prop_text.text] = int(v.value)
+        out[cast(bytes, prop_text.text).decode()] = int(v.value)
 
         # Get next value.
         try:

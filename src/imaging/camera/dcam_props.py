@@ -4,11 +4,11 @@ import ctypes
 from ctypes import c_double, c_int32, pointer
 from dataclasses import dataclass
 from logging import getLogger
-from typing import Iterator, MutableMapping, Optional, Type, cast, get_args
+from typing import Iterator, MutableMapping, NoReturn, cast
 
 from . import API
 from .dcam_api import DCAMReturnedZero
-from .dcam_mode_key import MODE_KEY, get_mode_key
+from .dcam_mode_key import get_mode_key
 from .dcam_types import (
     DCAM_PARAM_PROPERTYATTR,
     DCAMPROP_OPTION_NEAREST,
@@ -42,6 +42,22 @@ class DCAMProperty:
     name: Props
     attr: DCAMParamPropertyAttr
     value: float
+    mode_key: None | dict[str, int]  # None if not mode.
+
+    @staticmethod
+    def get_attr_val(h: Handle, id_: c_int32) -> tuple[DCAMParamPropertyAttr, float]:
+        attr = DCAM_PARAM_PROPERTYATTR.from_id(id_)
+        API.dcam_getpropertyattr(h, pointer(attr))
+        attr = attr.to_dataclass()
+
+        value = c_double(0)
+        API.dcam_getpropertyvalue(h, id_, pointer(value))
+        return attr, value.value
+
+    @classmethod
+    def from_dcam(cls, h: Handle, name: Props, id_: c_int32):
+        attr, value = DCAMProperty.get_attr_val(h, id_)
+        return cls(name, attr, value, get_mode_key(h, attr))
 
     @property
     def id_(self) -> c_int32:
@@ -51,14 +67,16 @@ class DCAMProperty:
     def type_(self) -> PropTypes:
         return self.attr.type_
 
-    def mode_key(self, h: Handle) -> Optional[dict[str, int]]:
-        return get_mode_key(h, self.attr)
+    def refresh(self, handle: Handle):
+        self.attr, self.value = self.get_attr_val(handle, self.id_)
 
     def __str__(self) -> str:
         return f"{self.name}: {self.value}"
 
+    def __eq__(self, __o: DCAMProperty) -> bool:
+        return str(self) == str(__o)
 
-# TODO Get default DCAM dict.
+
 class DCAMDict(MutableMapping):
     _TYPES = PrecomputedPropTypes
 
@@ -80,13 +98,10 @@ class DCAMDict(MutableMapping):
         to_set = ctypes.c_double(value)
         API.dcam_setgetpropertyvalue(self.handle, prop.id_, pointer(to_set), c_int32(DCAM_DEFAULT_ARG))
 
-        # check = c_double(0)
-        # API.dcam_getpropertyvalue(self.handle, prop.id_, pointer(check))
-        # prop.value = check.value
-        # assert prop.value == value
-        prop.value = ctypes.c_double(value).value
+        self.refresh()
+        assert self[name] == value
 
-    def __delitem__(self, _: Props):
+    def __delitem__(self, _: Props) -> NoReturn:
         raise Exception("Cannot remove properties!")
 
     def __iter__(self) -> Iterator[Props]:
@@ -98,20 +113,26 @@ class DCAMDict(MutableMapping):
     def __str__(self) -> str:
         return f"Properties: {{{', '.join(map(str, self._dict.values()))}}}"
 
+    def __eq__(self, __o: DCAMDict) -> bool:
+        return self._dict == __o._dict
+
+    def refresh(self) -> None:
+        [v.refresh(self.handle) for v in self._dict.values()]
+        logger.info("DCAMProp refreshed.")
+
     @staticmethod
     def to_snake_case(s: bytes) -> str:
         return s.lower().decode("utf-8").replace(" ", "_")
 
-    @classmethod
-    def from_dcam(cls: Type[DCAMDict], h: Handle, check_precomputed: bool = True) -> DCAMDict:
-        c_buf_len = 64
+    @staticmethod
+    def retrieve_dcam(h: Handle) -> dict[Props, DCAMProperty]:
+        c_buf_len = c_int32(64)
         dcam_props: dict[Props, DCAMProperty] = {}
 
-        this_name = ctypes.create_string_buffer(c_buf_len)
+        name_buf = ctypes.create_string_buffer(c_buf_len.value)
         this_id = c_int32(0)
 
-        try:
-            # Reset counter to start.
+        try:  # Reset counter to start.
             API.dcam_getnextpropertyid(h, pointer(this_id), c_int32(DCAMPROP_OPTION_NEAREST))
         except DCAMReturnedZero:
             pass
@@ -122,22 +143,11 @@ class DCAMDict(MutableMapping):
             except DCAMReturnedZero:
                 break  # All properties retrieved.
 
-            API.dcam_getpropertyname(h, this_id, this_name, c_int32(c_buf_len))
+            API.dcam_getpropertyname(h, this_id, name_buf, c_buf_len)
+            assert (this_name := cast(Props, DCAMDict.to_snake_case(name_buf.value)))  # in get_args(Props)
+            dcam_props[this_name] = DCAMProperty.from_dcam(h, this_name, this_id)
+        return dcam_props
 
-            # Get attr.
-            this_attr = DCAM_PARAM_PROPERTYATTR.from_id(this_id)
-            API.dcam_getpropertyattr(h, pointer(this_attr))
-
-            # Get value.
-            this_value = c_double(0)
-            API.dcam_getpropertyvalue(h, this_id, pointer(this_value))
-            name = cast(Props, cls.to_snake_case(this_name.value))
-            dcam_props[name] = DCAMProperty(name, this_attr.to_dataclass(), this_value.value)
-
-            if check_precomputed:
-                assert dcam_props[name].type_ == dcam_props[name].attr.type_
-                # print(dcam_props[name].mode_key)
-                # print("gnd", gnd := get_mode_key(h, dcam_props[name].attr))
-                # assert dcam_props[name].mode_key == gnd
-        # assert all(x in dcam_props.keys() for x in set(get_args(Props)))
-        return DCAMDict(h, dcam_props)
+    @classmethod
+    def from_dcam(cls, h: Handle) -> DCAMDict:
+        return cls(h, cls.retrieve_dcam(h))

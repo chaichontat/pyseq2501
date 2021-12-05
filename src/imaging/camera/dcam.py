@@ -77,19 +77,17 @@ class _Camera:
         self.id_ = id_
 
         self.handle = c_void_p(0)
-        logger.debug(f"Opening cam {id_}")
         API.dcam_open(pointer(self.handle), c_int32(id_), None)
+        logger.info(f"Connected to cam {id_}")
         self._capture_mode = DCAM_CAPTURE_MODE.SNAP
-        self.properties["sensor_mode_line_bundle_height"] = 128
+        # self.properties["sensor_mode_line_bundle_height"] = 128
         self._mode = Mode.TDI
-
-    @property
-    def properties(self) -> DCAMDict:
         if os.environ.get("FAKE_HISEQ", "0") == "1" or os.name != "nt":
-            return DCAMDict(
+            self.properties = DCAMDict(
                 self.handle, pickle.loads((Path(__file__).parent / "saved_props.pk").read_bytes())
             )
-        return DCAMDict.from_dcam(self.handle)
+        else:
+            self.properties = DCAMDict.from_dcam(self.handle)
 
     def initialize(self) -> None:
         ...
@@ -110,25 +108,6 @@ class _Camera:
             yield
         finally:
             API.dcam_idle(self.handle)
-
-    @contextmanager
-    def alloc(self, n_bundles: int, height: int) -> Generator[UInt16Array, None, None]:
-        out: npt.NDArray[np.uint16] = np.empty((n_bundles * height, self.IMG_WIDTH), dtype=np.uint16)
-        try:
-            API.dcam_allocframe(self.handle, c_int32(n_bundles))
-            yield out
-        finally:
-            API.dcam_freeframe(self.handle)
-
-    @contextmanager
-    def _lock_memory(self, height: int, n_curr: int):
-        addr = pointer((c_uint16 * self.IMG_WIDTH * height)())
-        row_bytes = c_int32(0)
-        API.dcam_lockdata(self.handle, pointer(cast(c_void_p, addr)), pointer(row_bytes), c_int32(n_curr))
-        try:
-            yield addr
-        finally:
-            API.dcam_unlockdata(self.handle)
 
     @property
     def status(self) -> Status:
@@ -152,6 +131,29 @@ class _Camera:
     #     finally:
     #         API.dcam_releasebuffer(self.handle)
 
+    @contextmanager
+    def alloc(self, n_bundles: int, height: int) -> Generator[UInt16Array, None, None]:
+        out: npt.NDArray[np.uint16] = np.empty((n_bundles * height, self.IMG_WIDTH), dtype=np.uint16)
+        try:
+            API.dcam_allocframe(self.handle, c_int32(n_bundles))
+            yield out
+        finally:
+            API.dcam_freeframe(self.handle)
+
+    @contextmanager
+    def _lock_memory(self, height: int, n_curr: int):
+        addr = pointer((c_uint16 * self.IMG_WIDTH * height)())
+        row_bytes = c_int32(0)
+        API.dcam_lockdata(self.handle, pointer(cast(c_void_p, addr)), pointer(row_bytes), c_int32(n_curr))
+        try:
+            yield addr
+        finally:
+            API.dcam_unlockdata(self.handle)
+
+    def get_bundle(self, buf: UInt16Array, height: int, n_curr: int) -> None:
+        with self._lock_memory(height=height, n_curr=n_curr) as addr:
+            buf[n_curr * height : (n_curr + 1) * height, :] = np.asarray(addr.contents)
+
     @property
     def n_frames_taken(self) -> int:
         """Return number of frames (int) that have been taken."""
@@ -159,10 +161,6 @@ class _Camera:
         f_count = c_int32(-1)
         API.dcam_gettransferinfo(self.handle, pointer(b_index), pointer(f_count))
         return int(f_count.value)
-
-    def get_bundle(self, buf: UInt16Array, height: int, n_curr: int) -> None:
-        with self._lock_memory(height=height, n_curr=n_curr) as addr:
-            buf[n_curr * height : (n_curr + 1) * height, :] = np.asarray(addr.contents)
 
 
 T = TypeVar("T", bound=Hashable)

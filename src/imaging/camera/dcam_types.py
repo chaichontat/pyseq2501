@@ -234,15 +234,14 @@ class DCAM_PARAM_PROPERTYVALUETEXT(Structure):
         ("textbytes", c_int32),
     ]
 
-    @classmethod
-    def from_attr(cls, prop_attr: DCAMParamPropertyAttr) -> DCAM_PARAM_PROPERTYVALUETEXT:
-        c_buf_len = 64
-        c_buf = create_string_buffer(c_buf_len)
+    def __init__(self, prop_attr: DCAMParamPropertyAttr) -> None:
+        super().__init__()
 
-        t = cls()
-        t.cbSize = c_int32(sizeof(t))
-        t.iProp = c_int32(prop_attr.iProp)
-        t.value = c_double(prop_attr.valuemin)
-        t.text = addressof(c_buf)
-        t.textbytes = c_buf_len
-        return t
+        c_buf_len = 64
+        self.c_buf = create_string_buffer(c_buf_len)  # Prevents garbage collection.
+
+        self.cbSize = c_int32(sizeof(self))
+        self.iProp = c_int32(prop_attr.iProp)
+        self.value = c_double(prop_attr.valuemin)
+        self.text = c_char_p(addressof(self.c_buf))
+        self.textbytes = c_int32(c_buf_len)

@@ -1,5 +1,5 @@
 import os
-import time
+import threading
 from ctypes import c_int32, pointer
 from enum import IntEnum
 from functools import wraps
@@ -25,6 +25,7 @@ else:
 DCAM_DEFAULT_ARG = c_int32(0)
 DCAM_DEFAULT_ARG_p = pointer(DCAM_DEFAULT_ARG)
 logger = getLogger("DCAMAPI")
+LOCK = threading.Lock()
 
 
 IGNORE = {
@@ -40,10 +41,12 @@ IGNORE = {
 def check_if_failed(f: Callable[P, R]) -> Callable[P, R]:
     @wraps(f)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-        res = f(*args, **kwargs)
+        with LOCK:
+            res = f(*args, **kwargs)
         # Literally the only function that returns int32 instead of BOOL.
         if res != 1 and f.__name__ != "dcam_getlasterror":
             raise DCAMReturnedZero(f"{f.__name__} did not return NOERR.")
+
         if f.__name__ not in IGNORE:
             logger.debug(f"{f.__name__} [green]OK")
         return res
