@@ -124,7 +124,7 @@ class COM:
             assert name != "fpga"
             self._serial = Channel(*LOOP.put(open_serial_connection(url=port_tx, baudrate=9600)).result())
             logger.info(f"{self.name}Started listening to port {port_tx}.")
-        
+
         self.tasks = LOOP.put(self._read_forever())  # Prevents garbage collection.
         time.sleep(0.1)  # Give time for read_forever to purge channel.
 
@@ -141,7 +141,7 @@ class COM:
 
             try:
                 for _ in range(1, cmd.n_lines):
-                    resp += " " + (await self._serial.reader.readline()).decode(**ENCODING_KW).strip()
+                    resp += "\n" + (await self._serial.reader.readline()).decode(**ENCODING_KW).strip()
                 parsed = cmd.parser(resp)
             except BaseException as e:
                 logger.error(
@@ -150,7 +150,7 @@ class COM:
                 # console.print_exception()
                 fut.set_result(None)
             else:
-                r = f"'{resp}'"
+                r = "'" + resp.replace("\n", " ") + "'"
                 logger.debug(f"{self.name}Rx:  {r:20s} [green]Parsed: '{parsed}'")
                 fut.set_result(parsed)
             finally:

@@ -50,6 +50,7 @@ class Imager:
     # TODO add more ready checks.
     def take_image(self, n_bundles: int, dark: bool = False) -> UInt16Array:
         logger.info(f"Taking image with {n_bundles} bundles.")
+        n_bundles += 1  # To flush CCD.
         while not self.all_still:
             logger.warning("Started taking an image while stage is moving. Waiting.")
             time.sleep(0.2)
@@ -76,7 +77,7 @@ class Imager:
 
         self.fpga.tdi.n_pulses
         logger.info(f"Done taking an image.")
-        return imgs
+        return imgs[:, :-128, :]
 
     @staticmethod
     def calc_delta_pos(n_px_y: int) -> int:
