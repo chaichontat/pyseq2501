@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import ctypes
+import threading
+
 from ctypes import c_double, c_int32, pointer
 from dataclasses import dataclass
 from logging import getLogger
-from typing import Iterator, MutableMapping, NoReturn, cast
+from typing import Iterator, MutableMapping, NoReturn, cast, get_args
 
 from . import API
 from .dcam_api import DCAMReturnedZero
@@ -33,7 +35,7 @@ from .dcam_types import (
 # BOOL DCAMAPI dcam_getpropertyvaluetext( HDCAM h, DCAM_PROPERTYVALUETEXT* param );
 
 logger = getLogger("DCAMprops")
-
+LOCK = threading.Lock()
 DCAM_DEFAULT_ARG = 0
 
 
@@ -88,18 +90,19 @@ class DCAMDict(MutableMapping):
         return self._dict[name].value
 
     def __setitem__(self, name: Props, value: int | float) -> None:
-        prop = self._dict[name]
-        # TODO: Check writable.
-        min_val: float = prop.attr.valuemin
-        max_val: float = prop.attr.valuemax
-        if not (min_val <= value <= max_val):
-            raise ValueError(f"Out of range for {name}. Given {value}, range is [{min_val}, {max_val}].")
+        with LOCK:
+            prop = self._dict[name]
+            # TODO: Check writable.
+            min_val: float = prop.attr.valuemin
+            max_val: float = prop.attr.valuemax
+            if not (min_val <= value <= max_val):
+                raise ValueError(f"Out of range for {name}. Given {value}, range is [{min_val}, {max_val}].")
 
-        to_set = ctypes.c_double(value)
-        API.dcam_setgetpropertyvalue(self.handle, prop.id_, pointer(to_set), c_int32(DCAM_DEFAULT_ARG))
+            to_set = ctypes.c_double(value)
+            API.dcam_setgetpropertyvalue(self.handle, prop.id_, pointer(to_set), c_int32(DCAM_DEFAULT_ARG))
 
-        self.refresh()
-        assert self[name] == value
+            self.refresh()
+            assert self[name] == value
 
     def __delitem__(self, _: Props) -> NoReturn:
         raise Exception("Cannot remove properties!")
@@ -129,24 +132,25 @@ class DCAMDict(MutableMapping):
         c_buf_len = c_int32(64)
         dcam_props: dict[Props, DCAMProperty] = {}
 
-        name_buf = ctypes.create_string_buffer(c_buf_len.value)
-        this_id = c_int32(0)
+        with LOCK:
+            name_buf = ctypes.create_string_buffer(c_buf_len.value)
+            this_id = c_int32(0)
 
-        try:  # Reset counter to start.
-            API.dcam_getnextpropertyid(h, pointer(this_id), c_int32(DCAMPROP_OPTION_NEAREST))
-        except DCAMReturnedZero:
-            pass
-
-        while True:
-            try:
-                API.dcam_getnextpropertyid(h, pointer(this_id), c_int32(DCAMPROP_OPTION_NEXT))
+            try:  # Reset counter to start.
+                API.dcam_getnextpropertyid(h, pointer(this_id), c_int32(DCAMPROP_OPTION_NEAREST))
             except DCAMReturnedZero:
-                break  # All properties retrieved.
+                pass
 
-            API.dcam_getpropertyname(h, this_id, name_buf, c_buf_len)
-            assert (this_name := cast(Props, DCAMDict.to_snake_case(name_buf.value)))  # in get_args(Props)
-            dcam_props[this_name] = DCAMProperty.from_dcam(h, this_name, this_id)
-        return dcam_props
+            while True:
+                try:
+                    API.dcam_getnextpropertyid(h, pointer(this_id), c_int32(DCAMPROP_OPTION_NEXT))
+                except DCAMReturnedZero:
+                    break  # All properties retrieved.
+
+                API.dcam_getpropertyname(h, this_id, name_buf, c_buf_len)
+                assert (this_name := cast(Props, DCAMDict.to_snake_case(name_buf.value))) in get_args(Props)
+                dcam_props[this_name] = DCAMProperty.from_dcam(h, this_name, this_id)
+            return dcam_props
 
     @classmethod
     def from_dcam(cls, h: Handle) -> DCAMDict:
