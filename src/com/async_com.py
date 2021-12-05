@@ -93,6 +93,8 @@ class COM:
         - Response from an instrument is in FIFO order.
         - All responses are accounted for.
 
+        Specific to each COM channel.
+
         Args:
             name (SerialInstruments): Name of the instrument.
             port_tx (str): COM port.
@@ -122,8 +124,8 @@ class COM:
             assert name != "fpga"
             self._serial = Channel(*LOOP.put(open_serial_connection(url=port_tx, baudrate=9600)).result())
             logger.info(f"{self.name}Started listening to port {port_tx}.")
-        self.tasks = LOOP.put(self._read_forever())
-        # Prevent garbage collection.
+        
+        self.tasks = LOOP.put(self._read_forever())  # Prevents garbage collection.
         time.sleep(0.1)  # Give time for read_forever to purge channel.
 
     async def _read_forever(self) -> NoReturn:
@@ -141,7 +143,6 @@ class COM:
                 for _ in range(1, cmd.n_lines):
                     resp += " " + (await self._serial.reader.readline()).decode(**ENCODING_KW).strip()
                 parsed = cmd.parser(resp)
-
             except BaseException as e:
                 logger.error(
                     f"{self.name}Exception {type(e).__name__} while parsing '{resp}' from '{cmd.cmd}'."
@@ -203,7 +204,7 @@ class COM:
     def send(
         self, msg: str | CmdParse[T, Any] | tuple[str | CmdParse[Any, Any], ...]
     ) -> None | Future[Optional[T]] | tuple[None | Future[Optional[Any]], ...]:
-        """Send command to instrument.
+        """Sends command to instrument.
         If msg is string   => no responses expected.
         If msg is CmdParse => response expected and parsed by CmdParse.parser.
             Unexpected response triggers a warning and returns Future[None].
@@ -229,9 +230,9 @@ class COM:
     def _send(self, msg: bytes) -> None:
         """This needs to be synchronous to maintain order of execution.
         asyncio.Queue is not thread-safe and using an asynchronous function to queue things does not guarantee order.
-
+        Enforces minimum delay between commands.
         Args:
-            msg (str): [description]
+            msg (bytes): Raw bytes to be sent. Usually encoded in ISO-8859-1.
         """
         with self.lock:
             if self.min_spacing:

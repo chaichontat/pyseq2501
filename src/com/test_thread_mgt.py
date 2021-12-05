@@ -37,3 +37,25 @@ def test_warning():
 def test_run_in_executor():
     """Test for piled up `run_in_executor` code."""
     assert Fake().another_thread(3).result() == 0
+
+
+class Raiser:
+    @run_in_executor
+    def no_executor(self):
+        return 1
+
+    @run_in_executor
+    def raiseexc(self):
+        raise NotImplementedError
+
+
+def test_exception():
+    """Test Exception handling in run_in_executor."""
+    t = ThreadPoolExecutor(max_workers=1)
+    r = Raiser()
+    with pytest.raises(AttributeError):
+        r.no_executor()
+
+    r._executor = t  # type: ignore
+    with pytest.warns(UserWarning):
+        r.raiseexc()

@@ -11,11 +11,15 @@ from typing import Any, Awaitable, Callable, Optional, ParamSpec, TypeVar
 # Without this, the thread running the event loop will run forever, and the program could not exit normally.
 # loop.call_soon_threadsafe(loop.stop)
 
+"""Generates a global variable LOOP that holds the event loop thread.
+"""
 
 T = TypeVar("T")
 
 
 class AsyncioEventLoopThread(Thread):
+    """Basically an event loop running in a thread."""
+
     def __init__(self, loop: Optional[AbstractEventLoop] = None):
         def endless_event_loop(loop: AbstractEventLoop) -> None:
             asyncio.set_event_loop(loop)
