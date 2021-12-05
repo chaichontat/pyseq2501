@@ -79,8 +79,10 @@ class YCmd:
     MODE_ABSOLUTE = "MA"  # p.159
     RESET = CmdParse(
         "Z",
-        ok_if_match("*ViX250IH-Servo Drive\n*REV 2.4 Jun 29 2005 16:58:18\nCopyright 2003 Parker-Hannifin"),
-        n_lines=3,
+        ok_if_match(
+            "1Z\n*ViX250IH-Servo Drive\n*REV 2.4 Jun 29 2005 16:58:18\nCopyright 2003 Parker-Hannifin"
+        ),
+        n_lines=4,
     )  # p.96, 180
 
 
@@ -100,12 +102,11 @@ class YStage(UsesSerial, Movable):
     @run_in_executor
     def initialize(self) -> None:
         logger.info("Initializing y-stage.")
-        self.com.send(YCmd.RESET)  # Initialize Stage
-        time.sleep(3)
-        self.com.send(CmdParse(YCmd.DONT_ECHO, lambda x: x == "1W(EX,0)"))  # Turn off echo
+        self.com.send(YCmd.RESET).result()  # Initialize Stage
+        # time.sleep(3)
+        # self.com.send(CmdParse(YCmd.DONT_ECHO, lambda x: x == "1W(EX,0)"))  # Turn off echo
         self.com.send("BRAKE0")
         self._mode = "MOVING"
-        self.com.send(YCmd.GAINS(MODES["MOVING"]["GAINS"]))
         self.com.send(("MA", "ON"))
         return self.com.send("GH")
 
@@ -140,5 +141,6 @@ class YStage(UsesSerial, Movable):
     def _mode(self, mode: ModeName) -> None:
         if self.__mode == mode:
             return
+        self.com.send(YCmd.GAINS(MODES[mode]["GAINS"]))
         self.com.send(YCmd.VELO(MODES[mode]["VELO"]))
         self.__mode = mode

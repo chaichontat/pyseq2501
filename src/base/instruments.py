@@ -6,6 +6,12 @@ from src.com.async_com import COM
 
 
 class UsesSerial(metaclass=ABCMeta):
+    com: COM
+
+    @property
+    def send(self):
+        return self.com.send
+
     @abstractmethod
     def initialize(self) -> Future[Any]:
         ...

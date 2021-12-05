@@ -42,6 +42,9 @@ class XStage(UsesSerial, Movable):
     def is_moving(self) -> Future[Optional[bool]]:
         return self.com.send(XCmd.IS_MOVING)
 
+    def move(self, pos: int) -> None:
+        return self.com.send(XCmd.SET_POS(pos))
+
     def initialize(self):
         """Initialize the xstage."""
         logger.info("Initializing x-stage.")

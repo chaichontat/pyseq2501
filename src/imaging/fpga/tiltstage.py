@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent.futures import Future
 from functools import partial
 from logging import getLogger
 from typing import Literal, Optional, cast, get_args

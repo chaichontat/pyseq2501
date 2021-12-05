@@ -32,6 +32,7 @@ class Imager:
         self.x = XStage(ports.x)
         self.y = YStage(ports.y)
         self.z = self.fpga.z
+        self.z_obj = self.fpga.z_obj
 
         self.lasers = Lasers(Laser("laser_g", ports.laser_g), Laser("laser_r", ports.laser_r))
         if init_cam:

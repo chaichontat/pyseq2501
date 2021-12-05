@@ -24,8 +24,9 @@ class ObjCmd:
     # Callable[[Annotated[int, "mm/s"]], str]
     # fmt: off
     SET_VELO = CmdParse(lambda x: f"ZSTEP {1288471 * x}", ok_if_match("ZSTEP"))
-    SET_POS  = CmdParse(lambda x: f"ZADCW {x}"          , ok_if_match("ZADCW"))
-    GET_POS  = CmdParse(           "ZDACR"              , get_pos)
+    SET_POS  = CmdParse(lambda x: f"ZDACW {x}"          , ok_if_match("ZDACW"))
+    GET_TARGET_POS = CmdParse(     "ZDACR"              , get_pos)
+    GET_POS  = CmdParse(           "ZADCR"              , get_pos)
     
     SET_TRIGGER = lambda x: f"ZTRG {x}"
     ARM_TRIGGER = "ZYT 0 3"
