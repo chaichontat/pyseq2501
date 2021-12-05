@@ -277,9 +277,22 @@ class Cameras:
         n_bundles: int,
         start_alloc: Callable[[], Any] = lambda: None,
         start_capture: Callable[[], Any] = lambda: None,
-        polling_time: float | int = 0.1,
         timeout: float | int = 5,
-    ) -> FourImages:
+    ) -> UInt16Array:
+        """
+
+        Args:
+            n_bundles (int): [description]
+            start_alloc (Callable[[], Any], optional): [description]. Defaults to lambda:None.
+            start_capture (Callable[[], Any], optional): [description]. Defaults to lambda:None.
+            timeout (float, optional): [description]. Defaults to 5.
+
+        Raises:
+            Exception: [description]
+
+        Returns:
+            UInt16Array: uint16 array with dimension [4, {128*n_bundles}, 2048]
+        """
         with self._alloc(n_bundles=n_bundles, height=128) as bufs:
             taken = 0
             start_alloc()
@@ -287,7 +300,7 @@ class Cameras:
                 start_capture()
                 t0 = time.monotonic()
                 while (avail := self.n_frames_taken) < n_bundles:
-                    time.sleep(polling_time)
+                    time.sleep(0.1)
                     if avail > taken:
                         [self._get_bundles(bufs=bufs, height=128, i=i) for i in range(taken, avail)]
                         taken = avail
@@ -297,4 +310,5 @@ class Cameras:
             for i in range(taken, max(avail, n_bundles)):
                 self._get_bundles(bufs=bufs, height=128, i=i)
             logger.info(f"Retrieved all {n_bundles} bundles.")
-        return cast(FourImages, (*chain(*(((x[:, :2048], x[:, 2048:]) for x in bufs))),))
+
+        return cast(UInt16Array, np.flip(np.swapaxes(np.hstack(bufs).reshape(-1, 4, 2048), 1, 0), axis=1))

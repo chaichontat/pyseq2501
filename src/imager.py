@@ -4,7 +4,7 @@ from logging import getLogger
 import time
 
 
-from .imaging.camera.dcam import Cameras, FourImages, Mode
+from .imaging.camera.dcam import Cameras, Mode, UInt16Array
 from .imaging.fpga import FPGA
 from .imaging.fpga.optics import Optics
 from .imaging.laser import Laser, Lasers
@@ -47,18 +47,8 @@ class Imager:
         x, y, z = self.x.is_moving, self.y.is_moving, self.z.is_moving
         return not any((x.result(), y.result(), z.result()))
 
-    # def wait_all_still(self):  DOES NOT WORK
-    #     while True:
-    #         remaining = [self.x.is_moving, self.y.is_moving, self.z.is_moving]
-    #         for i in range(len(remaining) - 1, -1, -1):  # Reversed
-    #             if not remaining[i].result():
-    #                 del remaining[i]
-    #             else:
-    #                 logger.warning("Started taking an image while stage is moving. Waiting.")
-    #                 time.sleep(0.2)
-
     # TODO add more ready checks.
-    def take_image(self, n_bundles: int) -> FourImages:
+    def take_image(self, n_bundles: int, dark: bool = False) -> UInt16Array:
         logger.info(f"Taking image with {n_bundles} bundles.")
         while not self.all_still:
             logger.warning("Started taking an image while stage is moving. Waiting.")
@@ -73,10 +63,17 @@ class Imager:
         fut = self.tdi.prepare_for_imaging(n_px_y, pos)
         self.cams.mode = Mode.TDI
         fut.result()
-        with self.optics.open_shutter():
-            imgs = self.cams.capture(
-                n_bundles, start_capture=lambda: self.y.move(end_y_pos, slowly=True)
-            ).result()
+
+        cap = lambda: self.cams.capture(
+            n_bundles, start_capture=lambda: self.y.move(end_y_pos, slowly=True)
+        ).result()
+
+        if dark:
+            imgs = cap()
+        else:
+            with self.optics.open_shutter():
+                imgs = cap()
+
         self.fpga.tdi.n_pulses
         logger.info(f"Done taking an image.")
         return imgs
