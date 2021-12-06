@@ -148,7 +148,7 @@ class COM:
                     f"{self.name}Exception {type(e).__name__} while parsing '{resp}' from '{cmd.cmd}'."
                 )
                 # console.print_exception()
-                fut.set_result(None)
+                fut.set_exception(e)
             else:
                 r = "'" + resp.replace("\n", " ") + "'"
                 logger.debug(f"{self.name}Rx:  {r:20s} [green]Parsed: '{parsed}'")
@@ -182,7 +182,7 @@ class COM:
         ...
 
     @overload
-    def send(self, msg: CmdParse[T, Any]) -> Future[Optional[T]]:
+    def send(self, msg: CmdParse[T, Any]) -> Future[T]:
         ...
 
     @overload
@@ -190,20 +190,20 @@ class COM:
         ...
 
     @overload
-    def send(self, msg: tuple[str | CmdParse[Any, Any], ...]) -> tuple[None | Future[Optional[Any]], ...]:
+    def send(self, msg: tuple[str | CmdParse[Any, Any], ...]) -> tuple[None | Future[Any], ...]:
         ...
 
     @overload
-    def send(self, msg: tuple[CmdParse[Any, Any], ...]) -> tuple[Future[Optional[Any]], ...]:
+    def send(self, msg: tuple[CmdParse[Any, Any], ...]) -> tuple[Future[Any], ...]:
         ...
 
     @overload
-    def send(self, msg: tuple[CmdParse[T, Any], ...]) -> tuple[Future[Optional[T]], ...]:
+    def send(self, msg: tuple[CmdParse[T, Any], ...]) -> tuple[Future[T], ...]:
         ...
 
     def send(
         self, msg: str | CmdParse[T, Any] | tuple[str | CmdParse[Any, Any], ...]
-    ) -> None | Future[Optional[T]] | tuple[None | Future[Optional[Any]], ...]:
+    ) -> None | Future[T] | tuple[None | Future[Any], ...]:
         """Sends command to instrument.
         If msg is string   => no responses expected.
         If msg is CmdParse => response expected and parsed by CmdParse.parser.

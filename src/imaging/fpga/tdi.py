@@ -46,16 +46,9 @@ class TDICmd:
 class TDI(FPGAControlled):
     cmd = TDICmd
 
-    def __init__(self, fpga_com: COM) -> None:
-        super().__init__(fpga_com)
-        self._position: int
-        # self.fcom.send(TDICmd.GET_ENCODER_Y).add_done_callback(
-        #     lambda x: setattr(self, "_position", x.result())
-        # )
-
     @property
     def encoder_pos(self):
-        return self._position
+        return self.com.send(TDICmd.GET_ENCODER_Y)
 
     @encoder_pos.setter
     def encoder_pos(self, pos: int):

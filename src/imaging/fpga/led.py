@@ -32,10 +32,10 @@ class LED(FPGAControlled):
     colors = LEDColor
     cmd = LEDCmd
 
-    def __init__(self, fpga_com: COM) -> None:
-        super().__init__(fpga_com)
-        self._color = [LEDColor.OFF, LEDColor.OFF]
+    # def __init__(self, fpga_com: COM) -> None:
+    #     super().__init__(fpga_com)
+    #     self._color = [LEDColor.OFF, LEDColor.OFF]
 
-    @property
-    def color(self):
-        return self._color
+    # @property
+    # def color(self):
+    #     return self._color

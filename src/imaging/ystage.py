@@ -1,6 +1,6 @@
 import logging
 import time
-from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent.futures import Future
 from dataclasses import dataclass
 from typing import Dict, Literal, Optional
 
@@ -95,8 +95,8 @@ class YStage(UsesSerial, Movable):
 
     def __init__(self, port_tx: str, tol: int = 10) -> None:
         self.com = COM("y", port_tx)
-
-        self.__mode: Optional[ModeName] = None
+        self._mode: Optional[ModeName] = None
+        self.set_mode("MOVING")
         self.tol = tol
 
     @run_in_executor
@@ -110,37 +110,34 @@ class YStage(UsesSerial, Movable):
         self.com.send(("MA", "ON"))
         return self.com.send("GH")
 
-    def move(self, pos: int, slowly: bool = False):
+    @run_in_executor
+    def move(self, pos: int, slowly: bool = False) -> int:
         # TODO: Parse
         if not (self.RANGE[0] <= pos <= self.RANGE[1]):
             raise ValueError(f"YSTAGE can only be between {self.RANGE[0]} and {self.RANGE[1]}")
         self._mode = "IMAGING" if slowly else "MOVING"
-        fut = self.com.send((YCmd.SET_POS(pos), YCmd.GO))
+        self.com.send((YCmd.SET_POS(pos), YCmd.GO))
         logger.info(f"Moving to {pos} for {self._mode}")
-        # def work() -> int:
-        #     self.com.send(is_between(YCmd.SET_POS, *self.RANGE)(pos))  # type: ignore[operator]
-        #     while abs((curr := self.position.result()) - pos) > self.tol:
-        #         self.com.send(YCmd.GO)
-        #         while not self.is_in_position:
-        #             time.sleep(0.1)
-        #     return curr
+        while self.is_moving:
+            time.sleep(0.2)
+        return self.position.result()
 
     @property
-    def position(self) -> Future[Optional[int]]:
+    def position(self) -> Future[int]:
         return self.com.send(YCmd.READ_POS)
 
     @property
-    def is_moving(self) -> Future[Optional[bool]]:
+    def is_moving(self) -> Future[bool]:
         return self.com.send(YCmd.IS_MOVING)
 
     @property
-    def _mode(self) -> Optional[ModeName]:
-        return self.__mode
+    def mode(self) -> Optional[ModeName]:
+        return self._mode
 
-    @_mode.setter
-    def _mode(self, mode: ModeName) -> None:
-        if self.__mode == mode:
+    @run_in_executor
+    def set_mode(self, mode: ModeName) -> None:
+        if self._mode == mode:
             return
         self.com.send(YCmd.GAINS(MODES[mode]["GAINS"]))
         self.com.send(YCmd.VELO(MODES[mode]["VELO"]))
-        self.__mode = mode
+        self._mode = mode

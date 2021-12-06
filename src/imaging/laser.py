@@ -1,7 +1,7 @@
 from dataclasses import dataclass, fields
 import time
 
-from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent.futures import Future
 from logging import getLogger
 from typing import Annotated, Any, Literal
 
@@ -26,14 +26,18 @@ class LaserCmd:
     """
 
     @staticmethod
-    def v_get_status(resp: str) -> bool:
-        return {"DISABLED": False, "ENABLED": True, "Error:- 00": None}[resp]
+    def v_get_status(resp: str) -> None | bool:
+        try:
+            return {"DISABLED": False, "ENABLED": True}[resp]
+        except KeyError:  # Tend to have status error on first calls.
+            return None
 
     @staticmethod
     def v_get_power(resp: str) -> int:
         assert resp.endswith("mW")
         return int(resp[:4])
 
+    # fmt: off
     ON = "ON"
     OFF = "OFF"
     SET_POWER  = chkrng(lambda x: f"POWER={x}", *POWER_RANGE) 
@@ -44,7 +48,7 @@ class LaserCmd:
 
 
 class Laser(UsesSerial):
-    POWER_RANGE = (0, 500)
+
     cmd = LaserCmd
 
     def __init__(self, name: Literal["laser_r", "laser_g"], port_tx: str) -> None:
@@ -62,7 +66,7 @@ class Laser(UsesSerial):
             if i > 0:
                 logger.warning(f"Laser did not switch to {state}, Trying again.")
             self.com.send({False: LaserCmd.OFF, True: LaserCmd.ON}[state])
-            while (resp := self.on) is None:
+            while (resp := self.on.result()) is None:
                 ...
             if resp == state:
                 break
@@ -85,28 +89,23 @@ class Laser(UsesSerial):
         """
         assert all((int(power) == power and power > 0, timeout > 0, tol > 0))
         if not self.on:
+            self.set_onoff(True).result()
         self.com.send(LaserCmd.SET_POWER(power))
 
         for _ in range(timeout):
             time.sleep(1)
-            if abs(power - self.power) < tol:
+            if abs(power - self.power.result()) < tol:
                 return True
         else:
             return False
 
     @property
-    def on(self) -> None | bool:
-        assert (out := self.com.send(LaserCmd.GET_STATUS).result()) is not None
-        return out
-
-    @on.setter
-    def on(self, state: bool):
-        self.set_onoff(state)
+    def on(self) -> Future[None | bool]:
+        return self.com.send(LaserCmd.GET_STATUS)
 
     @property
-    def power(self) -> int:
-        assert (out := self.com.send(LaserCmd.GET_POWER).result()) is not None
-        return out
+    def power(self) -> Future[int]:
+        return self.com.send(LaserCmd.GET_POWER)
 
 
 @dataclass

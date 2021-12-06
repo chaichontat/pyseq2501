@@ -6,7 +6,7 @@ from src.base.instruments import Movable, UsesSerial
 from src.com.async_com import COM, CmdParse
 import re
 
-from src.utils.utils import not_none, ok_if_match
+from src.utils.utils import chkrng, ok_if_match
 
 logger = logging.getLogger("XStage")
 RANGE = (1000, 50000)
@@ -36,11 +36,11 @@ class XStage(UsesSerial, Movable):
         self.com = COM("x", port_tx, min_spacing=0.3)
 
     @property
-    def position(self) -> Future[Optional[int]]:
+    def position(self) -> Future[int]:
         return self.com.send(XCmd.GET_POS)
 
     @property
-    def is_moving(self) -> Future[Optional[bool]]:
+    def is_moving(self) -> Future[bool]:
         return self.com.send(XCmd.IS_MOVING)
 
     def move(self, pos: int) -> None:
@@ -80,7 +80,7 @@ class XStage(UsesSerial, Movable):
 
         "PR I1"
 
-        def echo(s: str) -> Optional[bool]:
+        def echo(s: str) -> bool:
             return self.com.send(CmdParse(s, ok_if_match(s))).result()
 
         # list(
