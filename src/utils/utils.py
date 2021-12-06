@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from concurrent.futures import Future
 from math import ceil
-from typing import Callable, Dict, Literal, Optional, ParamSpec, Tuple, TypedDict, TypeVar, cast
+from typing import Callable, Dict, Literal, Optional, ParamSpec, Sequence, Tuple, TypedDict, TypeVar, cast
 
 TILE_WIDTH = 0.769  # mm
 RESOLUTION = 0.375  # µm / px
@@ -20,10 +20,9 @@ X_SPUM = 0.4096
 Y_SPUM = 100
 
 T, P = TypeVar("T"), ParamSpec("P")
-F = TypeVar("F", bound=(int | float))
 
 
-def ok_if_match(target: list[str] | str) -> Callable[[str], bool]:
+def ok_if_match(target: Sequence[str] | str) -> Callable[[str], bool]:
     def wrapped(resp: str) -> bool:
         if isinstance(target, list) and resp in target:
             return True
@@ -34,11 +33,12 @@ def ok_if_match(target: list[str] | str) -> Callable[[str], bool]:
     return wrapped
 
 
-def is_between(f: Callable[[F], T], min_: int, max_: int) -> Callable[[F], T]:
-    def wrapper(x: F) -> T:
+def chkrng(f: Callable[P, T], min_: int, max_: int) -> Callable[P, T]:
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+        x = cast(int, args[0])
         if not (min_ <= x <= max_) or x != int(x):
             raise ValueError(f"Invalid value for {f.__name__}: Got {x}. Expected [{min_}, {max_}].")
-        return f(x)
+        return f(*args, **kwargs)
 
     return wrapper
 

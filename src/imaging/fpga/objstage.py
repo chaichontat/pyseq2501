@@ -6,12 +6,13 @@ from typing import Optional
 from src.base.instruments import FPGAControlled, Movable
 from src.com.async_com import CmdParse
 from src.com.thread_mgt import run_in_executor
-from src.utils.utils import ok_if_match
+from src.utils.utils import chkrng, ok_if_match
 
 logger = getLogger("objective")
 
 
 Y_OFFSET = int(7e6)
+RANGE = (0, 65535)
 
 
 class ObjCmd:
@@ -24,7 +25,7 @@ class ObjCmd:
     # Callable[[Annotated[int, "mm/s"]], str]
     # fmt: off
     SET_VELO = CmdParse(lambda x: f"ZSTEP {1288471 * x}", ok_if_match("ZSTEP"))
-    SET_POS  = CmdParse(lambda x: f"ZDACW {x}"          , ok_if_match("ZDACW"))
+    SET_POS  = CmdParse(chkrng(lambda x: f"ZDACW {x}", *RANGE), ok_if_match("ZDACW"))
     GET_TARGET_POS = CmdParse(     "ZDACR"              , get_pos)
     GET_POS  = CmdParse(           "ZADCR"              , get_pos)
     

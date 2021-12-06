@@ -6,13 +6,14 @@ from logging import getLogger
 from typing import Literal, Optional, cast, get_args
 
 from src.base.instruments import FPGAControlled, Movable
-from src.com.async_com import COM, CmdParse
-from src.utils.utils import not_none, is_between
+from src.com.async_com import CmdParse
+from src.utils.utils import not_none, chkrng
 from src.com.thread_mgt import run_in_executor
 
 logger = getLogger("z")
 
 ID = Literal[1, 3, 2]
+RANGE = (0, 25000)
 import re
 
 
@@ -20,10 +21,10 @@ import re
 class TiltCmd:
     GO_HOME  = CmdParse(lambda i:       f"T{i}HM",         lambda x: bool(re.search(r"^@TILTPOS[123] \d+$", x)))
     READ_POS = CmdParse(lambda i:       f"T{i}RD",         lambda x: int(not_none(re.search(r"^T[123]RD (\d+)$", x)).group(1)))
-    SET_POS  = CmdParse(lambda i, x:    f"T{i}MOVETO {x}", lambda x: bool(re.search(r"^T[123]MOVETO \d+$", x)))
+    SET_POS  = CmdParse(chkrng(lambda x, i: f"T{i}MOVETO {x}", *RANGE), lambda x: bool(re.search(r"^T[123]MOVETO \d+$", x)))
     CLEAR_REGISTER = CmdParse(lambda i: f"T{i}CR",         lambda x: bool(re.search(r"^T[123]CR$", x)))
-    SET_VELO = CmdParse(lambda i, x:    f"T{i}VL {x}",     lambda x: bool(re.search(r"^T[123]VL$", x)))
-    SET_CURRENT = CmdParse(lambda i, x: f"T{i}CUR {x}",    lambda x: bool(re.search(r"^T[123]CUR$", x)))
+    SET_VELO =    CmdParse(lambda x, i: f"T{i}VL {x}",     lambda x: bool(re.search(r"^T[123]VL$", x)))
+    SET_CURRENT = CmdParse(lambda x, i: f"T{i}CUR {x}",    lambda x: bool(re.search(r"^T[123]CUR$", x)))
 # fmt:on
 
 
@@ -37,8 +38,8 @@ class TiltStage(FPGAControlled, Movable):
     def initialize(self):
         self.com.send("TDIZ_PI_STAGE")
         for i in get_args(ID):
-            self.com.send(TiltCmd.SET_CURRENT(i, 35))
-            self.com.send(TiltCmd.SET_VELO(i, 62500))
+            self.com.send(TiltCmd.SET_CURRENT(35, i))
+            self.com.send(TiltCmd.SET_VELO(62500, i))
 
         for i in get_args(ID):
             fut = self.com.send(tuple(TiltCmd.CLEAR_REGISTER(i) for i in get_args(ID)))
@@ -48,7 +49,7 @@ class TiltStage(FPGAControlled, Movable):
             self.com.send(TiltCmd.GO_HOME(i))
 
     def move(self, pos: int) -> list[Future[str]]:
-        return [self.com.send(is_between(partial(TiltCmd.SET_POS.cmd, i), *self.RANGE)(pos)) for i in get_args(ID)]  # type: ignore
+        return [self.com.send(TiltCmd.SET_POS(pos, i)) for i in get_args(ID)]  # type: ignore
 
     @property
     @run_in_executor
@@ -62,13 +63,6 @@ class TiltStage(FPGAControlled, Movable):
         if not all(map(lambda x: x > 0, out)):  # type: ignore
             raise Exception("Invalid Z position. Clear register first.")
         return cast(tuple[int, int, int], out)
-
-    # @property
-    # def _position(self) -> tuple[Future[int], Future[int], Future[int]]:
-    #     """Weird bug. Calling two self.position.result() under run_in_executor hangs thread.
-    #     Bug disappears in a a debug process"""
-    #     res = self.com.send(tuple(TiltCmd.READ_POS(i) for i in get_args(ID)))
-    #     return cast(tuple[Future[int], Future[int], Future[int]], res)
 
     @property
     @run_in_executor

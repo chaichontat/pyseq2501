@@ -23,7 +23,7 @@ class LEDColor(IntEnum):
 
 
 class LEDCmd:
-    SET_MODE = CmdParse(lambda i, x: f"LEDMODE{i} {x}", ok_if_match(["LEDMODE1", "LEDMODE2"]))
+    SET_MODE = CmdParse(lambda x, i: f"LEDMODE{i} {x}", ok_if_match(["LEDMODE1", "LEDMODE2"]))
     SET_SWEEP_RATE = CmdParse(lambda x: f"LEDSWPRATE {x}", ok_if_match("LEDSWPRATE"))
     SET_PULSE_RATE = CmdParse(lambda x: f"LEDPULSRATE {x}", ok_if_match("LEDPULSRATE"))
 

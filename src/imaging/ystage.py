@@ -6,7 +6,7 @@ from typing import Dict, Literal, Optional
 
 from src.base.instruments import Movable, UsesSerial
 from src.com.async_com import COM, CmdParse
-from src.utils.utils import ok_if_match
+from src.utils.utils import chkrng, ok_if_match
 from src.com.thread_mgt import run_in_executor
 
 logger = logging.getLogger("YStage")
@@ -14,7 +14,7 @@ logger = logging.getLogger("YStage")
 
 ModeParams = Literal["GAINS", "VELO"]
 ModeName = Literal["IMAGING", "MOVING"]
-
+RANGE = (int(-7e6), int(7.5e6))
 
 """
 SCALE '*ON/OFF 0 SCLA 1 SCLD 42000 SCLV 1 PEU 42000' p.171
@@ -64,7 +64,7 @@ class YCmd:
     See https://www.parkermotion.com/manuals/Digiplan/ViX-IH_UG_7-03.pdf for more.
     """
 
-    SET_POS = lambda x: f"D{x}"
+    SET_POS = chkrng(lambda x: f"D{x}", *RANGE)
     GO = "G"
     STOP = "S"
     IS_MOVING = CmdParse("R(IP)", lambda x: not bool(read_pos(x)))  # Intentional inversion.

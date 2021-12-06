@@ -7,10 +7,11 @@ from typing import Annotated, Any, Literal
 
 from src.base.instruments import UsesSerial
 from src.com.async_com import COM, CmdParse
-from src.utils.utils import is_between
+from src.utils.utils import chkrng, ok_if_match
 from src.com.thread_mgt import run_in_executor
 
 logger = getLogger("Laser")
+POWER_RANGE = (0, 500)
 
 
 class LaserException(Exception):
@@ -35,10 +36,11 @@ class LaserCmd:
 
     ON = "ON"
     OFF = "OFF"
-    SET_POWER = lambda x: f"POWER={x}"
-    GET_POWER = CmdParse("POWER?", v_get_power)
-    GET_STATUS = CmdParse("STAT?", v_get_status)
-    VERSION = CmdParse("VERSION?", lambda x: {"SMD-G-1.1.2": True, "SMD-G-1.1.1": True}[x])
+    SET_POWER  = chkrng(lambda x: f"POWER={x}", *POWER_RANGE) 
+    GET_POWER  = CmdParse("POWER?"  , v_get_power)
+    GET_STATUS = CmdParse("STAT?"   , v_get_status)
+    VERSION    = CmdParse("VERSION?", ok_if_match(("SMD-G-1.1.2", "SMD-G-1.1.1")))
+    # fmt: on
 
 
 class Laser(UsesSerial):
@@ -83,8 +85,7 @@ class Laser(UsesSerial):
         """
         assert all((int(power) == power and power > 0, timeout > 0, tol > 0))
         if not self.on:
-            self.on = True
-        self.com.send(is_between(LaserCmd.SET_POWER, *self.POWER_RANGE)(power))
+        self.com.send(LaserCmd.SET_POWER(power))
 
         for _ in range(timeout):
             time.sleep(1)

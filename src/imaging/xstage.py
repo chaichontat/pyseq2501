@@ -9,6 +9,7 @@ import re
 from src.utils.utils import not_none, ok_if_match
 
 logger = logging.getLogger("XStage")
+RANGE = (1000, 50000)
 
 # fmt: off
 class XCmd:
@@ -19,7 +20,7 @@ class XCmd:
     INIT = "\x03"
     IS_MOVING   = CmdParse("PR MV", lambda x: int(x) == 1, n_lines=1)
     GET_POS     = CmdParse("PR P" , int)
-    SET_POS     = lambda x: f"MA {x}"  # Set mode and move to abs. position.
+    SET_POS     = chkrng(lambda x: f"MA {x}", *RANGE)  # Set mode and move to abs. position.
     SET_POS_REL = lambda x: f"MR {x}"  # Set mode and move to rel. position.
 # fmt: on
 

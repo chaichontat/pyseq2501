@@ -38,7 +38,7 @@ class OpticCmd:
     EM_FILTER_DEFAULT = CmdParse("EM2I", ok_if_match("EM2I"))
     EM_FILTER_OUT = CmdParse("EM2O", ok_if_match("EM2O"))
     HOME_OD = CmdParse(lambda i: f"EX{i}HM", ok_if_match([f"EM{i}HM" for i in get_args(ID)]))
-    SET_OD = CmdParse(lambda i, x: f"EX{i}MV {x}", ok_if_match([f"EM{i}MV" for i in get_args(ID)]))
+    SET_OD = CmdParse(lambda x, i: f"EX{i}MV {x}", ok_if_match([f"EM{i}MV" for i in get_args(ID)]))
     OPEN_SHUTTER = CmdParse("SWLSRSHUT 1", ok_if_match("SWLSRSHUT"))
     CLOSE_SHUTTER = CmdParse("SWLSRSHUT 0", ok_if_match("SWLSRSHUT"))
 
@@ -53,7 +53,7 @@ class Optics(FPGAControlled):
     def initialize(self):
         self.com.send(OpticCmd.EM_FILTER_DEFAULT)
         self.com.send((OpticCmd.HOME_OD(1), OpticCmd.HOME_OD(2)))
-        self.com.send((OpticCmd.SET_OD(1, OD_GREEN["OPEN"]), OpticCmd.SET_OD(2, OD_RED["OPEN"])))
+        self.com.send((OpticCmd.SET_OD(OD_GREEN["OPEN"], 1), OpticCmd.SET_OD(OD_RED["OPEN"], 2)))
 
     @contextmanager
     def open_shutter(self):
