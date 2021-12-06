@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from logging import getLogger
@@ -19,6 +21,21 @@ logger = getLogger("Imager")
 class Channel:
     laser: Laser
     optics: Optics
+
+
+@dataclass(frozen=True)
+class State:
+    laser_power: tuple[int, int]
+    x_pos: int
+    y_pos: int
+    z_pos: tuple[int, int, int]
+    z_obj_pos: int
+
+    @classmethod
+    def from_futures(cls, *args, **kwargs) -> State:
+        args = map(lambda x: x.result(), args)
+        kwargs = {k: v.result() for k, v in kwargs.items()}
+        return cls(*args, **kwargs)
 
 
 class Imager:
@@ -43,6 +60,16 @@ class Imager:
         self.y.initialize()
         self.lasers.initialize()
 
+    def get_state(self) -> State:
+        out = {
+            "laser_power": (self.lasers.g.power, self.lasers.r.power),
+            "x_pos": self.x.position,
+            "y_pos": self.y.position,
+            "z_pos": self.z.position,
+            "z_obj_pos": self.z_obj.position,
+        }
+        return State.from_futures(**out)
+
     @property
     def all_still(self) -> bool:
         x, y, z = self.x.is_moving, self.y.is_moving, self.z.is_moving
@@ -54,9 +81,9 @@ class Imager:
         n_bundles += 1  # To flush CCD.
         while not self.all_still:
             logger.warning("Started taking an image while stage is moving. Waiting.")
-            time.sleep(0.2)
+            time.sleep(0.5)
 
-        self.y._mode = "IMAGING"
+        self.y.set_mode("IMAGING")
         pos = self.y.position
         pos = pos.result()
         assert pos is not None
