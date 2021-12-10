@@ -1,4 +1,7 @@
 site_name: PySeq 2501
+repo_url: https://github.com/chaichontat/pyseq2501
+repo_name: chaichontat/pyseq2501
+
 theme:
   name: material
   features:
@@ -45,3 +48,5 @@ plugins:
             - sys.path.append('../')
           rendering:
             members_order: source
+  - git-revision-date-localized:
+      type: iso_datetime

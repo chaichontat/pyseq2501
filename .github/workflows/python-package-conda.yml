@@ -57,6 +57,7 @@ jobs:
       - name: Build docs
         run: |
           conda install mkdocs mkdocs-material mkdocstrings
+          pip install mkdocs-git-revision-date-localized-plugin
           mkdocs build -f docs/mkdocs.yml
 
       - name: Deploy docs
