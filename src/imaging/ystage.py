@@ -102,7 +102,7 @@ class YStage(UsesSerial, Movable):
     @run_in_executor
     def initialize(self) -> None:
         logger.info("Initializing y-stage.")
-        self.com.send(YCmd.RESET).result()  # Initialize Stage
+        self.com.send(YCmd.RESET).result(5)  # Initialize Stage
         # time.sleep(3)
         # self.com.send(CmdParse(YCmd.DONT_ECHO, lambda x: x == "1W(EX,0)"))  # Turn off echo
         self.com.send("BRAKE0")
@@ -118,9 +118,9 @@ class YStage(UsesSerial, Movable):
         self._mode = "IMAGING" if slowly else "MOVING"
         self.com.send((YCmd.SET_POS(pos), YCmd.GO))
         logger.info(f"Moving to {pos} for {self._mode}")
-        while self.is_moving.result():
+        while self.is_moving.result(5):
             time.sleep(0.2)
-        return self.position.result()
+        return self.position.result(5)
 
     @property
     def position(self) -> Future[int]:

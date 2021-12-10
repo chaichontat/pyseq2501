@@ -16,7 +16,7 @@ class Fake:
         time.sleep(0.01)
         if a == 0:
             return 0
-        return self.another_thread(a - 1).result()
+        return self.another_thread(a - 1).result(1)
 
     @run_in_executor
     @warn_main_thread

@@ -66,7 +66,7 @@ class Laser(UsesSerial):
             if i > 0:
                 logger.warning(f"Laser did not switch to {state}, Trying again.")
             self.com.send({False: LaserCmd.OFF, True: LaserCmd.ON}[state])
-            while (resp := self.on.result()) is None:
+            while (resp := self.on.result(5)) is None:
                 ...
             if resp == state:
                 break
@@ -89,12 +89,12 @@ class Laser(UsesSerial):
         """
         assert all((int(power) == power and power > 0, timeout > 0, tol > 0))
         if not self.on:
-            self.set_onoff(True).result()
+            self.set_onoff(True).result(5)
         self.com.send(LaserCmd.SET_POWER(power))
 
         for _ in range(timeout):
             time.sleep(1)
-            if abs(power - self.power.result()) < tol:
+            if abs(power - self.power.result(5)) < tol:
                 return True
         else:
             return False

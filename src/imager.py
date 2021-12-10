@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from logging import getLogger
 import time
+
+from src.utils.utils import not_none
 
 
 from .imaging.camera.dcam import Cameras, Mode, UInt16Array
@@ -73,29 +74,29 @@ class Imager:
     @property
     def all_still(self) -> bool:
         x, y, z = self.x.is_moving, self.y.is_moving, self.z.is_moving
-        return not any((x.result(), y.result(), z.result()))
+        return not any((x.result(2), y.result(2), z.result(2)))
 
     # TODO add more ready checks.
     def take_image(self, n_bundles: int, dark: bool = False) -> UInt16Array:
         logger.info(f"Taking image with {n_bundles} bundles.")
         n_bundles += 1  # To flush CCD.
         while not self.all_still:
-            logger.warning("Started taking an image while stage is moving. Waiting.")
+            logger.info("Started taking an image while stage is moving. Waiting.")
             time.sleep(0.5)
 
         self.y.set_mode("IMAGING")
         pos = self.y.position
-        pos = pos.result()
+        pos = pos.result(2)
         assert pos is not None
         n_px_y = n_bundles * self.cams.BUNDLE_HEIGHT
         end_y_pos = pos - (delta := self.calc_delta_pos(n_px_y)) - 100000
         fut = self.tdi.prepare_for_imaging(n_px_y, pos)
         self.cams.mode = Mode.TDI
-        fut.result()
+        fut.result(5)
 
         cap = lambda: self.cams.capture(
             n_bundles, start_capture=lambda: self.y.move(end_y_pos, slowly=True)
-        ).result()
+        ).result(int(n_bundles / 2))
 
         if dark:
             imgs = cap()
@@ -103,9 +104,11 @@ class Imager:
             with self.optics.open_shutter():
                 imgs = cap()
 
-        self.fpga.tdi.n_pulses
+        if not_none(res := self.fpga.tdi.n_pulses.result(1)) - 1 != (exp := 128 * n_bundles):
+            logger.warning(f"Number of trigger pulses mismatch. Expected: {exp} Got {res}.")
+
         logger.info(f"Done taking an image.")
-        return imgs[:, :-128, :]
+        return imgs[:, :-128, :]  # Remove first oversaturated bundle.
 
     @staticmethod
     def calc_delta_pos(n_px_y: int) -> int:

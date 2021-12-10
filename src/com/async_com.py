@@ -118,11 +118,11 @@ class COM:
             assert name == "fpga"
             srx = LOOP.put(open_serial_connection(url=port_rx, baudrate=115200))
             stx = LOOP.put(open_serial_connection(url=port_tx, baudrate=115200))
-            self._serial = Channel(reader=srx.result()[0], writer=stx.result()[1])
+            self._serial = Channel(reader=srx.result(1)[0], writer=stx.result(1)[1])
             logger.info(f"{self.name}Started listening to ports {port_tx} and {port_rx}.")
         else:
             assert name != "fpga"
-            self._serial = Channel(*LOOP.put(open_serial_connection(url=port_tx, baudrate=9600)).result())
+            self._serial = Channel(*LOOP.put(open_serial_connection(url=port_tx, baudrate=9600)).result(1))
             logger.info(f"{self.name}Started listening to port {port_tx}.")
 
         self.tasks = LOOP.put(self._read_forever())  # Prevents garbage collection.

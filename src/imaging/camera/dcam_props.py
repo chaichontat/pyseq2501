@@ -100,7 +100,7 @@ class DCAMDict(MutableMapping):
 
             to_set = ctypes.c_double(value)
             API.dcam_setgetpropertyvalue(self.handle, prop.id_, pointer(to_set), c_int32(DCAM_DEFAULT_ARG))
-
+            logger.info(f"Set {name} to {value}.")
             self.refresh()
             assert self[name] == value
 
@@ -121,7 +121,7 @@ class DCAMDict(MutableMapping):
 
     def refresh(self) -> None:
         [v.refresh(self.handle) for v in self._dict.values()]
-        logger.info("DCAMProp refreshed.")
+        logger.debug("DCAMProp refreshed.")
 
     @staticmethod
     def to_snake_case(s: bytes) -> str:

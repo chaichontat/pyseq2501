@@ -37,6 +37,5 @@ class FPGA(UsesSerial):
 
     @run_in_executor
     def reset(self) -> Literal[True]:
-        self.com.send(FPGACmd.RESET)
-        time.sleep(2)
+        self.com.send(FPGACmd.RESET).result()
         return True

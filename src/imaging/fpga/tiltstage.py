@@ -43,7 +43,7 @@ class TiltStage(FPGAControlled, Movable):
 
         for i in get_args(ID):
             fut = self.com.send(tuple(TiltCmd.CLEAR_REGISTER(i) for i in get_args(ID)))
-        [f.result() for f in fut]  # type: ignore
+        [f.result(2) for f in fut]  # type: ignore
 
         for i in get_args(ID):
             self.com.send(TiltCmd.GO_HOME(i))
@@ -58,7 +58,7 @@ class TiltStage(FPGAControlled, Movable):
             tuple[Future[Optional[int]]], self.com.send(tuple(TiltCmd.READ_POS(i) for i in get_args(ID)))
         )
 
-        out = tuple(x.result() for x in resp)
+        out = tuple(x.result(2) for x in resp)
         assert all(map(not_none, out))
         if not all(map(lambda x: x > 0, out)):  # type: ignore
             raise Exception("Invalid Z position. Clear register first.")
@@ -67,4 +67,4 @@ class TiltStage(FPGAControlled, Movable):
     @property
     @run_in_executor
     def is_moving(self) -> bool:
-        return any(a != b for a, b in zip(self.position.result(), self.position.result()))
+        return any(a != b for a, b in zip(self.position.result(2), self.position.result(2)))

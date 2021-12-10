@@ -219,12 +219,12 @@ class Cameras:
         return cams
 
     def __getitem__(self, id_: ID) -> _Camera:
-        return self._cams.result()[id_]
+        return self._cams.result(20)[id_]
 
     def __getattr__(self, name: str) -> Any:
         if name == "properties":
             logger.info("Waiting for DCAM API to finish initializing. Consider not setting properties now.")
-            self._cams.result()
+            self._cams.result(20)
             return self.properties
         raise AttributeError
 
@@ -254,7 +254,7 @@ class Cameras:
     #         yield (buf1, buf2)
 
     def _get_bundles(self, bufs: tuple[UInt16Array, UInt16Array], height: int, i: int):
-        for c, b in zip(self._cams.result(), bufs):
+        for c, b in zip(self._cams.result(20), bufs):
             c.get_bundle(b, height, i)
         if i == 0 or i % 5 == 0:
             logger.info(f"Retrieved bundle {i + 1}.")

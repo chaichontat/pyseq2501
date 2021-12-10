@@ -57,7 +57,7 @@ class Optics(FPGAControlled):
 
     @contextmanager
     def open_shutter(self):
-        self._open().result()
+        self._open().result(2)
         try:
             yield
         finally:

@@ -54,4 +54,4 @@ class ObjStage(FPGAControlled, Movable):
     @property
     @run_in_executor
     def is_moving(self) -> bool:
-        return self.position.result() != self.position.result()
+        return self.position.result(5) != self.position.result(5)
