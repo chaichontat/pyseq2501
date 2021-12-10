@@ -1,0 +1,36 @@
+:root {
+  --md-primary-bg-color: rgba(0, 0, 0, 0.8);
+}
+
+.md-search__form {
+  background-color: white !important;
+  border: 1px solid #eee;
+  border-radius: 5px;
+}
+
+.md-search__input::placeholder {
+  color: #7b7b7b;
+}
+
+.md-search__icon {
+  color: rgb(97, 97, 97) !important;
+}
+
+.md-header {
+  box-shadow: none !important;
+  border-bottom: 1px solid #ededed;
+  background: white;
+}
+
+.md-ellipsis {
+  font-size: 24px;
+  font-weight: 300;
+}
+
+.gradient {
+  background: linear-gradient(61.68deg, #225de6 -4.27%, #a664fd 116.09%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+}

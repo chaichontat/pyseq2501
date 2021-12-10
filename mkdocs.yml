@@ -4,12 +4,23 @@ repo_name: chaichontat/pyseq2501
 
 theme:
   name: material
+  custom_dir: docs/overrides
+  font: Inter
+  # palette:
+  #   - media: "(prefers-color-scheme: light)"
+  #     scheme: default
+  #     toggle:
+  #       icon: material/lightbulb-outline
+  #       name: Switch to dark mode
+  #   - media: "(prefers-color-scheme: dark)"
+  #     scheme: slate
+  #     toggle:
+  #       icon: material/lightbulb
+  #       name: Switch to light mode
   features:
     - navigation.instant
     - toc.integrate
     - navigation.top
-docs_dir: .
-site_dir: ../site
 extra:
   social:
     - icon: fontawesome/brands/github
@@ -32,6 +43,9 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.superfences
   - pymdownx.snippets
+
+extra_css:
+  - stylesheets/extra.css
 
 extra_javascript:
   - javascripts/mathjax.js

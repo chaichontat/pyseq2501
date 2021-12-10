@@ -58,7 +58,7 @@ jobs:
         run: |
           conda install mkdocs mkdocs-material mkdocstrings
           pip install mkdocs-git-revision-date-localized-plugin
-          mkdocs build -f docs/mkdocs.yml
+          mkdocs build
 
       - name: Deploy docs
         uses: peaceiris/actions-gh-pages@v3
