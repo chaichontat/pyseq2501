@@ -9,5 +9,6 @@ dependencies:
   - pytest
   - returns
   - rich
+  - tifffile
   - pip:
     - pyserial-asyncio
