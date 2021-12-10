@@ -79,15 +79,14 @@ class _Camera:
         self.handle = c_void_p(0)
         API.dcam_open(pointer(self.handle), c_int32(id_), None)
         logger.info(f"Connected to cam {id_}")
-        self._capture_mode = DCAM_CAPTURE_MODE.SNAP
         # self.properties["sensor_mode_line_bundle_height"] = 128
-        self._mode = Mode.TDI
         if os.environ.get("FAKE_HISEQ", "0") == "1" or os.name != "nt":
             self.properties = DCAMDict(
                 self.handle, pickle.loads((Path(__file__).parent / "saved_props.pk").read_bytes())
             )
         else:
             self.properties = DCAMDict.from_dcam(self.handle)
+        self.capture_mode = DCAM_CAPTURE_MODE.SNAP
 
     def initialize(self) -> None:
         ...
@@ -216,6 +215,7 @@ class Cameras:
             logger.info(f"Still alive. dcam_init takes about 10s. Taken {time.monotonic() - t0:.2f} s.")
         cams = (_Camera(0), _Camera(1))
         self.properties = TwoProps(*[c.properties for c in cams])
+        self.mode = Mode.TDI
         return cams
 
     def __getitem__(self, id_: ID) -> _Camera:

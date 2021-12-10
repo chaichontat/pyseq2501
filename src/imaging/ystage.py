@@ -118,7 +118,7 @@ class YStage(UsesSerial, Movable):
         self._mode = "IMAGING" if slowly else "MOVING"
         self.com.send((YCmd.SET_POS(pos), YCmd.GO))
         logger.info(f"Moving to {pos} for {self._mode}")
-        while self.is_moving:
+        while self.is_moving.result():
             time.sleep(0.2)
         return self.position.result()
 

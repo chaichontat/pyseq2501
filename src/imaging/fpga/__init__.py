@@ -1,6 +1,7 @@
-from logging import getLogger
-
 import time
+from concurrent.futures import Future
+from logging import getLogger
+from typing import Literal
 
 from src.base.instruments import UsesSerial
 from src.com.async_com import COM, CmdParse
@@ -8,10 +9,10 @@ from src.com.thread_mgt import run_in_executor
 from src.utils.utils import ok_if_match
 
 from .led import LED
+from .objstage import ObjStage
 from .optics import Optics
 from .tdi import TDI
 from .tiltstage import TiltStage
-from .objstage import ObjStage
 
 logger = getLogger("fpga")
 
@@ -31,7 +32,11 @@ class FPGA(UsesSerial):
 
         # assert all([x.fcom is self.com for x in (self.tdi, self.led, self.optics, self.z)])  # type: ignore[attr-defined]
 
+    def initialize(self) -> Future[bool]:
+        return self.reset()
+
     @run_in_executor
-    def initialize(self) -> None:
+    def reset(self) -> Literal[True]:
         self.com.send(FPGACmd.RESET)
         time.sleep(2)
+        return True

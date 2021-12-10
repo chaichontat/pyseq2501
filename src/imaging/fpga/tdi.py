@@ -55,7 +55,7 @@ class TDI(FPGAControlled):
         self.com.send(TDICmd.SET_ENCODER_Y(pos))
         self._position = pos
 
-    def prepare_for_imaging(self, n_px_y: int, pos: int) -> Future[Any]:
+    def prepare_for_imaging(self, n_px_y: int, pos: int) -> Future[bool]:
         self.encoder_pos = pos
         self.com.send(TDICmd.SET_TRIGGER(pos))
         return self.com.send(TDICmd.ARM_TRIGGER(n_px_y, pos))

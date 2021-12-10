@@ -24,7 +24,7 @@ T, P = TypeVar("T"), ParamSpec("P")
 
 def ok_if_match(target: Sequence[str] | str) -> Callable[[str], bool]:
     def wrapped(resp: str) -> bool:
-        if isinstance(target, list) and resp in target:
+        if isinstance(target, Sequence) and resp in target:
             return True
         if isinstance(target, str) and resp == target:
             return True
