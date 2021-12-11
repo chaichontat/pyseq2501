@@ -1,10 +1,11 @@
 from __future__ import annotations
+
 import asyncio
-from concurrent.futures import Future, ThreadPoolExecutor
 import queue
 import threading
 import time
 from asyncio import StreamReader, StreamWriter
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from logging import getLogger
 from typing import (
@@ -150,7 +151,7 @@ class COM:
                 # console.print_exception()
                 fut.set_exception(e)
             else:
-                r = "'" + resp.replace("\n", " ") + "'"
+                r = "'" + resp.replace("\n", "\\n") + "'"
                 logger.debug(f"{self.name}Rx:  {r:20s} [green]Parsed: '{parsed}'")
                 fut.set_result(parsed)
             finally:

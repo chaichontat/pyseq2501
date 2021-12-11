@@ -1,11 +1,10 @@
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 from logging import getLogger
-import time
 
 from src.utils.utils import not_none
-
 
 from .imaging.camera.dcam import Cameras, Mode, UInt16Array
 from .imaging.fpga import FPGA
@@ -44,6 +43,7 @@ class Imager:
 
     def __init__(self, ports: Ports, init_cam: bool = True) -> None:
         self.fpga = FPGA(*ports.fpga)
+        self.fpga.initialize()
         self.tdi = self.fpga.tdi
         self.optics = self.fpga.optics
 
@@ -74,7 +74,7 @@ class Imager:
     @property
     def all_still(self) -> bool:
         x, y, z = self.x.is_moving, self.y.is_moving, self.z.is_moving
-        return not any((x.result(2), y.result(2), z.result(2)))
+        return not any((x.result(60), y.result(60), z.result(60)))
 
     # TODO add more ready checks.
     def take_image(self, n_bundles: int, dark: bool = False) -> UInt16Array:
@@ -86,13 +86,13 @@ class Imager:
 
         self.y.set_mode("IMAGING")
         pos = self.y.position
-        pos = pos.result(2)
+        pos = pos.result(60)
         assert pos is not None
         n_px_y = n_bundles * self.cams.BUNDLE_HEIGHT
         end_y_pos = pos - (delta := self.calc_delta_pos(n_px_y)) - 100000
         fut = self.tdi.prepare_for_imaging(n_px_y, pos)
         self.cams.mode = Mode.TDI
-        fut.result(5)
+        fut.result(60)
 
         cap = lambda: self.cams.capture(
             n_bundles, start_capture=lambda: self.y.move(end_y_pos, slowly=True)
@@ -104,7 +104,7 @@ class Imager:
             with self.optics.open_shutter():
                 imgs = cap()
 
-        if not_none(res := self.fpga.tdi.n_pulses.result(1)) - 1 != (exp := 128 * n_bundles):
+        if not_none(res := self.fpga.tdi.n_pulses.result(1)) != (exp := 128 * n_bundles):
             logger.warning(f"Number of trigger pulses mismatch. Expected: {exp} Got {res}.")
 
         logger.info(f"Done taking an image.")

@@ -1,11 +1,12 @@
 from concurrent.futures import Future
 from contextlib import contextmanager
 from logging import getLogger
-from typing import Literal, Optional, get_args
+from typing import Literal, Optional
 
 from src.base.instruments import FPGAControlled
 from src.com.async_com import CmdParse
-from src.utils.utils import ok_if_match
+from src.com.thread_mgt import run_in_executor
+from src.utils.utils import not_none, ok_if_match
 
 logger = getLogger("optics")
 
@@ -34,13 +35,15 @@ OD_RED = {
 }
 
 
+# fmt: off
 class OpticCmd:
     EM_FILTER_DEFAULT = CmdParse("EM2I", ok_if_match("EM2I"))
-    EM_FILTER_OUT = CmdParse("EM2O", ok_if_match("EM2O"))
-    HOME_OD = CmdParse(lambda i: f"EX{i}HM", ok_if_match([f"EM{i}HM" for i in get_args(ID)]))
-    SET_OD = CmdParse(lambda x, i: f"EX{i}MV {x}", ok_if_match([f"EM{i}MV" for i in get_args(ID)]))
-    OPEN_SHUTTER = CmdParse("SWLSRSHUT 1", ok_if_match("SWLSRSHUT"))
-    CLOSE_SHUTTER = CmdParse("SWLSRSHUT 0", ok_if_match("SWLSRSHUT"))
+    EM_FILTER_OUT     = CmdParse("EM2O", ok_if_match("EM2O"))
+    HOME_OD           = CmdParse(lambda i   : f"EX{i}HM",     ok_if_match(("EX1HM", "EX2HM")))
+    SET_OD            = CmdParse(lambda x, i: f"EX{i}MV {x}", ok_if_match(("EX1MV", "EX2MV")))
+    OPEN_SHUTTER      = CmdParse("SWLSRSHUT 1", ok_if_match("SWLSRSHUT"))
+    CLOSE_SHUTTER     = CmdParse("SWLSRSHUT 0", ok_if_match("SWLSRSHUT"))
+# fmt: on
 
 
 class Optics(FPGAControlled):
@@ -50,14 +53,18 @@ class Optics(FPGAControlled):
 
     cmd = OpticCmd
 
+    @run_in_executor
     def initialize(self):
         self.com.send(OpticCmd.EM_FILTER_DEFAULT)
-        self.com.send((OpticCmd.HOME_OD(1), OpticCmd.HOME_OD(2)))
-        self.com.send((OpticCmd.SET_OD(OD_GREEN["OPEN"], 1), OpticCmd.SET_OD(OD_RED["OPEN"], 2)))
+        [not_none(x).result(1) for x in self.com.send((OpticCmd.HOME_OD(1), OpticCmd.HOME_OD(2)))]
+        [
+            not_none(x).result(1)
+            for x in self.com.send((OpticCmd.SET_OD(OD_GREEN["OPEN"], 1), OpticCmd.SET_OD(OD_RED["OPEN"], 2)))
+        ]
 
     @contextmanager
     def open_shutter(self):
-        self._open().result(2)
+        self._open().result(60)
         try:
             yield
         finally:

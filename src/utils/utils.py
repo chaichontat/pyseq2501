@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from concurrent.futures import Future
 from math import ceil
 from typing import Callable, Dict, Literal, Optional, ParamSpec, Sequence, Tuple, TypedDict, TypeVar, cast
@@ -33,6 +34,18 @@ def ok_if_match(target: Sequence[str] | str) -> Callable[[str], bool]:
     return wrapped
 
 
+def ok_re(target: str, f: Callable[[str], T] = bool) -> Callable[[str], T]:
+    r = re.compile(target)
+
+    def inner(resp: str) -> T:
+        try:
+            return f(not_none(r.search(resp)).group(1))
+        except IndexError:
+            return f(not_none(r.search(resp)).group(0))
+
+    return inner
+
+
 def chkrng(f: Callable[P, T], min_: int, max_: int) -> Callable[P, T]:
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
         x = cast(int, args[0])
@@ -49,8 +62,13 @@ def gen_future(x: T) -> Future[T]:
     return fut
 
 
+class PatternNotFound(Exception):
+    ...
+
+
 def not_none(x: Optional[T]) -> T:
-    assert x is not None
+    if x is None:
+        raise PatternNotFound()
     return x
 
 

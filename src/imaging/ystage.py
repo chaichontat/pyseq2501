@@ -1,13 +1,14 @@
 import logging
+import re
 import time
 from concurrent.futures import Future
 from dataclasses import dataclass
-from typing import Dict, Literal, Optional
+from typing import Any, Callable, Dict, Literal, Optional
 
 from src.base.instruments import Movable, UsesSerial
 from src.com.async_com import COM, CmdParse
-from src.utils.utils import chkrng, ok_if_match
 from src.com.thread_mgt import run_in_executor
+from src.utils.utils import chkrng, ok_if_match, ok_re
 
 logger = logging.getLogger("YStage")
 
@@ -27,8 +28,8 @@ Imaging velo == 200200 units/s.
 
 """
 MODES: Dict[ModeName, Dict[ModeParams, str]] = {
-    "IMAGING": {"GAINS": "6,10,7,1.5,0", "VELO": "0.154"},
-    "MOVING": {"GAINS": "7,10,7,1.5,0", "VELO": "1"},
+    "IMAGING": {"GAINS": "5,10,7,1.5,0", "VELO": "0.154"},
+    "MOVING": {"GAINS": "5,10,7,1.5,0", "VELO": "1"},
 }
 
 
@@ -55,8 +56,12 @@ class Gains:
 {"SCANNING": Gains(GP=6, GI=10, GV=1.5, GF=5), "FASTMOVE": Gains(GP=7, GI=10, GV=1.5, GF=5)}
 
 
-def read_pos(resp: str) -> int:
-    return int(resp[1:])
+def gen_reader(s: str) -> Callable[[str], int]:
+    return ok_re(fr"1{s}\n\*([\d\+\-]+)", int)
+
+
+def gen_repeat(cmd: str) -> CmdParse[bool, Any]:
+    return CmdParse(cmd, ok_if_match("1" + cmd))
 
 
 class YCmd:
@@ -64,25 +69,24 @@ class YCmd:
     See https://www.parkermotion.com/manuals/Digiplan/ViX-IH_UG_7-03.pdf for more.
     """
 
-    SET_POS = chkrng(lambda x: f"D{x}", *RANGE)
-    GO = "G"
-    STOP = "S"
-    IS_MOVING = CmdParse("R(IP)", lambda x: not bool(read_pos(x)))  # Intentional inversion.
-    READ_POS = CmdParse("R(PA)", read_pos)  # Report(Position Actual)
-    TARGET_POS = CmdParse("R(PT)", read_pos)
-    GAINS = lambda x: f"GAINS({x})"
-    VELO = lambda x: f"V{x}"
-    DONT_ECHO = "W(EX,0)"
+    # fmt: off
+    SET_POS    = CmdParse(chkrng(lambda x: f"D{x}", *RANGE), ok_re(r"1D\-?\d+"))
+    GET_POS    = CmdParse("R(PA)",                    gen_reader(r"R\(PA\)"), n_lines=2)  # Report(Position Actual)
+    IS_MOVING  = CmdParse("R(IP)", lambda x: not bool(gen_reader(r"R\(IP\)")(x)), n_lines=2)
+    TARGET_POS = CmdParse("R(PT)",                    gen_reader(r"R\(PT\)")    , n_lines=2)
+    GAINS      = CmdParse(lambda x: f"GAINS({x})", ok_re(r"GAINS\(([\d\.,]+)\)"))
+    VELO       = CmdParse(lambda x: f"V{x}"      , ok_re(r"V([\d\.]+)"))
 
-    ON = "ON"
-    GO_HOME = "GH"
-    MODE_ABSOLUTE = "MA"  # p.159
+    GO            = gen_repeat("G")
+    STOP          = gen_repeat("S")
+    ON            = gen_repeat("ON")
+    GO_HOME       = gen_repeat("GH")
+    MODE_ABSOLUTE = gen_repeat("MA")  # p.159
+    BRAKE_OFF     = gen_repeat("BRAKE0")
+    # fmt: on
+
     RESET = CmdParse(
-        "Z",
-        ok_if_match(
-            "1Z\n*ViX250IH-Servo Drive\n*REV 2.4 Jun 29 2005 16:58:18\nCopyright 2003 Parker-Hannifin"
-        ),
-        n_lines=4,
+        "Z", ok_re(r"1Z\n\*ViX250IH\-Servo Drive\n\*REV 2\..+\n\*Copyright 2003 Parker\-Hannifin"), n_lines=4
     )  # p.96, 180
 
 
@@ -96,35 +100,32 @@ class YStage(UsesSerial, Movable):
     def __init__(self, port_tx: str, tol: int = 10) -> None:
         self.com = COM("y", port_tx)
         self._mode: Optional[ModeName] = None
-        self.set_mode("MOVING")
         self.tol = tol
 
     @run_in_executor
-    def initialize(self) -> None:
+    def initialize(self) -> bool:
         logger.info("Initializing y-stage.")
-        self.com.send(YCmd.RESET).result(5)  # Initialize Stage
-        # time.sleep(3)
+        self.com.send(YCmd.RESET).result(60)  # Initialize Stage
         # self.com.send(CmdParse(YCmd.DONT_ECHO, lambda x: x == "1W(EX,0)"))  # Turn off echo
-        self.com.send("BRAKE0")
-        self._mode = "MOVING"
-        self.com.send(("MA", "ON"))
-        return self.com.send("GH")
+        self.com.send(YCmd.BRAKE_OFF).result(60)
+        self.com.send(YCmd.GAINS("5,10,7,1.5,0")).result(60)
+        self.set_mode("MOVING")
+        self.com.send(YCmd.MODE_ABSOLUTE).result(60)
+        self.com.send(YCmd.ON).result(60)
+        return self.com.send(YCmd.GO_HOME).result(60)
 
     @run_in_executor
     def move(self, pos: int, slowly: bool = False) -> int:
-        # TODO: Parse
-        if not (self.RANGE[0] <= pos <= self.RANGE[1]):
-            raise ValueError(f"YSTAGE can only be between {self.RANGE[0]} and {self.RANGE[1]}")
         self._mode = "IMAGING" if slowly else "MOVING"
         self.com.send((YCmd.SET_POS(pos), YCmd.GO))
         logger.info(f"Moving to {pos} for {self._mode}")
-        while self.is_moving.result(5):
-            time.sleep(0.2)
-        return self.position.result(5)
+        while self.is_moving.result(60):
+            time.sleep(0.5)
+        return self.position.result(60)
 
     @property
     def position(self) -> Future[int]:
-        return self.com.send(YCmd.READ_POS)
+        return self.com.send(YCmd.GET_POS)
 
     @property
     def is_moving(self) -> Future[bool]:
@@ -135,9 +136,9 @@ class YStage(UsesSerial, Movable):
         return self._mode
 
     @run_in_executor
-    def set_mode(self, mode: ModeName) -> None:
+    def set_mode(self, mode: ModeName) -> bool:
         if self._mode == mode:
-            return
-        self.com.send(YCmd.GAINS(MODES[mode]["GAINS"]))
-        self.com.send(YCmd.VELO(MODES[mode]["VELO"]))
+            return True
+        fut = self.com.send(YCmd.VELO(MODES[mode]["VELO"]))
         self._mode = mode
+        return fut.result()

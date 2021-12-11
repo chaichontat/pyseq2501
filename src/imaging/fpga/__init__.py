@@ -1,7 +1,6 @@
 import time
 from concurrent.futures import Future
 from logging import getLogger
-from typing import Literal
 
 from src.base.instruments import UsesSerial
 from src.com.async_com import COM, CmdParse
@@ -30,12 +29,11 @@ class FPGA(UsesSerial):
         self.z_obj = ObjStage(self.com)
         self.z = TiltStage(self.com)
 
-        # assert all([x.fcom is self.com for x in (self.tdi, self.led, self.optics, self.z)])  # type: ignore[attr-defined]
-
-    def initialize(self) -> Future[bool]:
-        return self.reset()
-
     @run_in_executor
-    def reset(self) -> Literal[True]:
-        self.com.send(FPGACmd.RESET).result()
-        return True
+    def initialize(self) -> bool:
+        fut = self.reset()
+        time.sleep(1)  # Otherwise the FPGA hangs.
+        return fut.result()
+
+    def reset(self) -> Future[bool]:
+        return self.com.send(FPGACmd.RESET)

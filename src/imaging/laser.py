@@ -1,14 +1,13 @@
-from dataclasses import dataclass, fields
 import time
-
 from concurrent.futures import Future
+from dataclasses import dataclass, fields
 from logging import getLogger
 from typing import Annotated, Any, Literal
 
 from src.base.instruments import UsesSerial
 from src.com.async_com import COM, CmdParse
-from src.utils.utils import chkrng, ok_if_match
 from src.com.thread_mgt import run_in_executor
+from src.utils.utils import chkrng, ok_if_match
 
 logger = getLogger("Laser")
 POWER_RANGE = (0, 500)

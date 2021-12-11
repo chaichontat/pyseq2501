@@ -1,11 +1,9 @@
-import re
 from concurrent.futures import Future
 from logging import getLogger
-from typing import Any
 
 from src.base.instruments import FPGAControlled
-from src.com.async_com import COM, CmdParse
-from src.utils.utils import ok_if_match
+from src.com.async_com import CmdParse
+from src.utils.utils import ok_if_match, ok_re
 
 logger = getLogger(__name__)
 
@@ -13,21 +11,15 @@ logger = getLogger(__name__)
 Y_OFFSET = int(7e6)
 
 
-def read_y(resp: str) -> int:
-    match = re.match(r"^TDIYERD (\d+)$", resp)
-    assert match is not None
-    return int(match.group(1)) - Y_OFFSET
-
-
 class TDICmd:
     # fmt: off
-    GET_ENCODER_Y = CmdParse(              "TDIYERD"                              , read_y)
+    GET_ENCODER_Y = CmdParse(              "TDIYERD"                              , ok_re(r"TDIYERD (\d+)", lambda x: int(x) - Y_OFFSET))
     SET_ENCODER_Y = CmdParse(lambda x:    f"TDIYEWR {x + Y_OFFSET}"               , ok_if_match("TDIYEWR"))
 
     SET_TRIGGER   = CmdParse(lambda x:    f"TDIYPOS {x + Y_OFFSET - 80000}"       , ok_if_match("TDIYPOS"))
     WHATISTHIS             = lambda n:    f"TDIYARM2 {n} 1"
     ARM_TRIGGER   = CmdParse(lambda n, y: f"TDIYARM3 {n} {y + Y_OFFSET - 10000} 1", ok_if_match("TDIYARM3"))
-    N_PULSES      = CmdParse(              "TDIPULSES"                            , lambda x: int(x.split()[1]))
+    N_PULSES      = CmdParse(              "TDIPULSES"                            , ok_re(r"TDIPULSES (\d+)", lambda x: int(x) - 1))
     # fmt: on
 
 
@@ -61,7 +53,7 @@ class TDI(FPGAControlled):
         return self.com.send(TDICmd.ARM_TRIGGER(n_px_y, pos))
 
     @property
-    def n_pulses(self) -> Future[None | int]:
+    def n_pulses(self) -> Future[int]:
         return self.com.send(TDICmd.N_PULSES)
 
     # def TDIYPOS(self, y_pos) -> Future[bool]:

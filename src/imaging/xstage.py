@@ -1,15 +1,13 @@
 import logging
 from concurrent.futures import Future
-from typing import Any, Optional
 
 from src.base.instruments import Movable, UsesSerial
 from src.com.async_com import COM, CmdParse
-import re
-
-from src.utils.utils import chkrng, ok_if_match
+from src.utils.utils import chkrng, ok_if_match, ok_re
 
 logger = logging.getLogger("XStage")
 RANGE = (1000, 50000)
+
 
 # fmt: off
 class XCmd:
@@ -18,9 +16,9 @@ class XCmd:
     `$VAR=$VAL` : Set $VAR to $VAL
     """
     INIT = "\x03"
-    IS_MOVING   = CmdParse("PR MV", lambda x: int(x) == 1, n_lines=1)
-    GET_POS     = CmdParse("PR P" , int)
-    SET_POS     = chkrng(lambda x: f"MA {x}", *RANGE)  # Set mode and move to abs. position.
+    IS_MOVING   = CmdParse("PR MV", ok_re(fr"\??PR MV\n(\-?\d+)", lambda x: bool(int(x))), n_lines=2)
+    GET_POS     = CmdParse("PR P" , ok_re(fr"\??PR P\n(\-?\d+)", int), n_lines=2)
+    SET_POS     = CmdParse(chkrng(lambda x: f"MA {x}", *RANGE), ok_re(r"\?MA (\-?\d+)"))  # Set mode and move to abs. position.
     SET_POS_REL = lambda x: f"MR {x}"  # Set mode and move to rel. position.
 # fmt: on
 
@@ -43,7 +41,7 @@ class XStage(UsesSerial, Movable):
     def is_moving(self) -> Future[bool]:
         return self.com.send(XCmd.IS_MOVING)
 
-    def move(self, pos: int) -> None:
+    def move(self, pos: int) -> Future[bool]:
         return self.com.send(XCmd.SET_POS(pos))
 
     def initialize(self):
@@ -52,7 +50,6 @@ class XStage(UsesSerial, Movable):
         self.com.send(CmdParse("\x03", ok_if_match("Copyright© 2010 Schneider Electric Motion USA")))
         self.com.send(
             (
-                "\x03",
                 "EM=2",
                 "EE=1",
                 "VI=640",
