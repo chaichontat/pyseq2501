@@ -32,6 +32,6 @@ imager.y.move(1000000)
 # fut = (imager.lasers.g.set_power(30), imager.lasers.r.set_power(30))
 # wait(fut)
 
-img = imager.take_image(16, dark=True)
+img = imager.take(16, dark=True)
 Image.fromarray(img[2]).save("dark.tiff")
 time.sleep(0.5)

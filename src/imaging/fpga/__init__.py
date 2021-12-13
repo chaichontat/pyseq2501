@@ -28,6 +28,7 @@ class FPGA(UsesSerial):
         self.optics = Optics(self.com)
         self.z_obj = ObjStage(self.com)
         self.z = TiltStage(self.com)
+        self.initialize()
 
     @run_in_executor
     def initialize(self) -> bool:

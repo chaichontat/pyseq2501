@@ -13,6 +13,7 @@ from .imaging.laser import Laser, Lasers
 from .imaging.xstage import XStage
 from .imaging.ystage import YStage
 from .utils.ports import Ports
+from .utils.utils import not_none
 
 logger = getLogger("Imager")
 
@@ -77,7 +78,7 @@ class Imager:
         return not any((x.result(60), y.result(60), z.result(60)))
 
     # TODO add more ready checks.
-    def take_image(self, n_bundles: int, dark: bool = False) -> UInt16Array:
+    def take(self, n_bundles: int, dark: bool = False) -> UInt16Array:
         logger.info(f"Taking image with {n_bundles} bundles.")
         n_bundles += 1  # To flush CCD.
         while not self.all_still:
