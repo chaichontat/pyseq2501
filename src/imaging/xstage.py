@@ -18,7 +18,7 @@ class XCmd:
     INIT = "\x03"
     IS_MOVING   = CmdParse("PR MV", ok_re(fr"\??PR MV\n(\-?\d+)", lambda x: bool(int(x))), n_lines=2)
     GET_POS     = CmdParse("PR P" , ok_re(fr"\??PR P\n(\-?\d+)", int), n_lines=2)
-    SET_POS     = CmdParse(chkrng(lambda x: f"MA {x}", *RANGE), ok_re(r"\?MA (\-?\d+)"))  # Set mode and move to abs. position.
+    SET_POS     = CmdParse(chkrng(lambda x: f"MA {x}", *RANGE), ok_re(r"\??MA (\-?\d+)"))  # Set mode and move to abs. position.
     SET_POS_REL = lambda x: f"MR {x}"  # Set mode and move to rel. position.
 # fmt: on
 
@@ -34,7 +34,7 @@ class XStage(UsesSerial, Movable):
         self.com = COM("x", port_tx, min_spacing=0.3)
 
     @property
-    def position(self) -> Future[int]:
+    def pos(self) -> Future[int]:
         return self.com.send(XCmd.GET_POS)
 
     @property

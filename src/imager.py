@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from logging import getLogger
+from typing import NamedTuple
 
-from src.utils.utils import not_none
+import numpy as np
 
+from .com.thread_mgt import run_in_executor
 from .imaging.camera.dcam import Cameras, Mode, UInt16Array
 from .imaging.fpga import FPGA
 from .imaging.fpga.optics import Optics
@@ -18,6 +21,13 @@ from .utils.utils import not_none
 logger = getLogger("Imager")
 
 
+class Position(NamedTuple):
+    x: int
+    y: int
+    z_tilt: tuple[int, int, int]
+    z_obj: int
+
+
 @dataclass
 class Channel:
     laser: Laser
@@ -27,10 +37,7 @@ class Channel:
 @dataclass(frozen=True)
 class State:
     laser_power: tuple[int, int]
-    x_pos: int
-    y_pos: int
-    z_pos: tuple[int, int, int]
-    z_obj_pos: int
+    pos: Position
 
     @classmethod
     def from_futures(cls, *args, **kwargs) -> State:
@@ -57,6 +64,8 @@ class Imager:
         if init_cam:
             self.cams = Cameras()
 
+        self._executor = ThreadPoolExecutor(max_workers=1)
+
     def initialize(self) -> None:
         self.x.initialize()
         self.y.initialize()
@@ -65,10 +74,10 @@ class Imager:
     def get_state(self) -> State:
         out = {
             "laser_power": (self.lasers.g.power, self.lasers.r.power),
-            "x_pos": self.x.position,
-            "y_pos": self.y.position,
-            "z_pos": self.z.position,
-            "z_obj_pos": self.z_obj.position,
+            "x_pos": self.x.pos,
+            "y_pos": self.y.pos,
+            "z_pos": self.z.pos,
+            "z_obj_pos": self.z_obj.pos,
         }
         return State.from_futures(**out)
 
@@ -86,7 +95,7 @@ class Imager:
             time.sleep(0.5)
 
         self.y.set_mode("IMAGING")
-        pos = self.y.position
+        pos = self.y.pos
         pos = pos.result(60)
         assert pos is not None
         n_px_y = n_bundles * self.cams.BUNDLE_HEIGHT
@@ -114,3 +123,38 @@ class Imager:
     @staticmethod
     def calc_delta_pos(n_px_y: int) -> int:
         return int(n_px_y * Imager.UM_PER_PX * YStage.STEPS_PER_UM)
+
+    @property
+    @run_in_executor
+    def pos(self) -> Position:
+        res = dict(x=self.x.pos, y=self.y.pos, z_tilt=self.z.pos, z_obj=self.z_obj.pos)
+        res = {k: v.result() for k, v in res.items()}
+        return Position(**res)  # type: ignore
+
+    def autofocus(self) -> tuple[int, UInt16Array]:
+        n_bundles = 232
+        self.cams.properties["sensor_mode"] = 6
+        self.cams[0].properties.update({"exposure_time": 0.002, "partial_area_vsize": 5})
+        self.fpga.com.send("ZTRG 0")
+        self.fpga.com.send("ZYT 0 3")
+        self.fpga.com.send("ZMV 60292")
+        self.fpga.com.send("ZDACR")
+        self.fpga.com.send("ZSTEP 1288471")
+        self.fpga.com.send("SWYZ_POS 1")
+
+        with self.cams._alloc(232, height=5) as bufs:
+            with self.optics.open_shutter():
+                self.fpga.com.send("ZSTEP 541158")
+                self.fpga.com.send("ZTRG 60292")
+                self.fpga.com.send("ZYT 0 3")
+                with self.cams[0].capture():
+                    self.fpga.com.send("ZMV 2621")
+                    while (self.cams[0].n_frames_taken) < n_bundles:
+                        time.sleep(0.01)
+
+            # Done. Retrieve images.
+            for i in range(n_bundles):
+                self.cams[0].get_bundle(buf=bufs[0], height=5, n_curr=i)
+
+        target = np.argmax(intensity := np.mean(bufs[0], axis=1))[0]
+        return (60292 - (((60292 - 2621) / n_bundles) * (target / 5) + 2621), intensity)

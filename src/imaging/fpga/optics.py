@@ -1,7 +1,7 @@
 from concurrent.futures import Future
 from contextlib import contextmanager
 from logging import getLogger
-from typing import Literal, Optional
+from typing import Generator, Literal, Optional
 
 from src.base.instruments import FPGAControlled
 from src.com.async_com import CmdParse
@@ -54,7 +54,7 @@ class Optics(FPGAControlled):
     cmd = OpticCmd
 
     @run_in_executor
-    def initialize(self):
+    def initialize(self) -> None:
         self.com.send(OpticCmd.EM_FILTER_DEFAULT)
         [not_none(x).result(1) for x in self.com.send((OpticCmd.HOME_OD(1), OpticCmd.HOME_OD(2)))]
         [
@@ -63,7 +63,7 @@ class Optics(FPGAControlled):
         ]
 
     @contextmanager
-    def open_shutter(self):
+    def open_shutter(self) -> Generator[None, None, None]:
         self._open().result(60)
         try:
             yield

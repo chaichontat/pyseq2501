@@ -33,13 +33,17 @@ class Movable(metaclass=ABCMeta):
     #     return super().__new__(cls)
 
     @abstractmethod
-    def move(self) -> Future[Any]:
+    def move(self, p: int) -> Future[Any]:
         ...
 
     @property
     @abstractmethod
-    def position(self) -> Future[int]:
+    def pos(self) -> Future[int]:
         ...
+
+    @pos.setter
+    def pos(self, p: int) -> None:
+        self.move(p)
 
     @property
     @abstractmethod

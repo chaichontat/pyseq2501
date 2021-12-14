@@ -8,10 +8,10 @@ from src.com.thread_mgt import run_in_executor
 from src.utils.utils import ok_if_match
 
 from .led import LED
-from .objstage import ObjStage
 from .optics import Optics
 from .tdi import TDI
-from .tiltstage import TiltStage
+from .z_obj import ZObj
+from .z_tilt import ZTilt
 
 logger = getLogger("fpga")
 
@@ -26,8 +26,8 @@ class FPGA(UsesSerial):
         self.tdi = TDI(self.com)
         self.led = LED(self.com)
         self.optics = Optics(self.com)
-        self.z_obj = ObjStage(self.com)
-        self.z = TiltStage(self.com)
+        self.z_obj = ZObj(self.com)
+        self.z = ZTilt(self.com)
         self.initialize()
 
     @run_in_executor

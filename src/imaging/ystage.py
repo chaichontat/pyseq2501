@@ -121,10 +121,10 @@ class YStage(UsesSerial, Movable):
         logger.info(f"Moving to {pos} for {self._mode}")
         while self.is_moving.result(60):
             time.sleep(0.5)
-        return self.position.result(60)
+        return self.pos.result(60)
 
     @property
-    def position(self) -> Future[int]:
+    def pos(self) -> Future[int]:
         return self.com.send(YCmd.GET_POS)
 
     @property
@@ -134,6 +134,10 @@ class YStage(UsesSerial, Movable):
     @property
     def mode(self) -> Optional[ModeName]:
         return self._mode
+
+    @mode.setter
+    def mode(self, mode: ModeName) -> None:
+        self.set_mode(mode)
 
     @run_in_executor
     def set_mode(self, mode: ModeName) -> bool:

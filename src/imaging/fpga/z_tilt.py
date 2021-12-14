@@ -28,7 +28,7 @@ class TiltCmd:
 # fmt:on
 
 
-class TiltStage(FPGAControlled, Movable):
+class ZTilt(FPGAControlled, Movable):
     STEPS_PER_UM = 0.656
     RANGE = (0, 25000)
     HOME = 21500

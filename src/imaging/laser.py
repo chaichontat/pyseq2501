@@ -57,7 +57,6 @@ class Laser(UsesSerial):
     @run_in_executor
     def initialize(self) -> None:
         self.com.send(LaserCmd.VERSION)
-        self.set_onoff(True)
 
     @run_in_executor
     def set_onoff(self, state: bool, attempts: int = 3) -> bool:
@@ -99,12 +98,22 @@ class Laser(UsesSerial):
             return False
 
     @property
-    def on(self) -> Future[None | bool]:
+    def status(self) -> Future[None | bool]:
         return self.com.send(LaserCmd.GET_STATUS)
+
+    def on(self) -> Future[bool]:
+        return self.set_onoff(True)
+
+    def off(self) -> Future[bool]:
+        return self.set_onoff(False)
 
     @property
     def power(self) -> Future[int]:
         return self.com.send(LaserCmd.GET_POWER)
+
+    @power.setter
+    def power(self, x: int) -> None:
+        self.set_power(x)
 
 
 @dataclass

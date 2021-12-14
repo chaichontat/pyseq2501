@@ -39,11 +39,11 @@ class TDI(FPGAControlled):
     cmd = TDICmd
 
     @property
-    def encoder_pos(self):
+    def encoder_pos(self) -> Future[int]:
         return self.com.send(TDICmd.GET_ENCODER_Y)
 
     @encoder_pos.setter
-    def encoder_pos(self, pos: int):
+    def encoder_pos(self, pos: int) -> None:
         self.com.send(TDICmd.SET_ENCODER_Y(pos))
         self._position = pos
 
@@ -55,22 +55,3 @@ class TDI(FPGAControlled):
     @property
     def n_pulses(self) -> Future[int]:
         return self.com.send(TDICmd.N_PULSES)
-
-    # def TDIYPOS(self, y_pos) -> Future[bool]:
-    #     """Set the y position for TDI imaging.
-
-    #     **Parameters:**
-    #      - y_pos (int): The initial y position of the image.
-
-    #     """
-    #     return self.fcom.send(TDICmd.SET_Y_POS(y_pos))
-
-    # def TDIYARM3(self, n_triggers, y_pos) -> Future[str]:
-    #     """Arm the y stage triggers for TDI imaging.
-
-    #     **Parameters:**
-    #      - n_triggers (int): Number of triggers to send to the cameras.
-    #      - y_pos (int): The initial y position of the image.
-
-    #     """
-    #     return self.fcom.send(TDICmd.ARM(n_triggers, y_pos))
