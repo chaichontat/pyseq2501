@@ -57,7 +57,7 @@ class Imager:
 
         self.x = XStage(ports.x)
         self.y = YStage(ports.y)
-        self.z = self.fpga.z
+        self.z_tilt = self.fpga.z_tilt
         self.z_obj = self.fpga.z_obj
 
         self.lasers = Lasers(Laser("laser_g", ports.laser_g), Laser("laser_r", ports.laser_r))
@@ -69,21 +69,23 @@ class Imager:
     def initialize(self) -> None:
         self.x.initialize()
         self.y.initialize()
-        self.lasers.initialize()
+        self.z_tilt.initialize()
+        self.z_obj.initialize()
+        self.optics.initialize()
 
     def get_state(self) -> State:
         out = {
             "laser_power": (self.lasers.g.power, self.lasers.r.power),
             "x_pos": self.x.pos,
             "y_pos": self.y.pos,
-            "z_pos": self.z.pos,
+            "z_pos": self.z_tilt.pos,
             "z_obj_pos": self.z_obj.pos,
         }
         return State.from_futures(**out)
 
     @property
     def all_still(self) -> bool:
-        x, y, z = self.x.is_moving, self.y.is_moving, self.z.is_moving
+        x, y, z = self.x.is_moving, self.y.is_moving, self.z_tilt.is_moving
         return not any((x.result(60), y.result(60), z.result(60)))
 
     # TODO add more ready checks.
@@ -127,7 +129,7 @@ class Imager:
     @property
     @run_in_executor
     def pos(self) -> Position:
-        res = dict(x=self.x.pos, y=self.y.pos, z_tilt=self.z.pos, z_obj=self.z_obj.pos)
+        res = dict(x=self.x.pos, y=self.y.pos, z_tilt=self.z_tilt.pos, z_obj=self.z_obj.pos)
         res = {k: v.result() for k, v in res.items()}
         return Position(**res)  # type: ignore
 

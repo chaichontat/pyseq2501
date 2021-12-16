@@ -24,7 +24,6 @@ logging.getLogger("DCAMAPI").setLevel(logging.INFO)
 
 ports = get_ports(timeout=60)
 imager = Imager(ports)
-imager.fpga.reset().result()
 
 #%%
 imager.y.move(1000000)

@@ -27,14 +27,14 @@ class FPGA(UsesSerial):
         self.led = LED(self.com)
         self.optics = Optics(self.com)
         self.z_obj = ZObj(self.com)
-        self.z = ZTilt(self.com)
+        self.z_tilt = ZTilt(self.com)
         self.initialize()
 
     @run_in_executor
     def initialize(self) -> bool:
-        fut = self.reset()
+        res = self.reset().result()
         time.sleep(1)  # Otherwise the FPGA hangs.
-        return fut.result()
+        return res
 
     def reset(self) -> Future[bool]:
         return self.com.send(FPGACmd.RESET)
