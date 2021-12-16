@@ -12,23 +12,13 @@ from enum import Enum, IntEnum
 from itertools import chain
 from logging import getLogger
 from pathlib import Path
-from typing import (
-    Any,
-    Callable,
-    Generator,
-    Generic,
-    Hashable,
-    Literal,
-    MutableMapping,
-    TypeVar,
-    cast,
-    get_args,
-)
+from typing import (Any, Callable, Generator, Generic, Hashable, Literal,
+                    MutableMapping, TypeVar, cast, get_args)
 
 import numpy as np
 import numpy.typing as npt
-from src.imaging.camera.dcam_api import DCAM_CAPTURE_MODE
 from src.com.thread_mgt import run_in_executor, warn_main_thread
+from src.imaging.camera.dcam_api import DCAM_CAPTURE_MODE
 
 from . import API
 from .dcam_api import DCAMException
@@ -224,7 +214,7 @@ class Cameras:
     def __getattr__(self, name: str) -> Any:
         if name == "properties":
             logger.info("Waiting for DCAM API to finish initializing. Consider not setting properties now.")
-            self._cams.result(20)
+            self._cams.result(60)
             return self.properties
         raise AttributeError
 

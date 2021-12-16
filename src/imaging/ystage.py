@@ -112,16 +112,21 @@ class YStage(UsesSerial, Movable):
         self.set_mode("MOVING")
         self.com.send(YCmd.MODE_ABSOLUTE).result(60)
         self.com.send(YCmd.ON).result(60)
-        return self.com.send(YCmd.GO_HOME).result(60)
+        self.com.send(YCmd.GO_HOME).result(60)
+        while self.is_moving.result(60):
+            time.sleep(0.5)
+        return True
 
     @run_in_executor
-    def move(self, pos: int, slowly: bool = False) -> int:
+    def move(self, pos: int, slowly: bool = False) -> None | int:
         self._mode = "IMAGING" if slowly else "MOVING"
         self.com.send((YCmd.SET_POS(pos), YCmd.GO))
         logger.info(f"Moving to {pos} for {self._mode}")
-        while self.is_moving.result(60):
-            time.sleep(0.5)
-        return self.pos.result(60)
+        if not slowly:
+            while self.is_moving.result(60):
+                time.sleep(0.5)
+            return self.pos.result(60)
+        return None
 
     @property
     def pos(self) -> Future[int]:

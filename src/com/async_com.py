@@ -17,6 +17,7 @@ from typing import (
     NoReturn,
     Optional,
     ParamSpec,
+    Sequence,
     TypeVar,
     overload,
 )
@@ -49,6 +50,10 @@ T = TypeVar("T", covariant=True)
 P = ParamSpec("P")
 
 
+def wait_results(futs: Sequence[Future[Any]]) -> Sequence[Any]:
+    return [f.result() for f in futs]
+
+
 class Channel(NamedTuple):
     reader: StreamReader
     writer: StreamWriter
@@ -74,7 +79,7 @@ class CmdParse(Generic[T, P]):
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> CmdParse[T, P]:
         if isinstance(self.cmd, str):
             raise TypeError("This command does not take argument(s).")
-        return CmdParse(self.cmd(*args, **kwargs), self.parser)
+        return CmdParse(self.cmd(*args, **kwargs), self.parser, n_lines=self.n_lines)
 
     def __str__(self) -> str:
         return str(self.cmd)

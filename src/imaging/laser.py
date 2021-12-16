@@ -7,7 +7,7 @@ from typing import Annotated, Any, Literal
 from src.base.instruments import UsesSerial
 from src.com.async_com import COM, CmdParse
 from src.com.thread_mgt import run_in_executor
-from src.utils.utils import chkrng, ok_if_match
+from src.utils.utils import chkrng, not_none, ok_if_match
 
 logger = getLogger("Laser")
 POWER_RANGE = (0, 500)
@@ -64,7 +64,7 @@ class Laser(UsesSerial):
             if i > 0:
                 logger.warning(f"Laser did not switch to {state}, Trying again.")
             self.com.send({False: LaserCmd.OFF, True: LaserCmd.ON}[state])
-            while (resp := self.on.result(5)) is None:
+            while (resp := self.status.result(5)) is None or resp:
                 ...
             if resp == state:
                 break
@@ -72,7 +72,6 @@ class Laser(UsesSerial):
             raise LaserException(
                 f"Laser did not switch to {state} after {attempts} attempts. Check if all doors are 'closed'."
             )
-        self._on = state
         return resp
 
     @run_in_executor
@@ -92,7 +91,7 @@ class Laser(UsesSerial):
 
         for _ in range(timeout):
             time.sleep(1)
-            if abs(power - self.power.result(5)) < tol:
+            if abs(power - not_none(self.power.result(5))) < tol:
                 return True
         else:
             return False
@@ -108,8 +107,11 @@ class Laser(UsesSerial):
         return self.set_onoff(False)
 
     @property
-    def power(self) -> Future[int]:
-        return self.com.send(LaserCmd.GET_POWER)
+    @run_in_executor
+    def power(self) -> None | int:
+        if self.status.result():
+            return self.com.send(LaserCmd.GET_POWER).result()
+        return None
 
     @power.setter
     def power(self, x: int) -> None:
@@ -123,3 +125,9 @@ class Lasers:
 
     def initialize(self) -> list[Future[Any]]:
         return [getattr(self, f.name).initialize() for f in fields(self)]
+
+    def on(self):
+        return (self.g.on(), self.r.on())
+
+    def off(self):
+        return (self.g.off(), self.r.off())

@@ -19,7 +19,7 @@ import re
 
 # fmt: off
 class TiltCmd:
-    GO_HOME  = CmdParse(lambda i:       f"T{i}HM",         ok_re(r"^@TILTPOS[123] \-?\d+$"))
+    GO_HOME  = CmdParse(lambda i:       f"T{i}HM",         ok_re(r"@TILTPOS[123] \-?\d+\nT[123]HM"), n_lines=2)
     READ_POS = CmdParse(lambda i:       f"T{i}RD",         ok_re(r"^T[123]RD \-?(\d+)$", int))
     SET_POS  = CmdParse(chkrng(lambda x, i: f"T{i}MOVETO {x}", *RANGE), ok_re(r"^T[123]MOVETO \d+$"))
     CLEAR_REGISTER = CmdParse(lambda i: f"T{i}CR",         ok_re(r"^T[123]CR$"))
@@ -37,15 +37,15 @@ class ZTilt(FPGAControlled, Movable):
 
     @run_in_executor
     def initialize(self) -> None:
-        self.com.send("TDIZ_PI_STAGE")
+        # self.com.send("TDIZ_PI_STAGE")
         for i in get_args(ID):
             self.com.send(TiltCmd.SET_CURRENT(35, i))
             self.com.send(TiltCmd.SET_VELO(62500, i))
 
-        for i in get_args(ID):
-            self.com.send(TiltCmd.GO_HOME(i))
+        futs = [self.com.send(TiltCmd.GO_HOME(i)) for i in get_args(ID)]
+        [f.result() for f in futs]
 
-        time.sleep(8)  # Need a reliable way to check when move is complete.
+        # time.sleep(8)  # Need a reliable way to check when move is complete.
 
         for i in get_args(ID):
             fut = self.com.send(tuple(TiltCmd.CLEAR_REGISTER(i) for i in get_args(ID)))
@@ -58,18 +58,17 @@ class ZTilt(FPGAControlled, Movable):
 
     @property
     @run_in_executor
-    def position(self) -> tuple[int, int, int]:
+    def pos(self) -> tuple[int, int, int]:
         resp = cast(
             tuple[Future[Optional[int]]], self.com.send(tuple(TiltCmd.READ_POS(i) for i in get_args(ID)))
         )
 
         out = tuple(x.result(60) for x in resp)
-        assert all(map(not_none, out))
-        if not all(map(lambda x: x > 0, out)):  # type: ignore
+        if not all(map(lambda x: x >= 0, out)):  # type: ignore
             raise Exception("Invalid Z position. Clear register first.")
         return cast(tuple[int, int, int], out)
 
     @property
     @run_in_executor
     def is_moving(self) -> bool:
-        return any(a != b for a, b in zip(self.position.result(60), self.position.result(60)))
+        return any(a != b for a, b in zip(self.pos.result(60), self.pos.result(60)))
