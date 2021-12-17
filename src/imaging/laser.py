@@ -64,7 +64,7 @@ class Laser(UsesSerial):
             if i > 0:
                 logger.warning(f"Laser did not switch to {state}, Trying again.")
             self.com.send({False: LaserCmd.OFF, True: LaserCmd.ON}[state])
-            while (resp := self.status.result(5)) is None or resp:
+            while (resp := self.status.result(5)) is None:
                 ...
             if resp == state:
                 break

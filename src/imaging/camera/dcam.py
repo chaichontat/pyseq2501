@@ -7,7 +7,8 @@ import time
 from concurrent.futures import Future
 from concurrent.futures.thread import ThreadPoolExecutor
 from contextlib import contextmanager
-from ctypes import c_char_p, c_int32, c_uint16, c_void_p, pointer
+from ctypes import (c_char_p, c_int32, c_uint16, c_uint32, c_void_p, pointer,
+                    sizeof)
 from enum import Enum, IntEnum
 from itertools import chain
 from logging import getLogger
@@ -52,7 +53,7 @@ FourImages = tuple[UInt16Array, UInt16Array, UInt16Array, UInt16Array]
 
 class Mode(Enum):
     LIVE_AREA = {"sensor_mode": 1, "contrast_gain": 5}
-    TDI = {"sensor_mode": 4, "contrast_gain": 0}
+    TDI = {"sensor_mode": 4, "contrast_gain": 0, "sensor_mode_line_bundle_height": 128}
 
 
 class _Camera:
@@ -69,7 +70,6 @@ class _Camera:
         self.handle = c_void_p(0)
         API.dcam_open(pointer(self.handle), c_int32(id_), None)
         logger.info(f"Connected to cam {id_}")
-        # self.properties["sensor_mode_line_bundle_height"] = 128
         if os.environ.get("FAKE_HISEQ", "0") == "1" or os.name != "nt":
             self.properties = DCAMDict(
                 self.handle, pickle.loads((Path(__file__).parent / "saved_props.pk").read_bytes())
@@ -77,6 +77,7 @@ class _Camera:
         else:
             self.properties = DCAMDict.from_dcam(self.handle)
         self.capture_mode = DCAM_CAPTURE_MODE.SNAP
+        self.properties["sensor_mode_line_bundle_height"] = 128
 
     def initialize(self) -> None:
         ...
@@ -107,18 +108,19 @@ class _Camera:
         except ValueError:
             raise DCAMException(f"Invalid status. Got {s.value}.")
 
-    # @contextmanager
-    # def attach(self, n_bundles: int, arr: npt.NDArray[np.uint16]) -> Generator[None, None, None]:
-    #     # TODO Somehow stuck at 4 frames.
-    #     addr = arr.ctypes.data
-    #     ptr_arr = (c_void_p * n_bundles)()
-    #     for i in range(n_bundles):
-    #         ptr_arr[i] = 524288 * i + addr
-    #     try:
-    #         API.dcam_attachbuffer(self.handle, ptr_arr, c_uint32(n_bundles))
-    #         yield
-    #     finally:
-    #         API.dcam_releasebuffer(self.handle)
+    @contextmanager
+    def attach(self, n_bundles: int, height: int) -> Generator[UInt16Array, None, None]:
+        arr: npt.NDArray[np.uint16] = np.ascontiguousarray(
+            np.zeros((n_bundles * height, self.IMG_WIDTH), dtype=np.uint16)
+        )
+        addr, ptr_arr = arr.ctypes.data, (c_void_p * n_bundles)()
+        for i in range(n_bundles):
+            ptr_arr[i] = 2 * 4096 * height * i + addr
+        try:
+            API.dcam_attachbuffer(self.handle, ptr_arr, c_uint32(sizeof(ptr_arr)))
+            yield arr
+        finally:
+            API.dcam_releasebuffer(self.handle)
 
     @contextmanager
     def alloc(self, n_bundles: int, height: int) -> Generator[UInt16Array, None, None]:
@@ -228,8 +230,8 @@ class Cameras:
         return min([c.n_frames_taken for c in self])
 
     @contextmanager
-    def _alloc(self, n_bundles: int, height: int) -> Generator[tuple[UInt16Array, UInt16Array], None, None]:
-        with self[0].alloc(n_bundles, height) as buf1, self[1].alloc(n_bundles, height) as buf2:
+    def _attach(self, n_bundles: int, height: int) -> Generator[tuple[UInt16Array, UInt16Array], None, None]:
+        with self[0].attach(n_bundles, height) as buf1, self[1].attach(n_bundles, height) as buf2:
             logger.debug(f"Allocated memory for {n_bundles} bundles.")
             yield (buf1, buf2)
 
@@ -281,7 +283,7 @@ class Cameras:
         Returns:
             UInt16Array: uint16 array with dimension [4, {128*n_bundles}, 2048]
         """
-        with self._alloc(n_bundles=n_bundles, height=128) as bufs:
+        with self._attach(n_bundles=n_bundles, height=128) as bufs:
             taken = 0
             start_alloc()
             with self[0].capture(), self[1].capture():
@@ -290,13 +292,13 @@ class Cameras:
                 while (avail := self.n_frames_taken) < n_bundles:
                     time.sleep(0.1)
                     if avail > taken:
-                        [self._get_bundles(bufs=bufs, height=128, i=i) for i in range(taken, avail)]
+                        # [self._get_bundles(bufs=bufs, height=128, i=i) for i in range(taken, avail)]
                         taken = avail
                     if taken == 0 and time.monotonic() - t0 > timeout:
                         raise Exception(f"Did not capture a single bundle before {timeout=}s.")
             # Done. Retrieve images.
-            for i in range(taken, max(avail, n_bundles)):
-                self._get_bundles(bufs=bufs, height=128, i=i)
+            # for i in range(taken, max(avail, n_bundles)):
+            #     self._get_bundles(bufs=bufs, height=128, i=i)
             logger.info(f"Retrieved all {n_bundles} bundles.")
 
         return cast(UInt16Array, np.flip(np.swapaxes(np.hstack(bufs).reshape(-1, 4, 2048), 1, 0), axis=1))

@@ -61,7 +61,7 @@ def get_ports(timeout: int | float = 1, show_all=False) -> Ports:
                 print(res)
             return Ports.from_raw(res)
         except KeyError as e:
-            print(e)
+            print(f"Cannot find {e}.")
             time.sleep(0.5)
 
     raise Exception(f"Cannot find ports after {timeout} seconds.")
