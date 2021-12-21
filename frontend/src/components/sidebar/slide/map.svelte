@@ -3,6 +3,8 @@
   export let left = 100;
   export let top = 100;
 
+  let flowcell: boolean = false;
+
   let moving = false;
 
   function onMouseDown() {
@@ -29,14 +31,19 @@
     style="left: {left}px; top: {top}px;"
     class="indicator-item indicator-center indicator-middle badge badge-primary shadow-xl draggable z-50"
   />
-  <section class="flex justify-evenly divide-x divide-dashed -mt-8 -mb-4">
-    <Slide name="A" />
-    <Slide name="B" />
-  </section>
-  <input type="checkbox" class="toggle toggle-md self-center" />
-  <span>
-    <input type="text" class="input input-info input-bordered w-1/4" />
-    <input type="text" class="input input-info input-bordered w-1/4" />
+
+  <Slide name={flowcell ? "B" : "A"} />
+
+  <span class="justify-center mt-2">
+    X <input type="text" class="input input-info input-sm input-bordered w-1/4 pl-4" />
+    Y <input type="text" class="input input-info input-sm input-bordered w-1/4 pl-4" />
+  </span>
+  <span class="justify-center align-middle">
+    A<input
+      type="checkbox"
+      bind:checked={flowcell}
+      class="toggle toggle-md self-center mt-2"
+    />B
   </span>
 
   <!-- <section on:mousedown={onMouseDown} style="left: {left}px; top: {top}px;" class="draggable">

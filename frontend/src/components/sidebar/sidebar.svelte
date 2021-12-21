@@ -2,7 +2,7 @@
   import Division from "./division.svelte";
   import Lasers from "./lasers.svelte";
   import Logo from "./logo.svelte";
-  import Map from "./map.svelte";
+  import Map from "./slide/map.svelte";
 </script>
 
 <div class="drawer-side">
