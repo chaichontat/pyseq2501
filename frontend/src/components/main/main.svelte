@@ -7,6 +7,6 @@
   import Graph from "./graph.svelte";
 </script> -->
 
-<Progress curr={45} full={100} />
+<Progress curr={null} full={null} />
 <!-- <Graph /> -->
 <Preview />

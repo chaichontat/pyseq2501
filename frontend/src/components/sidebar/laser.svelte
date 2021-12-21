@@ -3,8 +3,8 @@
   export let color;
 </script>
 
-<tr style="--this-color: {color}">
-  <th><span class="dot">{name}</span></th>
+<tr class="text-base" style="--this-color: {color}">
+  <th><span class="dot font-semibold">{name}</span></th>
 
   <td>
     <input
@@ -12,7 +12,8 @@
       min="0"
       max="1000"
       step="1"
-      class="input input-bordered input-sm pr-2 w-10/12 float-right"
+      class="text-base input input-bordered pr-2 w-10/12 float-right"
+      style="height:2em;"
     />
   </td>
   <td class="text-center font-bold font-mono">45</td>
@@ -41,10 +42,12 @@
   }
 
   input:invalid {
+    @apply border-red-600;
     text-decoration: line-through;
   }
 
   input:valid {
+    @apply border-gray-400;
     text-decoration: none;
   }
 
