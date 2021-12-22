@@ -1,6 +1,7 @@
 <script>
   import Logo from "../logo.svelte";
   import Connected from "./connected.svelte";
+  import Status from "./status.svelte";
 </script>
 
 <div
@@ -28,6 +29,8 @@
     <div class="flex items-center flex-none lg:hidden">
       <Logo />
     </div>
+
+    <Status />
 
     <div class="flex-1" />
     <Connected />

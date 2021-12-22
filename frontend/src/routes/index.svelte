@@ -26,7 +26,7 @@
       class="flex-grow block overflow-x-hidden bg-base-100 text-base-content drawer-content"
     >
       <Nav />
-      <div class="p-4 lg:p-10"><Main /></div>
+      <div class="p-4 lg:p-8"><Main /></div>
     </main>
     <Sidebar />
   </div>

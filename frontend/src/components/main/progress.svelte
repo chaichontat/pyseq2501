@@ -11,7 +11,7 @@
   }
 </script>
 
-<span class="mt-2 flex flex-row gap-x-3 w-full">
+<span class="flex flex-row gap-x-3 w-full">
   <div class="grid grid-row-2 gap-y-2 w-24">
     <button class="_btn btn--primary">Start</button>
     <button class="_btn btn--secondary">Cancel</button>
@@ -22,7 +22,9 @@
       <div class="stat-figure text-primary">
         <button class="btn loading btn-circle btn-lg bg-base-200 btn-ghost" />
       </div>
-      <div class="stat-value">{`${_curr}/${_full}`}</div>
+      <div class="stat-value">
+        {`${_curr}/`}<input type="number" class="input stat-value w-24" placeholder="1" />
+      </div>
       <div class="stat-title">Bundles taken</div>
       <div class="stat-desc">
         <progress value={curr} max={full} class="progress progress-secondary" />
