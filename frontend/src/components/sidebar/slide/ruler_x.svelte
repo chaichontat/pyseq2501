@@ -6,7 +6,7 @@
 </script>
 
 <div
-  class="box-border absolute w-full"
+  class="box-border absolute w-full text-sm"
   style="transform: translateX(0.5px); width: calc(100% + 1px);"
 >
   {#each [...Array(cm).keys()] as c}
@@ -31,6 +31,10 @@
 </div>
 
 <style lang="postcss">
+  * {
+    @apply opacity-90;
+  }
+
   .cm {
     @apply text-right absolute font-mono h-4 -translate-y-6;
   }

@@ -26,36 +26,45 @@
 </script>
 
 <li>
-  <div
+  <!-- Toggle -->
+  <span class="monomedium justify-center align-middle mb-4 -translate-y-8">
+    <div class="text-base">A</div>
+    <input type="checkbox" bind:checked={flowcell} class="toggle toggle-md self-center mx-1 " />
+    <div class="text-base">B</div>
+  </span>
+  <!-- Need this since using negative margins on the checkbox did not move the clickable area. -->
+  <div class="-mt-8" />
+
+  <!-- <div
     on:mousedown={onMouseDown}
     style="left: {left}px; top: {top}px;"
     class="indicator-item indicator-center indicator-middle badge badge-primary shadow-xl draggable z-50 opacity-70"
-  />
+  /> -->
 
   <Slide name={flowcell ? "B" : "A"} />
 
-  <span class="monomedium justify-center align-middle">
-    <div class="text-base">A</div>
-    <input type="checkbox" bind:checked={flowcell} class="toggle toggle-md self-center m-1" />
-    <div class="text-base">B</div>
+  <!-- Z Objective -->
+  <span class="self-center text-sm">
+    Objective Z:&nbsp; <span class="font-mono font-medium">32000</span>
   </span>
 
+  <!-- XY Input -->
   <div class="form-control self-center mt-4">
-    <label class="monomedium input-group">
+    <label class="font-medium input-group">
       <span>X</span>
       <input
         type="number"
-        min="-0.5"
-        max="3"
-        step="0.001"
+        min="-5"
+        max="30"
+        step="0.01"
         class="text-lg text-center input input-bordered w-24"
       />
       <span>Y</span>
       <input
         type="number"
-        min="-0.5"
-        max="8"
-        step="0.001"
+        min="-5"
+        max="80"
+        step="0.01"
         class="text-lg text-center input input-bordered w-24"
       />
 
@@ -67,11 +76,8 @@
     </label>
   </div>
 
-  <span class="self-center">
-    Objective Z:&nbsp; <span class="font-mono">32000</span>
-  </span>
-
-  <button class="self-center btn btn-secondary btn-sm w-16">
+  <!-- Eject button -->
+  <button class="self-center btn btn-secondary btn-sm w-16 mt-4">
     <svg
       class="w-4 h-4 fill-current "
       version="1.1"
@@ -126,7 +132,7 @@
     transition: background, box-shadow var(--animation-input, 0.2s) ease-in-out;
   }
 
-  /* Remove arrows */
+  /* Remove arrows
   input::-webkit-outer-spin-button,
   input::-webkit-inner-spin-button {
     -webkit-appearance: none;
@@ -134,7 +140,7 @@
   }
   input[type="number"] {
     -moz-appearance: textfield;
-  }
+  } */
 
   input:invalid {
     @apply border-red-600 border-2;
