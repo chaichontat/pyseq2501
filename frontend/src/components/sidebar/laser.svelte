@@ -12,8 +12,7 @@
       min="0"
       max="1000"
       step="1"
-      class="text-base input input-bordered pr-2 w-10/12 float-right"
-      style="height:2em;"
+      class="text-base input input-bordered px-2 w-10/12 float-right h-8"
     />
   </td>
   <td class="text-center font-bold font-mono">45</td>
@@ -22,7 +21,7 @@
 
 <style lang="postcss">
   input {
-    text-align: right;
+    text-align: center;
   }
 
   input:focus {
@@ -54,7 +53,7 @@
   .dot::before {
     content: "";
     clip-path: circle();
-    transform: translateX(-1.2em) translateY(0.33em);
+    transform: translateX(-1.2em) translateY(0.4em);
     position: absolute;
     width: 0.75em;
     height: 0.75em;

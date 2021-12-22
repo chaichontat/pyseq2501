@@ -27,11 +27,6 @@
   }
 </script>
 
-<div class="mt-4">
-  <button class="btn btn-secondary" on:click={() => store.set("take")}>Start</button>
-  <button class="btn btn-primary">Focus</button>
-</div>
-
-<div class="mt-4 center shadow" on:wheel={pz.zoomWithWheel}>
+<div class="mt-4 center shadow border border-gray-400" on:wheel={pz.zoomWithWheel}>
   <canvas class="" bind:this={canvas} width={1024} height={1024} />
 </div>

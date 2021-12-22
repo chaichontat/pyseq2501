@@ -1,4 +1,5 @@
 <script>
+  import Logo from "../logo.svelte";
   import Connected from "./connected.svelte";
 </script>
 
@@ -23,26 +24,11 @@
         ></label
       >
     </div>
+
     <div class="flex items-center flex-none lg:hidden">
-      <a
-        href="/"
-        aria-label="Homepage"
-        class="px-2 flex-0 btn btn-ghost md:px-4 nuxt-link-active"
-        ><div class="inline-block text-3xl font-title text-primary">
-          <span class="lowercase">daisy</span><span class="uppercase text-base-content">UI</span
-          >
-        </div></a
-      >
+      <Logo />
     </div>
-    <a
-      href="https://github.com/saadeghi/daisyui/blob/master/CHANGELOG.md"
-      target="_blank"
-      rel="nofollow"
-      class="font-mono text-xs opacity-50 lg:hidden"
-      ><div data-tip="Changelog" class="tooltip tooltip-bottom">
-        <span class="hidden lg:inline xl:ml-2">version</span>&nbsp;1.16.2
-      </div></a
-    >
+
     <div class="flex-1" />
     <Connected />
     <!---->

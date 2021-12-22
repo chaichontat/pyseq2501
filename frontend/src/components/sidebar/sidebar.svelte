@@ -1,16 +1,20 @@
 <script>
   import Division from "./division.svelte";
   import Lasers from "./lasers.svelte";
-  import Logo from "./logo.svelte";
+  import Logo from "../logo.svelte";
   import Map from "./slide/map.svelte";
 </script>
 
-<div class="drawer-side">
+<div class="drawer drawer-side">
   <label for="main-menu" class="drawer-overlay" />
   <aside class="sidebar flex flex-col bg-base-100">
-    <Logo />
+    <div
+      class="sticky inset-x-0 top-0 z-50 w-full py-1 transition duration-200 ease-in-out border-b block border-base-200 bg-base-100"
+    >
+      <Logo />
+    </div>
 
-    <ul class="menu p-2 pt-2 compact">
+    <ol class="menu p-2 mt-4">
       <Division name="Map">
         <Map />
       </Division>
@@ -18,21 +22,14 @@
       <Division name="Lasers">
         <Lasers />
       </Division>
-    </ul>
+    </ol>
   </aside>
 </div>
 
 <style lang="postcss">
   .sidebar {
     @apply text-base-content;
-    @apply w-80 h-screen;
+    @apply w-96 h-screen;
     @apply border-r border-base-200;
-  }
-
-  th {
-    padding-left: 0.5rem;
-    padding-right: 0.25rem;
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
   }
 </style>
