@@ -1,5 +1,8 @@
 <script>
   import Laser from "./laser.svelte";
+
+  export let g;
+  export let r;
 </script>
 
 <li>
@@ -19,15 +22,10 @@
       </tr>
     </thead>
     <tbody>
-      <Laser name="532 nm" color="#84cc16" />
-      <Laser name="633 nm" color="#ef4444" />
+      <Laser name="532 nm" color="#84cc16" power={g} />
+      <Laser name="633 nm" color="#ef4444" power={r} />
     </tbody>
   </table>
-
-  <span class="self-center mt-2 text-lg">
-    Shutter:&nbsp;
-    <div class="font-mono font-bold">CLOSED</div>
-  </span>
 </li>
 
 <style lang="postcss">

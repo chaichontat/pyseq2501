@@ -1,8 +1,7 @@
 <script lang="ts">
-  export let message = "d";
+  export let message = "";
 
   import { afterUpdate } from "svelte";
-  import { fade } from "svelte/transition";
 
   let div: HTMLElement;
 
@@ -25,10 +24,16 @@
   });
 </script>
 
-<div bind:this={div} class="font-mono text-sm font-medium">
+<div bind:this={div} class="font-mono font-medium rounded-lg">
   {#if message}
-    <div class="circle ml-8" style="--size: 1rem; --color: blue; --duration: 1s" />
-    <span class="mx-4">{message}</span>
+    <div
+      class="circle ml-8 transition-all"
+      style="--size: 1rem; --color: blue; --duration: 1s"
+    />
+    <span class="mx-4 text-sm">{message}</span>
+  {:else}
+    <div class="ml-8" />
+    <span class="mx-4 text-sm">Idle</span>
   {/if}
 </div>
 

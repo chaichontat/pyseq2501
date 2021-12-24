@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import Panzoom, { PanzoomObject } from "@panzoom/panzoom";
   import type { Writable } from "svelte/store";
-  import { websocketStore } from "../../store";
+  import { websocketStore } from "../../ws_store";
 
   let canvas: HTMLCanvasElement;
   let img: HTMLImageElement;

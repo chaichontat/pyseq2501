@@ -1,20 +1,20 @@
 <script lang="ts">
-  export let ztilt: [number, number, number] = [19850, 19850, 1];
+  export let z_tilt: [number, number, number] = [19850, 19850, 1];
 </script>
 
 <span class="dot left" style="top: 2rem;">
   Tilt 3 <br /> Z:
-  <span class="font-medium">{ztilt[2]}</span>
+  <span class="font-medium">{z_tilt[2]}</span>
 </span>
 
 <span class="dot left" style="bottom: 2rem;">
   Tilt 2 <br /> Z:
-  <span class="font-medium">{ztilt[1]}</span>
+  <span class="font-medium">{z_tilt[1]}</span>
 </span>
 
 <span class="dot right" style="bottom: 2rem;">
   Tilt 1 <br /> Z:
-  <span class="font-medium">{ztilt[0]}</span>
+  <span class="font-medium">{z_tilt[0]}</span>
 </span>
 
 <style lang="postcss">

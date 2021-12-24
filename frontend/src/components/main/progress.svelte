@@ -12,10 +12,10 @@
 </script>
 
 <span class="flex flex-row gap-x-3 w-full">
-  <div class="grid grid-row-2 gap-y-2 w-24">
+  <content class="grid grid-row-2 gap-y-2 w-24">
     <button class="_btn btn--primary">Start</button>
     <button class="_btn btn--secondary">Cancel</button>
-  </div>
+  </content>
 
   <div class=" border stats border-base-300 flex-grow">
     <div class="stat">
@@ -35,7 +35,7 @@
 
 <style lang="postcss">
   ._btn {
-    @apply text-base font-medium rounded-lg p-3 border-none;
+    @apply text-lg font-medium rounded-lg p-3 border-none;
   }
 
   .btn--primary {

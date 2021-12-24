@@ -6,7 +6,9 @@
   import Tilt from "./tilt.svelte";
 
   export let name: string = "";
-  export let ztilt: [number, number, number] = [19850, 19850, 19850];
+  export let x = 0;
+  export let y = 0;
+  export let z_tilt: [number, number, number] = [19850, 19850, 19850];
 </script>
 
 <div
@@ -14,8 +16,8 @@
 >
   <RulerX />
   <RulerY />
-  <Locator />
-  <Tilt />
+  <Locator {x} {y} />
+  <Tilt {z_tilt} />
 
   <span class="name">
     {name}

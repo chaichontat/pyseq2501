@@ -1,7 +1,6 @@
 // From https://github.com/arlac77/svelte-websocket-store
 
-import type { Subscriber, Unsubscriber, Updater, Writable } from "svelte/store"
-
+import type { Subscriber, Unsubscriber, Updater, Readable, Writable } from "svelte/store"
 /**
  * Create a writable store based on a web-socket.
  * Data is transferred as JSON.
@@ -13,13 +12,13 @@ import type { Subscriber, Unsubscriber, Updater, Writable } from "svelte/store"
 const reopenTimeouts = [2000, 5000, 10000, 30000, 60000];
 type ValidType = string | ArrayBufferLike | Blob | ArrayBufferView;
 
-export function websocketStore<T extends ValidType>(url: string, socketOptions?: string[]): Writable<T | null> {
+export function websocketStore<T>(url: string, initialValue: T, f = (x: ValidType) => x): Writable<T> {
     let socket: WebSocket | undefined
-    let openPromise: Promise<boolean>
-    let reopenTimeoutHandler: NodeJS.Timeout;
+    let openPromise: Promise<boolean> | undefined
+    let reopenTimeoutHandler: number | undefined;
     let reopenCount: number = 0;
 
-    const subscribers: Set<Subscriber<T | null>> = new Set();
+    const subscribers: Set<Subscriber<T>> = new Set();
 
     function reopenTimeout(): number {
         const n = reopenCount;
@@ -56,44 +55,50 @@ export function websocketStore<T extends ValidType>(url: string, socketOptions?:
         // we are still in the opening phase
         if (openPromise) return openPromise;
 
-        socket = new WebSocket(url, socketOptions);
+        socket = new WebSocket(url);
 
         socket.onmessage = (event: MessageEvent): void => {
             // initialValue = JSON.parse(event.data);
             subscribers.forEach((subscriber) => {
-                subscriber(event.data as T)
+                // @ts-ignore
+                subscriber(f(event.data))
             });
         };
 
         socket.onclose = (_: CloseEvent): void => reopen();
 
         openPromise = new Promise((resolve, reject) => {
-            socket.onerror = (error: Event): void => {
-                reject(error);
-                openPromise = undefined;
-            };
-            socket.onopen = (_: Event): void => {
-                reopenCount = 0;
-                resolve(true);
-                openPromise = undefined;
-            };
+            if (socket) {
+                socket.onerror = (error: Event): void => {
+                    reject(error);
+                    openPromise = undefined;
+                };
+                socket.onopen = (_: Event): void => {
+                    reopenCount = 0;
+                    resolve(true);
+                    openPromise = undefined;
+                };
+            }
         });
         return openPromise;
     }
 
     return {
         set(value: T): void {
-            const send = () => socket.send(value);
-            if (socket.readyState !== WebSocket.OPEN) {
-                open().then(send)
-            } else { send() }
+            if (socket) {
+                // @ts-ignore
+                const send = () => socket.send(value);
+                if (socket.readyState !== WebSocket.OPEN) {
+                    open().then(send)
+                } else { send() }
+            }
         },
 
         update(_: Updater<any>): void { },
 
-        subscribe(subscriber: Subscriber<T | null>): Unsubscriber {
+        subscribe(subscriber: Subscriber<T>): Unsubscriber {
             open();
-            subscriber(null);
+            subscriber(initialValue);
             subscribers.add(subscriber);
             return () => {
                 subscribers.delete(subscriber);

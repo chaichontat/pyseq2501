@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
-  import websocketStore from "../store";
+  import websocketStore from "../ws_store";
   import Main from "../components/main/main.svelte";
   import Nav from "../components/navbar/nav.svelte";
   import Sidebar from "../components/sidebar/sidebar.svelte";
@@ -26,7 +26,7 @@
       class="flex-grow block overflow-x-hidden bg-base-100 text-base-content drawer-content"
     >
       <Nav />
-      <div class="p-4 lg:p-8"><Main /></div>
+      <div class="p-4 lg:p-10"><Main /></div>
     </main>
     <Sidebar />
   </div>

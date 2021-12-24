@@ -1,28 +1,28 @@
 <script lang="ts">
   import Slide from "./slide.svelte";
-  export let left = 100;
-  export let top = 100;
+  export let x = 10;
+  export let y = 10;
+  export let z_tilt = [0, 0, 0];
+  export let z_obj = 0;
 
   let flowcell: boolean = false;
 
-  let moving = false;
+  // let moving = false;
 
-  function onMouseDown() {
-    moving = true;
-  }
+  // function onMouseDown() {
+  //   moving = true;
+  // }
 
-  function onMouseMove(e: MouseEvent) {
-    if (moving) {
-      left += e.movementX;
-      top += e.movementY;
-    }
-  }
+  // function onMouseMove(e: MouseEvent) {
+  //   if (moving) {
+  //     left += e.movementX;
+  //     top += e.movementY;
+  //   }
+  // }
 
-  function onMouseUp() {
-    moving = false;
-  }
-
-  // 	$: console.log(moving);
+  // function onMouseUp() {
+  //   moving = false;
+  // }
 </script>
 
 <li>
@@ -41,17 +41,17 @@
     class="indicator-item indicator-center indicator-middle badge badge-primary shadow-xl draggable z-50 opacity-70"
   /> -->
 
-  <Slide name={flowcell ? "B" : "A"} />
+  <Slide name={flowcell ? "B" : "A"} {x} {y} {z_tilt} />
 
   <!-- Z Objective -->
   <span class="self-center text-sm">
-    Objective Z:&nbsp; <span class="font-mono font-medium">32000</span>
+    Objective Z:&nbsp; <span class="font-mono font-medium">{z_obj}</span>
   </span>
 
   <!-- XY Input -->
   <div class="form-control self-center mt-4">
     <label class="font-medium input-group">
-      <span>X</span>
+      <span class="italic">X</span>
       <input
         type="number"
         min="-5"
@@ -59,7 +59,7 @@
         step="0.01"
         class="text-lg text-center input input-bordered w-24"
       />
-      <span>Y</span>
+      <span class="italic">Y</span>
       <input
         type="number"
         min="-5"
@@ -98,14 +98,13 @@
   </button>
 </li>
 
-<svelte:window on:mouseup={onMouseUp} on:mousemove={onMouseMove} />
-
+<!-- <svelte:window on:mouseup={onMouseUp} on:mousemove={onMouseMove} /> -->
 <style lang="postcss">
-  .draggable {
+  /* .draggable {
     user-select: none;
     cursor: move;
     position: absolute;
-  }
+  } */
 
   .monomedium {
     @apply font-mono font-medium;

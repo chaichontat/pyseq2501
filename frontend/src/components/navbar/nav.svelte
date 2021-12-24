@@ -36,7 +36,7 @@
     <Connected />
     <!---->
     <div title="Change Theme" class="dropdown dropdown-end">
-      <div tabindex="0" class="m-1 normal-case btn-ghost btn">
+      <div tabindex="0" class="m-1 normal-case btn-ghost btn pr-0">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -64,7 +64,7 @@
         <ul class="p-4 menu compact" />
       </div>
     </div>
-    <div title="Github ↗︎" class="items-center flex-none">
+    <div title="Github ↗︎" class="items-center flex-none pr-4">
       <a
         aria-label="Github"
         target="_blank"
