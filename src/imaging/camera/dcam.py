@@ -7,14 +7,23 @@ import time
 from concurrent.futures import Future
 from concurrent.futures.thread import ThreadPoolExecutor
 from contextlib import contextmanager
-from ctypes import (c_char_p, c_int32, c_uint16, c_uint32, c_void_p, pointer,
-                    sizeof)
+from ctypes import c_char_p, c_int32, c_uint16, c_uint32, c_void_p, pointer, sizeof
 from enum import Enum, IntEnum
 from itertools import chain
 from logging import getLogger
 from pathlib import Path
-from typing import (Any, Callable, Generator, Generic, Hashable, Literal,
-                    MutableMapping, TypeVar, cast, get_args)
+from typing import (
+    Any,
+    Callable,
+    Generator,
+    Generic,
+    Hashable,
+    Literal,
+    MutableMapping,
+    TypeVar,
+    cast,
+    get_args,
+)
 
 import numpy as np
 import numpy.typing as npt
@@ -53,13 +62,26 @@ FourImages = tuple[UInt16Array, UInt16Array, UInt16Array, UInt16Array]
 
 class Mode(Enum):
     LIVE_AREA = {"sensor_mode": 1, "contrast_gain": 5}
+    FOCUS_SWEEP = {"sensor_mode": 6, "exposure_time": 0.002, "partial_area_vsize": 5}
     TDI = {"sensor_mode": 4, "contrast_gain": 0, "sensor_mode_line_bundle_height": 128}
 
 
-class _Camera:
-    # TDI_EXPOSURE_TIME = 0.002568533333333333
-    # AREA_EXPOSURE_TIME = 0.005025378
+# imager.fpga.com.send("ZSTEP 6442353")
+# imager.fpga.com.send("ZTRG 0")
+# imager.fpga.com.send("ZYT 0 3")
+# imager.fpga.com.send("ZMV 60292").result()
+# imager.fpga.com.send("SWYZ_POS 1")
+# with imager.cams[i].attach(232, height=5) as bufs:
+#     with imager.optics.open_shutter():
+#         imager.fpga.com.send("ZSTEP 541158")
+#         imager.fpga.com.send("ZTRG 60292")
+#         imager.fpga.com.send("ZYT 0 3")
+#         with imager.cams[i].capture():
+#             taken = 0
+#             imager.fpga.com.send("ZMV 2621")
 
+
+class _Camera:
     IMG_WIDTH = 4096
     BUNDLE_HEIGHT = 128
 
@@ -110,12 +132,11 @@ class _Camera:
 
     @contextmanager
     def attach(self, n_bundles: int, height: int) -> Generator[UInt16Array, None, None]:
-        arr: npt.NDArray[np.uint16] = np.ascontiguousarray(
-            np.zeros((n_bundles * height, self.IMG_WIDTH), dtype=np.uint16)
-        )
+        arr: npt.NDArray[np.uint16] = np.zeros((n_bundles * height, self.IMG_WIDTH), dtype=np.uint16)
         addr, ptr_arr = arr.ctypes.data, (c_void_p * n_bundles)()
         for i in range(n_bundles):
             ptr_arr[i] = 2 * 4096 * height * i + addr
+
         try:
             API.dcam_attachbuffer(self.handle, ptr_arr, c_uint32(sizeof(ptr_arr)))
             yield arr
@@ -245,11 +266,11 @@ class Cameras:
     #         logger.debug(f"Allocated memory for {n_bundles} bundles.")
     #         yield (buf1, buf2)
 
-    def _get_bundles(self, bufs: tuple[UInt16Array, UInt16Array], height: int, i: int):
-        for c, b in zip(self._cams.result(20), bufs):
-            c.get_bundle(b, height, i)
-        if i == 0 or i % 5 == 0:
-            logger.info(f"Retrieved bundle {i + 1}.")
+    # def _get_bundles(self, bufs: tuple[UInt16Array, UInt16Array], height: int, i: int):
+    #     for c, b in zip(self._cams.result(20), bufs):
+    #         c.get_bundle(b, height, i)
+    #     if i == 0 or i % 5 == 0:
+    #         logger.info(f"Retrieved bundle {i + 1}.")
 
     @property
     def mode(self):
@@ -291,14 +312,8 @@ class Cameras:
                 t0 = time.monotonic()
                 while (avail := self.n_frames_taken) < n_bundles:
                     time.sleep(0.1)
-                    if avail > taken:
-                        # [self._get_bundles(bufs=bufs, height=128, i=i) for i in range(taken, avail)]
-                        taken = avail
                     if taken == 0 and time.monotonic() - t0 > timeout:
                         raise Exception(f"Did not capture a single bundle before {timeout=}s.")
-            # Done. Retrieve images.
-            # for i in range(taken, max(avail, n_bundles)):
-            #     self._get_bundles(bufs=bufs, height=128, i=i)
             logger.info(f"Retrieved all {n_bundles} bundles.")
 
         return cast(UInt16Array, np.flip(np.swapaxes(np.hstack(bufs).reshape(-1, 4, 2048), 1, 0), axis=1))

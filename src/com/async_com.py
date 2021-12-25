@@ -29,7 +29,7 @@ from src.com.eventloop import LOOP
 logger = getLogger("COM")
 # © is not in ASCII. Looking at you Schneider Electrics (x-stage).
 ENCODING_KW = {"encoding": "ISO-8859-1", "errors": "replace"}
-# fmt:off
+# fmt: off
 # Pick from ANSI colors.
 COLOR: dict[SerialInstruments, str] = dict(
     fpga="blue",
@@ -37,15 +37,15 @@ COLOR: dict[SerialInstruments, str] = dict(
     y="yellow",
     laser_g="green",
     laser_r="magenta"
-) # type: ignore
+)  # type: ignore
 FORMATTER: dict[SerialInstruments, Callable[[str], str]] = dict(
        fpga=lambda x:  f"{x}\n",
           x=lambda x:  f"{x}\r",
           y=lambda x: f"1{x}\r\n",  # Axis 1
     laser_g=lambda x:  f"{x}\r",
     laser_r=lambda x:  f"{x}\r",
-)  # type: ignore
-# fmt:on
+)   # type: ignore
+# fmt: on
 T = TypeVar("T", covariant=True)
 P = ParamSpec("P")
 
@@ -63,13 +63,16 @@ class Channel(NamedTuple):
 class CmdParse(Generic[T, P]):
     """A command with its parsing function.
 
+    If the command is callable, this entire structure is callable and
+    outputs the same structure but with an `str` command.
+
     Args:
         cmd: String command or a unary function that outputs a command.
-        process: A unary function that takes in raw output from the device and parse it into a useful format.
-            Uses the Result architecture.
+        parser: A unary function that takes in raw output from the device and parse it into a useful format.
+        n_lines: Number of lines in the expected response.
 
     Returns:
-        A data structure where a command and its parsing function are together.
+        A data structure in which a command and its parsing function are together.
     """
 
     cmd: str | Callable[P, str]
@@ -86,6 +89,22 @@ class CmdParse(Generic[T, P]):
 
 
 class COM:
+    """
+    Necessary conditions:
+    - Commands are executed in FIFO order.
+    - Response from an instrument is in FIFO order.
+    - All responses are accounted for.
+
+    Specific to each COM channel.
+
+    Args:
+        name (SerialInstruments): Name of the instrument.
+        port_tx (str): COM port.
+        port_rx (Optional[str], optional): Receiving port if different from port_tx.
+            Only the FPGA uses separate channels.
+        min_spacing (int, optional): Minimum time between commands. Defaults to 0.05s.
+    """
+
     def __init__(
         self,
         name: SerialInstruments,
@@ -93,22 +112,7 @@ class COM:
         port_rx: Optional[str] = None,
         min_spacing: Annotated[int | float, "s"] = 0.05,
     ) -> None:
-        """
-        Necessary conditions:
-        - Commands are executed in FIFO order.
-        - Response from an instrument is in FIFO order.
-        - All responses are accounted for.
 
-        Specific to each COM channel.
-
-        Args:
-            name (SerialInstruments): Name of the instrument.
-            port_tx (str): COM port.
-            port_rx (Optional[str], optional): Receiving port if different from port_tx.
-                Only the FPGA uses separate channels.
-            min_spacing (int, optional): Minimum time between commands. Defaults to 0.05s.
-        """
-        assert port_tx.startswith("COM")
         self.port = port_tx
         self.name = f"[{COLOR[name]}]{name:10s}[/{COLOR[name]}]"
         self.formatter = FORMATTER[name]
@@ -153,7 +157,6 @@ class COM:
                 logger.error(
                     f"{self.name}Exception {type(e).__name__} while parsing '{resp}' from '{cmd.cmd}'."
                 )
-                # console.print_exception()
                 fut.set_exception(e)
             else:
                 r = "'" + resp.replace("\n", "\\n") + "'"
@@ -161,27 +164,6 @@ class COM:
                 fut.set_result(parsed)
             finally:
                 self._read_queue.task_done()
-
-    # @overload
-    # async def _send(self, msg: str) -> None:
-    #     ...
-
-    # @overload
-    # async def _send(self, msg: CmdParse[T, Any]) -> Optional[T]:
-    #     ...
-
-    # async def _send(self, msg: str | CmdParse[T, Any]) -> None | Optional[T]:
-    #     print(f"Adding {msg} to queue.")
-    #     if isinstance(msg, str):
-    #         self._write_queue.put_nowait(msg)
-    #         return
-
-    #     if not isinstance(msg.cmd, str):
-    #         raise ValueError("This command needs argument(s), call it first.")
-
-    #     self._write_queue.put_nowait(msg.cmd)
-    #     self._read_queue.put_nowait((msg, fut := asyncio.Future()))
-    #     return await fut
 
     @overload
     def send(self, msg: str) -> None:
@@ -210,10 +192,11 @@ class COM:
     def send(
         self, msg: str | CmdParse[T, Any] | tuple[str | CmdParse[Any, Any], ...]
     ) -> None | Future[T] | tuple[None | Future[Any], ...]:
-        """Sends command to instrument.
+        """Sends a command to an instrument.
         If msg is string   => no responses expected.
         If msg is CmdParse => response expected and parsed by CmdParse.parser.
             Unexpected response triggers a warning and returns Future[None].
+
         If msg is a list of either above, map this function to all elements.
 
         Returns:
@@ -250,15 +233,3 @@ class COM:
     @staticmethod
     async def async_wrapper(fut):
         return await fut
-
-
-if __name__ == "__main__":
-    g = COM(name="laser_g", port_tx="COM15")
-    r = COM(name="laser_r", port_tx="COM17")
-
-    ver = CmdParse("VERSION?\r", lambda x: x == "SMD-G-1.1.2")
-    test = g.send(ver)
-    test = r.send(ver)
-    print(test.result())
-    time.sleep(1)
-    LOOP.stop()

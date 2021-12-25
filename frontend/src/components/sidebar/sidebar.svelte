@@ -2,7 +2,6 @@
   import { onMount } from "svelte";
   import type { Writable } from "svelte/store";
   import type { Status } from "../../structs";
-  import websocketStore from "../../ws_store";
   import Logo from "../logo.svelte";
   import Division from "./division.svelte";
   import Lasers from "./lasers.svelte";
@@ -19,28 +18,28 @@
   };
 
   let store: Writable<Status>;
-  onMount(() => {
-    store = websocketStore(
-      `ws://${window.location.hostname}:8000/status`,
-      status,
-      (x: string) => JSON.parse(JSON.parse(x))
-    );
-  });
+  // onMount(() => {
+  //   store = websocketStore(
+  //     `ws://${window.location.hostname}:8000/status`,
+  //     status,
+  //     (x: string) => JSON.parse(JSON.parse(x))
+  //   );
+  // });
 
-  $: {
-    if ($store) {
-      // WHAT????
-      // https://stackoverflow.com/questions/42494823/json-parse-returns-string-instead-of-object
-      status = $store;
-    }
-  }
+  onMount(() => {
+    const sse = new EventSource("http://localhost:8000/status");
+    sse.onmessage = (event: MessageEvent<string>) => (status = JSON.parse(event.data));
+    return () => {
+      if (sse.readyState === 1) sse.close();
+    };
+  });
 </script>
 
 <div class="drawer drawer-side">
   <label for="main-menu" class="drawer-overlay" />
   <aside class="sidebar flex flex-col bg-base-100 ">
     <div
-      class="hidden lg:block sticky inset-x-0 top-0 z-50 w-full py-1 transition duration-200 ease-in-out border-b border-base-200 bg-base-100"
+      class="hidden lg:block sticky inset-x-0 top-0 z-10 w-full py-1 transition duration-200 ease-in-out border-b border-base-200 bg-base-100"
     >
       <Logo />
     </div>

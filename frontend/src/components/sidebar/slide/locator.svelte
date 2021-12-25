@@ -11,6 +11,7 @@
 </script>
 
 <div
+  id="cross"
   class="absolute z-50 text-xl text-blue-700 transition-all"
   style="top:calc({(100 * y) / 75}% - 0.8em); right:calc({real_x}% - 0.32em);"
 >
@@ -18,18 +19,21 @@
 </div>
 
 <div
-  class="absolute w-full border-t border-gray-400 transition-all"
+  id="horz"
+  class="absolute w-full border-t border-blue-200 transition-all"
   style="top:calc({real_y}% - 1px); right:0%; width:{real_x}%;"
 />
 <div
-  class="absolute h-full border-l border-gray-400 transition-all"
+  id="vert"
+  class="absolute h-full border-l border-blue-200 transition-all"
   style="right:calc({real_x}% - 1px); height:{real_y}%;"
 />
 
 <span
-  class="absolute font-mono font-medium text-sm text-center w-36 transition-all"
+  id="legend"
+  class="z-50 absolute font-mono font-medium text-sm text-center w-36 transition-all text-blue-700"
   style="top:calc({(100 * y) /
-    75}% + 0.6em); right:calc({real_x}% - 4.5rem); text-shadow: 2px 2px 8px white;"
+    75}% + 0.4rem); right:calc({real_x}% - 4.5rem); text-shadow: 0px 0px 2px white, 0px 0px 5px white, 0px 0px 10px white"
 >
   ({x.toFixed(1)}, {y.toFixed(1)})
 </span>

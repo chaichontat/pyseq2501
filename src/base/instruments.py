@@ -28,10 +28,6 @@ class Movable(metaclass=ABCMeta):
     RANGE: ClassVar[tuple[int, int]]
     HOME: ClassVar[int]
 
-    # def __new__(cls) -> Movable:
-    #     (cls.STEPS_PER_UM, cls.RANGE, cls.HOME)  # Check if all classvars are defined.
-    #     return super().__new__(cls)
-
     @abstractmethod
     def move(self, p: int) -> Future[Any]:
         ...

@@ -34,7 +34,7 @@
   }
 
   .label-line {
-    @apply absolute border-b border-gray-400 w-full box-border;
+    @apply absolute border-b border-gray-400 w-full box-border z-10;
     bottom: calc(6rem - 1px);
   }
 

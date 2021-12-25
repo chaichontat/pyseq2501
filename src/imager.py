@@ -11,7 +11,6 @@ import numpy as np
 from .com.thread_mgt import run_in_executor
 from .imaging.camera.dcam import Cameras, Mode, UInt16Array
 from .imaging.fpga import FPGA
-from .imaging.fpga.optics import Optics
 from .imaging.laser import Laser, Lasers
 from .imaging.xstage import XStage
 from .imaging.ystage import YStage
@@ -26,12 +25,6 @@ class Position(NamedTuple):
     y: int
     z_tilt: tuple[int, int, int]
     z_obj: int
-
-
-@dataclass
-class Channel:
-    laser: Laser
-    optics: Optics
 
 
 @dataclass(frozen=True)
@@ -51,7 +44,6 @@ class Imager:
 
     def __init__(self, ports: Ports, init_cam: bool = True) -> None:
         self.fpga = FPGA(*ports.fpga)
-        self.fpga.initialize()
         self.tdi = self.fpga.tdi
         self.optics = self.fpga.optics
 
@@ -134,29 +126,31 @@ class Imager:
         return Position(**res)  # type: ignore
 
     def autofocus(self) -> tuple[int, UInt16Array]:
-        n_bundles = 232
-        self.cams.properties["sensor_mode"] = 6
-        self.cams[0].properties.update({"exposure_time": 0.002, "partial_area_vsize": 5})
+        """Moves to z_max and takes 232 (2048 × 5) images while moving to z_min.
+
+        Returns the z position of maximum intensity and the images.
+
+        """
+        n_bundles, height = 232, 5
+        z_min, z_max = 2621, 60292
+        self.cams[0].properties.update({"sensor_mode": 6, "exposure_time": 0.002, "partial_area_vsize": 5})
         self.fpga.com.send("ZTRG 0")
         self.fpga.com.send("ZYT 0 3")
-        self.fpga.com.send("ZMV 60292")
-        self.fpga.com.send("ZDACR")
-        self.fpga.com.send("ZSTEP 1288471")
+        self.fpga.com.send(f"ZMV {z_max}")
         self.fpga.com.send("SWYZ_POS 1")
 
-        with self.cams._alloc(232, height=5) as bufs:
+        with self.cams._alloc(n_bundles, height=height) as bufs:
             with self.optics.open_shutter():
                 self.fpga.com.send("ZSTEP 541158")
-                self.fpga.com.send("ZTRG 60292")
+                self.fpga.com.send(f"ZTRG {z_max}")
                 self.fpga.com.send("ZYT 0 3")
                 with self.cams[0].capture():
-                    self.fpga.com.send("ZMV 2621")
+                    self.fpga.com.send(f"ZMV {z_min}")
                     while (self.cams[0].n_frames_taken) < n_bundles:
                         time.sleep(0.01)
 
-            # Done. Retrieve images.
-            for i in range(n_bundles):
-                self.cams[0].get_bundle(buf=bufs[0], height=5, n_curr=i)
+        intensity = np.mean(np.reshape(bufs[0], (n_bundles, height, 4096)), axis=(1, 2))
+        target = np.argmax(intensity)[0]
 
-        target = np.argmax(intensity := np.mean(bufs[0], axis=1))[0]
-        return (60292 - (((60292 - 2621) / n_bundles) * (target / 5) + 2621), intensity)
+        self.fpga.com.send("ZSTEP 6442353")
+        return (z_max - (((z_max - z_min) / n_bundles) * target + z_min), intensity)

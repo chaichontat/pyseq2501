@@ -10,12 +10,14 @@ from pathlib import Path
 import numpy as np
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from PIL import Image
-from pydantic import BaseModel
 
 sys.path.append((Path(__file__).parent.parent.parent).as_posix())
+from fastapi.middleware.cors import CORSMiddleware
 from rich.logging import RichHandler
 from src.imager import Imager
 from src.utils.ports import get_ports
+
+import status
 
 logging.basicConfig(
     level="NOTSET",
@@ -24,22 +26,20 @@ logging.basicConfig(
     handlers=[RichHandler(rich_tracebacks=True, markup=True)],
 )
 
+logging.getLogger("sse_starlette.sse").setLevel(logging.INFO)
 logging.getLogger("DCAMAPI").setLevel(logging.INFO)
 logging.getLogger("matplotlib.font_manager").setLevel(logging.INFO)
 
 app = FastAPI()
 thr = ThreadPoolExecutor(max_workers=1)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # imager = Imager(get_ports(60))
-
-
-class Status(BaseModel):
-    x: float
-    y: float
-    z_tilt: tuple[int, int, int]
-    z_obj: int
-    laser_r: int
-    laser_g: int
-    shutter: bool
 
 
 def take_img() -> str:
@@ -74,23 +74,5 @@ async def websocket_endpoint(websocket: WebSocket):
                 ...
 
 
-@app.websocket("/status")
-async def status(websocket: WebSocket):
-    while True:
-        await websocket.accept()
-        x = 0
-        y = 1
-        while True:
-            try:
-                await websocket.send_json(
-                    Status(x=x, y=y, z_tilt=(1, 1, 1), z_obj=1, laser_r=y, laser_g=1, shutter=False).json()
-                )
-                await asyncio.sleep(1)
-            except WebSocketDisconnect:
-                ...
-            x += 0.3
-            y += 1
-            if x > 25:
-                x = 0
-            if y > 75:
-                y = 0
+app.get("/status")(status.poll)
+# app.get("/logs")(status.logs)

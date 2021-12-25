@@ -49,6 +49,7 @@ class OpticCmd:
 class Optics(FPGAControlled):
     """
     No reason to change this.
+    Always set to no OD filters and emission filter in.
     """
 
     cmd = OpticCmd

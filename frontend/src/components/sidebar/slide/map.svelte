@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Pencil from "../../svgs/pencil.svelte";
   import Slide from "./slide.svelte";
   export let x = 10;
   export let y = 10;
@@ -6,6 +7,10 @@
   export let z_obj = 0;
 
   let flowcell: boolean = false;
+
+  const focus = (el) => {
+    el.focus;
+  };
 
   // let moving = false;
 
@@ -44,9 +49,18 @@
   <Slide name={flowcell ? "B" : "A"} {x} {y} {z_tilt} />
 
   <!-- Z Objective -->
-  <span class="self-center text-sm">
-    Objective Z:&nbsp; <span class="font-mono font-medium">{z_obj}</span>
-  </span>
+  <div class="mt-3 flex self-center text-sm">
+    <Pencil class="ml-2" let:modifying>
+      <div slot="before">
+        <div class="">Objective Z:&nbsp;</div>
+        {#if modifying}
+          <input type="number" class="w-24 font-medium text-center" autofocus />
+        {:else}
+          <div class="w-12 font-mono font-medium text-right">{z_obj}</div>
+        {/if}
+      </div>
+    </Pencil>
+  </div>
 
   <!-- XY Input -->
   <div class="form-control self-center mt-4">
@@ -57,7 +71,7 @@
         min="-5"
         max="30"
         step="0.01"
-        class="text-lg text-center input input-bordered w-24"
+        class="text-lg text-center input input-bordered w-24 h-10"
       />
       <span class="italic">Y</span>
       <input
@@ -65,7 +79,7 @@
         min="-5"
         max="80"
         step="0.01"
-        class="text-lg text-center input input-bordered w-24"
+        class="text-lg text-center input input-bordered w-24 h-10"
       />
 
       <button
