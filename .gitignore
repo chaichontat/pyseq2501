@@ -130,3 +130,7 @@ dmypy.json
 
 src/pyseq
 images/
+*.tiff
+*.tif
+*.pk
+*.npy
