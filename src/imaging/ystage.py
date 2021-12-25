@@ -73,6 +73,7 @@ class YCmd:
     SET_POS    = CmdParse(chkrng(lambda x: f"D{x}", *RANGE), ok_re(r"1D\-?\d+"))
     GET_POS    = CmdParse("R(PA)",                    gen_reader(r"R\(PA\)"), n_lines=2)  # Report(Position Actual)
     IS_MOVING  = CmdParse("R(IP)", lambda x: not bool(gen_reader(r"R\(IP\)")(x)), n_lines=2)
+    MOVE_DONE  = CmdParse("GOTO(CHKMV)", ok_if_match("1GOTO(CHKMV)\nMove Done"), n_lines=2)  # Returns when move is completed.
     TARGET_POS = CmdParse("R(PT)",                    gen_reader(r"R\(PT\)")    , n_lines=2)
     GAINS      = CmdParse(lambda x: f"GAINS({x})", ok_re(r"GAINS\(([\d\.,]+)\)"))
     VELO       = CmdParse(lambda x: f"V{x}"      , ok_re(r"V([\d\.]+)"))
@@ -104,17 +105,21 @@ class YStage(UsesSerial, Movable):
 
     @run_in_executor
     def initialize(self) -> bool:
+        def echo(s: str) -> CmdParse[bool, Any]:
+            return CmdParse(s, ok_if_match(f"1{s}"))
+
         logger.info("Initializing y-stage.")
-        self.com.send(YCmd.RESET).result(60)  # Initialize Stage
-        # self.com.send(CmdParse(YCmd.DONT_ECHO, lambda x: x == "1W(EX,0)"))  # Turn off echo
+        self.com.send(YCmd.RESET).result(60)  # Initialize Stage, wait 1-2 seconds.
+        self.com.send(echo("W(CQ,1)")).result()
+        self.com.send(tuple(map(echo, ("DECLARE(CHKMV)", "CHKMV:", "TR(MV,=,0)", '"Move Done"', "END"))))
         self.com.send(YCmd.BRAKE_OFF).result(60)
         self.com.send(YCmd.GAINS("5,10,7,1.5,0")).result(60)
-        self.set_mode("MOVING")
+        self.set_mode("MOVING").result(60)
         self.com.send(YCmd.MODE_ABSOLUTE).result(60)
         self.com.send(YCmd.ON).result(60)
         self.com.send(YCmd.GO_HOME).result(60)
-        while self.is_moving.result(60):
-            time.sleep(0.5)
+        self.com.send(YCmd.MOVE_DONE).result(60)
+        logger.info("Completed y-stage initialization.")
         return True
 
     @run_in_executor
@@ -123,8 +128,7 @@ class YStage(UsesSerial, Movable):
         self.com.send((YCmd.SET_POS(pos), YCmd.GO))
         logger.info(f"Moving to {pos} for {self._mode}")
         if not slowly:
-            while self.is_moving.result(60):
-                time.sleep(0.5)
+            self.com.send(YCmd.MOVE_DONE).result(60)
             return self.pos.result(60)
         return None
 
