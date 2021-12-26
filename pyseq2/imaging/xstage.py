@@ -2,10 +2,10 @@ import logging
 from concurrent.futures import Future
 from typing import Any
 
-from src.base.instruments import Movable, UsesSerial
-from src.com.async_com import COM, CmdParse
-from src.com.thread_mgt import run_in_executor
-from src.utils.utils import chkrng, ok_if_match, ok_re
+from pyseq2.base.instruments import Movable, UsesSerial
+from pyseq2.com.async_com import COM, CmdParse
+from pyseq2.com.thread_mgt import run_in_executor
+from pyseq2.utils.utils import chkrng, ok_if_match, ok_re
 
 logger = logging.getLogger("XStage")
 RANGE = (1000, 50000)
@@ -79,6 +79,7 @@ class XStage(UsesSerial, Movable):
                 echo("D1=5"),
                 echo("HC=20"),
                 echo("RC=100"),
+                # Program 1. Set Home to 30000.
                 echo("PG 1"),
                 CmdParse("HM 1", ok_if_match("1  HM 1")),
                 CmdParse("H", ok_if_match("5  H")),

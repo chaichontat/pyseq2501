@@ -4,7 +4,7 @@ from abc import ABCMeta, abstractmethod
 from concurrent.futures import Future
 from typing import Annotated, Any, ClassVar, NoReturn, final
 
-from src.com.async_com import COM
+from pyseq2.com.async_com import COM
 
 
 class UsesSerial(metaclass=ABCMeta):

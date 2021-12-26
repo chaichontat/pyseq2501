@@ -17,7 +17,6 @@ if os.name == "nt" and os.environ.get("FAKE_HISEQ", "0") != "1":
         def __init__(self) -> None:
             super().__init__("dcamapi.dll")
 
-
 else:
     from .fake_dcam import FakeAPI as DCAMAPI
 

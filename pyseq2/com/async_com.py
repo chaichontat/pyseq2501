@@ -22,9 +22,9 @@ from typing import (
     overload,
 )
 
+from pyseq2.base.instruments_types import SerialInstruments
+from pyseq2.com.eventloop import LOOP
 from serial_asyncio import open_serial_connection
-from src.base.instruments_types import SerialInstruments
-from src.com.eventloop import LOOP
 
 logger = getLogger("COM")
 # © is not in ASCII. Looking at you Schneider Electrics (x-stage).
@@ -111,11 +111,13 @@ class COM:
         port_tx: str,
         port_rx: Optional[str] = None,
         min_spacing: Annotated[int | float, "s"] = 0.05,
+        no_check=False,
     ) -> None:
 
         self.port = port_tx
         self.name = f"[{COLOR[name]}]{name:10s}[/{COLOR[name]}]"
         self.formatter = FORMATTER[name]
+        self.no_check = no_check
 
         self.min_spacing = min_spacing
         self.t_lastcmd = time.monotonic()
@@ -141,6 +143,11 @@ class COM:
     async def _read_forever(self) -> NoReturn:
         while True:
             resp = (await self._serial.reader.readline()).decode(**ENCODING_KW).strip()
+
+            if self.no_check:
+                print(resp)
+                continue
+
             if not resp:  # len == 0
                 continue
             try:

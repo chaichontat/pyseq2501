@@ -18,12 +18,13 @@ logging.basicConfig(
 )
 
 log = logging.getLogger("rich")
+logging.getLogger("DCAMAPI").setLevel(logging.INFO)
 
-from src.imaging.camera.dcam import Cameras
+from src.imaging.camera.dcam import Cameras, Mode
 
 print("[green]Holding breath...")
 #%%
-test = Cameras()
+cams = Cameras()
 
 
 #%%
@@ -32,44 +33,47 @@ from ctypes import POINTER, c_double, c_int32, c_uint16, c_uint32, c_void_p, poi
 
 from src.imaging.camera import API
 
-DCAMWAIT_CAPEVENT_FRAMEREADY = 0x0002
+# DCAMWAIT_CAPEVENT_FRAMEREADY = 0x0002
 
-test.properties["trigger_source"] = 1
-test.properties["sensor_mode"] = 1
-API.dcam_precapture(test[0].handle, DCAM_CAPTURE_MODE.SEQUENCE)
-API.dcam_precapture(test[1].handle, DCAM_CAPTURE_MODE.SEQUENCE)
-exp = 0.3
-test.properties["exposure_time"] = exp
+# test.properties["trigger_source"] = 1
+# test.properties["sensor_mode"] = 1
+API.dcam_precapture(cams[0].handle, DCAM_CAPTURE_MODE.SNAP)
+API.dcam_precapture(cams[1].handle, DCAM_CAPTURE_MODE.SNAP)
+
+# exp = 0.3
+# test.properties["exposure_time"] = exp
+# cams.mode = Mode.AUTOFOCUS
+n_bundles = 10
+with cams._alloc(n_bundles) as bufs:
+    taken = 0
+    with cams[0].capture(), cams[1].capture():
+        t0 = time.time()
+        while (avail := cams.n_frames_taken) < n_bundles:
+            time.sleep(0.1)
+            if avail > taken:
+                print(f"Now at {avail}")
+                taken = avail
 
 
 # %%
-n_bundles = 5
 taken = 0
-t = test.capture(5)
-# with test[0].alloc(n_bundles) as buf:
-#     with test[0].capture():
-#         while (curr := test[0].n_frames_taken) < n_bundles:
-#             for i in range(taken, curr):
-#                 test[0].test_get(buf, i)
+
 
 #%%
+from ctypes import POINTER, c_double, c_int32, c_uint16, c_uint32, c_void_p, pointer
 
+import numpy as np
 
-# get_mode_key(test.handle, test)
-# import pickle
+n = 32
+arr = np.ones((n * 128, 4096), dtype=np.uint16)
+addr = arr.ctypes.data
 
-# print(test.properties)
-# Path("what.pk").write_bytes(pickle.dumps(test.properties._dict))
-#%%
-# import sys
-# from pathlib import Path
+# pointer((c_uint16 * (n * 128) * 4096)())
 
-# # from src.instruments.camera.dcam_mode_key import get_mode_key
-
-# sys.path.append("c:\\Users\\sbsuser\\Desktop\\goff-rotation")
-# import pickle
-# from pathlib import Path
-
-# d = pickle.loads(Path("what.pk").read_bytes())
+t = (c_void_p * n)()
+for i in range(n):
+    t[i] = 524288 * i + addr
 
 # %%
+# cams[0].properties._dict["trigger_source"].mode_key(cams[0].handle)
+{"sensor_mode": 6, "exposure_time": 0.0022, "partial_area_vsize": 5}

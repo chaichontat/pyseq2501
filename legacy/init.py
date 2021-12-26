@@ -1,3 +1,4 @@
+#%%
 DUMMY = False
 
 from rich import print
@@ -15,7 +16,6 @@ else:
 
 import logging
 
-from ui import init_ui
 
 logging.basicConfig(
     level="NOTSET",
@@ -28,4 +28,5 @@ log = logging.getLogger("rich")
 console = Console()
 
 hs = FriendlyHiSeq(console=console)
-init_ui(hs.gen_initialize_seq(skip=[Components.PUMPS, Components.VALVES]))
+
+# %%

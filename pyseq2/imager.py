@@ -84,7 +84,7 @@ class Imager:
     def take(self, n_bundles: int, dark: bool = False) -> UInt16Array:
         logger.info(f"Taking image with {n_bundles} bundles.")
         n_bundles += 1  # To flush CCD.
-        while not self.all_still:
+        while not self.all_still:  # All commands block unless done with moving.
             logger.info("Started taking an image while stage is moving. Waiting.")
             time.sleep(0.5)
 

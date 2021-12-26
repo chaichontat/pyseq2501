@@ -2,10 +2,10 @@ import time
 from concurrent.futures import Future
 from logging import getLogger
 
-from src.base.instruments import UsesSerial
-from src.com.async_com import COM, CmdParse
-from src.com.thread_mgt import run_in_executor
-from src.utils.utils import ok_if_match
+from pyseq2.base.instruments import UsesSerial
+from pyseq2.com.async_com import COM, CmdParse
+from pyseq2.com.thread_mgt import run_in_executor
+from pyseq2.utils.utils import ok_if_match
 
 from .led import LED
 from .optics import Optics

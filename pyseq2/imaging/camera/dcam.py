@@ -27,8 +27,8 @@ from typing import (
 
 import numpy as np
 import numpy.typing as npt
-from src.com.thread_mgt import run_in_executor, warn_main_thread
-from src.imaging.camera.dcam_api import DCAM_CAPTURE_MODE
+from pyseq2.com.thread_mgt import run_in_executor, warn_main_thread
+from pyseq2.imaging.camera.dcam_api import DCAM_CAPTURE_MODE
 
 from . import API
 from .dcam_api import DCAMException
@@ -66,21 +66,6 @@ class Mode(Enum):
     TDI = {"sensor_mode": 4, "contrast_gain": 0, "sensor_mode_line_bundle_height": 128}
 
 
-# imager.fpga.com.send("ZSTEP 6442353")
-# imager.fpga.com.send("ZTRG 0")
-# imager.fpga.com.send("ZYT 0 3")
-# imager.fpga.com.send("ZMV 60292").result()
-# imager.fpga.com.send("SWYZ_POS 1")
-# with imager.cams[i].attach(232, height=5) as bufs:
-#     with imager.optics.open_shutter():
-#         imager.fpga.com.send("ZSTEP 541158")
-#         imager.fpga.com.send("ZTRG 60292")
-#         imager.fpga.com.send("ZYT 0 3")
-#         with imager.cams[i].capture():
-#             taken = 0
-#             imager.fpga.com.send("ZMV 2621")
-
-
 class _Camera:
     IMG_WIDTH = 4096
     BUNDLE_HEIGHT = 128
@@ -99,7 +84,6 @@ class _Camera:
         else:
             self.properties = DCAMDict.from_dcam(self.handle)
         self.capture_mode = DCAM_CAPTURE_MODE.SNAP
-        self.properties["sensor_mode_line_bundle_height"] = 128
 
     def initialize(self) -> None:
         ...
@@ -143,28 +127,28 @@ class _Camera:
         finally:
             API.dcam_releasebuffer(self.handle)
 
-    @contextmanager
-    def alloc(self, n_bundles: int, height: int) -> Generator[UInt16Array, None, None]:
-        out: npt.NDArray[np.uint16] = np.empty((n_bundles * height, self.IMG_WIDTH), dtype=np.uint16)
-        try:
-            API.dcam_allocframe(self.handle, c_int32(n_bundles))
-            yield out
-        finally:
-            API.dcam_freeframe(self.handle)
+    # @contextmanager
+    # def alloc(self, n_bundles: int, height: int) -> Generator[UInt16Array, None, None]:
+    #     out: npt.NDArray[np.uint16] = np.empty((n_bundles * height, self.IMG_WIDTH), dtype=np.uint16)
+    #     try:
+    #         API.dcam_allocframe(self.handle, c_int32(n_bundles))
+    #         yield out
+    #     finally:
+    #         API.dcam_freeframe(self.handle)
 
-    @contextmanager
-    def _lock_memory(self, height: int, n_curr: int):
-        addr = pointer((c_uint16 * self.IMG_WIDTH * height)())
-        row_bytes = c_int32(0)
-        API.dcam_lockdata(self.handle, pointer(cast(c_void_p, addr)), pointer(row_bytes), c_int32(n_curr))
-        try:
-            yield addr
-        finally:
-            API.dcam_unlockdata(self.handle)
+    # @contextmanager
+    # def _lock_memory(self, height: int, n_curr: int):
+    #     addr = pointer((c_uint16 * self.IMG_WIDTH * height)())
+    #     row_bytes = c_int32(0)
+    #     API.dcam_lockdata(self.handle, pointer(cast(c_void_p, addr)), pointer(row_bytes), c_int32(n_curr))
+    #     try:
+    #         yield addr
+    #     finally:
+    #         API.dcam_unlockdata(self.handle)
 
-    def get_bundle(self, buf: UInt16Array, height: int, n_curr: int) -> None:
-        with self._lock_memory(height=height, n_curr=n_curr) as addr:
-            buf[n_curr * height : (n_curr + 1) * height, :] = np.asarray(addr.contents)
+    # def get_bundle(self, buf: UInt16Array, height: int, n_curr: int) -> None:
+    #     with self._lock_memory(height=height, n_curr=n_curr) as addr:
+    #         buf[n_curr * height : (n_curr + 1) * height, :] = np.asarray(addr.contents)
 
     @property
     def n_frames_taken(self) -> int:
@@ -211,9 +195,6 @@ class Cameras:
         self.ready = Future()
         self._executor = ThreadPoolExecutor(max_workers=1)  # Only case of Executor outside COM.
         self._cams = self.post_init()  # self.properties set in here.
-        # self._cams.add_done_callback(
-        #     lambda _: setattr(self, "properties", TwoProps(*[c.properties for c in self]))
-        # )
 
     @run_in_executor
     @warn_main_thread
@@ -255,16 +236,6 @@ class Cameras:
         with self[0].attach(n_bundles, height) as buf1, self[1].attach(n_bundles, height) as buf2:
             logger.debug(f"Allocated memory for {n_bundles} bundles.")
             yield (buf1, buf2)
-
-    # @contextmanager
-    # def _attach(self, n_bundles: int) -> Generator[tuple[UInt16Array, UInt16Array], None, None]:
-    #     # TODO Somehow stuck at 4 frames.
-    #     buf1 = np.ones((n_bundles * 128, 4096), dtype=np.uint16)
-    #     buf2 = buf1.copy()
-    #     assert buf1.ctypes.data != buf2.ctypes.data
-    #     with self[0].attach(n_bundles, buf1), self[1].attach(n_bundles, buf2):
-    #         logger.debug(f"Allocated memory for {n_bundles} bundles.")
-    #         yield (buf1, buf2)
 
     # def _get_bundles(self, bufs: tuple[UInt16Array, UInt16Array], height: int, i: int):
     #     for c, b in zip(self._cams.result(20), bufs):
@@ -310,7 +281,7 @@ class Cameras:
             with self[0].capture(), self[1].capture():
                 start_capture()
                 t0 = time.monotonic()
-                while (avail := self.n_frames_taken) < n_bundles:
+                while self.n_frames_taken < n_bundles:
                     time.sleep(0.1)
                     if taken == 0 and time.monotonic() - t0 > timeout:
                         raise Exception(f"Did not capture a single bundle before {timeout=}s.")

@@ -3,10 +3,10 @@ from contextlib import contextmanager
 from logging import getLogger
 from typing import Generator, Literal, Optional
 
-from src.base.instruments import FPGAControlled
-from src.com.async_com import CmdParse
-from src.com.thread_mgt import run_in_executor
-from src.utils.utils import not_none, ok_if_match
+from pyseq2.base.instruments import FPGAControlled
+from pyseq2.com.async_com import CmdParse
+from pyseq2.com.thread_mgt import run_in_executor
+from pyseq2.utils.utils import not_none, ok_if_match
 
 logger = getLogger("optics")
 

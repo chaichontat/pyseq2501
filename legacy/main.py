@@ -25,7 +25,7 @@ console = Console()
 
 hs = FriendlyHiSeq(console=console)
 #%%
-# init_ui(hs.gen_initialize_seq(skip=[Components.PUMPS, Components.VALVES]))
+hs.x.initialize()
 #%%
 hs.image_path = "C:\\Users\\sbsuser\\Desktop\\goff-rotation\\images\\"
 hs.initializeCams()
@@ -58,4 +58,12 @@ for z in [21600, 21800]:
     hs.y.move(pos["y_initial"] + 2200000)
     hs.take_picture(16, f"128al{z}")
 #%%
+# %%
+from ctypes import WinDLL, c_int32, c_void_p, pointer
+
+# test = Cameras()
+handle = c_void_p(0)
+#%%
+a = WinDLL("dcamapi.dll")
+t = a.dcam_open(pointer(handle), c_int32(0), None)
 # %%

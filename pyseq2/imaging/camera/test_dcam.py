@@ -1,7 +1,7 @@
 from ctypes import c_char_p, c_int32, c_void_p, pointer
 
 import pytest
-from src.imaging.camera.dcam_api import DCAM_CAPTURE_MODE, DCAMException, check_if_failed
+from pyseq2.imaging.camera.dcam_api import DCAM_CAPTURE_MODE, DCAMException, check_if_failed
 
 from . import API
 from .dcam import Cameras, TwoProps, _Camera
@@ -16,11 +16,9 @@ def test_camera():
 
     assert c.n_frames_taken == 0
 
-    with c.alloc(n_bundles=8, height=128) as buf:
+    with c.attach(n_bundles=8, height=128) as buf:
         with c.capture():
             ...
-        for i in range(8):
-            c._lock_memory(n_curr=i, height=128)
 
 
 def test_two_props():

@@ -5,19 +5,20 @@ from pathlib import Path
 
 api = Path("dcamapi3.h").read_text()
 prop = Path("dcamprop.h").read_text()
-md = Path("dcam.md").read_text()
+miss = Path("missing.h.cpp").read_text()
+# md = Path("dcam.md").read_text()
 s = Path("test.pyi").read_text()
 # %%
 cand = set(re.findall(r"^BOOL DCAMAPI (dcam_\w+)", api, re.M))
 cand |= set(re.findall(r"^BOOL DCAMAPI (dcam_\w+)", prop, re.M))
-
+miss = set(re.findall(r"^BOOL DCAMAPI (dcam_\w+)", miss, re.M))
 x = re.findall(r"^    def (\w+)", s, re.M)
 # %%
-from ctypes import Structure, WinDLL, byref, c_double, c_int32, c_void_p, sizeof  # type: ignore
+from ctypes import Structure, WinDLL, pointer, c_double, c_int32, c_void_p, sizeof  # type: ignore
 
 w = WinDLL("dcamapi.dll")
 succ = set()
-for f in x:
+for f in miss:
     try:
         getattr(w, f)
         succ.add(f)

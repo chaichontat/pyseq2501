@@ -1,12 +1,10 @@
-from ctypes import WinDLL, _CArgObject, byref, c_char_p, c_double, c_int32, c_ubyte, c_uint32
+from ctypes import WinDLL, _CArgObject, c_char_p, c_double, c_int32, c_ubyte, c_uint32, pointer
 from typing import Literal
-
-from src.imaging.camera.dcam import DCAM_CAPTUREMODE_SNAP
 
 # DCAM_CAPTUREMODE_SNAP		= 0,
 # DCAM_CAPTUREMODE_SEQUENCE	= 1,
 DCAM_DEFAULT_ARG = c_int32(0)
-DCAM_DEFAULT_ARG_p = byref(c_int32(0))
+DCAM_DEFAULT_ARG_p = pointer(c_int32(0))
 Handle = c_void_p
 DCAM_CAPTUREMODE = Literal[c_int32(0), c_int32(1)]
 c_void_p = _CArgObject

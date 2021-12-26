@@ -4,10 +4,10 @@ from dataclasses import dataclass, fields
 from logging import getLogger
 from typing import Annotated, Any, Literal
 
-from src.base.instruments import UsesSerial
-from src.com.async_com import COM, CmdParse
-from src.com.thread_mgt import run_in_executor
-from src.utils.utils import chkrng, not_none, ok_if_match
+from pyseq2.base.instruments import UsesSerial
+from pyseq2.com.async_com import COM, CmdParse
+from pyseq2.com.thread_mgt import run_in_executor
+from pyseq2.utils.utils import chkrng, not_none, ok_if_match
 
 logger = getLogger("Laser")
 POWER_RANGE = (0, 500)

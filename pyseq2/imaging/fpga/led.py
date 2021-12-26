@@ -2,9 +2,9 @@ from enum import IntEnum, unique
 from logging import getLogger
 from typing import Literal
 
-from src.base.instruments import FPGAControlled
-from src.com.async_com import CmdParse
-from src.utils.utils import ok_if_match
+from pyseq2.base.instruments import FPGAControlled
+from pyseq2.com.async_com import CmdParse
+from pyseq2.utils.utils import ok_if_match
 
 logger = getLogger("LED")
 

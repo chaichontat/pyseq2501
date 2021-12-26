@@ -3,10 +3,10 @@ from concurrent.futures import Future
 from logging import getLogger
 from typing import Optional
 
-from src.base.instruments import FPGAControlled, Movable
-from src.com.async_com import CmdParse
-from src.com.thread_mgt import run_in_executor
-from src.utils.utils import chkrng, ok_if_match, ok_re
+from pyseq2.base.instruments import FPGAControlled, Movable
+from pyseq2.com.async_com import CmdParse
+from pyseq2.com.thread_mgt import run_in_executor
+from pyseq2.utils.utils import chkrng, ok_if_match, ok_re
 
 logger = getLogger("objective")
 

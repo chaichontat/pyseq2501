@@ -1,9 +1,9 @@
 from concurrent.futures import Future
 from logging import getLogger
 
-from src.base.instruments import FPGAControlled
-from src.com.async_com import CmdParse
-from src.utils.utils import ok_if_match, ok_re
+from pyseq2.base.instruments import FPGAControlled
+from pyseq2.com.async_com import CmdParse
+from pyseq2.utils.utils import ok_if_match, ok_re
 
 logger = getLogger(__name__)
 
