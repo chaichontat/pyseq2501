@@ -1,79 +1,57 @@
-#%%
-import sys
-from pathlib import Path
+from ctypes import c_char_p, c_int32, c_void_p, pointer
 
-sys.path.append("c:\\Users\\sbsuser\\Desktop\\goff-rotation")
-import logging
-
-from rich import print
-from rich.console import Console
-from rich.logging import RichHandler
-from src.imaging.camera.dcam_api import DCAM_CAPTURE_MODE
-
-logging.basicConfig(
-    level="NOTSET",
-    format="[yellow]%(name)-10s[/] %(message)s",
-    datefmt="[%X]",
-    handlers=[RichHandler(rich_tracebacks=True, markup=True)],
-)
-
-log = logging.getLogger("rich")
-logging.getLogger("DCAMAPI").setLevel(logging.INFO)
-
-from src.imaging.camera.dcam import Cameras, Mode
-
-print("[green]Holding breath...")
-#%%
-cams = Cameras()
+import pytest
+from pyseq2.imaging.camera import API
+from pyseq2.imaging.camera.dcam import Cameras, TwoProps, _Camera
+from pyseq2.imaging.camera.dcam_api import DCAM_CAPTURE_MODE, DCAMException, check_if_failed
 
 
-#%%
-import time
-from ctypes import POINTER, c_double, c_int32, c_uint16, c_uint32, c_void_p, pointer
+def test_camera():
+    API.dcam_init(c_void_p(0), pointer(c_int32(0)), c_char_p(0))
+    c = _Camera(0)
+    assert c.capture_mode == DCAM_CAPTURE_MODE.SNAP
+    c.capture_mode = DCAM_CAPTURE_MODE.SEQUENCE
+    assert c.capture_mode == DCAM_CAPTURE_MODE.SEQUENCE
 
-from src.imaging.camera import API
+    assert c.n_frames_taken == 0
 
-# DCAMWAIT_CAPEVENT_FRAMEREADY = 0x0002
-
-# test.properties["trigger_source"] = 1
-# test.properties["sensor_mode"] = 1
-API.dcam_precapture(cams[0].handle, DCAM_CAPTURE_MODE.SNAP)
-API.dcam_precapture(cams[1].handle, DCAM_CAPTURE_MODE.SNAP)
-
-# exp = 0.3
-# test.properties["exposure_time"] = exp
-# cams.mode = Mode.AUTOFOCUS
-n_bundles = 10
-with cams._alloc(n_bundles) as bufs:
-    taken = 0
-    with cams[0].capture(), cams[1].capture():
-        t0 = time.time()
-        while (avail := cams.n_frames_taken) < n_bundles:
-            time.sleep(0.1)
-            if avail > taken:
-                print(f"Now at {avail}")
-                taken = avail
+    with c.attach(n_bundles=8, height=128) as buf:
+        with c.capture():
+            ...
 
 
-# %%
-taken = 0
+def test_two_props():
+    a, b = {"same": 1, "diff": 0}, {"same": 1, "diff": 1}
+    t = TwoProps(a, b)
+    with pytest.raises(Exception):
+        t["diff"]
+    t.update({"diff": 1})
+    t["diff"]
+    t["same"] = -1
+    assert t["same"] == -1
 
 
-#%%
-from ctypes import POINTER, c_double, c_int32, c_uint16, c_uint32, c_void_p, pointer
+def test_cameras():
+    cs = Cameras()
 
-import numpy as np
 
-n = 32
-arr = np.ones((n * 128, 4096), dtype=np.uint16)
-addr = arr.ctypes.data
+class Failed:
+    @check_if_failed
+    def bad(self):
+        return 0
 
-# pointer((c_uint16 * (n * 128) * 4096)())
+    @check_if_failed
+    def good(self):
+        return 1
 
-t = (c_void_p * n)()
-for i in range(n):
-    t[i] = 524288 * i + addr
+    @check_if_failed
+    def what(self):
+        return "hi"
 
-# %%
-# cams[0].properties._dict["trigger_source"].mode_key(cams[0].handle)
-{"sensor_mode": 6, "exposure_time": 0.0022, "partial_area_vsize": 5}
+
+def test_check_if_failed():
+    f = Failed()
+    with pytest.raises(DCAMException):
+        f.bad()
+        f.what()
+    f.good()

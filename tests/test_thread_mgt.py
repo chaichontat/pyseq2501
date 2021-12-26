@@ -2,8 +2,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
-
-from .thread_mgt import run_in_executor, warn_main_thread
+from pyseq2.com.thread_mgt import run_in_executor, warn_main_thread
 
 
 class Fake:
