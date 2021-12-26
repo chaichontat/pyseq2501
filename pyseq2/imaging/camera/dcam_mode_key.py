@@ -16,7 +16,7 @@ from .dcam_types import (
     Props,
 )
 
-logger = getLogger("DCAMmodekey")
+logger = getLogger(__name__)
 LOCK = threading.Lock()
 DCAMPROP_ATTR_HASVALUETEXT = int("0x10000000", 0)
 

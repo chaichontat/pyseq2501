@@ -6,7 +6,7 @@ from enum import IntEnum
 from logging import getLogger
 from typing import Literal, TypedDict, get_args
 
-logger = getLogger("DCAM")
+logger = getLogger(__name__)
 
 # fmt: off
 DCAMPROP_TYPE_MASK      = 0x0000000F

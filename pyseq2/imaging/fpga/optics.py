@@ -8,7 +8,7 @@ from pyseq2.com.async_com import CmdParse
 from pyseq2.com.thread_mgt import run_in_executor
 from pyseq2.utils.utils import not_none, ok_if_match
 
-logger = getLogger("optics")
+logger = getLogger(__name__)
 
 ID = Literal[1, 2]
 

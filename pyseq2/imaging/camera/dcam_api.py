@@ -23,7 +23,7 @@ else:
 
 DCAM_DEFAULT_ARG = c_int32(0)
 DCAM_DEFAULT_ARG_p = pointer(DCAM_DEFAULT_ARG)
-logger = getLogger("DCAMAPI")
+logger = getLogger(__name__)
 LOCK = threading.Lock()
 
 

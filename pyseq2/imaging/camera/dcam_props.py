@@ -34,7 +34,7 @@ from .dcam_types import (
 # BOOL DCAMAPI dcam_getpropertyname	( HDCAM h, int32 iProp, char* text, int32 textbytes );
 # BOOL DCAMAPI dcam_getpropertyvaluetext( HDCAM h, DCAM_PROPERTYVALUETEXT* param );
 
-logger = getLogger("DCAMprops")
+logger = getLogger(__name__)
 LOCK = threading.Lock()
 DCAM_DEFAULT_ARG = 0
 

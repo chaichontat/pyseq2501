@@ -7,7 +7,7 @@ from pyseq2.com.async_com import COM, CmdParse
 from pyseq2.com.thread_mgt import run_in_executor
 from pyseq2.utils.utils import chkrng, ok_if_match, ok_re
 
-logger = logging.getLogger("XStage")
+logger = logging.getLogger(__name__)
 RANGE = (1000, 50000)
 
 

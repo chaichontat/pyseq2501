@@ -9,7 +9,7 @@ from pyseq2.com.async_com import COM, CmdParse
 from pyseq2.com.thread_mgt import run_in_executor
 from pyseq2.utils.utils import chkrng, not_none, ok_if_match
 
-logger = getLogger("Laser")
+logger = getLogger(__name__)
 POWER_RANGE = (0, 500)
 
 

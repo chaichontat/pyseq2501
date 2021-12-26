@@ -13,7 +13,7 @@ from .tdi import TDI
 from .z_obj import ZObj
 from .z_tilt import ZTilt
 
-logger = getLogger("fpga")
+logger = getLogger(__name__)
 
 
 class FPGACmd:

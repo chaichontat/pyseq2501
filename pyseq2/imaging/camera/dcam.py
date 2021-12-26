@@ -34,7 +34,7 @@ from . import API
 from .dcam_api import DCAMException
 from .dcam_props import DCAMDict
 
-logger = getLogger("DCAM")
+logger = getLogger(__name__)
 # DCAMAPI v3.0.301.3690
 
 

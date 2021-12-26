@@ -26,7 +26,7 @@ from pyseq2.base.instruments_types import SerialInstruments
 from pyseq2.com.eventloop import LOOP
 from serial_asyncio import open_serial_connection
 
-logger = getLogger("COM")
+logger = getLogger(__name__)
 # © is not in ASCII. Looking at you Schneider Electrics (x-stage).
 ENCODING_KW = {"encoding": "ISO-8859-1", "errors": "replace"}
 # fmt: off

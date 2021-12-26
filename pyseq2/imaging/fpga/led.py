@@ -6,7 +6,7 @@ from pyseq2.base.instruments import FPGAControlled
 from pyseq2.com.async_com import CmdParse
 from pyseq2.utils.utils import ok_if_match
 
-logger = getLogger("LED")
+logger = getLogger(__name__)
 
 ID = Literal[1, 2]
 

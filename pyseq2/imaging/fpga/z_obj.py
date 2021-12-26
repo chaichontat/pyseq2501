@@ -8,7 +8,7 @@ from pyseq2.com.async_com import CmdParse
 from pyseq2.com.thread_mgt import run_in_executor
 from pyseq2.utils.utils import chkrng, ok_if_match, ok_re
 
-logger = getLogger("objective")
+logger = getLogger(__name__)
 
 
 Y_OFFSET = int(7e6)
