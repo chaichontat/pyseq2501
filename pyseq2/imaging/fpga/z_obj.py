@@ -46,7 +46,7 @@ class ZObj(FPGAControlled, Movable):
     def pos(self, x: int) -> None:
         self.move(x)
 
-    def move(self, x: int) -> Future[None | bool]:
+    def move(self, x: int) -> Future[bool]:
         return self.com.send(ObjCmd.SET_POS(x))
 
     @property

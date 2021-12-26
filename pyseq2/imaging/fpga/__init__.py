@@ -34,7 +34,7 @@ class FPGA(UsesSerial):
 
     @run_in_executor
     def initialize(self) -> bool:
-        res = self.reset().result()
+        res = self.reset().result(60)
         time.sleep(1)  # Otherwise the FPGA hangs.
         return res
 

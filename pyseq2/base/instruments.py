@@ -29,8 +29,14 @@ class Movable(metaclass=ABCMeta):
     HOME: ClassVar[int]
 
     @abstractmethod
-    def move(self, p: int) -> Future[Any]:
-        ...
+    def move(self, p: int) -> Future[bool]:
+        """
+        Args:
+            p (int): Target position
+
+        Returns:
+            Future[bool]: Future that resolves when move is completed.
+        """
 
     @property
     @abstractmethod
@@ -39,7 +45,8 @@ class Movable(metaclass=ABCMeta):
 
     @pos.setter
     def pos(self, p: int) -> None:
-        self.move(p)
+        """Move that always block."""
+        self.move(p).result()
 
     @property
     @abstractmethod

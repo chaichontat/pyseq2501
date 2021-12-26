@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-import time
-from concurrent.futures import Future
+from concurrent.futures import Future, wait
 from logging import getLogger
 from typing import Literal, Optional, cast, get_args
 
 from pyseq2.base.instruments import FPGAControlled, Movable
 from pyseq2.com.async_com import CmdParse
 from pyseq2.com.thread_mgt import run_in_executor
-from pyseq2.utils.utils import chkrng, not_none, ok_re
+from pyseq2.utils.utils import chkrng, ok_re
 
 logger = getLogger("z")
 
@@ -47,14 +46,20 @@ class ZTilt(FPGAControlled, Movable):
         [f.result() for f in futs]  # Returns when move is completed.
 
         for i in get_args(ID):
-            fut = self.com.send(tuple(TiltCmd.CLEAR_REGISTER(i) for i in get_args(ID)))
+            fut = cast(
+                tuple[Future[bool], ...],
+                self.com.send(tuple(TiltCmd.CLEAR_REGISTER(i) for i in get_args(ID))),
+            )
 
-        [f.result(60) for f in fut]  # type: ignore
-        assert all(x > -10 for x in self.pos.result(60))
+        wait(fut, 60)  # type: ignore
+        assert all(x > -5 for x in self.pos.result(60))
         logger.info("Completed z-tilt initialization.")
 
-    def move(self, pos: int) -> list[Future[bool]]:
-        return [self.com.send(TiltCmd.SET_POS(pos, i)) for i in get_args(ID)]  # type: ignore
+    @run_in_executor
+    def move(self, pos: int) -> bool:
+        futs = [self.com.send(TiltCmd.SET_POS(pos, i)) for i in get_args(ID)]
+        wait(futs, 60)
+        return True
 
     @property
     @run_in_executor
@@ -69,6 +74,6 @@ class ZTilt(FPGAControlled, Movable):
         return cast(tuple[int, int, int], out)
 
     @property
-    @run_in_executor
-    def is_moving(self) -> bool:
-        return any(a != b for a, b in zip(self.pos.result(60), self.pos.result(60)))
+    def is_moving(self) -> Future[Literal[False]]:
+        return self.com._executor.submit(lambda: False)
+        # return any(a != b for a, b in zip(self.pos.result(60), self.pos.result(60)))

@@ -42,7 +42,7 @@ class XStage(UsesSerial, Movable):
     def is_moving(self) -> Future[bool]:
         return self.com.send(XCmd.IS_MOVING)
 
-    def move(self, pos: int) -> Future[int]:
+    def move(self, pos: int) -> Future[bool]:
         """Returns when move is completed."""
         return self.com.send(XCmd.SET_POS(pos))
 

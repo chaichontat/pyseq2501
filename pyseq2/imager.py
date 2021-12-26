@@ -17,7 +17,7 @@ from .imaging.ystage import YStage
 from .utils.ports import Ports
 from .utils.utils import not_none
 
-logger = getLogger("Imager")
+logger = getLogger(__name__)
 
 
 class Position(NamedTuple):
@@ -75,22 +75,21 @@ class Imager:
         }
         return State.from_futures(**out)
 
-    @property
-    def all_still(self) -> bool:
-        x, y, z = self.x.is_moving, self.y.is_moving, self.z_tilt.is_moving
-        return not any((x.result(60), y.result(60), z.result(60)))
+    def wait_all_idle(self) -> None:
+        logger.info("Waiting for all motions to complete.")
+        self.x.com._executor.submit(lambda: None).result(60)
+        self.y.com._executor.submit(lambda: None).result(60)
+        self.fpga.com._executor.submit(lambda: None).result(60)
+        logger.info("All motions completed.")
+        # return not any((x.result(60), y.result(60), z.result(60)))
 
-    # TODO add more ready checks.
     def take(self, n_bundles: int, dark: bool = False) -> UInt16Array:
-        logger.info(f"Taking image with {n_bundles} bundles.")
+        logger.info(f"Taking an image with {n_bundles} bundles.")
         n_bundles += 1  # To flush CCD.
-        while not self.all_still:  # All commands block unless done with moving.
-            logger.info("Started taking an image while stage is moving. Waiting.")
-            time.sleep(0.5)
+        self.wait_all_idle()
 
         self.y.set_mode("IMAGING")
-        pos = self.y.pos
-        pos = pos.result(60)
+        pos = self.y.pos.result(60)
         assert pos is not None
         n_px_y = n_bundles * self.cams.BUNDLE_HEIGHT
         end_y_pos = pos - (delta := self.calc_delta_pos(n_px_y)) - 100000
@@ -112,7 +111,7 @@ class Imager:
             logger.warning(f"Number of trigger pulses mismatch. Expected: {exp} Got {res}.")
 
         logger.info(f"Done taking an image.")
-        return imgs[:, :-128, :]  # Remove first oversaturated bundle.
+        return imgs[:, :-128, :]  # Remove oversaturated first bundle.
 
     @staticmethod
     def calc_delta_pos(n_px_y: int) -> int:
@@ -127,9 +126,8 @@ class Imager:
 
     def autofocus(self) -> tuple[int, UInt16Array]:
         """Moves to z_max and takes 232 (2048 × 5) images while moving to z_min.
-
+        Somehow only works with cam 0.
         Returns the z position of maximum intensity and the images.
-
         """
         n_bundles, height = 232, 5
         z_min, z_max = 2621, 60292
