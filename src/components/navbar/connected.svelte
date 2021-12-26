@@ -1,5 +1,5 @@
 <script lang="ts">
-  let connected: boolean = true;
+  let connected: boolean = false;
 </script>
 
 {#if connected}
@@ -20,7 +20,7 @@
     </svg>
   </span>
 {:else}
-  <span class="font-semibold text-sm" style="color:rgb(207, 34, 46);">
+  <span class="font-semibold text-sm animate-pulse" style="color:rgb(207, 34, 46);">
     Not Connected
     <svg
       role="img"

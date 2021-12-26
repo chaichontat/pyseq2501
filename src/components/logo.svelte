@@ -1,15 +1,15 @@
 <div class="mx-auto space-x-1 navbar max-w-none">
   <div class="flex items-center flex-none">
-    <a href="/" aria-label="Homepage" class="px-2 flex-0 btn btn-ghost md:px-4 nuxt-link-active"
+    <span aria-label="Homepage" class="px-2 flex-0 md:px-4 "
       ><div class="inline-block text-3xl">
         <span class="normal-case font-light">PySeq</span><span class="grad font-medium"
           >&nbsp;2501</span
         >
-      </div></a
+      </div></span
     >
   </div>
   <a
-    href="https://github.com/saadeghi/daisyui/blob/master/CHANGELOG.md"
+    href="https://github.com/chaichontat/pyseq2501/"
     target="_blank"
     rel="nofollow"
     class="font-mono text-xs opacity-50"
@@ -19,7 +19,7 @@
   >
 </div>
 
-<style>
+<style lang="postcss">
   .grad {
     background: linear-gradient(61.68deg, #225de6 -4.27%, #a664fd 116.09%);
     background-clip: text;
