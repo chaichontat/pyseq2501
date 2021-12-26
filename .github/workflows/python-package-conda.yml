@@ -43,16 +43,16 @@ jobs:
       - name: Autoformat with Black
         run: |
           conda install black
-          black --line-length 110 --check src/
+          black --line-length 110 --check pyseq2/
 
       - name: Type check with Pyright
         run: |
           npm i -g pyright
-          pyright --warnings src/
+          pyright --warnings pyseq2/
 
       - name: Test with Pytest
         run: |
-          pytest src/
+          pytest pyseq2/
 
       - name: Build docs
         run: |
