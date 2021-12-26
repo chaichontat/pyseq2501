@@ -33,6 +33,7 @@ nav:
       - Overview: hiseq.md
       - Programs: programs.md
   - Reference: reference.md
+  - Troubleshooting: troubleshooting.md
 
 markdown_extensions:
   - pymdownx.arithmatex:
