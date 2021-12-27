@@ -35,7 +35,11 @@
   <!-- Toggle -->
   <span class="monomedium justify-center align-middle mb-4 -translate-y-8">
     <div class="text-base">A</div>
-    <input type="checkbox" bind:checked={flowcell} class="toggle toggle-md self-center mx-1 " />
+    <input
+      type="checkbox"
+      bind:checked={flowcell}
+      class="toggle toggle-md toggl-dark self-center mx-1 "
+    />
     <div class="text-base">B</div>
   </span>
   <!-- Need this since using negative margins on the checkbox did not move the clickable area. -->
@@ -56,21 +60,21 @@
   <!-- XY Input -->
   <div class="form-control self-center mt-4">
     <label class="font-medium input-group">
-      <span class="italic">X</span>
+      <span>X</span>
       <input
         type="number"
         min="-5"
         max="30"
         step="0.01"
-        class="text-lg text-center input input-bordered w-24 h-10"
+        class="text-lg text-center input input-bordered inputcheck w-24 h-10"
       />
-      <span class="italic">Y</span>
+      <span>Y</span>
       <input
         type="number"
         min="-5"
         max="80"
         step="0.01"
-        class="text-lg text-center input input-bordered w-24 h-10"
+        class="text-lg text-center input input-bordered inputcheck w-24 h-10"
       />
 
       <button
@@ -115,25 +119,8 @@
     @apply font-mono font-medium;
   }
 
-  .toggle {
-    --chkbg: hsla(var(--bc) / 0.2);
-    --focus-shadow: 0 0 0;
-    --handleoffset: 1.5rem; /* 24px */
+  .toggl-dark {
     --tw-bg-opacity: 0.8;
-    --tw-border-opacity: 0.8;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background-color: hsla(var(--bc) / var(--tw-bg-opacity, 1));
-    border-color: hsla(var(--bc) / var(--tw-border-opacity, 1));
-    border-width: 1px;
-    cursor: pointer;
-    height: 1.5rem; /* 24px */
-    width: 3rem; /* 48px */
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 0.3s;
-    border-radius: var(--rounded-badge, 1.9rem);
-    transition: background, box-shadow var(--animation-input, 0.2s) ease-in-out;
   }
 
   /* Remove arrows
@@ -151,6 +138,7 @@
   }
 
   input:valid {
-    @apply border-gray-200 border;
+    @apply border;
+    border-color: inherit;
   }
 </style>

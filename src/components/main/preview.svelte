@@ -27,6 +27,6 @@
   }
 </script>
 
-<div class="mt-4 center shadow border border-gray-400" on:wheel={pz.zoomWithWheel}>
-  <canvas class="" bind:this={canvas} width={1024} height={1024} />
+<div class="mt-4 max-h-full center shadow border border-gray-400" on:wheel={pz.zoomWithWheel}>
+  <canvas bind:this={canvas} width={1024} height={800} />
 </div>
