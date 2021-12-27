@@ -8,7 +8,10 @@
   let elem: HTMLInputElement;
 
   const dispatch = createEventDispatcher();
-  const focus = (el: HTMLElement) => el.focus();
+  const focus = (el: HTMLInputElement) => {
+    el.focus();
+    el.select();
+  };
   function validator(x: number) {
     return 0 <= x && x <= 65535;
   }
