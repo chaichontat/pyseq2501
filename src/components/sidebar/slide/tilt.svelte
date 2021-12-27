@@ -1,27 +1,48 @@
 <script lang="ts">
   export let z_tilt: [number, number, number] = [19850, 19850, 1];
 
+  let editable = [false, false, false];
+
   import Pencil from "../../svgs/pencil.svelte";
+  import Editable from "./editable.svelte";
+
+  $: console.log(editable);
 </script>
 
-<span class="dot left top-8">
+<div class="dot left top-8">
   <div>
-    Tilt 3 <br /> Z:&nbsp;<span class="font-medium">{z_tilt[2]}</span>
+    Tilt 3<Editable
+      bind:editable={editable[2]}
+      value={z_tilt[2]}
+      clDisp="absolute right-8 leading-6 font-mono font-medium"
+      clInp="absolute text-base top-5 right-6 input input-smaller w-16 text-right"
+    />
   </div>
-  <Pencil class="ml-2" />
+  <Pencil class="ml-2" on:click={() => (editable[2] = true)} />
+</div>
+
+<span class="dot left" style="top: 19rem;">
+  <div>
+    Tilt 2<Editable
+      bind:editable={editable[1]}
+      value={z_tilt[1]}
+      clDisp="absolute right-8 leading-6 font-mono font-medium"
+      clInp="absolute text-base top-5 right-6 input input-smaller w-16 text-right"
+    />
+  </div>
+  <Pencil class="ml-2" on:click={() => (editable[1] = true)} />
 </span>
 
-<span class="dot left bottom-8">
+<span class="dot right">
+  <Pencil class="mr-2" on:click={() => (editable[0] = true)} />
   <div>
-    Tilt 2 <br /> Z:&nbsp;<span class="font-medium">{z_tilt[1]}</span>
-  </div>
-  <Pencil class="ml-2" />
-</span>
-
-<span class="dot bottom-8 left-36">
-  <Pencil class="mr-2" />
-  <div>
-    Tilt 1 <br /> Z:&nbsp;<span class="font-medium">{z_tilt[0]}</span>
+    Tilt 1
+    <Editable
+      bind:editable={editable[0]}
+      value={z_tilt[0]}
+      clDisp="absolute left-6 leading-6 font-mono font-medium"
+      clInp="absolute top-5 left-4 text-base input input-smaller w-16"
+    />
   </div>
 </span>
 
@@ -45,6 +66,11 @@
     background: black;
     opacity: 0.5;
   */
+
+  .right {
+    top: 19rem;
+    left: 9.5rem;
+  }
 
   .left {
     @apply text-right float-right right-32;

@@ -1,5 +1,6 @@
 <script lang="ts">
   import Pencil from "../../svgs/pencil.svelte";
+  import ObjectiveZ from "./objective_z.svelte";
   import Slide from "./slide.svelte";
   export let x = 10;
   export let y = 10;
@@ -49,18 +50,8 @@
   <Slide name={flowcell ? "B" : "A"} {x} {y} {z_tilt} />
 
   <!-- Z Objective -->
-  <div class="mt-3 flex self-center text-sm">
-    <Pencil class="ml-2" let:modifying>
-      <div slot="before">
-        <div class="">Objective Z:&nbsp;</div>
-        {#if modifying}
-          <input type="number" class="w-24 font-medium text-center" autofocus />
-        {:else}
-          <div class="w-12 font-mono font-medium text-right">{z_obj}</div>
-        {/if}
-      </div>
-    </Pencil>
-  </div>
+
+  <ObjectiveZ />
 
   <!-- XY Input -->
   <div class="form-control self-center mt-4">

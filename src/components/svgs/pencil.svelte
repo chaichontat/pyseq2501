@@ -1,17 +1,17 @@
 <script lang="ts">
+  import { createEventDispatcher } from "svelte";
+
   let cl = "";
   export { cl as class };
-  let modifying: boolean = false;
+
+  const dispatch = createEventDispatcher();
+
+  function click() {
+    dispatch("click", true);
+  }
 </script>
 
-<slot name="before" {modifying} />
-<button
-  class={cl}
-  on:click={() => {
-    modifying = true;
-    console.log(modifying);
-  }}
->
+<button class={cl} on:click={click}>
   <svg
     xmlns="http://www.w3.org/2000/svg"
     class="h-4 w-4 fill-gray-700 hover:fill-blue-800 transition-colors"
@@ -25,4 +25,3 @@
     />
   </svg>
 </button>
-<slot name="after" {modifying} />
