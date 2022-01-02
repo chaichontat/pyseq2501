@@ -12,7 +12,7 @@
 
 <div
   id="cross"
-  class="absolute z-50 text-xl text-blue-700 transition-all"
+  class="absolute z-20 text-xl text-blue-700 transition-all"
   style="top:calc({(100 * y) / 75}% - 0.8em); right:calc({real_x}% - 0.32em);"
 >
   ×
@@ -31,7 +31,7 @@
 
 <span
   id="legend"
-  class="z-50 absolute font-mono font-medium text-sm text-center w-36 transition-all text-blue-700"
+  class="z-20 absolute font-mono font-medium text-sm text-center w-36 transition-all text-blue-700"
   style="top:calc({(100 * y) /
     75}% + 0.4rem); right:calc({real_x}% - 4.5rem); text-shadow: 0px 0px 2px white, 0px 0px 5px white, 0px 0px 10px white"
 >

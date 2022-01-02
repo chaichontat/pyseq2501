@@ -10,9 +10,9 @@ import type { Subscriber, Unsubscriber, Updater, Readable, Writable } from "svel
  * @return {Store}
  */
 const reopenTimeouts = [2000, 5000, 10000, 30000, 60000];
-type ValidType = string | ArrayBufferLike | Blob | ArrayBufferView;
+type ValidType = string; // | ArrayBufferLike | Blob | ArrayBufferView;
 
-export function websocketStore<T>(url: string, initialValue: T, f = (x: ValidType) => x): Writable<T> {
+export function websocketStore<T>(url: string, initialValue: T | undefined = undefined, f: (x: ValidType) => any = (x: ValidType) => x): Writable<T> {
     let socket: WebSocket | undefined
     let openPromise: Promise<boolean> | undefined
     let reopenTimeoutHandler: number | undefined;
@@ -55,6 +55,14 @@ export function websocketStore<T>(url: string, initialValue: T, f = (x: ValidTyp
         // we are still in the opening phase
         if (openPromise) return openPromise;
 
+        // while (true) {
+        //     try {
+        //         WebSocket
+        //         break
+        //     } catch (e) {
+        //         await new Promise(r => setTimeout(r, 1000));
+        //     }
+        // }
         socket = new WebSocket(url);
 
         socket.onmessage = (event: MessageEvent): void => {
@@ -65,7 +73,13 @@ export function websocketStore<T>(url: string, initialValue: T, f = (x: ValidTyp
             });
         };
 
-        socket.onclose = (_: CloseEvent): void => reopen();
+        socket.onclose = (_: CloseEvent): void => {
+            subscribers.forEach((subscriber) => {
+                // @ts-ignore
+                subscriber(undefined)
+            });
+            reopen();
+        }
 
         openPromise = new Promise((resolve, reject) => {
             if (socket) {

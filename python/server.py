@@ -2,34 +2,30 @@
 import asyncio
 import base64
 import logging
-import sys
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
-from pathlib import Path
+from typing import Callable, Literal, NoReturn, Optional
 
 import numpy as np
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from PIL import Image
-
-sys.path.append((Path(__file__).parent.parent.parent).as_posix())
 from fastapi.middleware.cors import CORSMiddleware
+from PIL import Image
+from pydantic import BaseModel, validator
+from pyseq2.imager import Imager
+from pyseq2.utils.ports import get_ports
 from rich.logging import RichHandler
-from src.imager import Imager
-from src.utils.ports import get_ports
 
 import status
+from fake_imager import FakeImager
 
 logging.basicConfig(
-    level="NOTSET",
+    level="INFO",
     format="[yellow]%(name)-10s[/] %(message)s",
     datefmt="[%X]",
     handlers=[RichHandler(rich_tracebacks=True, markup=True)],
 )
 
-logging.getLogger("sse_starlette.sse").setLevel(logging.INFO)
-logging.getLogger("DCAMAPI").setLevel(logging.INFO)
-logging.getLogger("matplotlib.font_manager").setLevel(logging.INFO)
-
+logger = logging.getLogger(__name__)
 app = FastAPI()
 thr = ThreadPoolExecutor(max_workers=1)
 app.add_middleware(
@@ -39,40 +35,49 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# imager = Imager(get_ports(60))
 
 
-def take_img() -> str:
-    imager.y.move(4000000)
-    img = imager.take(8, dark=True)
-    # print(i := np.random.randint(0, 256))
-    pil_img = Image.fromarray((img[1] / 8).astype(np.uint8))
-    buff = BytesIO()
-    pil_img.save(buff, format="JPEG")
-    return base64.b64encode(buff.getvalue()).decode("utf-8")
+DEBUG = True
+imager = FakeImager if DEBUG else Imager(get_ports(60))
+
+def take_img(n_bundles: int, dark: bool = False) -> Callable[[], str]:
+    def inner() -> str:
+        img = imager.take(n_bundles, dark=dark)
+        pil_img = Image.fromarray((img[1] / 8).astype(np.uint8))
+        buff = BytesIO()
+        pil_img.save(buff, format="JPEG")
+        return base64.b64encode(buff.getvalue()).decode("utf-8")
+    return inner
 
 
-def fake() -> str:
-    print(i := np.random.randint(0, 256))
-    pil_img = Image.fromarray(i * np.ones((256, 256), dtype=np.uint8))
-    buff = BytesIO()
-    pil_img.save(buff, format="JPEG")
-    return base64.b64encode(buff.getvalue()).decode("utf-8")
+Cmds = Literal["take", "stop", "eject", "laser_r", "laser_g", "x", "y", "z_obj", "z_tilt", "init"]
 
+class Received(BaseModel):
+    __match_args__ = ("cmd", "n")
+    cmd: Cmds
+    n: Optional[int]
+    
 
 @app.websocket("/img")
-async def websocket_endpoint(websocket: WebSocket):
+async def image_endpoint(websocket: WebSocket) -> NoReturn:
     while True:
         await websocket.accept()
         while True:
             try:
-                cmd = await websocket.receive_text()
-                if cmd == "take":
-                    imgstr = await asyncio.get_running_loop().run_in_executor(thr, take_img)
-                    await websocket.send_text(imgstr)
+                cmd = Received.parse_raw(await websocket.receive_text())
+                match cmd:
+                    case Received("take", n):
+                        logger.info(f"Received: Take {n} bundles.")
+                        imgstr = await asyncio.get_running_loop().run_in_executor(thr, take_img(n))
+                        await websocket.send_text(imgstr)
+                
             except WebSocketDisconnect:
                 ...
 
 
-app.get("/status")(status.poll)
+app.websocket("/status")(status.gen_poll(imager))
 # app.get("/logs")(status.logs)
+
+    
+# %%
+

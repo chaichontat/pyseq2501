@@ -13,10 +13,6 @@
 
   //   // receive JSON from server (push)
   //   let response = $myStore;
-  let myStore;
-  onMount(() => {
-    myStore = websocketStore("ws://127.0.0.1:8000/ws", { a: "ourim" });
-  });
 </script>
 
 <div>

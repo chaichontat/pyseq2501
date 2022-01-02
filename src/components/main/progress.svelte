@@ -1,19 +1,27 @@
 <script lang="ts">
-  export let full: null | number;
+  import { mainStore } from "../../store";
+
+  export let full: null | number = 8;
   export let curr: null | number;
 
-  let _curr = "--";
-  let _full = "--";
+  let _curr = "  --";
 
   $: {
-    _full = full ? full.toString() : "--";
     _curr = curr ? curr.toString() : "--";
+  }
+
+  function start() {
+    if (0 < full && full < 1000) {
+      mainStore.set(JSON.stringify({ cmd: "take", n: full }));
+    } else {
+      alert("Invalid number of bundles.");
+    }
   }
 </script>
 
 <span class="flex flex-row gap-x-3 w-full">
   <content class="grid grid-row-2 gap-y-2 w-24">
-    <button class="_btn btn--primary">Start</button>
+    <button class="_btn btn--primary" on:click={start}>Start</button>
     <button class="_btn btn--secondary">Cancel</button>
   </content>
 
@@ -22,9 +30,18 @@
       <div class="stat-figure text-primary">
         <button class="btn loading btn-circle btn-lg bg-base-200 btn-ghost" />
       </div>
-      <div class="stat-value">
-        {`${_curr}/`}<input type="number" class="input stat-value w-24" placeholder="1" />
-      </div>
+      <span class="stat-value">
+        <span class="font-mono">{_curr}</span>
+        /
+        <input
+          type="number"
+          class="input stat-value w-24"
+          min="1"
+          max="999"
+          placeholder="1"
+          bind:value={full}
+        />
+      </span>
       <div class="stat-title">Bundles taken</div>
       <div class="stat-desc">
         <progress value={curr} max={full} class="progress progress-secondary" />

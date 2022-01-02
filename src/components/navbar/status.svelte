@@ -1,30 +1,20 @@
 <script lang="ts">
-  export let message = "";
+  import { statusStore } from "../../store";
+  import { flash } from "../../utils";
 
-  import { afterUpdate } from "svelte";
+  let message = "";
 
   let div: HTMLElement;
-
-  function flash(element) {
-    requestAnimationFrame(() => {
-      element.style.transition = "none";
-      element.style.color = "rgba(255,62,0,1)";
-      element.style.backgroundColor = "rgba(255,62,0,0.2)";
-
-      setTimeout(() => {
-        element.style.transition = "color 1s, background 1s";
-        element.style.color = "";
-        element.style.backgroundColor = "";
-      });
-    });
+  $: {
+    if ($statusStore && message !== $statusStore.msg) {
+      message = $statusStore.msg;
+      flash(div);
+    }
   }
-
-  afterUpdate(() => {
-    flash(div);
-  });
 </script>
 
-<div bind:this={div} class="font-mono font-medium rounded-lg">
+<div class="relative font-mono font-medium py-2 ">
+  <div bind:this={div} class="ml-4 absolute w-full h-full rounded-lg" />
   {#if message}
     <div
       class="circle ml-8 transition-all"

@@ -6,7 +6,7 @@ const config = {
     extend: {},
   },
 
-  plugins: [require("daisyui"), require("@tailwindcss/forms")],
+  plugins: [require("daisyui")],
   daisyui: {
     themes: [
       {

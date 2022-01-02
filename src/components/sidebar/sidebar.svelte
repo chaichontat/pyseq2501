@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import type { Writable } from "svelte/store";
-  import type { Status } from "../../structs";
+  import type { Status } from "../../store";
+  import { statusStore } from "../../store";
   import Logo from "../logo.svelte";
   import Division from "./division.svelte";
   import Lasers from "./lasers.svelte";
@@ -15,24 +14,24 @@
     laser_r: 3,
     laser_g: 5,
     shutter: false,
+    msg: "",
   };
 
-  let store: Writable<Status>;
+  let connected: boolean = false;
   // onMount(() => {
-  //   store = websocketStore(
-  //     `ws://${window.location.hostname}:8000/status`,
-  //     status,
-  //     (x: string) => JSON.parse(JSON.parse(x))
-  //   );
+  //   const sse = new EventSource("http://localhost:8000/status");
+  //   sse.onmessage = (event: MessageEvent<string>) => (status = JSON.parse(event.data));
+  //   return () => {
+  //     if (sse.readyState === 1) sse.close();
+  //   };
   // });
 
-  onMount(() => {
-    const sse = new EventSource("http://localhost:8000/status");
-    sse.onmessage = (event: MessageEvent<string>) => (status = JSON.parse(event.data));
-    return () => {
-      if (sse.readyState === 1) sse.close();
-    };
-  });
+  $: {
+    if ($statusStore) {
+      status = $statusStore;
+    }
+    connected = $statusStore != undefined ? true : false;
+  }
 </script>
 
 <div class="drawer drawer-side">
@@ -42,8 +41,13 @@
       class="hidden lg:block sticky inset-x-0 top-0 z-10 w-full py-1 transition duration-200 ease-in-out border-b border-base-200 bg-base-100"
     >
       <Logo />
-      <div>
-        <ol class="menu p-2 mt-4">
+
+      <div class="relative">
+        <!-- <div
+          class:translucent={!connected}
+          class="hidden absolute w-full h-full transition-all"
+        /> -->
+        <ol class="menu p-2 mt-4 ">
           <Division name="Map">
             <Map {...status} />
           </Division>
@@ -69,5 +73,9 @@
     @apply text-base-content;
     @apply w-96;
     @apply border-r border-base-200;
+  }
+
+  .translucent {
+    @apply bg-white opacity-40 z-50 block;
   }
 </style>

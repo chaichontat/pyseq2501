@@ -1,5 +1,7 @@
 <script lang="ts">
+  import { statusStore } from "../../store";
   let connected: boolean = false;
+  $: connected = $statusStore != undefined ? true : false;
 </script>
 
 {#if connected}
@@ -20,7 +22,7 @@
     </svg>
   </span>
 {:else}
-  <span class="font-semibold text-sm animate-pulse" style="color:rgb(207, 34, 46);">
+  <span class="mt-1 font-semibold text-sm animate-bounce" style="color:rgb(207, 34, 46);">
     Not Connected
     <svg
       role="img"

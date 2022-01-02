@@ -5,8 +5,6 @@
 
   import Pencil from "../../svgs/pencil.svelte";
   import Editable from "./editable.svelte";
-
-  $: console.log(editable);
 </script>
 
 <div class="dot left top-8">

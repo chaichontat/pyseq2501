@@ -1,7 +1,7 @@
 import adapter from "@sveltejs/adapter-static"
 import preprocess from "svelte-preprocess"
 
-const dev = process.env.NODE_ENV === 'development'
+const ci = process.env.CI === 'true'
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -27,7 +27,7 @@ const config = {
       },
     },
     paths: {
-      base: dev ? "" : "/pyseq2501-web"
+      base: ci ? "/pyseq2501-web" : ""
     },
     appDir: "internal",
     adapter: adapter({
