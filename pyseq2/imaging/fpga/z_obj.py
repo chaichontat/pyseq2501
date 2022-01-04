@@ -1,7 +1,7 @@
-import re
 from concurrent.futures import Future
+from contextlib import contextmanager
 from logging import getLogger
-from typing import Optional
+from typing import Callable, Generator, Optional
 
 from pyseq2.base.instruments import FPGAControlled, Movable
 from pyseq2.com.async_com import CmdParse
@@ -18,13 +18,15 @@ RANGE = (0, 65535)
 class ObjCmd:
     # Callable[[Annotated[int, "mm/s"]], str]
     # fmt: off
-    SET_VELO = CmdParse(lambda x: f"ZSTEP {1288471 * x}", ok_if_match("ZSTEP"))
+    SET_VELO = CmdParse(lambda x: f"ZSTEP {int(1288471 * x)}", ok_if_match("ZSTEP"))
     SET_POS  = CmdParse(chkrng(lambda x: f"ZDACW {x}", *RANGE), ok_if_match("ZDACW"))
     GET_TARGET_POS = CmdParse(     "ZDACR"              , ok_re(r"^ZDACR (\d+)$", int))
     GET_POS        = CmdParse(     "ZADCR"              , ok_re(r"^ZADCR (\d+)$", int))
     
-    SET_TRIGGER = lambda x: f"ZTRG {x}"
-    ARM_TRIGGER = "ZYT 0 3"
+    SET_TRIGGER = CmdParse(lambda x: f"ZTRG {x}"   , ok_if_match("ZTRG"))
+    ARM_TRIGGER = CmdParse(           "ZYT 0 3"    , ok_if_match("ZYT"))
+    Z_MOVE      = CmdParse(lambda x: f"ZMV {x}"    , ok_if_match("@LOG Trigger Camera\nZMV"), n_lines=2)
+    SWYZ        = CmdParse(           "SWYZ_POS 1" , ok_if_match("SWYZ_POS"))
     # fmt: on
 
 
@@ -48,6 +50,20 @@ class ZObj(FPGAControlled, Movable):
 
     def move(self, x: int) -> Future[bool]:
         return self.com.send(ObjCmd.SET_POS(x))
+
+    @contextmanager
+    def af_arm(
+        self, z_min: int = 2621, z_max: int = 60292
+    ) -> Generator[Callable[[], Future[bool]], None, None]:
+        try:
+            self.com.send(ObjCmd.SET_POS(z_max)).result()  # Returns when done.
+            self.com.send(ObjCmd.SWYZ)
+            self.com.send(ObjCmd.SET_VELO(0.42))
+            self.com.send(ObjCmd.SET_TRIGGER(z_max))
+            self.com.send(ObjCmd.ARM_TRIGGER).result()
+            yield lambda: self.com.send(ObjCmd.Z_MOVE(z_min))
+        finally:
+            self.com.send(ObjCmd.SET_VELO(5)).result()
 
     @property
     @run_in_executor

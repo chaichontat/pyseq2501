@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import ctypes
 import threading
-
 from ctypes import c_double, c_int32, pointer
 from dataclasses import dataclass
 from logging import getLogger
 from typing import Iterator, MutableMapping, NoReturn, cast, get_args
+
+import numpy as np
 
 from . import API
 from .dcam_api import DCAMReturnedZero
@@ -102,7 +103,7 @@ class DCAMDict(MutableMapping):
             API.dcam_setgetpropertyvalue(self.handle, prop.id_, pointer(to_set), c_int32(DCAM_DEFAULT_ARG))
             logger.info(f"Set {name} to {value}.")
             self.refresh()
-            assert self[name] == value
+            assert np.allclose(self[name], value)
 
     def __delitem__(self, _: Props) -> NoReturn:
         raise Exception("Cannot remove properties!")

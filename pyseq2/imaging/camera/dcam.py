@@ -7,9 +7,8 @@ import time
 from concurrent.futures import Future
 from concurrent.futures.thread import ThreadPoolExecutor
 from contextlib import contextmanager
-from ctypes import c_char_p, c_int32, c_uint16, c_uint32, c_void_p, pointer, sizeof
+from ctypes import c_char_p, c_int32, c_uint32, c_void_p, pointer, sizeof
 from enum import Enum, IntEnum
-from itertools import chain
 from logging import getLogger
 from pathlib import Path
 from typing import (
@@ -23,12 +22,14 @@ from typing import (
     TypeVar,
     cast,
     get_args,
+    overload,
 )
 
 import numpy as np
 import numpy.typing as npt
 from pyseq2.com.thread_mgt import run_in_executor, warn_main_thread
 from pyseq2.imaging.camera.dcam_api import DCAM_CAPTURE_MODE
+from pyseq2.utils.utils import gen_future
 
 from . import API
 from .dcam_api import DCAMException
@@ -61,9 +62,8 @@ FourImages = tuple[UInt16Array, UInt16Array, UInt16Array, UInt16Array]
 
 
 class Mode(Enum):
-    LIVE_AREA = {"sensor_mode": 1, "contrast_gain": 5}
-    FOCUS_SWEEP = {"sensor_mode": 6, "exposure_time": 0.002, "partial_area_vsize": 5}
-    TDI = {"sensor_mode": 4, "contrast_gain": 0, "sensor_mode_line_bundle_height": 128}
+    FOCUS_SWEEP = {"sensor_mode": 6, "exposure_time": 0.001, "partial_area_vsize": 5}
+    TDI = {"sensor_mode": 4, "sensor_mode_line_bundle_height": 128}
 
 
 class _Camera:
@@ -93,7 +93,7 @@ class _Camera:
         return self._capture_mode
 
     @capture_mode.setter
-    def capture_mode(self, m: DCAM_CAPTURE_MODE):
+    def capture_mode(self, m: DCAM_CAPTURE_MODE) -> None:
         API.dcam_precapture(self.handle, m)
         self._capture_mode = m
 
@@ -153,10 +153,9 @@ class _Camera:
     @property
     def n_frames_taken(self) -> int:
         """Return number of frames (int) that have been taken."""
-        b_index = c_int32(-1)
-        f_count = c_int32(-1)
+        b_index, f_count = c_int32(-1), c_int32(-1)
         API.dcam_gettransferinfo(self.handle, pointer(b_index), pointer(f_count))
-        return int(f_count.value)
+        return f_count.value
 
 
 T = TypeVar("T", bound=Hashable)
@@ -187,6 +186,7 @@ class Cameras:
 
     IMG_WIDTH = 4096
     BUNDLE_HEIGHT = 128
+    MODE = Mode
 
     _cams: Future[tuple[_Camera, _Camera]]
     properties: TwoProps
@@ -209,7 +209,7 @@ class Cameras:
             logger.info(f"Still alive. dcam_init takes about 10s. Taken {time.monotonic() - t0:.2f} s.")
         cams = (_Camera(0), _Camera(1))
         self.properties = TwoProps(*[c.properties for c in cams])
-        self.mode = Mode.TDI
+        self.set_mode("TDI")
         return cams
 
     def __getitem__(self, id_: ID) -> _Camera:
@@ -225,17 +225,37 @@ class Cameras:
     @run_in_executor
     def initialize(self) -> None:
         [x.initialize() for x in self]
-        self.mode = Mode.TDI
+        self.set_mode("TDI")
 
-    @property
-    def n_frames_taken(self) -> int:
-        return min([c.n_frames_taken for c in self])
+    def n_frames_taken(self, cam: Literal[0, 1, 2]) -> int:
+        return min([c.n_frames_taken for c in self]) if cam == 2 else self[cam].n_frames_taken
+
+    @overload
+    @contextmanager
+    def _attach(
+        self, n_bundles: int, height: int, cam: Literal[0, 1] = ...
+    ) -> Generator[UInt16Array, None, None]:
+        ...
+
+    @overload
+    @contextmanager
+    def _attach(
+        self, n_bundles: int, height: int, cam: Literal[2] = ...
+    ) -> Generator[tuple[UInt16Array, UInt16Array], None, None]:
+        ...
 
     @contextmanager
-    def _attach(self, n_bundles: int, height: int) -> Generator[tuple[UInt16Array, UInt16Array], None, None]:
-        with self[0].attach(n_bundles, height) as buf1, self[1].attach(n_bundles, height) as buf2:
-            logger.debug(f"Allocated memory for {n_bundles} bundles.")
-            yield (buf1, buf2)
+    def _attach(
+        self, n_bundles: int, height: int, cam: Literal[0, 1, 2] = 2
+    ) -> Generator[UInt16Array, None, None] | Generator[tuple[UInt16Array, UInt16Array], None, None]:
+        if cam == 2:
+            with self[0].attach(n_bundles, height) as buf1, self[1].attach(n_bundles, height) as buf2:
+                logger.debug(f"Allocated memory for {n_bundles} bundles.")
+                yield (buf1, buf2)
+        else:
+            with self[cam].attach(n_bundles, height) as buf1:
+                logger.debug(f"Allocated memory for {n_bundles} bundles for cam {cam}.")
+                yield buf1
 
     # def _get_bundles(self, bufs: tuple[UInt16Array, UInt16Array], height: int, i: int):
     #     for c, b in zip(self._cams.result(20), bufs):
@@ -244,12 +264,11 @@ class Cameras:
     #         logger.info(f"Retrieved bundle {i + 1}.")
 
     @property
-    def mode(self):
+    def mode(self) -> str:
         return self._mode
 
-    @mode.setter
-    def mode(self, m: Mode) -> None:
-        self.properties.update(m.value)
+    def set_mode(self, m: Literal["TDI", "FOCUS_SWEEP"]) -> None:
+        self.properties.update(Mode[m].value)
         self._mode = m
 
     @run_in_executor
@@ -257,9 +276,12 @@ class Cameras:
     def capture(
         self,
         n_bundles: int,
+        height: int = 128,
         start_alloc: Callable[[], Any] = lambda: None,
-        start_capture: Callable[[], Any] = lambda: None,
+        start_capture: Callable[[], Future[Any]] = lambda: gen_future(None),
+        mode: Literal["TDI", "FOCUS_SWEEP"] = "TDI",
         timeout: float | int = 5,
+        cam: Literal[0, 1, 2] = 2,
     ) -> UInt16Array:
         """
 
@@ -275,16 +297,30 @@ class Cameras:
         Returns:
             UInt16Array: uint16 array with dimension [4, {128*n_bundles}, 2048]
         """
-        with self._attach(n_bundles=n_bundles, height=128) as bufs:
+
+        def in_ctx():
+            fut = start_capture()
+            t0 = time.monotonic()
+            while self.n_frames_taken(cam) < n_bundles:
+                time.sleep(0.1)
+                if taken == 0 and time.monotonic() - t0 > timeout:
+                    raise Exception(f"Did not capture a single bundle before {timeout=}s.")
+            fut.result()
+
+        self.set_mode(mode)
+        with self._attach(n_bundles=n_bundles, height=height, cam=cam) as bufs:
             taken = 0
             start_alloc()
-            with self[0].capture(), self[1].capture():
-                start_capture()
-                t0 = time.monotonic()
-                while self.n_frames_taken < n_bundles:
-                    time.sleep(0.1)
-                    if taken == 0 and time.monotonic() - t0 > timeout:
-                        raise Exception(f"Did not capture a single bundle before {timeout=}s.")
+            if cam == 2:
+                with self[0].capture(), self[1].capture():
+                    in_ctx()
+            else:
+                with self[cam].capture():
+                    in_ctx()
             logger.info(f"Retrieved all {n_bundles} bundles.")
 
-        return cast(UInt16Array, np.flip(np.swapaxes(np.hstack(bufs).reshape(-1, 4, 2048), 1, 0), axis=1))
+        if cam == 2:
+            bufs = cast(tuple[UInt16Array, UInt16Array], bufs)
+            return cast(UInt16Array, np.hstack(bufs).reshape(-1, 4, 2048).transpose(1, 0, 2))
+        bufs = cast(UInt16Array, bufs)
+        return cast(UInt16Array, bufs.reshape(-1, 2, 2048).transpose(1, 0, 2))

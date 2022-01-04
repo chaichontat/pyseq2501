@@ -2,6 +2,7 @@
 import logging
 import time
 
+import matplotlib.pyplot as plt
 from PIL import Image
 from pyseq2.imager import Imager
 from pyseq2.utils.ports import get_ports
@@ -13,14 +14,19 @@ logging.basicConfig(
     datefmt="[%X]",
     handlers=[RichHandler(rich_tracebacks=True, markup=True)],
 )
+logging.getLogger("matplotlib.font_manager").setLevel(logging.WARNING)
 
 ports = get_ports(timeout=60)
 imager = Imager(ports, init_cam=True)
 
 #%%
 imager.y.move(1000000)
-img = imager.take(16, dark=True)
-Image.fromarray(img[2]).save("dark.tiff")
+img = imager.take(12, dark=True, cam=2)
+Image.fromarray(img[0]).save("dark.tiff")
 time.sleep(0.5)
 
+# %%
+
+target, focus_plot = imager.autofocus()
+plt.plot(focus_plot)
 # %%

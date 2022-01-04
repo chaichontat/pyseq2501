@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from logging import getLogger
-from typing import NamedTuple
+from typing import Literal, NamedTuple
 
 import numpy as np
 
 from .com.thread_mgt import run_in_executor
-from .imaging.camera.dcam import Cameras, Mode, UInt16Array
+from .imaging.camera.dcam import Cameras, UInt16Array
 from .imaging.fpga import FPGA
 from .imaging.laser import Laser, Lasers
 from .imaging.xstage import XStage
@@ -81,9 +80,8 @@ class Imager:
         self.y.com._executor.submit(lambda: None).result(60)
         self.fpga.com._executor.submit(lambda: None).result(60)
         logger.info("All motions completed.")
-        # return not any((x.result(60), y.result(60), z.result(60)))
 
-    def take(self, n_bundles: int, dark: bool = False) -> UInt16Array:
+    def take(self, n_bundles: int, dark: bool = False, cam: Literal[0, 1, 2] = 2) -> UInt16Array:
         logger.info(f"Taking an image with {n_bundles} bundles.")
         n_bundles += 1  # To flush CCD.
         self.wait_all_idle()
@@ -94,11 +92,10 @@ class Imager:
         n_px_y = n_bundles * self.cams.BUNDLE_HEIGHT
         end_y_pos = pos - (delta := self.calc_delta_pos(n_px_y)) - 100000
         fut = self.tdi.prepare_for_imaging(n_px_y, pos)
-        self.cams.mode = Mode.TDI
         fut.result(60)
 
         cap = lambda: self.cams.capture(
-            n_bundles, start_capture=lambda: self.y.move(end_y_pos, slowly=True)
+            n_bundles, start_capture=lambda: self.y.move(end_y_pos, slowly=True), cam=cam
         ).result(int(n_bundles / 2))
 
         if dark:
@@ -107,10 +104,8 @@ class Imager:
             with self.optics.open_shutter():
                 imgs = cap()
 
-        if not_none(res := self.fpga.tdi.n_pulses.result(1)) != (exp := 128 * n_bundles):
-            logger.warning(f"Number of trigger pulses mismatch. Expected: {exp} Got {res}.")
-
         logger.info(f"Done taking an image.")
+        imgs = np.flip(imgs, axis=1)
         return imgs[:, :-128, :]  # Remove oversaturated first bundle.
 
     @staticmethod
@@ -124,31 +119,24 @@ class Imager:
         res = {k: v.result() for k, v in res.items()}
         return Position(**res)  # type: ignore
 
-    def autofocus(self) -> tuple[int, UInt16Array]:
+    def autofocus(self, channel: Literal[0, 1, 2, 3] = 1) -> tuple[int, UInt16Array]:
         """Moves to z_max and takes 232 (2048 × 5) images while moving to z_min.
-        Somehow only works with cam 0.
         Returns the z position of maximum intensity and the images.
         """
+        logger.info(f"Starting autofocus using data from {channel=}.")
+        self.wait_all_idle()
+
         n_bundles, height = 232, 5
         z_min, z_max = 2621, 60292
-        self.cams[0].properties.update({"sensor_mode": 6, "exposure_time": 0.002, "partial_area_vsize": 5})
-        self.fpga.com.send("ZTRG 0")
-        self.fpga.com.send("ZYT 0 3")
-        self.fpga.com.send(f"ZMV {z_max}")
-        self.fpga.com.send("SWYZ_POS 1")
+        cam = 0 if channel in (0, 1) else 1
 
-        with self.cams._alloc(n_bundles, height=height) as bufs:
+        with self.z_obj.af_arm(z_min=z_min, z_max=z_max) as start_move:
             with self.optics.open_shutter():
-                self.fpga.com.send("ZSTEP 541158")
-                self.fpga.com.send(f"ZTRG {z_max}")
-                self.fpga.com.send("ZYT 0 3")
-                with self.cams[0].capture():
-                    self.fpga.com.send(f"ZMV {z_min}")
-                    while (self.cams[0].n_frames_taken) < n_bundles:
-                        time.sleep(0.01)
+                img = self.cams.capture(
+                    n_bundles, height, start_capture=start_move, mode="FOCUS_SWEEP", cam=cam
+                ).result(int(n_bundles / 2))
 
-        intensity = np.mean(np.reshape(bufs[0], (n_bundles, height, 4096)), axis=(1, 2))
-        target = np.argmax(intensity)[0]
-
-        self.fpga.com.send("ZSTEP 6442353")
-        return (z_max - (((z_max - z_min) / n_bundles) * target + z_min), intensity)
+        intensity = np.mean(np.reshape(img[channel - 2 * cam], (n_bundles, height, 2048)), axis=(1, 2))
+        target = int(z_max - (((z_max - z_min) / n_bundles) * np.argmax(intensity) + z_min))
+        logger.info(f"Done autofocus. Optimum={target}")
+        return (target, intensity)
