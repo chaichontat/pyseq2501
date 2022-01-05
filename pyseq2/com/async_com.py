@@ -46,6 +46,7 @@ FORMATTER: dict[SerialInstruments, Callable[[str], str]] = dict(
     laser_r=lambda x:  f"{x}\r",
 )   # type: ignore
 # fmt: on
+
 T = TypeVar("T", covariant=True)
 P = ParamSpec("P")
 
@@ -103,6 +104,7 @@ class COM:
         port_rx (Optional[str], optional): Receiving port if different from port_tx.
             Only the FPGA uses separate channels.
         min_spacing (int, optional): Minimum time between commands. Defaults to 0.05s.
+        no_check (bool, optional): Do not check for return values. Defaults to False.
     """
 
     def __init__(
@@ -111,7 +113,7 @@ class COM:
         port_tx: str,
         port_rx: Optional[str] = None,
         min_spacing: Annotated[int | float, "s"] = 0.05,
-        no_check=False,
+        no_check: bool = False,
     ) -> None:
 
         self.port = port_tx
@@ -145,7 +147,7 @@ class COM:
             resp = (await self._serial.reader.readline()).decode(**ENCODING_KW).strip()
 
             if self.no_check:
-                print(resp)
+                logger.debug(resp)
                 continue
 
             if not resp:  # len == 0

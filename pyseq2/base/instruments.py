@@ -48,11 +48,6 @@ class Movable(metaclass=ABCMeta):
         """Move that always block."""
         self.move(p).result()
 
-    @property
-    @abstractmethod
-    def is_moving(self) -> Future[bool]:
-        ...
-
     def convert(self, p: Annotated[float, "mm"]) -> int:
         return int(p * 1000 * self.STEPS_PER_UM)
 

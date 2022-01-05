@@ -1,11 +1,10 @@
 from concurrent.futures import Future
 from contextlib import contextmanager
 from logging import getLogger
-from typing import Callable, Generator, Optional
+from typing import Callable, Generator, Literal, Optional
 
 from pyseq2.base.instruments import FPGAControlled, Movable
 from pyseq2.com.async_com import CmdParse
-from pyseq2.com.thread_mgt import run_in_executor
 from pyseq2.utils.utils import chkrng, ok_if_match, ok_re
 
 logger = getLogger(__name__)
@@ -16,13 +15,14 @@ RANGE = (0, 65535)
 
 
 class ObjCmd:
-    # Callable[[Annotated[int, "mm/s"]], str]
     # fmt: off
+    # Callable[[Annotated[int, "mm/s"]], str]
     SET_VELO = CmdParse(lambda x: f"ZSTEP {int(1288471 * x)}", ok_if_match("ZSTEP"))
     SET_POS  = CmdParse(chkrng(lambda x: f"ZDACW {x}", *RANGE), ok_if_match("ZDACW"))
-    GET_TARGET_POS = CmdParse(     "ZDACR"              , ok_re(r"^ZDACR (\d+)$", int))
-    GET_POS        = CmdParse(     "ZADCR"              , ok_re(r"^ZADCR (\d+)$", int))
+    GET_TARGET_POS = CmdParse(     "ZDACR"              , ok_re(r"^ZDACR (\d+)$", int))  # D A
+    GET_POS        = CmdParse(     "ZADCR"              , ok_re(r"^ZADCR (\d+)$", int))  # A D
     
+    # Autofocus stuffs
     SET_TRIGGER = CmdParse(lambda x: f"ZTRG {x}"   , ok_if_match("ZTRG"))
     ARM_TRIGGER = CmdParse(           "ZYT 0 3"    , ok_if_match("ZYT"))
     Z_MOVE      = CmdParse(lambda x: f"ZMV {x}"    , ok_if_match("@LOG Trigger Camera\nZMV"), n_lines=2)
@@ -66,6 +66,5 @@ class ZObj(FPGAControlled, Movable):
             self.com.send(ObjCmd.SET_VELO(5)).result()
 
     @property
-    @run_in_executor
-    def is_moving(self) -> bool:
-        return self.pos.result(60) != self.pos.result(60)
+    def is_moving(self) -> Future[Literal[False]]:
+        return self.com._executor.submit(lambda: False)

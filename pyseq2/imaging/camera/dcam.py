@@ -57,11 +57,14 @@ class SensorMode(IntEnum):
 
 
 ID = Literal[0, 1]
+Cam = Literal[0, 1, 2]
 UInt16Array = npt.NDArray[np.uint16]
 FourImages = tuple[UInt16Array, UInt16Array, UInt16Array, UInt16Array]
 
 
 class Mode(Enum):
+    """DCAM properties preset"""
+
     FOCUS_SWEEP = {"sensor_mode": 6, "exposure_time": 0.001, "partial_area_vsize": 5}
     TDI = {"sensor_mode": 4, "sensor_mode_line_bundle_height": 128}
 
@@ -76,7 +79,6 @@ class _Camera:
 
         self.handle = c_void_p(0)
         API.dcam_open(pointer(self.handle), c_int32(id_), None)
-        logger.info(f"Connected to cam {id_}")
         if os.environ.get("FAKE_HISEQ", "0") == "1" or os.name != "nt":
             self.properties = DCAMDict(
                 self.handle, pickle.loads((Path(__file__).parent / "saved_props.pk").read_bytes())
@@ -84,6 +86,7 @@ class _Camera:
         else:
             self.properties = DCAMDict.from_dcam(self.handle)
         self.capture_mode = DCAM_CAPTURE_MODE.SNAP
+        logger.info(f"Connected to cam {id_}")
 
     def initialize(self) -> None:
         ...
@@ -100,10 +103,12 @@ class _Camera:
     @contextmanager
     def capture(self) -> Generator[None, None, None]:
         API.dcam_capture(self.handle)
+        logger.info(f"Cam {self.id_}: Started capturing.")
         try:
             yield
         finally:
             API.dcam_idle(self.handle)
+            logger.info(f"Cam {self.id_}: Done capturing.")
 
     @property
     def status(self) -> Status:
@@ -116,6 +121,16 @@ class _Camera:
 
     @contextmanager
     def attach(self, n_bundles: int, height: int) -> Generator[UInt16Array, None, None]:
+        """Generates a numpy array and "attach" it to the camera.
+        Aka. Tells the camera to write captured bundles here.
+
+        Args:
+            n_bundles (int): Number of bundles
+            height (int): Height of each bundle. 128 for TDI. 5 for focus sweep.
+
+        Yields:
+            Generator[UInt16Array, None, None]: Output array (n_bundles × height, 4096)
+        """
         arr: npt.NDArray[np.uint16] = np.zeros((n_bundles * height, self.IMG_WIDTH), dtype=np.uint16)
         addr, ptr_arr = arr.ctypes.data, (c_void_p * n_bundles)()
         for i in range(n_bundles):
@@ -163,6 +178,8 @@ R = TypeVar("R")
 
 
 class TwoProps(Generic[T, R]):
+    """Unified properties of two cameras"""
+
     def __init__(self, prop1: MutableMapping[T, R], prop2: MutableMapping[T, R]) -> None:
         self._props = (prop1, prop2)
 
@@ -182,11 +199,14 @@ class TwoProps(Generic[T, R]):
 
 
 class Cameras:
-    """Experiments indicated that dcamapi.dll is not thread-safe."""
+    """Object representing two cameras.
+    To access a single camera, index this object.
+    `Cam = 0, 1` refers to cameras 0, 1. Whereas 2 refers to both.
+
+    Experiments indicated that dcamapi.dll is not thread-safe."""
 
     IMG_WIDTH = 4096
     BUNDLE_HEIGHT = 128
-    MODE = Mode
 
     _cams: Future[tuple[_Camera, _Camera]]
     properties: TwoProps
@@ -225,9 +245,8 @@ class Cameras:
     @run_in_executor
     def initialize(self) -> None:
         [x.initialize() for x in self]
-        self.set_mode("TDI")
 
-    def n_frames_taken(self, cam: Literal[0, 1, 2]) -> int:
+    def n_frames_taken(self, cam: Cam) -> int:
         return min([c.n_frames_taken for c in self]) if cam == 2 else self[cam].n_frames_taken
 
     @overload
@@ -246,7 +265,7 @@ class Cameras:
 
     @contextmanager
     def _attach(
-        self, n_bundles: int, height: int, cam: Literal[0, 1, 2] = 2
+        self, n_bundles: int, height: int, cam: Cam = 2
     ) -> Generator[UInt16Array, None, None] | Generator[tuple[UInt16Array, UInt16Array], None, None]:
         if cam == 2:
             with self[0].attach(n_bundles, height) as buf1, self[1].attach(n_bundles, height) as buf2:
@@ -257,15 +276,13 @@ class Cameras:
                 logger.debug(f"Allocated memory for {n_bundles} bundles for cam {cam}.")
                 yield buf1
 
-    # def _get_bundles(self, bufs: tuple[UInt16Array, UInt16Array], height: int, i: int):
-    #     for c, b in zip(self._cams.result(20), bufs):
-    #         c.get_bundle(b, height, i)
-    #     if i == 0 or i % 5 == 0:
-    #         logger.info(f"Retrieved bundle {i + 1}.")
-
     @property
     def mode(self) -> str:
         return self._mode
+
+    @mode.setter
+    def mode(self, m: Literal["TDI", "FOCUS_SWEEP"]) -> None:
+        self.set_mode(m)
 
     def set_mode(self, m: Literal["TDI", "FOCUS_SWEEP"]) -> None:
         self.properties.update(Mode[m].value)
@@ -277,40 +294,40 @@ class Cameras:
         self,
         n_bundles: int,
         height: int = 128,
-        start_alloc: Callable[[], Any] = lambda: None,
-        start_capture: Callable[[], Future[Any]] = lambda: gen_future(None),
+        start_attach: Callable[[], Any] = lambda: None,
+        fut_capture: Callable[[], Future[Any]] = lambda: gen_future(None),
         mode: Literal["TDI", "FOCUS_SWEEP"] = "TDI",
-        timeout: float | int = 5,
         cam: Literal[0, 1, 2] = 2,
     ) -> UInt16Array:
-        """
+        """Captures images and split them into channels.
+        Timeout if no bundle was captured within the first 5 seconds.
 
         Args:
-            n_bundles (int): [description]
-            start_alloc (Callable[[], Any], optional): [description]. Defaults to lambda:None.
-            start_capture (Callable[[], Any], optional): [description]. Defaults to lambda:None.
-            timeout (float, optional): [description]. Defaults to 5.
-
-        Raises:
-            Exception: [description]
+            n_bundles (int): Number of bundles.
+            height (int, optional): Height of each bundle. Defaults to 128.
+            start_attach (Callable[[], Any], optional): Function to call upon storage attachment. Defaults to lambda:None.
+            fut_capture (Callable[[], Future[Any]], optional): Function that produces a Future object that resolves when
+                imaging is completed. Used for move commands that return when completed. Defaults to lambda:gen_future(None).
+            mode (Literal["TDI", "FOCUS_SWEEP"], optional): Defaults to "TDI".
+            cam (Literal[0, 1, 2], optional): Which camera(s) to capture. 2 means both. Defaults to 2.
 
         Returns:
-            UInt16Array: uint16 array with dimension [4, {128*n_bundles}, 2048]
+            UInt16Array: Either (2, n_bundles × height, 2048) or (4, n_bundles × height, 2048).
         """
 
         def in_ctx():
-            fut = start_capture()
+            fut = fut_capture()
             t0 = time.monotonic()
             while self.n_frames_taken(cam) < n_bundles:
                 time.sleep(0.1)
-                if taken == 0 and time.monotonic() - t0 > timeout:
-                    raise Exception(f"Did not capture a single bundle before {timeout=}s.")
+                if taken == 0 and time.monotonic() - t0 > 5:
+                    raise Exception(f"Did not capture a single bundle before {5=}s.")
             fut.result()
 
         self.set_mode(mode)
         with self._attach(n_bundles=n_bundles, height=height, cam=cam) as bufs:
             taken = 0
-            start_alloc()
+            start_attach()
             if cam == 2:
                 with self[0].capture(), self[1].capture():
                     in_ctx()

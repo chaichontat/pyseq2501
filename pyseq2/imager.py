@@ -75,6 +75,9 @@ class Imager:
         return State.from_futures(**out)
 
     def wait_all_idle(self) -> None:
+        """Returns when no commands are pending return which indicates that all motors are idle.
+        This is because all move commands are expected to return some value upon completion.
+        """
         logger.info("Waiting for all motions to complete.")
         self.x.com._executor.submit(lambda: None).result(60)
         self.y.com._executor.submit(lambda: None).result(60)
@@ -82,7 +85,7 @@ class Imager:
         logger.info("All motions completed.")
 
     def take(self, n_bundles: int, dark: bool = False, cam: Literal[0, 1, 2] = 2) -> UInt16Array:
-        logger.info(f"Taking an image with {n_bundles} bundles.")
+        logger.info(f"Taking an image with {n_bundles} bundles using cam(s) {cam}.")
         n_bundles += 1  # To flush CCD.
         self.wait_all_idle()
 
@@ -90,12 +93,12 @@ class Imager:
         pos = self.y.pos.result(60)
         assert pos is not None
         n_px_y = n_bundles * self.cams.BUNDLE_HEIGHT
-        end_y_pos = pos - (delta := self.calc_delta_pos(n_px_y)) - 100000
+        end_y_pos = pos - (delta := self.calc_delta_pos(n_px_y)) - 50000
         fut = self.tdi.prepare_for_imaging(n_px_y, pos)
         fut.result(60)
 
         cap = lambda: self.cams.capture(
-            n_bundles, start_capture=lambda: self.y.move(end_y_pos, slowly=True), cam=cam
+            n_bundles, fut_capture=lambda: self.y.move(end_y_pos, slowly=True), cam=cam
         ).result(int(n_bundles / 2))
 
         if dark:
@@ -133,10 +136,12 @@ class Imager:
         with self.z_obj.af_arm(z_min=z_min, z_max=z_max) as start_move:
             with self.optics.open_shutter():
                 img = self.cams.capture(
-                    n_bundles, height, start_capture=start_move, mode="FOCUS_SWEEP", cam=cam
+                    n_bundles, height, fut_capture=start_move, mode="FOCUS_SWEEP", cam=cam
                 ).result(int(n_bundles / 2))
 
         intensity = np.mean(np.reshape(img[channel - 2 * cam], (n_bundles, height, 2048)), axis=(1, 2))
         target = int(z_max - (((z_max - z_min) / n_bundles) * np.argmax(intensity) + z_min))
         logger.info(f"Done autofocus. Optimum={target}")
+        if 10000 < target < 50000:
+            logger.info(f"Target too close to edge, considering moving the tilt motors.")
         return (target, intensity)

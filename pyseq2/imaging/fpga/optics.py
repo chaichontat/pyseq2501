@@ -66,10 +66,12 @@ class Optics(FPGAControlled):
     @contextmanager
     def open_shutter(self) -> Generator[None, None, None]:
         self._open().result(60)
+        logger.info("Shutter opened.")
         try:
             yield
         finally:
             self._close()
+            logger.info("Shutter closed.")
 
     def _open(self) -> Future[Optional[bool]]:
         return self.com.send(OpticCmd.OPEN_SHUTTER)
