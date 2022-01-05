@@ -215,7 +215,7 @@ class DCAM_PARAM_PROPERTYATTR(Structure):
 
     @classmethod
     def from_id(cls, id_: c_int32) -> DCAM_PARAM_PROPERTYATTR:
-        attr = cls()
+        attr = cls()  # type: ignore
         attr.cbSize = sizeof(attr)
         attr.iProp = id_
         return attr

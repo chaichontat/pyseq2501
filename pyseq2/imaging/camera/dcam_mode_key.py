@@ -71,7 +71,7 @@ def get_mode_key(handle: Handle, prop_attr: DCAMParamPropertyAttr) -> Optional[d
         return None
 
     with LOCK:
-        prop_text = DCAM_PARAM_PROPERTYVALUETEXT(prop_attr)
+        prop_text = DCAM_PARAM_PROPERTYVALUETEXT(prop_attr)  # type: ignore
         v = c_double(prop_attr.valuemin)
 
         out: dict[str, int] = {}
