@@ -1,0 +1,11 @@
+[build-system]
+build-backend = 'setuptools.build_meta'
+requires = ["setuptools >= 43.0.0"]
+
+[tool.black]
+include = 'pyseq2/'
+line-length = 110
+
+[tool.pyright]
+include = ["pyseq2"]
+reportPropertyTypeMismatch = "none"
