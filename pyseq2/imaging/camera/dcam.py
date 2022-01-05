@@ -18,6 +18,7 @@ from typing import (
     Generic,
     Hashable,
     Literal,
+    Mapping,
     MutableMapping,
     TypeVar,
     cast,
@@ -36,7 +37,6 @@ from .dcam_api import DCAMException
 from .dcam_props import DCAMDict
 
 logger = getLogger(__name__)
-# DCAMAPI v3.0.301.3690
 
 
 class Status(IntEnum):
@@ -142,29 +142,6 @@ class _Camera:
         finally:
             API.dcam_releasebuffer(self.handle)
 
-    # @contextmanager
-    # def alloc(self, n_bundles: int, height: int) -> Generator[UInt16Array, None, None]:
-    #     out: npt.NDArray[np.uint16] = np.empty((n_bundles * height, self.IMG_WIDTH), dtype=np.uint16)
-    #     try:
-    #         API.dcam_allocframe(self.handle, c_int32(n_bundles))
-    #         yield out
-    #     finally:
-    #         API.dcam_freeframe(self.handle)
-
-    # @contextmanager
-    # def _lock_memory(self, height: int, n_curr: int):
-    #     addr = pointer((c_uint16 * self.IMG_WIDTH * height)())
-    #     row_bytes = c_int32(0)
-    #     API.dcam_lockdata(self.handle, pointer(cast(c_void_p, addr)), pointer(row_bytes), c_int32(n_curr))
-    #     try:
-    #         yield addr
-    #     finally:
-    #         API.dcam_unlockdata(self.handle)
-
-    # def get_bundle(self, buf: UInt16Array, height: int, n_curr: int) -> None:
-    #     with self._lock_memory(height=height, n_curr=n_curr) as addr:
-    #         buf[n_curr * height : (n_curr + 1) * height, :] = np.asarray(addr.contents)
-
     @property
     def n_frames_taken(self) -> int:
         """Return number of frames (int) that have been taken."""
@@ -193,7 +170,7 @@ class TwoProps(Generic[T, R]):
         for p in self._props:
             p[name] = value
 
-    def update(self, to_change: dict[T, R]):
+    def update(self, to_change: Mapping[T, R]):
         for k, v in to_change.items():
             self[k] = v
 
@@ -209,12 +186,14 @@ class Cameras:
     BUNDLE_HEIGHT = 128
 
     _cams: Future[tuple[_Camera, _Camera]]
-    properties: TwoProps
+    properties: TwoProps[str, float]
 
     def __init__(self) -> None:
-        self.ready = Future()
         self._executor = ThreadPoolExecutor(max_workers=1)  # Only case of Executor outside COM.
         self._cams = self.post_init()  # self.properties set in here.
+
+    def wait_cam_ready(self) -> None:
+        self._cams.result()
 
     @run_in_executor
     @warn_main_thread
@@ -314,6 +293,7 @@ class Cameras:
         Returns:
             UInt16Array: Either (2, n_bundles × height, 2048) or (4, n_bundles × height, 2048).
         """
+        self.wait_cam_ready()
 
         def in_ctx():
             fut = fut_capture()
@@ -340,4 +320,4 @@ class Cameras:
             bufs = cast(tuple[UInt16Array, UInt16Array], bufs)
             return cast(UInt16Array, np.hstack(bufs).reshape(-1, 4, 2048).transpose(1, 0, 2))
         bufs = cast(UInt16Array, bufs)
-        return cast(UInt16Array, bufs.reshape(-1, 2, 2048).transpose(1, 0, 2))
+        return bufs.reshape(-1, 2, 2048).transpose(1, 0, 2)

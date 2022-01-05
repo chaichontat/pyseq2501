@@ -127,7 +127,7 @@ class COM:
         self._executor = ThreadPoolExecutor(max_workers=1)
 
         # asyncio.Queue is not thread-safe and we're not waiting anyway.
-        self._read_queue: queue.Queue[tuple[CmdParse, asyncio.Future]] = queue.Queue()
+        self._read_queue: queue.Queue[tuple[CmdParse[Any, Any], asyncio.Future[Any]]] = queue.Queue()
         if port_rx is not None:
             assert name == "fpga"
             srx = LOOP.put(open_serial_connection(url=port_rx, baudrate=115200))
@@ -163,9 +163,7 @@ class COM:
                     resp += "\n" + (await self._serial.reader.readline()).decode(**ENCODING_KW).strip()
                 parsed = cmd.parser(resp)
             except BaseException as e:
-                logger.error(
-                    f"{self.name}Exception {type(e).__name__} while parsing '{resp}' from '{cmd.cmd}'."
-                )
+                logger.error(f"{self.name}Exception {str(e)} while parsing '{resp}' from '{cmd.cmd}'.")
                 fut.set_exception(e)
             else:
                 r = "'" + resp.replace("\n", "\\n") + "'"
@@ -187,7 +185,7 @@ class COM:
         ...
 
     @overload
-    def send(self, msg: tuple[str | CmdParse[Any, Any], ...]) -> tuple[None | Future[Any], ...]:
+    def send(self, msg: tuple[CmdParse[T, Any], ...]) -> tuple[Future[T], ...]:
         ...
 
     @overload
@@ -195,7 +193,7 @@ class COM:
         ...
 
     @overload
-    def send(self, msg: tuple[CmdParse[T, Any], ...]) -> tuple[Future[T], ...]:
+    def send(self, msg: tuple[str | CmdParse[Any, Any], ...]) -> tuple[None | Future[Any], ...]:
         ...
 
     def send(
@@ -220,7 +218,8 @@ class COM:
                 if not isinstance(msg.cmd, str):
                     raise ValueError("This command needs argument(s), call it first.")
 
-                self._read_queue.put_nowait((msg, fut := asyncio.Future(loop=LOOP.loop)))
+                fut: asyncio.Future[Any] = asyncio.Future(loop=LOOP.loop)
+                self._read_queue.put_nowait((msg, fut))
                 self._send(self.formatter(msg.cmd).encode(**ENCODING_KW))
                 return LOOP.put(self.async_wrapper(fut))
             return tuple(self.send(x) for x in msg)
@@ -240,5 +239,5 @@ class COM:
             logger.debug(f"{self.name}Tx: {msg}")
 
     @staticmethod
-    async def async_wrapper(fut):
+    async def async_wrapper(fut: asyncio.Future[T]) -> T:
         return await fut

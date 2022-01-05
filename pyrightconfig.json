@@ -1,0 +1,6 @@
+{
+    "include": [
+        "pyseq2"
+    ],
+    "reportPropertyTypeMismatch": "none",
+}

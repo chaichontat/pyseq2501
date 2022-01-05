@@ -38,6 +38,8 @@ IGNORE = {
 
 
 def check_if_failed(f: Callable[P, R]) -> Callable[P, R]:
+    """Raise Exception if calls did not return 1."""
+
     @wraps(f)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
         with LOCK:

@@ -48,11 +48,11 @@ jobs:
       - name: Type check with Pyright
         run: |
           npm i -g pyright
-          pyright --warnings pyseq2/
+          pyright --warnings
 
       - name: Test with Pytest
         run: |
-          pytest pyseq2/
+          pytest tests/
 
       - name: Build docs
         run: |

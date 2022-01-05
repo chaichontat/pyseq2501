@@ -43,15 +43,11 @@ class ZTilt(FPGAControlled, Movable):
             self.com.send(TiltCmd.SET_VELO(62500, i))
 
         futs = [self.com.send(TiltCmd.GO_HOME(i)) for i in get_args(ID)]
-        [f.result() for f in futs]  # Returns when move is completed.
+        wait(futs, 60)  # Returns when move is completed.
 
-        for i in get_args(ID):
-            fut = cast(
-                tuple[Future[bool], ...],
-                self.com.send(tuple(TiltCmd.CLEAR_REGISTER(i) for i in get_args(ID))),
-            )
+        futs = self.com.send(tuple(TiltCmd.CLEAR_REGISTER(i) for i in get_args(ID)))
+        wait(futs, 60)  # type: ignore
 
-        wait(fut, 60)  # type: ignore
         assert all(x > -5 for x in self.pos.result(60))
         logger.info("Completed z-tilt initialization.")
 

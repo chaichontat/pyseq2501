@@ -1,9 +1,9 @@
+import threading
+import warnings
 from concurrent.futures import Future, ThreadPoolExecutor
 from functools import wraps
 from logging import getLogger
-import threading
 from typing import Callable, ParamSpec, TypeVar
-import warnings
 
 P, T = ParamSpec("P"), TypeVar("T")
 
@@ -43,8 +43,8 @@ def run_in_executor(f: Callable[P, T]) -> Callable[P, Future[T]]:
                 try:
                     return f(*args, **kwargs)
                 except BaseException as e:
-                    warnings.warn(f"Uncaught exception {type(e).__name__} in thread.")
-                    getLogger(type(self).__name__).error(f"Uncaught exception {type(e).__name__} in thread.")
+                    warnings.warn(f"Uncaught exception {str(e)} in thread.")
+                    getLogger(type(self).__name__).error(f"Uncaught exception {str(e)} in thread.")
                     raise e
 
             return exc.submit(g)

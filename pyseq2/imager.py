@@ -14,7 +14,6 @@ from .imaging.laser import Laser, Lasers
 from .imaging.xstage import XStage
 from .imaging.ystage import YStage
 from .utils.ports import Ports
-from .utils.utils import not_none
 
 logger = getLogger(__name__)
 
@@ -74,7 +73,7 @@ class Imager:
         }
         return State.from_futures(**out)
 
-    def wait_all_idle(self) -> None:
+    def wait_ready(self) -> None:
         """Returns when no commands are pending return which indicates that all motors are idle.
         This is because all move commands are expected to return some value upon completion.
         """
@@ -82,24 +81,25 @@ class Imager:
         self.x.com._executor.submit(lambda: None).result(60)
         self.y.com._executor.submit(lambda: None).result(60)
         self.fpga.com._executor.submit(lambda: None).result(60)
+        self.cams.wait_cam_ready()
         logger.info("All motions completed.")
 
     def take(self, n_bundles: int, dark: bool = False, cam: Literal[0, 1, 2] = 2) -> UInt16Array:
         logger.info(f"Taking an image with {n_bundles} bundles using cam(s) {cam}.")
         n_bundles += 1  # To flush CCD.
-        self.wait_all_idle()
+        self.wait_ready()
 
         self.y.set_mode("IMAGING")
         pos = self.y.pos.result(60)
         assert pos is not None
         n_px_y = n_bundles * self.cams.BUNDLE_HEIGHT
-        end_y_pos = pos - (delta := self.calc_delta_pos(n_px_y)) - 50000
+        end_y_pos = pos - (delta := self.calc_delta_pos(n_px_y)) - 100000
         fut = self.tdi.prepare_for_imaging(n_px_y, pos)
         fut.result(60)
 
         cap = lambda: self.cams.capture(
             n_bundles, fut_capture=lambda: self.y.move(end_y_pos, slowly=True), cam=cam
-        ).result(int(n_bundles / 2))
+        ).result(60 + int(n_bundles / 2))
 
         if dark:
             imgs = cap()
@@ -127,7 +127,7 @@ class Imager:
         Returns the z position of maximum intensity and the images.
         """
         logger.info(f"Starting autofocus using data from {channel=}.")
-        self.wait_all_idle()
+        self.wait_ready()
 
         n_bundles, height = 232, 5
         z_min, z_max = 2621, 60292
