@@ -9,7 +9,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.0">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.4">
     
     
       
@@ -17,10 +17,10 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.82f3c0b9.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.bb3983ee.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.9204c3b2.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.e6a45f82.min.css">
         
       
     
@@ -416,6 +416,21 @@
   
 
     
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting.md" class="md-nav__link">
+        Troubleshooting
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -435,30 +450,34 @@
 
 <h1 id="architecture">Architecture</h1>
 <h2 id="serial">Serial</h2>
-<p>Each file corresponds to an instrument controlled by a serial port. The FPGA or the "computer" of the HiSeq controls more instruments directly.
-This is presumably due to instrument interfaces and lower latency requirements.
-A single thread, running an asynchronous event loop, serves as a bridge for all serial communications.
+<p>The HiSeq is controlled by multiple serial ports, with each port typically corresponding to an instrument. Some of the instruments are controlled by the FPGA or the "computer" of the HiSeq, which itself is also controlled by a serial port. All serial ports are connected to the computer through a single USB port.</p>
+<p>A single thread, running an asynchronous event loop, serves as a bridge for all serial communications.
 This allows concurrent signaling across multiple instruments, dramatically increasing the throughput of the system.
 Multiple commands could be sent at once and each incoming message could be processed nearly instantaneously without waiting for the last command to finish.</p>
+<p>Communication through the serial port is exceptionally slow (9600 bps or 9600 kHz for each character not including the response time). Therefore, all functions that involve the serial interface or requires any waiting are run in its own thread.
+That is, each function should never block the main thread to maintain responsiveness.</p>
 <h3 id="commands">Commands</h3>
-<p>Lists of commands are available in the beginning of all files. Commands can be of two formats: <code>Callable[..., str]</code> or <code>str</code> for commands with and without arguments.
-For commands that elicit a response from an instrument, bundling a command with a parser using <code>CmdParse</code> is highly recommended.
-Sending a <code>CmdParse</code> command results in a <code>Future</code> object, which could be used to access the parsed response once it is completed.
-Any responses that could not be accounted for using a <code>CmdParse</code> object would trigger a warning as these often indicate deviations from a typical behavior.</p>
-<p>Since commands are sent without waiting for the previous one to return, a deluge of commands could overwhelm an instrument.
-In this case, use the <code>min_spacing</code> keyword argument to specify the minimum temporal spacing between commands, defaults to 0.1 seconds.</p>
+<p>Commands are strings that are sent through the serial port to each instrument, similar to text messaging.
+Some commands evoke a return from an instrument.
+Lists of commands are available in the beginning of all instrument files and at <code>{class}.cmd</code>.
+Commands can be of two formats: <code>Callable[..., str]</code> or <code>str</code> for commands with and without arguments.</p>
+<p>To ensure that there are no silent failures, all responses to commands are compared against the expected response.
+Any unexpected response throws an <code>Exception</code>. 
+The command and its parser are bundled together in the <code>CmdParse</code> object.</p>
+<p>Sending a <code>CmdParse</code> command results in a <code>Future</code> object, which could be used to access the parsed response once it is completed.</p>
 <h2 id="camera">Camera</h2>
 <p>PySeq 2501 communicates with the camera through a DLL file <code>dcamapi.dll</code> from Hamamatsu, which probably communicates with the camera through <a href="https://en.wikipedia.org/wiki/Camera_Link">Camera Link</a>.
-PySeq 2501 is only guaranteed to work with the original driver version from Illumina.
+PySeq 2501 is only guaranteed to work with the original driver version from Illumina. The driver is available upon ReAsOnAbLe ReQuEsT.
 I have tried the latest API from Hamamatsu without much success.
 The response time is also much better than that over serial communication.</p>
+<p>Each camera is individually connected to the frame grabber card.</p>
 
   <hr>
 <div class="md-source-file">
   <small>
     
       Last update:
-      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime">2021-12-11 16:49:33</span>
+      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime">2022-01-05 18:50:20</span>
       
     
   </small>
@@ -532,7 +551,7 @@ The response time is also much better than that over serial communication.</p>
       
       
     
-    <a href="https://github.com/chaichontat/goff-rotation" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+    <a href="https://github.com/chaichontat/pyseq2501" target="_blank" rel="noopener" title="github.com" class="md-social__link">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
     </a>
   
@@ -546,10 +565,10 @@ The response time is also much better than that over serial communication.</p>
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "toc.integrate", "navigation.top"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.cefbb252.min.js"}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "toc.integrate", "navigation.top"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.361d90f1.min.js"}</script>
     
     
-      <script src="../assets/javascripts/bundle.17f42bbf.min.js"></script>
+      <script src="../assets/javascripts/bundle.289a2a4b.min.js"></script>
       
         <script src="../javascripts/mathjax.js"></script>
       
