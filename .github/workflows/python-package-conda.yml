@@ -53,7 +53,8 @@ jobs:
       - name: Test with Pytest
         run: |
           pip install .
-          pytest tests/
+          cd tests/
+          pytest
 
       - name: Build docs
         run: |
