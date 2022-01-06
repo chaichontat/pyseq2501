@@ -22,7 +22,8 @@
       min="0"
       max="1000"
       step="1"
-      class="text-base input input-bordered px-2 w-10/12 float-right h-8"
+      class="font-medium text-base input input-bordered w-10/12 h-8 block"
+      style="margin: 0 auto;"
     />
   </td>
   <td class="text-center font-bold font-mono">{power}</td>

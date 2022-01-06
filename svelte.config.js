@@ -1,4 +1,5 @@
 import adapter from "@sveltejs/adapter-static"
+import path from 'path'
 import preprocess from "svelte-preprocess"
 
 const ci = process.env.CI === 'true'
@@ -16,6 +17,12 @@ const config = {
   kit: {
     target: "#svelte",
     vite: {
+      resolve: {
+        alias: {
+          '$src': path.resolve('./src'),
+          '$comps': path.resolve('./src/components'),
+        }
+      },
       optimizeDeps: {
         include: [
           "fast-deep-equal",

@@ -16,8 +16,8 @@
     <thead class="text-right">
       <tr>
         <th style="background:transparent" />
-        <th class="rounded-l-lg text-right" style="padding-right:0.5rem;">Target</th>
-        <th class="rounded-r-lg">Actual</th>
+        <th class="rounded-l-lg text-center text-sm">Target</th>
+        <th class="rounded-r-lg text-center text-sm">Actual</th>
         <th style="background:transparent" />
       </tr>
     </thead>

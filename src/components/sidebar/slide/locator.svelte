@@ -1,10 +1,19 @@
 <script lang="ts">
-  export let x: number = 10;
-  export let y: number = 10;
+  import type { XY } from "src/store";
+
+  export let xy: XY = { x: 0, y: 0 };
+  export let line: boolean = true;
+  export let legend: boolean = true;
+  export let char: string = "×";
+  export let offset: [number, number] = [0.5, 1.2];
 
   let real_x: number;
   let real_y: number;
+  let x = xy.x;
+  let y = xy.y;
   $: {
+    x = xy.x;
+    y = xy.y;
     real_x = (100 * x) / 25;
     real_y = (100 * y) / 75;
   }
@@ -12,28 +21,40 @@
 
 <div
   id="cross"
-  class="absolute z-20 text-xl text-blue-700 transition-all"
-  style="top:calc({(100 * y) / 75}% - 0.8em); right:calc({real_x}% - 0.32em);"
+  class="absolute z-40 text-2xl text-blue-700 transition-all"
+  style="top:calc({real_y}% - {offset[1]}rem); left:calc({real_x}% - {offset[0]}rem);"
 >
-  ×
+  {char}
 </div>
 
-<div
-  id="horz"
-  class="absolute w-full border-t border-blue-200 transition-all"
-  style="top:calc({real_y}% - 1px); right:0%; width:{real_x}%;"
-/>
-<div
-  id="vert"
-  class="absolute h-full border-l border-blue-200 transition-all"
-  style="right:calc({real_x}% - 1px); height:{real_y}%;"
-/>
+{#if line}
+  {#if y >= 0 && y <= 75}
+    <div
+      id="horz"
+      class="absolute w-full border-t border-blue-200 transition-all z-30"
+      style="top:calc({real_y}% - 1px); right:{25 - x > 0 ? 0 : 100 - real_x}%; width:{Math.abs(
+        100 - real_x
+      )}%;"
+    />
+  {/if}
+  {#if x >= 0 && x <= 25}
+    <div
+      id="vert"
+      class="absolute h-full border-l border-blue-200 transition-all z-30"
+      style="top:{real_y > 0 ? 0 : real_y}%; left:calc({real_x}% - 1px); height:{Math.abs(
+        real_y
+      )}%;"
+    />
+  {/if}
+{/if}
 
-<span
-  id="legend"
-  class="z-20 absolute font-mono font-medium text-sm text-center w-36 transition-all text-blue-700"
-  style="top:calc({(100 * y) /
-    75}% + 0.4rem); right:calc({real_x}% - 4.5rem); text-shadow: 0px 0px 2px white, 0px 0px 5px white, 0px 0px 10px white"
->
-  ({x.toFixed(1)}, {y.toFixed(1)})
-</span>
+{#if legend}
+  <span
+    id="legend"
+    class="z-20 absolute font-mono font-bold text-center w-36 transition-all text-blue-700"
+    style="top:calc({(100 * y) /
+      75}% + 0.6rem); left:calc({real_x}% - 4.5rem); text-shadow: 0px 0px 2px white, 0px 0px 5px white, 0px 0px 10px white"
+  >
+    ({x.toFixed(1)}, {y.toFixed(1)})
+  </span>
+{/if}

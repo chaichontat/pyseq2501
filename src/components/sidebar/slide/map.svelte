@@ -1,17 +1,37 @@
 <script lang="ts">
-  import Pencil from "../../svgs/pencil.svelte";
-  import ObjectiveZ from "./objective_z.svelte";
+  import type { XY } from "src/store";
+  import BigZ from "./big_z.svelte";
   import Slide from "./slide.svelte";
+  import XYInput from "./xy_input.svelte";
+  import { statusStore as store } from "$src/store";
   export let x = 10;
   export let y = 10;
-  export let z_tilt = [0, 0, 0];
+  export let z_tilt: [number, number, number] = [0, 0, 0];
   export let z_obj = 0;
+
+  const Y_UPPER = -180000;
+  const Y_STEP_MM = 1e5;
+  const X_STEP_MM = 409.6;
+  const A_LEFT = 7331;
+  const B_LEFT = 33070;
+
+  export let xy_user: XY = { x: 2, y: 2 };
 
   let flowcell: boolean = false;
 
   const focus = (el) => {
     el.focus;
   };
+
+  let xy: XY = { x: $store.x, y: $store.y };
+  let x_offset = A_LEFT;
+  $: {
+    x_offset = flowcell ? B_LEFT : A_LEFT;
+    xy = {
+      x: ($store.x - x_offset) / X_STEP_MM,
+      y: ($store.y - Y_UPPER) / Y_STEP_MM,
+    };
+  }
 
   // let moving = false;
 
@@ -38,7 +58,7 @@
     <input
       type="checkbox"
       bind:checked={flowcell}
-      class="toggle toggle-md toggl-dark self-center mx-1 "
+      class="toggle toggle-md toggl-dark self-center mx-1"
     />
     <div class="text-base">B</div>
   </span>
@@ -51,42 +71,18 @@
     class="indicator-item indicator-center indicator-middle badge badge-primary shadow-xl draggable z-50 opacity-70"
   /> -->
 
-  <Slide name={flowcell ? "B" : "A"} {x} {y} {z_tilt} />
+  <Slide name={flowcell ? "B" : "A"} {xy} {xy_user} {z_tilt} />
 
   <!-- Z Objective -->
+  <section class="flex flex-grow space-x-8 self-center mt-4">
+    <BigZ name="All Tilt" />
+    <BigZ name="Objective Z" />
+  </section>
 
-  <ObjectiveZ />
-
-  <!-- XY Input -->
-  <div class="form-control self-center mt-4">
-    <label class="font-medium input-group">
-      <span>X</span>
-      <input
-        type="number"
-        min="-5"
-        max="30"
-        step="0.01"
-        class="text-lg text-center input input-bordered inputcheck w-24 h-10"
-      />
-      <span>Y</span>
-      <input
-        type="number"
-        min="-5"
-        max="80"
-        step="0.01"
-        class="text-lg text-center input input-bordered inputcheck w-24 h-10"
-      />
-
-      <button
-        class="font-sans content-center w-12 text-indigo-100 transition-colors duration-150 bg-indigo-700 rounded-lg focus:shadow-outline hover:bg-indigo-800"
-        tabindex="0"
-        >Go
-      </button>
-    </label>
-  </div>
+  <XYInput bind:xy_user bind:xy />
 
   <!-- Eject button -->
-  <button class="self-center btn btn-secondary btn-sm w-16 mt-4">
+  <button class="self-center btn btn-secondary btn-sm w-16 mt-2">
     <svg
       class="w-4 h-4 fill-current "
       version="1.1"

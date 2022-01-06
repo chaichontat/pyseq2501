@@ -9,11 +9,11 @@
     "check:watch": "svelte-check --tsconfig ./tsconfig.json --watch"
   },
   "devDependencies": {
-    "@silvia-odwyer/photon": "^0.3.11",
     "@sveltejs/adapter-static": "^1.0.0-next.21",
     "@sveltejs/kit": "next",
     "@types/ws": "^8.2.0",
     "autoprefixer": "^10.4.0",
+    "clone": "^2.1.2",
     "cssnano": "^5.0.11",
     "daisyui": "^1.16.2",
     "postcss": "^8.4.4",

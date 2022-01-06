@@ -6,17 +6,6 @@
   import Lasers from "./lasers.svelte";
   import Map from "./slide/map.svelte";
 
-  let status: Status = {
-    x: 2,
-    y: 5,
-    z_tilt: [0, 1, 2],
-    z_obj: 4,
-    laser_r: 3,
-    laser_g: 5,
-    shutter: false,
-    msg: "",
-  };
-
   let connected: boolean = false;
   // onMount(() => {
   //   const sse = new EventSource("http://localhost:8000/status");
@@ -25,18 +14,18 @@
   //     if (sse.readyState === 1) sse.close();
   //   };
   // });
+  let status: Status = $statusStore;
+  console.log(status);
 
   $: {
-    if ($statusStore) {
-      status = $statusStore;
-    }
+    status = $statusStore;
     connected = $statusStore != undefined ? true : false;
   }
 </script>
 
 <div class="drawer drawer-side">
   <label for="main-menu" class="drawer-overlay" />
-  <aside class="sidebar flex flex-col overflow-y-auto bg-base-100 ">
+  <aside class="sidebar flex flex-col overflow-y-auto bg-base-100">
     <div
       class="hidden lg:block sticky inset-x-0 top-0 z-40 w-full py-1 transition duration-200 ease-in-out border-b border-base-200 bg-base-100"
     >
@@ -70,8 +59,8 @@
 <style lang="postcss">
   .sidebar {
     @apply text-base-content;
-    @apply w-96;
     @apply border-r border-base-200;
+    width: 26rem;
   }
 
   .translucent {

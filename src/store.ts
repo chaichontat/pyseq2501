@@ -1,5 +1,11 @@
+import type { Writable } from "svelte/store";
 import { writable } from "svelte/store";
 import websocketStore from "./ws_store";
+
+export type XY = {
+  x: number;
+  y: number;
+}
 
 export type Status = {
   x: number;
@@ -12,13 +18,30 @@ export type Status = {
   msg: string;
 };
 
+let status: Status = {
+  x: 2,
+  y: 5,
+  z_tilt: [0, 1, 2],
+  z_obj: 4,
+  laser_r: 3,
+  laser_g: 5,
+  shutter: false,
+  msg: "",
+};
+
+export type UserSettings = {
+  n: number;
+}
+
 export const mainStore = (typeof window !== 'undefined')
   ? websocketStore(`ws://${ window.location.hostname }:8000/img`)
   : writable(undefined)
 
-export const statusStore = (typeof window !== 'undefined')
-  ? websocketStore(`ws://${ window.location.hostname }:8000/status`, undefined, (x) => JSON.parse(JSON.parse(x)))
-  : writable(undefined)
+export const statusStore: Writable<Status> = (typeof window !== 'undefined')
+  ? websocketStore(`ws://${ window.location.hostname }:8000/status`, status, (x): Status => JSON.parse(JSON.parse(x)))
+  : writable(status)
+
+export const userStore: Writable<UserSettings> = writable({ n: 5 })
 
 // export let status: Status = {
 //   x: 2,

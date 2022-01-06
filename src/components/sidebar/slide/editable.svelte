@@ -54,6 +54,11 @@
     @apply text-sm font-medium leading-none h-6 px-2;
   }
 
+  .input-normal {
+    @apply text-lg font-medium leading-none h-6 px-2;
+    /* font-size: 1.06125rem; */
+  }
+
   input::-webkit-outer-spin-button,
   input::-webkit-inner-spin-button {
     -webkit-appearance: none;

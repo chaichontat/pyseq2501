@@ -45,8 +45,8 @@ class Status(BaseModel):
 
 def gen_poll(imager: Imager):
     async def poll(websocket: WebSocket) -> NoReturn:
-        x = 0
-        y = 1
+        x = 10000
+        y = -180000
         while True:
             await websocket.accept()
             while True:
@@ -57,18 +57,18 @@ def gen_poll(imager: Imager):
                             y=y,
                             z_tilt=(1, 1, 1),
                             z_obj=1,
-                            laser_r=y,
+                            laser_r=int(x / 10000),
                             laser_g=1,
                             shutter=False,
                             msg="Imaging",
                         ).json()
                     )
                     await asyncio.sleep(1)
-                    x += 0.3
-                    y += 1
-                    if x > 25:
+                    x += 500
+                    y += 50000
+                    if x > 50000:
                         x = 0
-                    if y > 75:
+                    if y > 5000000:
                         y = 0
                 except WebSocketDisconnect:
                     ...

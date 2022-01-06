@@ -1,7 +1,5 @@
 <script lang="ts">
-  import { mainStore } from "../../store";
-
-  export let full: null | number = 8;
+  import { mainStore, userStore } from "../../store";
   export let curr: null | number;
 
   let _curr = "  --";
@@ -11,8 +9,8 @@
   }
 
   function start() {
-    if (0 < full && full < 1000) {
-      mainStore.set(JSON.stringify({ cmd: "take", n: full }));
+    if (0 < $userStore.n && $userStore.n < 1000) {
+      mainStore.set(JSON.stringify({ cmd: "take", n: $userStore.n }));
     } else {
       alert("Invalid number of bundles.");
     }
@@ -39,12 +37,12 @@
           min="1"
           max="999"
           placeholder="1"
-          bind:value={full}
+          bind:value={$userStore.n}
         />
       </span>
       <div class="stat-title">Bundles taken</div>
       <div class="stat-desc">
-        <progress value={curr} max={full} class="progress progress-secondary" />
+        <progress value={curr} max={$userStore.n} class="progress progress-secondary" />
       </div>
     </div>
   </div>

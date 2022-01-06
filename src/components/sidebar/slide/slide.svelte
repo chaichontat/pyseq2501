@@ -1,13 +1,13 @@
 <script lang="ts">
+  import type { XY } from "src/store";
   import Locator from "./locator.svelte";
-
   import RulerX from "./ruler_x.svelte";
   import RulerY from "./ruler_y.svelte";
   import Tilt from "./tilt.svelte";
 
   export let name: string = "";
-  export let x = 0;
-  export let y = 0;
+  export let xy: XY = { x: 0, y: 0 };
+  export let xy_user: XY = { x: 0, y: 0 };
   export let z_tilt: [number, number, number] = [19850, 19850, 19850];
 </script>
 
@@ -16,7 +16,8 @@
 >
   <RulerX />
   <RulerY />
-  <Locator {x} {y} />
+  <Locator {xy} />
+  <Locator line={false} legend={false} char="📍" xy={xy_user} offset={[0.8, 1.65]} />
   <Tilt {z_tilt} />
 
   <span class="name">
