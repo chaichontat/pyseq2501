@@ -1,4 +1,4 @@
-<div class="mx-auto space-x-1 navbar max-w-none border-b">
+<div class="mx-auto space-x-1 navbar max-w-none">
   <div class="flex items-center flex-none">
     <span aria-label="Homepage" class="px-2 flex-0 md:px-4 "
       ><div class="inline-block text-3xl">

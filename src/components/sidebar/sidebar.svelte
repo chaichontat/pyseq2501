@@ -38,32 +38,31 @@
   <label for="main-menu" class="drawer-overlay" />
   <aside class="sidebar flex flex-col overflow-y-auto bg-base-100 ">
     <div
-      class="hidden lg:block sticky inset-x-0 top-0 z-10 w-full py-1 transition duration-200 ease-in-out border-b border-base-200 bg-base-100"
+      class="hidden lg:block sticky inset-x-0 top-0 z-40 w-full py-1 transition duration-200 ease-in-out border-b border-base-200 bg-base-100"
     >
       <Logo />
+    </div>
+    <div class="relative">
+      <!-- <div
+        class:translucent={!connected}
+        class="hidden absolute w-full h-full transition-all"
+      /> -->
+      <ol class="menu p-2 mt-4 ">
+        <Division name="Map">
+          <Map {...status} />
+        </Division>
 
-      <div class="relative">
-        <!-- <div
-          class:translucent={!connected}
-          class="hidden absolute w-full h-full transition-all"
-        /> -->
-        <ol class="menu p-2 mt-4 ">
-          <Division name="Map">
-            <Map {...status} />
-          </Division>
-
-          <Division name="Lasers">
-            <Lasers g={status.laser_g} r={status.laser_r} />
-            <li>
-              <span class="self-center mt-2 text-lg">
-                Shutter:&nbsp; <p class="font-mono font-bold">
-                  {status.shutter ? "OPENED" : "CLOSED"}
-                </p>
-              </span>
-            </li>
-          </Division>
-        </ol>
-      </div>
+        <Division name="Lasers">
+          <Lasers g={status.laser_g} r={status.laser_r} />
+          <li>
+            <span class="self-center mt-2 text-lg">
+              Shutter:&nbsp; <p class="font-mono font-bold">
+                {status.shutter ? "OPENED" : "CLOSED"}
+              </p>
+            </span>
+          </li>
+        </Division>
+      </ol>
     </div>
   </aside>
 </div>
