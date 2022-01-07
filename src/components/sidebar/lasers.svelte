@@ -1,8 +1,6 @@
 <script>
+  import { userStore, statusStore } from "$src/store";
   import Laser from "./laser.svelte";
-
-  export let g;
-  export let r;
 </script>
 
 <li>
@@ -22,8 +20,18 @@
       </tr>
     </thead>
     <tbody>
-      <Laser name="532 nm" color="#84cc16" power={g} />
-      <Laser name="633 nm" color="#ef4444" power={r} />
+      <Laser
+        name="532 nm"
+        color="#84cc16"
+        power={$statusStore.laser_g}
+        userPower={$userStore.laser_g}
+      />
+      <Laser
+        name="633 nm"
+        color="#ef4444"
+        power={$statusStore.laser_r}
+        userPower={$userStore.laser_r}
+      />
     </tbody>
   </table>
 </li>

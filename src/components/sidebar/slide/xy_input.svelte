@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { XY } from "src/store";
-  export let xy: XY = { x: 0, y: 0 };
-  export let xy_user: XY = { x: 0, y: 0 };
+  export let xy: XY = { x: -1, y: -1 };
+  export let xy_user: XY = { x: -1, y: -1 };
 </script>
 
 <!-- XY Input -->
@@ -9,7 +9,7 @@
 <div class="form-control self-center mt-4">
   <label class="font-medium input-group">
     <span
-      ><div data-tip={xy.x.toFixed(2)} class="tooltip tooltip-bottom">
+      ><div data-tip={`${xy.x.toFixed(2)} mm`} class="tooltip tooltip-bottom">
         <b>X</b>
       </div></span
     >
@@ -22,7 +22,7 @@
       class="text-lg text-center input input-bordered inputcheck w-28 h-10"
     />
     <span
-      ><div data-tip={xy.y.toFixed(2)} class="tooltip tooltip-bottom">
+      ><div data-tip={`${xy.y.toFixed(2)} mm`} class="tooltip tooltip-bottom">
         <b>Y</b>
       </div></span
     >

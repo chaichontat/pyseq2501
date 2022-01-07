@@ -15,7 +15,6 @@
   //   };
   // });
   let status: Status = $statusStore;
-  console.log(status);
 
   $: {
     status = $statusStore;
@@ -27,7 +26,7 @@
   <label for="main-menu" class="drawer-overlay" />
   <aside class="sidebar flex flex-col overflow-y-auto bg-base-100">
     <div
-      class="hidden lg:block sticky inset-x-0 top-0 z-40 w-full py-1 transition duration-200 ease-in-out border-b border-base-200 bg-base-100"
+      class="hidden lg:block sticky inset-x-0 top-0 z-40 w-full py-1 transition duration-200 ease-in-out ring-1 ring-gray-900 ring-opacity-5 shadow-sm bg-white"
     >
       <Logo />
     </div>
@@ -42,7 +41,7 @@
         </Division>
 
         <Division name="Lasers">
-          <Lasers g={status.laser_g} r={status.laser_r} />
+          <Lasers />
           <li>
             <span class="self-center mt-2 text-lg">
               Shutter:&nbsp; <p class="font-mono font-bold">

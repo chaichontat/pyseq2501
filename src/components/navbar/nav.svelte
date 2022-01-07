@@ -6,7 +6,7 @@
 
 <div
   id="nav"
-  class="inset-x-0 top-0 z-50 w-full transition duration-200 ease-in-out border-b border-base-200 bg-base-100 text-base-content sticky"
+  class="inset-x-0 top-0 z-50 w-full transition duration-200 ease-in-out text-base-content sticky ring-1 ring-gray-900 ring-opacity-5 shadow-sm bg-white"
 >
   <div class="mx-auto space-x-1 navbar max-w-none">
     <div class="flex-none">

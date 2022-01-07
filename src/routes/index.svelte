@@ -1,25 +1,14 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-
-  import websocketStore from "../ws_store";
   import Main from "../components/main/main.svelte";
   import Nav from "../components/navbar/nav.svelte";
   import Sidebar from "../components/sidebar/sidebar.svelte";
-
-  // export const myStore = websocketStore("wss://localhost:8000/ws", "a");
-
-  // send JSON to websocket server
-  // $myStore = { content: "to be saved", other_values: "all" };
-
-  //   // receive JSON from server (push)
-  //   let response = $myStore;
 </script>
 
 <div>
-  <div class="drawer drawer-mobile">
+  <div class="drawer drawer-mobile antialiased">
     <input id="main-menu" type="checkbox" class="drawer-toggle" />
     <main
-      class="flex-grow block overflow-x-hidden bg-base-100 text-base-content drawer-content"
+      class="flex-grow block overflow-x-hidden text-base-content drawer-content bg-white shadow-md"
     >
       <Nav />
       <div class="p-4 lg:p-10"><Main /></div>

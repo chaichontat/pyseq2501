@@ -1,8 +1,10 @@
 <script lang="ts">
   import type { XY } from "src/store";
+  import { userStore, statusStore } from "$src/store";
   import Locator from "./locator.svelte";
   import RulerX from "./ruler_x.svelte";
   import RulerY from "./ruler_y.svelte";
+  import Shade from "./shade.svelte";
   import Tilt from "./tilt.svelte";
 
   export let name: string = "";
@@ -18,6 +20,7 @@
   <RulerY />
   <Locator {xy} />
   <Locator line={false} legend={false} char="📍" xy={xy_user} offset={[0.8, 1.65]} />
+  <Shade xy={xy_user} />
   <Tilt {z_tilt} />
 
   <span class="name">

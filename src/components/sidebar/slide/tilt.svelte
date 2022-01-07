@@ -1,5 +1,6 @@
 <script lang="ts">
-  export let z_tilt: [number, number, number] = [19850, 19850, 1];
+  export let z: [number, number, number] = [-1, -1, -1];
+  export let user_z: number | [number, number, number] = [-1, -1, -1];
 
   let editable = [false, false, false];
 
@@ -11,7 +12,7 @@
   <div>
     Tilt 3<Editable
       bind:editable={editable[2]}
-      value={z_tilt[2]}
+      value={z[2]}
       clDisp="absolute right-8 leading-6 font-mono font-medium"
       clInp="absolute text-base top-5 right-6 input input-smaller w-16 text-right"
     />
@@ -23,7 +24,7 @@
   <div>
     Tilt 2<Editable
       bind:editable={editable[1]}
-      value={z_tilt[1]}
+      value={z[1]}
       clDisp="absolute right-8 leading-6 font-mono font-medium"
       clInp="absolute text-base top-5 right-6 input input-smaller w-16 text-right"
     />
@@ -37,7 +38,7 @@
     Tilt 1
     <Editable
       bind:editable={editable[0]}
-      value={z_tilt[0]}
+      value={z[0]}
       clDisp="absolute left-6 leading-6 font-mono font-medium"
       clInp="absolute top-5 left-4 text-base input input-smaller w-16"
     />

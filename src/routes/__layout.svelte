@@ -2,6 +2,9 @@
   import "../app.css";
 </script>
 
-<!-- <div class="flex min-h-screen"> -->
+<svelte:head>
+  <title>PySeq 2501</title>
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+</svelte:head>
+
 <slot />
-<!-- </div> -->

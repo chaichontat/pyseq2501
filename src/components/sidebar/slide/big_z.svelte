@@ -3,9 +3,10 @@
   import Editable from "./editable.svelte";
 
   export let name = "";
+  export let value: number | string = -1;
+  export let userValue: number = -1;
 
   let editable: boolean = false;
-  let value: number = 0;
 </script>
 
 <div class="flex self-center">
@@ -13,9 +14,10 @@
     <span class="w-24 text-center font-medium">{name}</span>
     <Editable
       bind:editable
+      bind:userValue
       {value}
       clDisp="leading-6 font-mono font-medium text-center"
-      clInp="w-24 text-base input input-normal text-center"
+      clInp="w-24 text-base input input-smaller text-center"
     />
   </div>
   <Pencil class="ml-2" on:click={() => (editable = true)} />

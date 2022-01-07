@@ -1,7 +1,8 @@
 <script lang="ts">
-  export let name;
-  export let color;
-  export let power;
+  export let name: string;
+  export let color: string;
+  export let userPower: number;
+  export let power: number;
 </script>
 
 <tr style="--this-color: {color}">
@@ -24,6 +25,7 @@
       step="1"
       class="font-medium text-base input input-bordered w-10/12 h-8 block"
       style="margin: 0 auto;"
+      bind:value={userPower}
     />
   </td>
   <td class="text-center font-bold font-mono">{power}</td>

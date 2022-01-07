@@ -3,11 +3,7 @@
   import BigZ from "./big_z.svelte";
   import Slide from "./slide.svelte";
   import XYInput from "./xy_input.svelte";
-  import { statusStore as store } from "$src/store";
-  export let x = 10;
-  export let y = 10;
-  export let z_tilt: [number, number, number] = [0, 0, 0];
-  export let z_obj = 0;
+  import { statusStore as store, userStore } from "$src/store";
 
   const Y_UPPER = -180000;
   const Y_STEP_MM = 1e5;
@@ -17,8 +13,6 @@
 
   export let xy_user: XY = { x: 2, y: 2 };
 
-  let flowcell: boolean = false;
-
   const focus = (el) => {
     el.focus;
   };
@@ -26,11 +20,12 @@
   let xy: XY = { x: $store.x, y: $store.y };
   let x_offset = A_LEFT;
   $: {
-    x_offset = flowcell ? B_LEFT : A_LEFT;
+    x_offset = $userStore.flowcell ? B_LEFT : A_LEFT;
     xy = {
       x: ($store.x - x_offset) / X_STEP_MM,
       y: ($store.y - Y_UPPER) / Y_STEP_MM,
     };
+    xy_user = { x: $userStore.x, y: $userStore.y };
   }
 
   // let moving = false;
@@ -57,7 +52,7 @@
     <div class="text-base">A</div>
     <input
       type="checkbox"
-      bind:checked={flowcell}
+      bind:checked={$userStore.flowcell}
       class="toggle toggle-md toggl-dark self-center mx-1"
     />
     <div class="text-base">B</div>
@@ -71,12 +66,15 @@
     class="indicator-item indicator-center indicator-middle badge badge-primary shadow-xl draggable z-50 opacity-70"
   /> -->
 
-  <Slide name={flowcell ? "B" : "A"} {xy} {xy_user} {z_tilt} />
+  <Slide name={$userStore.flowcell ? "B" : "A"} {xy} {xy_user} z_tilt={$store.z_tilt} />
 
   <!-- Z Objective -->
   <section class="flex flex-grow space-x-8 self-center mt-4">
-    <BigZ name="All Tilt" />
-    <BigZ name="Objective Z" />
+    <BigZ
+      name="All Tilt"
+      value={typeof $userStore.z_tilt == "number" ? $userStore.z_tilt : "--"}
+    />
+    <BigZ name="Objective Z" value={$store.z_obj} bind:userValue={$userStore.z_obj} />
   </section>
 
   <XYInput bind:xy_user bind:xy />

@@ -3,9 +3,11 @@
   export let curr: null | number;
 
   let _curr = "  --";
+  let height = 0;
 
   $: {
     _curr = curr ? curr.toString() : "--";
+    height = ($userStore.n * 128 * 0.375) / 1000;
   }
 
   function start() {
@@ -23,23 +25,30 @@
     <button class="_btn btn--secondary">Cancel</button>
   </content>
 
-  <div class=" border stats border-base-300 flex-grow">
+  <div class="border stats border-base-300 flex-grow">
     <div class="stat">
       <div class="stat-figure text-primary">
         <button class="btn loading btn-circle btn-lg bg-base-200 btn-ghost" />
       </div>
-      <span class="stat-value">
-        <span class="font-mono">{_curr}</span>
-        /
-        <input
-          type="number"
-          class="input stat-value w-24"
-          min="1"
-          max="999"
-          placeholder="1"
-          bind:value={$userStore.n}
-        />
-      </span>
+      <div class="flex">
+        <span class="stat-value">
+          <span class="font-mono">{_curr}</span>
+          /
+          <input
+            type="number"
+            class="input stat-value w-30 text-right px-2"
+            min="1"
+            max="999"
+            placeholder="1"
+            bind:value={$userStore.n}
+          />
+        </span>
+        <div class="flex flex-col ml-2 opacity-75">
+          <span>Height {height.toFixed(3)} mm</span>
+          <span>Total time: {height / 2} s</span>
+        </div>
+      </div>
+
       <div class="stat-title">Bundles taken</div>
       <div class="stat-desc">
         <progress value={curr} max={$userStore.n} class="progress progress-secondary" />

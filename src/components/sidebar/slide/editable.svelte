@@ -2,7 +2,8 @@
   import { createEventDispatcher } from "svelte";
 
   export let editable: boolean = false;
-  export let value: number = 0;
+  export let value: number | string = 0;
+  export let userValue: number = 0;
   export let clInp: string = "text-center self-center";
   export let clDisp: string = "text-center self-center";
   let elem: HTMLInputElement;
@@ -24,12 +25,8 @@
   }
 
   function focuslost() {
-    if (!validator(value)) {
-      focus(elem);
-      return;
-    }
     editable = false;
-    dispatch("set", value);
+    dispatch("set", userValue);
   }
 </script>
 
@@ -37,7 +34,7 @@
   <input
     type="number"
     class={clInp}
-    bind:value
+    bind:value={userValue}
     on:keypress={handleInput}
     on:blur={focuslost}
     bind:this={elem}
@@ -66,5 +63,15 @@
   }
   input[type="number"] {
     -moz-appearance: textfield;
+  }
+
+  input:invalid {
+    @apply border-red-600;
+    text-decoration: line-through;
+  }
+
+  input:valid {
+    @apply border-gray-400;
+    text-decoration: none;
   }
 </style>
