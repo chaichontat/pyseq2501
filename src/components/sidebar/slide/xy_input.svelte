@@ -1,7 +1,9 @@
 <script lang="ts">
-  import type { XY } from "src/store";
+  import Spinning from "$src/components/navbar/spinning.svelte";
+  import type { XY } from "$src/store";
+  import { userStore as user, statusStore as status } from "$src/store";
+
   export let xy: XY = { x: -1, y: -1 };
-  export let xy_user: XY = { x: -1, y: -1 };
 </script>
 
 <!-- XY Input -->
@@ -14,11 +16,11 @@
       </div></span
     >
     <input
-      bind:value={xy_user.x}
+      bind:value={$user.x}
       type="number"
       min="-5"
       max="30"
-      step="0.7"
+      step="0.01"
       class="text-lg text-center input input-bordered inputcheck w-28 h-10"
     />
     <span
@@ -27,18 +29,25 @@
       </div></span
     >
     <input
-      bind:value={xy_user.y}
+      bind:value={$user.y}
       type="number"
       min="-5"
       max="80"
-      step="0.7"
+      step="0.01"
       class="text-lg text-center input input-bordered inputcheck w-28 h-10"
     />
 
     <button
-      class="font-sans content-center w-12 text-indigo-100 transition-colors duration-150 bg-indigo-700 rounded-lg focus:shadow-outline hover:bg-indigo-800"
+      class="font-sans content-center w-12 text-indigo-100 transition-all duration-150 bg-indigo-700 rounded-lg focus:shadow-outline hover:bg-indigo-800"
       tabindex="0"
-      >Go
+    >
+      {#if $status.moving}
+        <div class="ml-4">
+          <Spinning color="white" />
+        </div>
+      {:else}
+        Go
+      {/if}
     </button>
   </label>
 </div>

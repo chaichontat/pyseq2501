@@ -1,7 +1,6 @@
 <script lang="ts">
-  import type { XY } from "src/store";
-
-  export let xy: XY = { x: 0, y: 0 };
+  export let x: number;
+  export let y: number;
   export let line: boolean = true;
   export let legend: boolean = true;
   export let char: string = "×";
@@ -9,11 +8,8 @@
 
   let real_x: number;
   let real_y: number;
-  let x = xy.x;
-  let y = xy.y;
+
   $: {
-    x = xy.x;
-    y = xy.y;
     real_x = (100 * x) / 25;
     real_y = (100 * y) / 75;
   }

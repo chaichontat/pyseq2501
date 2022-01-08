@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { XY } from "src/store";
-  import BigZ from "./big_z.svelte";
-  import Slide from "./slide.svelte";
-  import XYInput from "./xy_input.svelte";
+  import BigZ from "./slide/big_z.svelte";
+  import Slide from "./slide/slide.svelte";
+  import XYInput from "./slide/xy_input.svelte";
   import { statusStore as store, userStore } from "$src/store";
 
   const Y_UPPER = -180000;
@@ -10,8 +10,6 @@
   const X_STEP_MM = 409.6;
   const A_LEFT = 7331;
   const B_LEFT = 33070;
-
-  export let xy_user: XY = { x: 2, y: 2 };
 
   const focus = (el) => {
     el.focus;
@@ -25,7 +23,6 @@
       x: ($store.x - x_offset) / X_STEP_MM,
       y: ($store.y - Y_UPPER) / Y_STEP_MM,
     };
-    xy_user = { x: $userStore.x, y: $userStore.y };
   }
 
   // let moving = false;
@@ -66,7 +63,7 @@
     class="indicator-item indicator-center indicator-middle badge badge-primary shadow-xl draggable z-50 opacity-70"
   /> -->
 
-  <Slide name={$userStore.flowcell ? "B" : "A"} {xy} {xy_user} z_tilt={$store.z_tilt} />
+  <Slide name={$userStore.flowcell ? "B" : "A"} x={xy.x} y={xy.y} z_tilt={$store.z_tilt} />
 
   <!-- Z Objective -->
   <section class="flex flex-grow space-x-8 self-center mt-4">
@@ -77,7 +74,7 @@
     <BigZ name="Objective Z" value={$store.z_obj} bind:userValue={$userStore.z_obj} />
   </section>
 
-  <XYInput bind:xy_user bind:xy />
+  <XYInput {xy} />
 
   <!-- Eject button -->
   <button class="self-center btn btn-secondary btn-sm w-16 mt-2">

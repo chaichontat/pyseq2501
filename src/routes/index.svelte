@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Main from "../components/main/main.svelte";
-  import Nav from "../components/navbar/nav.svelte";
-  import Sidebar from "../components/sidebar/sidebar.svelte";
+  import Main from "./main.svelte";
+  import Nav from "./nav.svelte";
+  import Sidebar from "./sidebar.svelte";
 </script>
 
 <div>
@@ -11,7 +11,9 @@
       class="flex-grow block overflow-x-hidden text-base-content drawer-content bg-white shadow-md"
     >
       <Nav />
-      <div class="p-4 lg:p-10"><Main /></div>
+      <div class="p-4 lg:px-10">
+        <Main />
+      </div>
     </main>
     <Sidebar />
   </div>

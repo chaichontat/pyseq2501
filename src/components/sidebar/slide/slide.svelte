@@ -8,19 +8,52 @@
   import Tilt from "./tilt.svelte";
 
   export let name: string = "";
-  export let xy: XY = { x: 0, y: 0 };
-  export let xy_user: XY = { x: 0, y: 0 };
+  export let x;
+  export let y;
   export let z_tilt: [number, number, number] = [19850, 19850, 19850];
+
+  function handleKey(e: KeyboardEvent) {
+    console.log(e);
+    switch (e.key) {
+      case "ArrowDown":
+        $userStore.y += 0.7;
+        break;
+
+      case "ArrowLeft":
+        $userStore.x -= 0.7;
+        break;
+
+      case "ArrowRight":
+        $userStore.x += 0.7;
+        break;
+
+      case "ArrowUp":
+        $userStore.y -= 0.7;
+        break;
+
+      default:
+        break;
+    }
+  }
 </script>
+
+<svelte:window on:keydown={handleKey} />
 
 <div
   class="bg-light-200 self-center slide border border-gray-400 shadow flex relative justify-center box-border"
 >
   <RulerX />
   <RulerY />
-  <Locator {xy} />
-  <Locator line={false} legend={false} char="📍" xy={xy_user} offset={[0.8, 1.65]} />
-  <Shade xy={xy_user} />
+  <Locator {x} {y} />
+  <Locator
+    line={false}
+    legend={false}
+    char="📍"
+    x={$userStore.x}
+    y={$userStore.y}
+    offset={[0.8, 1.65]}
+  />
+  <Shade />
   <Tilt {z_tilt} />
 
   <span class="name">

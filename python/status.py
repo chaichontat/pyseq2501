@@ -20,27 +20,8 @@ class Status(BaseModel):
     laser_r: int
     laser_g: int
     shutter: bool
+    moving: bool
     msg: str
-
-
-# def gen_poll(imager: Imager) -> Callable[[Request], Coroutine[None, None, EventSourceResponse]]:
-#     async def poll(request: Request) -> EventSourceResponse:
-#         async def gen() -> AsyncGenerator[str, None]:
-#             x = 0
-#             y = 1
-#             while True:
-#                 yield Status(x=x, y=y, z_tilt=(1, 1, 1), z_obj=1, laser_r=y, laser_g=1, shutter=False).json()
-#                 await asyncio.sleep(1)
-#                 x += 0.3
-#                 y += 1
-#                 if x > 25:
-#                     x = 0
-#                 if y > 75:
-#                     y = 0
-
-#         return EventSourceResponse(gen())
-
-#     return poll
 
 
 def gen_poll(imager: Imager):
@@ -60,6 +41,7 @@ def gen_poll(imager: Imager):
                             laser_r=int(x / 10000),
                             laser_g=1,
                             shutter=False,
+                            moving=False,
                             msg="Imaging",
                         ).json()
                     )

@@ -1,17 +1,11 @@
 <script lang="ts">
   import { userStore, XY } from "$src/store";
 
-  export let xy: XY = { x: 0, y: 0 };
-
   let real_x: number;
   let real_y: number;
-  let x = xy.x;
-  let y = xy.y;
   $: {
-    x = xy.x;
-    y = xy.y;
-    real_x = (100 * x) / 25;
-    real_y = (100 * y) / 75;
+    real_x = (100 * $userStore.x) / 25;
+    real_y = (100 * $userStore.y) / 75;
   }
 </script>
 

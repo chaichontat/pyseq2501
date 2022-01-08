@@ -100,15 +100,21 @@ export function websocketStore<T>(url: string, initialValue: T | undefined = und
     return {
         set(value: T): void {
             if (socket) {
-                // @ts-ignore
-                const send = () => socket.send(value);
+                const send =
+                    (typeof value == "object")
+                        ? () => socket.send(JSON.stringify(value))
+                        // @ts-ignore
+                        : () => socket.send(value)
                 if (socket.readyState !== WebSocket.OPEN) {
                     open().then(send)
                 } else { send() }
             }
+            subscribers.forEach((subscriber) => {
+                subscriber(value)
+            });
         },
 
-        update(_: Updater<any>): void { },
+        update(_: Updater<any>): void { console.log("update") },
 
         subscribe(subscriber: Subscriber<T>): Unsubscriber {
             open();

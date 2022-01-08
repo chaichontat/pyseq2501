@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Preview from "./preview.svelte";
-  import Progress from "./progress.svelte";
+  import Preview from "$comps/main/preview.svelte";
+  import Progress from "$comps/main/progress.svelte";
 </script>
 
 <svelte:head>

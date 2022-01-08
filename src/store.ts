@@ -33,8 +33,8 @@ let status: Status = {
 
 export type UserSettings = {
   n: number;
-  x: number;
-  y: number;
+  x: number
+  y: number
   z_tilt: number | [number, number, number],
   z_obj: number,
   laser_r: number,
@@ -42,15 +42,21 @@ export type UserSettings = {
   flowcell: boolean,
 }
 
-export const mainStore = (typeof window !== 'undefined')
-  ? websocketStore(`ws://${ window.location.hostname }:8000/img`)
-  : writable(undefined)
+let userDefault: UserSettings = { n: 8, x: 0, y: 0, z_tilt: 19850, z_obj: 32000, laser_r: 5, laser_g: 5, flowcell: false }
 
-export const statusStore: Writable<Status> = (typeof window !== 'undefined')
+let img = { n: 0, img: "" }
+
+export const mainStore = (!import.meta.env.SSR)
+  ? websocketStore(`ws://${ window.location.hostname }:8000/img`, img, (x) => JSON.parse(JSON.parse(x)))
+  : writable(img)
+
+export const statusStore: Writable<Status> = (!import.meta.env.SSR)
   ? websocketStore(`ws://${ window.location.hostname }:8000/status`, status, (x): Status => JSON.parse(JSON.parse(x)))
   : writable(status)
 
-export const userStore: Writable<UserSettings> = writable({ n: 8, x: 0, y: 0, z_tilt: 19850, z_obj: 32000, laser_r: 5, laser_g: 5, flowcell: false })
+export const userStore: Writable<UserSettings> = (!import.meta.env.SSR)
+  ? websocketStore(`ws://${ window.location.hostname }:8000/user`, userDefault, (x): Status => JSON.parse(JSON.parse(x)))
+  : writable(userDefault)
 
 // export let status: Status = {
 //   x: 2,

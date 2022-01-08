@@ -1,7 +1,7 @@
 <script lang="ts">
   import { statusStore } from "../../store";
   let connected: boolean = false;
-  $: connected = $statusStore != undefined ? true : false;
+  $: connected = $statusStore.laser_r != -1;
 </script>
 
 {#if connected}

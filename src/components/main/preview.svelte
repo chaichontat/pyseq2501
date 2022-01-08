@@ -2,19 +2,17 @@
   import { onMount } from "svelte";
   import Panzoom, { PanzoomObject } from "@panzoom/panzoom";
   import { mainStore, userStore } from "../../store";
-  import Veg from "./veg.svelte";
 
   let canvas: HTMLCanvasElement;
   let img: HTMLImageElement;
   let pz: PanzoomObject;
 
+  let ctx: CanvasRenderingContext2D;
+
   onMount(() => {
-    const ctx = canvas.getContext("2d");
-    img = new Image();
-    img.onload = function () {
-      ctx.drawImage(img, 0, 0);
-    };
+    ctx = canvas.getContext("2d");
     pz = Panzoom(canvas, { maxZoom: 5 });
+    pz.zoom(0.25, { animate: true });
 
     // var width = 100;
     // var height = 100;
@@ -48,15 +46,34 @@
     //   // pz.pan(10, 10);
   });
 
+  function render() {}
+
   $: {
     if (canvas && $mainStore) {
-      img.src = "data:image/jpg;base64," + $mainStore;
+      if ($mainStore.n == 1) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      img = new Image();
+      img.onload = () => ctx.drawImage(img, 0, 128 * ($userStore.n - $mainStore.n));
+      img.src = "data:image/jpg;base64," + $mainStore.img;
     }
   }
+
+  // $: if (canvas) ctx.canvas.height = 128 * $userStore.n;
 </script>
 
-<div class="mt-4 max-h-full center shadow border border-gray-400" on:wheel={pz.zoomWithWheel}>
-  <canvas id="canvas" bind:this={canvas} width={1024} height={800} />
+<div
+  class="mt-4 center shadow border border-gray-400"
+  on:wheel={pz.zoomWithWheel}
+  style="height:75vh;"
+>
+  <canvas
+    id="canvas"
+    bind:this={canvas}
+    width={2048}
+    height={128 * $userStore.n}
+    style="border:2px solid #000000;"
+  />
 </div>
 
 <!-- <svelte:component /> -->

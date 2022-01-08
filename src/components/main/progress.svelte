@@ -6,13 +6,14 @@
   let height = 0;
 
   $: {
-    _curr = curr ? curr.toString() : "--";
     height = ($userStore.n * 128 * 0.375) / 1000;
+    curr = $mainStore ? $mainStore.n : -1;
+    _curr = curr == -1 ? "--" : curr;
   }
 
   function start() {
     if (0 < $userStore.n && $userStore.n < 1000) {
-      mainStore.set(JSON.stringify({ cmd: "take", n: $userStore.n }));
+      $mainStore = { cmd: "take", n: $userStore.n };
     } else {
       alert("Invalid number of bundles.");
     }
@@ -20,9 +21,9 @@
 </script>
 
 <span class="flex flex-row gap-x-3 w-full">
-  <content class="grid grid-row-2 gap-y-2 w-24">
+  <content class="grid grid-row-2 gap-y-2 w-32">
     <button class="_btn btn--primary" on:click={start}>Start</button>
-    <button class="_btn btn--secondary">Cancel</button>
+    <button class="_btn btn--secondary">Autofocus</button>
   </content>
 
   <div class="border stats border-base-300 flex-grow">
@@ -36,14 +37,14 @@
           /
           <input
             type="number"
-            class="input stat-value w-30 text-right px-2"
+            class="input stat-value w-36 text-right px-2"
             min="1"
             max="999"
             placeholder="1"
             bind:value={$userStore.n}
           />
         </span>
-        <div class="flex flex-col ml-2 opacity-75">
+        <div class="flex flex-col ml-4 opacity-75">
           <span>Height {height.toFixed(3)} mm</span>
           <span>Total time: {height / 2} s</span>
         </div>
@@ -51,7 +52,11 @@
 
       <div class="stat-title">Bundles taken</div>
       <div class="stat-desc">
-        <progress value={curr} max={$userStore.n} class="progress progress-secondary" />
+        <progress
+          value={$mainStore.n}
+          max={$userStore.n}
+          class="progress progress-secondary transition-all"
+        />
       </div>
     </div>
   </div>

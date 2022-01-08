@@ -1,7 +1,7 @@
 <script>
-  import Logo from "../logo.svelte";
-  import Connected from "./connected.svelte";
-  import Status from "./status.svelte";
+  import Logo from "$comps/logo.svelte";
+  import Connected from "$comps/navbar/connected.svelte";
+  import Status from "$comps/navbar/status.svelte";
 </script>
 
 <div

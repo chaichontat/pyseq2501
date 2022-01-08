@@ -1,10 +1,10 @@
 <script lang="ts">
-  import type { Status } from "../../store";
-  import { statusStore } from "../../store";
-  import Logo from "../logo.svelte";
-  import Division from "./division.svelte";
-  import Lasers from "./lasers.svelte";
-  import Map from "./slide/map.svelte";
+  import type { Status } from "$src/store";
+  import { statusStore } from "$src/store";
+  import Logo from "$comps/logo.svelte";
+  import Division from "$comps/sidebar/division.svelte";
+  import Lasers from "$comps/sidebar/lasers.svelte";
+  import Map from "$src/components/sidebar/map.svelte";
 
   let connected: boolean = false;
   // onMount(() => {
@@ -35,7 +35,7 @@
         class:translucent={!connected}
         class="hidden absolute w-full h-full transition-all"
       /> -->
-      <ol class="menu p-2 mt-4 ">
+      <ol class="menu p-2 ">
         <Division name="Map">
           <Map {...status} />
         </Division>
