@@ -1,9 +1,14 @@
 <script lang="ts">
   import Spinning from "$src/components/navbar/spinning.svelte";
   import type { XY } from "$src/store";
-  import { userStore as user, statusStore as status } from "$src/store";
+  import { mainStore, userStore as user, statusStore as status } from "$src/store";
 
   export let xy: XY = { x: -1, y: -1 };
+
+  function move() {
+    $mainStore = { cmd: "x", n: $user.x };
+    $mainStore = { cmd: "y", n: $user.y };
+  }
 </script>
 
 <!-- XY Input -->
@@ -40,6 +45,7 @@
     <button
       class="font-sans content-center w-12 text-indigo-100 transition-all duration-150 bg-indigo-700 rounded-lg focus:shadow-outline hover:bg-indigo-800"
       tabindex="0"
+      on:click={move}
     >
       {#if $status.moving}
         <div class="ml-4">

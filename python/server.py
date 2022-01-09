@@ -37,8 +37,8 @@ app.add_middleware(
 )
 
 
-DEBUG = True
-imager = FakeImager if DEBUG else Imager(get_ports(60))
+DEBUG = False
+imager = Imager(get_ports(60))
 
 class Img(BaseModel):
     n: int
@@ -76,10 +76,14 @@ async def image_endpoint(websocket: WebSocket) -> NoReturn:
                     case Received("take", n):
                         logger.info(f"Received: Take {n} bundles.")
                         imgstr = await asyncio.get_running_loop().run_in_executor(thr, take_img(n))
-                        for i in range(n):
-                            await asyncio.sleep(0.25)
-                            await websocket.send_json(Img(n=i+1, img=imgstr).json())
-                
+                        await websocket.send_json(Img(n=n, img=imgstr).json())
+                    case Received("x", n):
+                        logger.info(f"X Go: {n}")
+                        await asyncio.get_running_loop().run_in_executor(thr, imager.x.move(n))
+                    case Received("y", n):
+                        logger.info(f"Y Go: {n}")
+                        await asyncio.get_running_loop().run_in_executor(thr, imager.y.move(n))
+                        
             except WebSocketDisconnect:
                 ...
 
