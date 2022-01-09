@@ -125,7 +125,7 @@ class YStage(UsesSerial, Movable):
         self._mode = "IMAGING" if slowly else "MOVING"
         logger.info(f"Moving to {pos} for {self._mode}")
         self.com.send((YCmd.SET_POS(pos), YCmd.GO))
-        return self.com.send(YCmd.MOVE_DONE).result(120)
+        return self.com.send(YCmd.MOVE_DONE, wait_next_cmd=True).result(120)
 
     @property
     def pos(self) -> Future[int]:

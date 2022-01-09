@@ -44,7 +44,7 @@ class XStage(UsesSerial, Movable):
 
     def move(self, pos: int) -> Future[bool]:
         """Returns when move is completed."""
-        return self.com.send(XCmd.SET_POS(pos))
+        return self.com.send(XCmd.SET_POS(pos), wait_next_cmd=True)
 
     @run_in_executor
     def initialize(self) -> bool:

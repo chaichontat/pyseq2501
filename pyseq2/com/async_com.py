@@ -24,6 +24,7 @@ from typing import (
 
 from pyseq2.base.instruments_types import SerialInstruments
 from pyseq2.com.eventloop import LOOP
+from pyseq2.com.thread_mgt import run_in_executor
 from serial_asyncio import open_serial_connection
 
 logger = getLogger(__name__)
@@ -94,6 +95,9 @@ class COM:
     Necessary conditions:
     - Commands are executed in FIFO order.
     - Response from an instrument is in FIFO order.
+        **This is usually true except for `move` commands in which the instrument is
+          programmed to respond on completion**
+
     - All responses are accounted for.
 
     Specific to each COM channel.
@@ -125,6 +129,7 @@ class COM:
         self.t_lastcmd = time.monotonic()
         self.lock = threading.RLock()
         self._executor = ThreadPoolExecutor(max_workers=1)
+        self.wait_last_cmd = False
 
         # asyncio.Queue is not thread-safe and we're not waiting anyway.
         self._read_queue: queue.Queue[tuple[CmdParse[Any, Any], asyncio.Future[Any]]] = queue.Queue()
@@ -173,31 +178,33 @@ class COM:
                 self._read_queue.task_done()
 
     @overload
-    def send(self, msg: str) -> None:
+    def send(self, msg: str, wait_next_cmd: bool = ...) -> None:
         ...
 
     @overload
-    def send(self, msg: CmdParse[T, Any]) -> Future[T]:
+    def send(self, msg: CmdParse[T, Any], wait_next_cmd: bool = ...) -> Future[T]:
         ...
 
     @overload
-    def send(self, msg: tuple[str, ...]) -> tuple[None, ...]:
+    def send(self, msg: tuple[str, ...], wait_next_cmd: bool = ...) -> tuple[None, ...]:
         ...
 
     @overload
-    def send(self, msg: tuple[CmdParse[T, Any], ...]) -> tuple[Future[T], ...]:
+    def send(self, msg: tuple[CmdParse[T, Any], ...], wait_next_cmd: bool = ...) -> tuple[Future[T], ...]:
         ...
 
     @overload
-    def send(self, msg: tuple[CmdParse[Any, Any], ...]) -> tuple[Future[Any], ...]:
+    def send(self, msg: tuple[CmdParse[Any, Any], ...], wait_next_cmd: bool = ...) -> tuple[Future[Any], ...]:
         ...
 
     @overload
-    def send(self, msg: tuple[str | CmdParse[Any, Any], ...]) -> tuple[None | Future[Any], ...]:
+    def send(
+        self, msg: tuple[str | CmdParse[Any, Any], ...], wait_next_cmd: bool = ...
+    ) -> tuple[None | Future[Any], ...]:
         ...
 
     def send(
-        self, msg: str | CmdParse[T, Any] | tuple[str | CmdParse[Any, Any], ...]
+        self, msg: str | CmdParse[T, Any] | tuple[str | CmdParse[Any, Any], ...], wait_next_cmd: bool = False
     ) -> None | Future[T] | tuple[None | Future[Any], ...]:
         """Sends a command to an instrument.
         If msg is string   => no responses expected.
@@ -205,6 +212,9 @@ class COM:
             Unexpected response triggers a warning and returns Future[None].
 
         If msg is a list of either above, map this function to all elements.
+
+        wait_next_cmd: bool = False. Current command can return _after_ the next command.
+            Solution is to block the execution of the next command until this command is returned.
 
         Returns:
             None for msg, Future of a CmdParse result.
@@ -218,11 +228,27 @@ class COM:
                 if not isinstance(msg.cmd, str):
                     raise ValueError("This command needs argument(s), call it first.")
 
-                fut: asyncio.Future[Any] = asyncio.Future(loop=LOOP.loop)
-                self._read_queue.put_nowait((msg, fut))
-                self._send(self.formatter(msg.cmd).encode(**ENCODING_KW))
-                return LOOP.put(self.async_wrapper(fut))
+                fut: asyncio.Future[T] = asyncio.Future(loop=LOOP.loop)
+
+                if self.wait_last_cmd:
+                    self.wait_last_cmd = False
+                    ret = self._send_wait(msg, fut)  # Can block, move to executor.
+                else:
+                    self._read_queue.put_nowait((msg, fut))
+                    self._send(self.formatter(msg.cmd).encode(**ENCODING_KW))
+                    ret = LOOP.put(self.async_wrapper(fut))
+                if wait_next_cmd:
+                    self.wait_last_cmd = True
+                return ret
             return tuple(self.send(x) for x in msg)
+
+    @run_in_executor
+    def _send_wait(self, msg: CmdParse[T, Any], fut: asyncio.Future[T]) -> T:
+        assert isinstance(msg.cmd, str)
+        self._read_queue.join()  # Block
+        self._read_queue.put_nowait((msg, fut))
+        self._send(self.formatter(msg.cmd).encode(**ENCODING_KW))
+        return LOOP.put(self.async_wrapper(fut)).result()
 
     def _send(self, msg: bytes) -> None:
         """This needs to be synchronous to maintain order of execution.
@@ -237,6 +263,10 @@ class COM:
             self._serial.writer.write(msg)
             self.t_lastcmd = time.monotonic()
             logger.debug(f"{self.name}Tx: {msg}")
+
+    def wait(self) -> None:
+        """Wait until all commands are sent/received."""
+        self._read_queue.join()
 
     @staticmethod
     async def async_wrapper(fut: asyncio.Future[T]) -> T:

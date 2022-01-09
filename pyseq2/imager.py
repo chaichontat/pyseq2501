@@ -78,9 +78,9 @@ class Imager:
         This is because all move commands are expected to return some value upon completion.
         """
         logger.info("Waiting for all motions to complete.")
-        self.x.com._executor.submit(lambda: None).result(60)
-        self.y.com._executor.submit(lambda: None).result(60)
-        self.fpga.com._executor.submit(lambda: None).result(60)
+        self.x.com.wait()
+        self.y.com.wait()
+        self.fpga.com.wait()
         self.cams.wait_cam_ready()
         logger.info("All motions completed.")
 
