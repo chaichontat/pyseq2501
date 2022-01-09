@@ -1,3 +1,3 @@
 # Reference
 
-::: src.imaging.laser
+::: pyseq2.imaging.laser

@@ -24,7 +24,7 @@ theme:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/chaichontat/goff-rotation
+      link: https://github.com/chaichontat/pyseq2501
 
 nav:
   - Home: index.md
@@ -58,9 +58,6 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          setup_commands:
-            - import sys
-            - sys.path.append('../')
           rendering:
             members_order: source
   - git-revision-date-localized:

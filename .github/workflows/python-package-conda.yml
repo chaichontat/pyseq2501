@@ -56,10 +56,10 @@ jobs:
       - name: Test with Pytest
         run: |
           pip install .
-          cd tests/
           pytest
 
       - name: Build docs
+        if: ${{ matrix.os == 'ubuntu-latest'}}
         run: |
           conda install mkdocs mkdocs-material mkdocstrings
           pip install mkdocs-git-revision-date-localized-plugin
