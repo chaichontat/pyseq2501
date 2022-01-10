@@ -11,7 +11,7 @@ from rich.traceback import install
 
 install()
 logging.basicConfig(
-    level="DEBUG",
+    level="INFO",
     format="[yellow]%(name)-20s[/] %(message)s",
     datefmt="[%X]",
     handlers=[RichHandler(rich_tracebacks=True, markup=True)],
@@ -22,13 +22,15 @@ ports = get_ports(timeout=60)
 imager = Imager(ports, init_cam=True)
 
 #%%
+# imager.initialize()  # If not initialized in this session (defined by HiSeq power cycle).
+
+#%%
 imager.y.move(1000000)
 img = imager.take(12, dark=True, cam=0)
 Image.fromarray(img[0]).save("dark.tiff")
 time.sleep(0.5)
 
-# %%
-
+#%%
 target, focus_plot = imager.autofocus(channel=0)
 plt.plot(focus_plot)
 # %%
