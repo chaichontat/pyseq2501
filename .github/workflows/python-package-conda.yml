@@ -50,8 +50,8 @@ jobs:
           npm i -g pyright
           pyright --warnings
 
-      - name: Debug with tmate
-        uses: mxschmitt/action-tmate@v3
+#       - name: Debug with tmate
+#         uses: mxschmitt/action-tmate@v3
 
       - name: Test with Pytest
         run: |
