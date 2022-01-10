@@ -3,6 +3,8 @@
 [![GitHub Actions](https://github.com/chaichontat/goff-rotation/actions/workflows/python-package-conda.yml/badge.svg)](https://github.com/chaichontat/goff-rotation/actions/workflows/python-package-conda.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
+**[Docs](https://chaichontat.github.io/pyseq2501/)**
+
 Control your HiSeq 2000/2500 with ease. Web control (under development) available [here](https://github.com/chaichontat/pyseq2501-web).
 
 Fluidics control coming soon!
