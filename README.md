@@ -6,4 +6,15 @@ This is the web interface and the communication system for [PySeq 2501](https://
 
 ## Usage
 
+![2022-01-10 20 04 44](https://user-images.githubusercontent.com/34997334/148863230-8b66ae28-5212-4e1e-a74c-33ebe695be9f.gif)
+
+
+## Installation
 Install [`npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) and clone this repo.
+
+Run
+```sh
+npm i
+npm run build
+npm run preview
+```
