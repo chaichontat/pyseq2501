@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-import queue
-import threading
+import logging
 import time
-from asyncio import StreamReader, StreamWriter
-from concurrent.futures import Future, ThreadPoolExecutor
+from asyncio import Future, StreamReader, StreamWriter
 from dataclasses import dataclass
 from logging import getLogger
 from typing import (
@@ -17,14 +15,11 @@ from typing import (
     NoReturn,
     Optional,
     ParamSpec,
-    Sequence,
     TypeVar,
     overload,
 )
 
 from pyseq2.base.instruments_types import SerialInstruments
-from pyseq2.com.eventloop import LOOP
-from pyseq2.com.thread_mgt import run_in_executor
 from serial_asyncio import open_serial_connection
 
 logger = getLogger(__name__)
@@ -50,10 +45,6 @@ FORMATTER: dict[SerialInstruments, Callable[[str], str]] = dict(
 
 T = TypeVar("T", covariant=True)
 P = ParamSpec("P")
-
-
-def wait_results(futs: Sequence[Future[Any]]) -> Sequence[Any]:
-    return [f.result() for f in futs]
 
 
 class Channel(NamedTuple):
@@ -111,41 +102,48 @@ class COM:
         no_check (bool, optional): Do not check for return values. Defaults to False.
     """
 
-    def __init__(
-        self,
+    @classmethod
+    async def ainit(
+        cls,
         name: SerialInstruments,
         port_tx: str,
         port_rx: Optional[str] = None,
         min_spacing: Annotated[int | float, "s"] = 0.05,
         no_check: bool = False,
+    ):
+
+        self = cls(name, min_spacing, no_check)
+        if port_rx is not None:
+            assert name == "fpga"
+            srx = await open_serial_connection(url=port_rx, baudrate=115200)
+            stx = await open_serial_connection(url=port_tx, baudrate=115200)
+            self._serial = Channel(reader=srx[0], writer=stx[1])
+            logger.info(f"{self.name}Started listening to ports {port_tx} and {port_rx}.")
+        else:
+            assert name != "fpga"
+            self._serial = Channel(*await open_serial_connection(url=port_tx, baudrate=9600))
+            logger.info(f"{self.name}Started listening to port {port_tx}.")
+
+        asyncio.create_task(self._read_forever())
+        return self
+
+    def __init__(
+        self,
+        name: SerialInstruments,
+        min_spacing: Annotated[int | float, "s"] = 0.05,
+        no_check: bool = False,
     ) -> None:
 
-        self.port = port_tx
         self.name = f"[{COLOR[name]}]{name:10s}[/{COLOR[name]}]"
         self.formatter = FORMATTER[name]
         self.no_check = no_check
 
         self.min_spacing = min_spacing
         self.t_lastcmd = time.monotonic()
-        self.lock = threading.RLock()
-        self._executor = ThreadPoolExecutor(max_workers=1)
-        self.wait_last_cmd = False
+        self.lock = asyncio.Lock()
 
-        # asyncio.Queue is not thread-safe and we're not waiting anyway.
-        self._read_queue: queue.Queue[tuple[CmdParse[Any, Any], asyncio.Future[Any]]] = queue.Queue()
-        if port_rx is not None:
-            assert name == "fpga"
-            srx = LOOP.put(open_serial_connection(url=port_rx, baudrate=115200))
-            stx = LOOP.put(open_serial_connection(url=port_tx, baudrate=115200))
-            self._serial = Channel(reader=srx.result(1)[0], writer=stx.result(1)[1])
-            logger.info(f"{self.name}Started listening to ports {port_tx} and {port_rx}.")
-        else:
-            assert name != "fpga"
-            self._serial = Channel(*LOOP.put(open_serial_connection(url=port_tx, baudrate=9600)).result(1))
-            logger.info(f"{self.name}Started listening to port {port_tx}.")
-
-        self.tasks = LOOP.put(self._read_forever())  # Prevents garbage collection.
-        time.sleep(0.1)  # Give time for read_forever to purge channel.
+        self._read_queue: asyncio.Queue[tuple[CmdParse[Any, Any], asyncio.Future[Any]]] = asyncio.Queue()
+        self._serial: Channel
 
     async def _read_forever(self) -> NoReturn:
         while True:
@@ -159,7 +157,7 @@ class COM:
                 continue
             try:
                 cmd, fut = self._read_queue.get_nowait()
-            except queue.Empty:
+            except asyncio.QueueEmpty:
                 logger.warning(f"{self.name}Got mysterious return '{resp}'.")
                 continue
 
@@ -178,34 +176,14 @@ class COM:
                 self._read_queue.task_done()
 
     @overload
-    def send(self, msg: str, wait_next_cmd: bool = ...) -> None:
+    def send(self, msg: str) -> None:
         ...
 
     @overload
-    def send(self, msg: CmdParse[T, Any], wait_next_cmd: bool = ...) -> Future[T]:
+    def send(self, msg: CmdParse[T, Any]) -> Future[T]:
         ...
 
-    @overload
-    def send(self, msg: tuple[str, ...], wait_next_cmd: bool = ...) -> tuple[None, ...]:
-        ...
-
-    @overload
-    def send(self, msg: tuple[CmdParse[T, Any], ...], wait_next_cmd: bool = ...) -> tuple[Future[T], ...]:
-        ...
-
-    @overload
-    def send(self, msg: tuple[CmdParse[Any, Any], ...], wait_next_cmd: bool = ...) -> tuple[Future[Any], ...]:
-        ...
-
-    @overload
-    def send(
-        self, msg: tuple[str | CmdParse[Any, Any], ...], wait_next_cmd: bool = ...
-    ) -> tuple[None | Future[Any], ...]:
-        ...
-
-    def send(
-        self, msg: str | CmdParse[T, Any] | tuple[str | CmdParse[Any, Any], ...], wait_next_cmd: bool = False
-    ) -> None | Future[T] | tuple[None | Future[Any], ...]:
+    def send(self, msg: str | CmdParse[T, Any]) -> None | Future[T]:
         """Sends a command to an instrument.
         If msg is string   => no responses expected.
         If msg is CmdParse => response expected and parsed by CmdParse.parser.
@@ -219,36 +197,19 @@ class COM:
         Returns:
             None for msg, Future of a CmdParse result.
         """
-        with self.lock:  # Main thread and COM-specific thread can use this function at the same time.
-            if isinstance(msg, str):
-                self._send(self.formatter(msg).encode(**ENCODING_KW))
-                return
+        # with self.lock:  # Main thread and COM-specific thread can use this function at the same time.
+        if isinstance(msg, str):
+            self._send(self.formatter(msg).encode(**ENCODING_KW))
+            return
 
-            if isinstance(msg, CmdParse):
-                if not isinstance(msg.cmd, str):
-                    raise ValueError("This command needs argument(s), call it first.")
+        if not isinstance(msg.cmd, str):
+            raise ValueError("This command needs argument(s), call it first.")
 
-                fut: asyncio.Future[T] = asyncio.Future(loop=LOOP.loop)
+        fut: Future[T] = asyncio.Future()
 
-                if self.wait_last_cmd:
-                    self.wait_last_cmd = False
-                    ret = self._send_wait(msg, fut)  # Can block, move to executor.
-                else:
-                    self._read_queue.put_nowait((msg, fut))
-                    self._send(self.formatter(msg.cmd).encode(**ENCODING_KW))
-                    ret = LOOP.put(self.async_wrapper(fut))
-                if wait_next_cmd:
-                    self.wait_last_cmd = True
-                return ret
-            return tuple(self.send(x) for x in msg)
-
-    @run_in_executor
-    def _send_wait(self, msg: CmdParse[T, Any], fut: asyncio.Future[T]) -> T:
-        assert isinstance(msg.cmd, str)
-        self._read_queue.join()  # Block
         self._read_queue.put_nowait((msg, fut))
         self._send(self.formatter(msg.cmd).encode(**ENCODING_KW))
-        return LOOP.put(self.async_wrapper(fut)).result()
+        return fut
 
     def _send(self, msg: bytes) -> None:
         """This needs to be synchronous to maintain order of execution.
@@ -257,17 +218,33 @@ class COM:
         Args:
             msg (bytes): Raw bytes to be sent. Usually encoded in ISO-8859-1.
         """
-        with self.lock:
-            if self.min_spacing:
-                time.sleep(max(0, self.min_spacing - (time.monotonic() - self.t_lastcmd)))
-            self._serial.writer.write(msg)
-            self.t_lastcmd = time.monotonic()
-            logger.debug(f"{self.name}Tx: {msg}")
+        # if self.min_spacing:
+        #     await asyncio.sleep(max(0, self.min_spacing - (time.monotonic() - self.t_lastcmd)))
+        self._serial.writer.write(msg)
+        self.t_lastcmd = time.monotonic()
+        logger.debug(f"{self.name}Tx: {msg}")
 
-    def wait(self) -> None:
-        """Wait until all commands are sent/received."""
-        self._read_queue.join()
 
-    @staticmethod
-    async def async_wrapper(fut: asyncio.Future[T]) -> T:
-        return await fut
+async def interactive():
+    import aioconsole
+    from pyseq2.utils.ports import get_ports
+    from rich.logging import RichHandler
+
+    logging.basicConfig(
+        level="NOTSET",
+        format="[yellow]%(name)-10s[/] %(message)s",
+        datefmt="[%X]",
+        handlers=[RichHandler(rich_tracebacks=True, markup=True)],
+    )
+
+    name: SerialInstruments = await aioconsole.ainput("Instrument? ")
+    com = await COM.ainit(name, getattr(get_ports(), name))
+    while True:
+        await asyncio.sleep(0.2)
+        line = await aioconsole.ainput("Command? ")
+        await aioconsole.aprint()
+        com.send(line)
+
+
+if __name__ == "__main__":
+    asyncio.run(interactive())
