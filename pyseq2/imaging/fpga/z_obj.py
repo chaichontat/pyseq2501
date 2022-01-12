@@ -1,7 +1,7 @@
-from concurrent.futures import Future
-from contextlib import contextmanager
+import asyncio
+from contextlib import asynccontextmanager
 from logging import getLogger
-from typing import Callable, Generator, Literal, Optional
+from typing import Any, AsyncGenerator, Awaitable, Callable, Coroutine
 
 from pyseq2.base.instruments import FPGAControlled, Movable
 from pyseq2.com.async_com import CmdParse
@@ -37,34 +37,35 @@ class ZObj(FPGAControlled, Movable):
 
     cmd = ObjCmd
 
-    def initialize(self) -> Future[bool | None]:
-        return self.com.send(ObjCmd.SET_VELO(5))
+    async def initialize(self) -> bool | None:
+        return await self.com.send(ObjCmd.SET_VELO(5))
 
     @property
-    def pos(self) -> Future[Optional[int]]:
-        return self.com.send(ObjCmd.GET_POS)
+    async def pos(self) -> int | None:
+        return await self.com.send(ObjCmd.GET_POS)
 
     @pos.setter
-    def pos(self, x: int) -> None:
-        self.move(x)
+    async def pos(self, x: int) -> None:
+        await self.move(x)
 
-    def move(self, x: int) -> Future[bool]:
-        return self.com.send(ObjCmd.SET_POS(x))
+    async def move(self, x: int) -> bool:
+        return await self.com.send(ObjCmd.SET_POS(x))
 
-    @contextmanager
-    def af_arm(
-        self, z_min: int = 2621, z_max: int = 60292
-    ) -> Generator[Callable[[], Future[bool]], None, None]:
+    @asynccontextmanager
+    async def af_arm(self, z_min: int = 2621, z_max: int = 60292) -> AsyncGenerator[Awaitable[Any], None]:
         try:
-            self.com.send(ObjCmd.SET_POS(z_max)).result()  # Returns when done.
-            self.com.send(ObjCmd.SWYZ)
-            self.com.send(ObjCmd.SET_VELO(0.42))
-            self.com.send(ObjCmd.SET_TRIGGER(z_max))
-            self.com.send(ObjCmd.ARM_TRIGGER).result()
-            yield lambda: self.com.send(ObjCmd.Z_MOVE(z_min))
+            await self.com.send(ObjCmd.SET_POS(z_max))  # Returns when done.
+            await asyncio.gather(
+                *[
+                    self.com.send(x)
+                    for x in (
+                        ObjCmd.SWYZ,
+                        ObjCmd.SET_VELO(0.42),
+                        ObjCmd.SET_TRIGGER(z_max),
+                        ObjCmd.ARM_TRIGGER,
+                    )
+                ]
+            )
+            yield self.com.send(ObjCmd.Z_MOVE(z_min))
         finally:
-            self.com.send(ObjCmd.SET_VELO(5)).result()
-
-    @property
-    def is_moving(self) -> Future[Literal[False]]:
-        return self.com._executor.submit(lambda: False)
+            await self.com.send(ObjCmd.SET_VELO(5))

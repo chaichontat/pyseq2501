@@ -1,19 +1,17 @@
 from __future__ import annotations
 
-from concurrent.futures import Future, wait
+import asyncio
 from logging import getLogger
-from typing import Literal, Optional, cast, get_args
+from typing import Any, Awaitable, Callable, Literal, TypeVar, cast
 
 from pyseq2.base.instruments import FPGAControlled, Movable
 from pyseq2.com.async_com import CmdParse
-from pyseq2.com.thread_mgt import run_in_executor
 from pyseq2.utils.utils import chkrng, ok_re
 
 logger = getLogger(__name__)
-
+T = TypeVar("T")
 ID = Literal[1, 3, 2]
 RANGE = (0, 25000)
-import re
 
 
 # fmt: off
@@ -34,42 +32,31 @@ class ZTilt(FPGAControlled, Movable):
 
     cmd = TiltCmd
 
-    @run_in_executor
-    def initialize(self) -> None:
+    def all_z(
+        self, cmd: Callable[[int], CmdParse[T, Any]]
+    ) -> tuple[Awaitable[T], Awaitable[T], Awaitable[T]]:
+        return self.com.send(cmd(1)), self.com.send(cmd(3)), self.com.send(cmd(2))
+
+    async def initialize(self) -> None:
         # self.com.send("TDIZ_PI_STAGE")
         logger.info("Initializing z-tilt.")
-        for i in get_args(ID):
-            self.com.send(TiltCmd.SET_CURRENT(35, i))
-            self.com.send(TiltCmd.SET_VELO(62500, i))
-
-        futs = [self.com.send(TiltCmd.GO_HOME(i)) for i in get_args(ID)]
-        wait(futs, 60)  # Returns when move is completed.
-
-        futs = self.com.send(tuple(TiltCmd.CLEAR_REGISTER(i) for i in get_args(ID)))
-        wait(futs, 60)  # type: ignore
-
-        assert all(x > -5 for x in self.pos.result(60))
+        await asyncio.gather(
+            *self.all_z(lambda i: TiltCmd.SET_CURRENT(35, i)), *self.all_z(lambda i: TiltCmd.SET_VELO(35, i))
+        )
+        await asyncio.gather(*self.all_z(lambda i: TiltCmd.GO_HOME(i)))
+        await asyncio.gather(*self.all_z(lambda i: TiltCmd.CLEAR_REGISTER(i)))
+        assert all(x > -5 for x in await self.pos)
         logger.info("Completed z-tilt initialization.")
 
-    @run_in_executor
-    def move(self, pos: int) -> bool:
-        futs = [self.com.send(TiltCmd.SET_POS(pos, i)) for i in get_args(ID)]
-        wait(futs, 60)
-        return True
-
-    @property
-    @run_in_executor
-    def pos(self) -> tuple[int, int, int]:
-        resp = cast(
-            tuple[Future[Optional[int]]], self.com.send(tuple(TiltCmd.READ_POS(i) for i in get_args(ID)))
+    async def move(self, pos: int) -> tuple[int, int, int]:
+        return await cast(
+            asyncio.Future[tuple[int, int, int]],
+            asyncio.gather(*self.all_z(lambda i: TiltCmd.SET_POS(pos, i))),
         )
 
-        out = tuple(x.result(60) for x in resp)
-        if not all(map(lambda x: x >= 0, out)):  # type: ignore
-            raise Exception("Invalid Z position. Clear register first.")
-        return cast(tuple[int, int, int], out)
-
     @property
-    def is_moving(self) -> Future[Literal[False]]:
-        return self.com._executor.submit(lambda: False)
-        # return any(a != b for a, b in zip(self.pos.result(60), self.pos.result(60)))
+    async def pos(self) -> tuple[int, int, int]:
+        resp = cast(tuple[int, int, int], await asyncio.gather(*self.all_z(lambda i: TiltCmd.READ_POS(i))))
+        if not all(map(lambda x: x >= 0, resp)):
+            raise Exception("Invalid Z position. Initialize first.")
+        return resp

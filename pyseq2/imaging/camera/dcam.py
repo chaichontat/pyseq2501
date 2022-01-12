@@ -1,11 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 import os
 import pickle
-import threading
 import time
-from concurrent.futures import Future
-from concurrent.futures.thread import ThreadPoolExecutor
+from asyncio import Future
 from contextlib import contextmanager
 from ctypes import c_char_p, c_int32, c_uint32, c_void_p, pointer, sizeof
 from enum import Enum, IntEnum
@@ -13,6 +12,7 @@ from logging import getLogger
 from pathlib import Path
 from typing import (
     Any,
+    Awaitable,
     Callable,
     Generator,
     Generic,
@@ -30,9 +30,8 @@ import numpy as np
 import numpy.typing as npt
 from pyseq2.com.thread_mgt import run_in_executor, warn_main_thread
 from pyseq2.imaging.camera.dcam_api import DCAM_CAPTURE_MODE
-from pyseq2.utils.utils import gen_future
 
-from . import API
+from . import API, EXECUTOR
 from .dcam_api import DCAMException
 from .dcam_props import DCAMDict
 
@@ -62,6 +61,12 @@ UInt16Array = npt.NDArray[np.uint16]
 FourImages = tuple[UInt16Array, UInt16Array, UInt16Array, UInt16Array]
 
 
+def nothing() -> Awaitable[None]:
+    fut = Future()
+    fut.set_result(None)
+    return fut
+
+
 class Mode(Enum):
     """DCAM properties preset"""
 
@@ -73,12 +78,23 @@ class _Camera:
     IMG_WIDTH = 4096
     BUNDLE_HEIGHT = 128
 
-    def __init__(self, id_: ID) -> None:
+    @classmethod
+    async def ainit(cls, id_: ID) -> _Camera:
+        handle = c_void_p(0)
+        await asyncio.get_running_loop().run_in_executor(
+            EXECUTOR, lambda: API.dcam_open(pointer(handle), c_int32(id_), None)
+        )
+        return cls(id_, handle)
+
+    def __init__(self, id_: ID, handle: c_void_p | None = None) -> None:
         assert id_ in get_args(ID)
         self.id_ = id_
 
-        self.handle = c_void_p(0)
-        API.dcam_open(pointer(self.handle), c_int32(id_), None)
+        if handle is None:
+            handle = c_void_p(0)
+            API.dcam_open(pointer(handle), c_int32(id_), None)
+
+        self.handle = handle
         if os.environ.get("FAKE_HISEQ", "0") == "1" or os.name != "nt":
             self.properties = DCAMDict(
                 self.handle, pickle.loads((Path(__file__).parent / "saved_props.pk").read_bytes())
@@ -185,41 +201,46 @@ class Cameras:
     IMG_WIDTH = 4096
     BUNDLE_HEIGHT = 128
 
-    _cams: Future[tuple[_Camera, _Camera]]
+    # _cams: Future[tuple[_Camera, _Camera]]
     properties: TwoProps[str, float]
 
-    def __init__(self) -> None:
-        self._executor = ThreadPoolExecutor(max_workers=1)  # Only case of Executor outside COM.
-        self._cams = self.post_init()  # self.properties set in here.
-
-    def wait_cam_ready(self) -> None:
-        self._cams.result()
-
-    @run_in_executor
-    @warn_main_thread
-    def post_init(self) -> tuple[_Camera, _Camera]:
+    @classmethod
+    async def ainit(cls) -> Cameras:
         t0 = time.monotonic()
         logger.info("Initializing DCAM API.")
-        # This is slow that I need to make sure that the thing is still running.
-        th = threading.Thread(target=lambda: API.dcam_init(c_void_p(0), pointer(c_int32(0)), c_char_p(0)))
-        th.start()
-        while th.is_alive():
-            time.sleep(2)
-            logger.info(f"Still alive. dcam_init takes about 10s. Taken {time.monotonic() - t0:.2f} s.")
-        cams = (_Camera(0), _Camera(1))
-        self.properties = TwoProps(*[c.properties for c in cams])
+        fut = asyncio.get_running_loop().run_in_executor(
+            EXECUTOR, lambda: API.dcam_init(c_void_p(0), pointer(c_int32(0)), c_char_p(0))
+        )
+        while not fut.done():
+            t = time.monotonic() - t0
+            if int(t) % 2 == 0:
+                logger.info(f"Still alive. dcam_init takes about 10s. Taken {t:.2f} s.")
+            if t > 60:
+                raise TimeoutError("DCAM API initialization timeout.")
+            await asyncio.sleep(0.5)
+
+        return cls((await _Camera.ainit(0), await _Camera.ainit(1)))
+
+    def __init__(self, _cams: tuple[_Camera, _Camera] | None = None) -> None:
+        if _cams is None:
+            logger.info("Initializing DCAM API.")
+            API.dcam_init(c_void_p(0), pointer(c_int32(0)), c_char_p(0))
+            _cams = (_Camera(0), _Camera(1))
+
+        self._cams = _cams
+
+        self.properties = TwoProps(*[c.properties for c in self._cams])
         self.set_mode("TDI")
-        return cams
 
     def __getitem__(self, id_: ID) -> _Camera:
-        return self._cams.result(20)[id_]
+        return self._cams[id_]
 
-    def __getattr__(self, name: str) -> Any:
-        if name == "properties":
-            logger.info("Waiting for DCAM API to finish initializing. Consider not setting properties now.")
-            self._cams.result(60)
-            return self.properties
-        raise AttributeError
+    # def __getattr__(self, name: str) -> Any:
+    #     if name == "properties":
+    #         logger.info("Waiting for DCAM API to finish initializing. Consider not setting properties now.")
+    #         self._cams.result(60)
+    #         return self.properties
+    #     raise AttributeError
 
     @run_in_executor
     def initialize(self) -> None:
@@ -267,14 +288,50 @@ class Cameras:
         self.properties.update(Mode[m].value)
         self._mode = m
 
+    async def acapture(
+        self,
+        n_bundles: int,
+        height: int = 128,
+        start_attach: Callable[[], Any] = lambda: None,
+        fut_capture: Awaitable[Any] = nothing(),
+        mode: Literal["TDI", "FOCUS_SWEEP"] = "TDI",
+        cam: Literal[0, 1, 2] = 2,
+    ) -> UInt16Array:
+        async def in_ctx():
+            fut = asyncio.create_task(fut_capture)
+            t0 = time.monotonic()
+            while self.n_frames_taken(cam) < n_bundles:
+                await asyncio.sleep(0.05)
+                if taken == 0 and time.monotonic() - t0 > 5:
+                    raise Exception(f"Did not capture a single bundle before {5=}s.")
+            await fut
+
+        self.set_mode(mode)
+        with self._attach(n_bundles=n_bundles, height=height, cam=cam) as bufs:
+            taken = 0
+            start_attach()
+            if cam == 2:
+                with self[0].capture(), self[1].capture():
+                    await in_ctx()
+            else:
+                with self[cam].capture():
+                    await in_ctx()
+            logger.info(f"Retrieved all {n_bundles} bundles.")
+
+        if cam == 2:
+            bufs = cast(tuple[UInt16Array, UInt16Array], bufs)
+            return cast(UInt16Array, np.hstack(bufs).reshape(-1, 4, 2048).transpose(1, 0, 2))
+        bufs = cast(UInt16Array, bufs)
+        return bufs.reshape(-1, 2, 2048).transpose(1, 0, 2)
+
     @run_in_executor
     @warn_main_thread
     def capture(
         self,
         n_bundles: int,
+        fut_capture: Callable[[], Future[Any]],
         height: int = 128,
         start_attach: Callable[[], Any] = lambda: None,
-        fut_capture: Callable[[], Future[Any]] = lambda: gen_future(None),
         mode: Literal["TDI", "FOCUS_SWEEP"] = "TDI",
         cam: Literal[0, 1, 2] = 2,
     ) -> UInt16Array:
@@ -293,7 +350,7 @@ class Cameras:
         Returns:
             UInt16Array: Either (2, n_bundles × height, 2048) or (4, n_bundles × height, 2048).
         """
-        self.wait_cam_ready()
+        # self.wait_cam_ready()
 
         def in_ctx():
             fut = fut_capture()

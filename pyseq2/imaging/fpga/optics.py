@@ -1,12 +1,12 @@
-from concurrent.futures import Future
-from contextlib import contextmanager
+import asyncio
+from contextlib import asynccontextmanager
 from logging import getLogger
-from typing import Generator, Literal, Optional
+from typing import AsyncGenerator, Literal, Optional
 
 from pyseq2.base.instruments import FPGAControlled
 from pyseq2.com.async_com import CmdParse
 from pyseq2.com.thread_mgt import run_in_executor
-from pyseq2.utils.utils import not_none, ok_if_match
+from pyseq2.utils.utils import ok_if_match
 
 logger = getLogger(__name__)
 
@@ -54,27 +54,26 @@ class Optics(FPGAControlled):
 
     cmd = OpticCmd
 
-    @run_in_executor
-    def initialize(self) -> None:
-        self.com.send(OpticCmd.EM_FILTER_DEFAULT)
-        [not_none(x).result(1) for x in self.com.send((OpticCmd.HOME_OD(1), OpticCmd.HOME_OD(2)))]
-        [
-            not_none(x).result(1)
-            for x in self.com.send((OpticCmd.SET_OD(OD_GREEN["OPEN"], 1), OpticCmd.SET_OD(OD_RED["OPEN"], 2)))
-        ]
+    async def initialize(self) -> None:
+        await self.com.send(OpticCmd.EM_FILTER_DEFAULT)
+        await asyncio.gather(self.com.send(OpticCmd.HOME_OD(1)), self.com.send(OpticCmd.HOME_OD(2)))
+        await asyncio.gather(
+            self.com.send(OpticCmd.SET_OD(OD_GREEN["OPEN"], 1)),
+            self.com.send(OpticCmd.SET_OD(OD_RED["OPEN"], 2)),
+        )
 
-    @contextmanager
-    def open_shutter(self) -> Generator[None, None, None]:
-        self._open().result(60)
+    @asynccontextmanager
+    async def open_shutter(self) -> AsyncGenerator[None, None]:
+        await self._open()
         logger.info("Shutter opened.")
         try:
             yield
         finally:
-            self._close()
+            await self._close()
             logger.info("Shutter closed.")
 
-    def _open(self) -> Future[Optional[bool]]:
-        return self.com.send(OpticCmd.OPEN_SHUTTER)
+    async def _open(self) -> bool:
+        return await self.com.send(OpticCmd.OPEN_SHUTTER)
 
-    def _close(self) -> Future[Optional[bool]]:
-        return self.com.send(OpticCmd.CLOSE_SHUTTER)
+    async def _close(self) -> bool:
+        return await self.com.send(OpticCmd.CLOSE_SHUTTER)

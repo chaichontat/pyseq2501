@@ -1,10 +1,11 @@
-import time
-from concurrent.futures import Future
+from __future__ import annotations
+
+import asyncio
 from logging import getLogger
+from typing import Awaitable
 
 from pyseq2.base.instruments import UsesSerial
 from pyseq2.com.async_com import COM, CmdParse
-from pyseq2.com.thread_mgt import run_in_executor
 from pyseq2.utils.utils import ok_if_match
 
 from .led import LED
@@ -23,20 +24,30 @@ class FPGACmd:
 class FPGA(UsesSerial):
     """Instruments controlled by the FPGA."""
 
-    def __init__(self, port_tx: str, port_rx: str) -> None:
-        self.com = COM("fpga", port_tx, port_rx, min_spacing=0.01)
+    @classmethod
+    async def ainit(cls, port_tx: str, port_rx: str) -> FPGA:
+        self = cls()
+        self.com = await COM.ainit("fpga", port_tx, port_rx, min_spacing=0.01)
+
         self.tdi = TDI(self.com)
         self.led = LED(self.com)
         self.optics = Optics(self.com)
         self.z_obj = ZObj(self.com)
         self.z_tilt = ZTilt(self.com)
-        self.initialize()
+        await self.initialize()
+        return self
 
-    @run_in_executor
-    def initialize(self) -> bool:
-        res = self.reset().result(60)
-        time.sleep(1)  # Otherwise the FPGA hangs.
-        return res
+    def __init__(self) -> None:
+        self.com: COM
+        self.tdi: TDI
+        self.led: LED
+        self.optics: Optics
+        self.z_obj: ZObj
+        self.z_tilt: ZTilt
 
-    def reset(self) -> Future[bool]:
-        return self.com.send(FPGACmd.RESET)
+    async def initialize(self) -> None:
+        await self.reset()
+        await asyncio.sleep(1)  # Otherwise the FPGA hangs.
+
+    async def reset(self) -> bool:
+        return await self.com.send(FPGACmd.RESET)

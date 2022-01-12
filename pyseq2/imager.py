@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
+import asyncio
 from dataclasses import dataclass
 from logging import getLogger
 from typing import Literal, NamedTuple
 
 import numpy as np
 
-from .com.thread_mgt import run_in_executor
 from .imaging.camera.dcam import Cameras, UInt16Array
 from .imaging.fpga import FPGA
 from .imaging.laser import Laser, Lasers
@@ -40,72 +39,86 @@ class State:
 class Imager:
     UM_PER_PX = 0.375
 
-    def __init__(self, ports: Ports, init_cam: bool = True) -> None:
-        self.fpga = FPGA(*ports.fpga)
+    @classmethod
+    async def ainit(cls, ports: Ports) -> Imager:
+        cams, fpga, x, y, laser_g, laser_r = await asyncio.gather(
+            Cameras.ainit(),
+            FPGA.ainit(*ports.fpga),
+            XStage.ainit(ports.x),
+            YStage.ainit(ports.y),
+            Laser.ainit("g", ports.laser_g),
+            Laser.ainit("r", ports.laser_r),
+        )
+
+        return cls(fpga, x, y, Lasers(g=laser_g, r=laser_r), cams)
+
+    def __init__(self, fpga: FPGA, x: XStage, y: YStage, lasers: Lasers, cams: Cameras) -> None:
+        self.fpga = fpga
         self.tdi = self.fpga.tdi
         self.optics = self.fpga.optics
+        self.lasers = lasers
 
-        self.x = XStage(ports.x)
-        self.y = YStage(ports.y)
+        self.x = x
+        self.y = y
         self.z_tilt = self.fpga.z_tilt
         self.z_obj = self.fpga.z_obj
 
-        self.lasers = Lasers(Laser("laser_g", ports.laser_g), Laser("laser_r", ports.laser_r))
-        if init_cam:
-            self.cams = Cameras()
+        self.cams = cams
 
-        self._executor = ThreadPoolExecutor(max_workers=1)
+    async def initialize(self) -> None:
+        logger.info("Starting initialization.")
+        await asyncio.gather(
+            self.x.initialize(),
+            self.y.initialize(),
+            self.z_tilt.initialize(),
+            self.z_obj.initialize(),
+            self.optics.initialize(),
+        )
+        logger.info("Initialization completed.")
 
-    def initialize(self) -> None:
-        self.x.initialize()
-        self.y.initialize()
-        self.z_tilt.initialize()
-        self.z_obj.initialize()
-        self.optics.initialize()
+    # def get_state(self) -> State:
+    #     out = {
+    #         "laser_power": (self.lasers.g.power, self.lasers.r.power),
+    #         "x_pos": self.x.pos,
+    #         "y_pos": self.y.pos,
+    #         "z_pos": self.z_tilt.pos,
+    #         "z_obj_pos": self.z_obj.pos,
+    #     }
+    #     return State.from_futures(**out)
 
-    def get_state(self) -> State:
-        out = {
-            "laser_power": (self.lasers.g.power, self.lasers.r.power),
-            "x_pos": self.x.pos,
-            "y_pos": self.y.pos,
-            "z_pos": self.z_tilt.pos,
-            "z_obj_pos": self.z_obj.pos,
-        }
-        return State.from_futures(**out)
-
-    def wait_ready(self) -> None:
+    async def wait_ready(self) -> None:
         """Returns when no commands are pending return which indicates that all motors are idle.
         This is because all move commands are expected to return some value upon completion.
         """
         logger.info("Waiting for all motions to complete.")
-        self.x.com.wait()
-        self.y.com.wait()
-        self.fpga.com.wait()
-        self.cams.wait_cam_ready()
+        await self.x.com.wait()
+        await self.y.com.wait()
+        await self.fpga.com.wait()
+        # self.cams.wait_cam_ready()
         logger.info("All motions completed.")
 
-    def take(self, n_bundles: int, dark: bool = False, cam: Literal[0, 1, 2] = 2) -> UInt16Array:
+    async def take(self, n_bundles: int, dark: bool = False, cam: Literal[0, 1, 2] = 2) -> UInt16Array:
         logger.info(f"Taking an image with {n_bundles} bundles using cam(s) {cam}.")
         n_bundles += 1  # To flush CCD.
-        self.wait_ready()
+        await self.wait_ready()
 
-        self.y.set_mode("IMAGING")
-        pos = self.y.pos.result(60)
-        assert pos is not None
+        pos = await self.y.pos
         n_px_y = n_bundles * self.cams.BUNDLE_HEIGHT
         end_y_pos = pos - (delta := self.calc_delta_pos(n_px_y)) - 100000
-        fut = self.tdi.prepare_for_imaging(n_px_y, pos)
-        fut.result(60)
 
-        cap = lambda: self.cams.capture(
-            n_bundles, fut_capture=lambda: self.y.move(end_y_pos, slowly=True), cam=cam
-        ).result(60 + int(n_bundles / 2))
+        await asyncio.gather(self.tdi.prepare_for_imaging(n_px_y, pos), self.y.set_mode("IMAGING"))
+
+        async def test():
+            print("Called")
+            await self.y.move(end_y_pos, slowly=True)
+
+        cap = self.cams.acapture(n_bundles, fut_capture=test(), cam=cam)
 
         if dark:
-            imgs = cap()
+            imgs = await cap
         else:
-            with self.optics.open_shutter():
-                imgs = cap()
+            async with self.optics.open_shutter():
+                imgs = await cap
 
         logger.info(f"Done taking an image.")
         imgs = np.flip(imgs, axis=1)
@@ -116,28 +129,27 @@ class Imager:
         return int(n_px_y * Imager.UM_PER_PX * YStage.STEPS_PER_UM)
 
     @property
-    @run_in_executor
-    def pos(self) -> Position:
-        res = dict(x=self.x.pos, y=self.y.pos, z_tilt=self.z_tilt.pos, z_obj=self.z_obj.pos)
-        res = {k: v.result() for k, v in res.items()}
-        return Position(**res)  # type: ignore
+    async def pos(self) -> Position:
+        names = ("x", "y", "z_tilt", "z_obj")
+        res = await asyncio.gather(self.x.pos, self.y.pos, self.z_tilt.pos, self.z_obj.pos)
+        return Position(**dict(zip(names, res)))  # type: ignore
 
-    def autofocus(self, channel: Literal[0, 1, 2, 3] = 1) -> tuple[int, UInt16Array]:
+    async def autofocus(self, channel: Literal[0, 1, 2, 3] = 1) -> tuple[int, UInt16Array]:
         """Moves to z_max and takes 232 (2048 × 5) images while moving to z_min.
         Returns the z position of maximum intensity and the images.
         """
         logger.info(f"Starting autofocus using data from {channel=}.")
-        self.wait_ready()
+        await self.wait_ready()
 
         n_bundles, height = 232, 5
         z_min, z_max = 2621, 60292
         cam = 0 if channel in (0, 1) else 1
 
-        with self.z_obj.af_arm(z_min=z_min, z_max=z_max) as start_move:
-            with self.optics.open_shutter():
-                img = self.cams.capture(
+        async with self.z_obj.af_arm(z_min=z_min, z_max=z_max) as start_move:
+            async with self.optics.open_shutter():
+                img = await self.cams.acapture(
                     n_bundles, height, fut_capture=start_move, mode="FOCUS_SWEEP", cam=cam
-                ).result(int(n_bundles / 2))
+                )
 
         intensity = np.mean(np.reshape(img[channel - 2 * cam], (n_bundles, height, 2048)), axis=(1, 2))
         target = int(z_max - (((z_max - z_min) / n_bundles) * np.argmax(intensity) + z_min))

@@ -20,6 +20,7 @@ from typing import (
 )
 
 from pyseq2.base.instruments_types import SerialInstruments
+from pyseq2.utils.utils import InvalidResponse
 from serial_asyncio import open_serial_connection
 
 logger = getLogger(__name__)
@@ -108,7 +109,7 @@ class COM:
         name: SerialInstruments,
         port_tx: str,
         port_rx: Optional[str] = None,
-        min_spacing: Annotated[int | float, "s"] = 0.05,
+        min_spacing: Annotated[int | float, "s"] = 0.01,
         no_check: bool = False,
     ):
 
@@ -145,8 +146,11 @@ class COM:
         self._read_queue: asyncio.Queue[tuple[CmdParse[Any, Any], asyncio.Future[Any]]] = asyncio.Queue()
         self._serial: Channel
 
+        self.waiting = None
+
     async def _read_forever(self) -> NoReturn:
         while True:
+            print(time.time(), "waiting")
             resp = (await self._serial.reader.readline()).decode(**ENCODING_KW).strip()
 
             if self.no_check:
@@ -155,6 +159,19 @@ class COM:
 
             if not resp:  # len == 0
                 continue
+
+            # For commands that can return later.
+            if self.waiting is not None:
+                try:
+                    parsed = self.waiting[0](resp)
+                except InvalidResponse as e:
+                    ...
+                else:
+                    logger.debug(f"{self.name}Rx: Waited {resp:20s} [green]Parsed: '{parsed}'")
+                    self.waiting[1].set_result(parsed)
+                    self.waiting = None
+                    continue
+
             try:
                 cmd, fut = self._read_queue.get_nowait()
             except asyncio.QueueEmpty:
@@ -163,6 +180,7 @@ class COM:
 
             try:
                 for _ in range(1, cmd.n_lines):
+                    print(f"{time.time()} multiline")
                     resp += "\n" + (await self._serial.reader.readline()).decode(**ENCODING_KW).strip()
                 parsed = cmd.parser(resp)
             except BaseException as e:
@@ -176,14 +194,14 @@ class COM:
                 self._read_queue.task_done()
 
     @overload
-    def send(self, msg: str) -> None:
+    async def send(self, msg: str) -> None:
         ...
 
     @overload
-    def send(self, msg: CmdParse[T, Any]) -> Future[T]:
+    async def send(self, msg: CmdParse[T, Any]) -> T:
         ...
 
-    def send(self, msg: str | CmdParse[T, Any]) -> None | Future[T]:
+    async def send(self, msg: str | CmdParse[T, Any], option=None) -> None | T:
         """Sends a command to an instrument.
         If msg is string   => no responses expected.
         If msg is CmdParse => response expected and parsed by CmdParse.parser.
@@ -197,32 +215,47 @@ class COM:
         Returns:
             None for msg, Future of a CmdParse result.
         """
-        # with self.lock:  # Main thread and COM-specific thread can use this function at the same time.
+
         if isinstance(msg, str):
-            self._send(self.formatter(msg).encode(**ENCODING_KW))
-            return
+            await self._send(self.formatter(msg).encode(**ENCODING_KW))
+            return None
 
         if not isinstance(msg.cmd, str):
             raise ValueError("This command needs argument(s), call it first.")
 
         fut: Future[T] = asyncio.Future()
 
-        self._read_queue.put_nowait((msg, fut))
-        self._send(self.formatter(msg.cmd).encode(**ENCODING_KW))
-        return fut
+        # Need lock as reversal can happen when two closely spaced commands enter.
+        # While the former is waiting for min_spacing, the later could arrive just a
+        # little later to pass the min_spacing check without waiting.
+        async with self.lock:
+            if option:
+                if self.waiting is not None:
+                    raise Exception("Cannot have >1 delayable commands at a time.")
+                self.waiting = (option, fut)
+                self._read_queue.put_nowait((msg, asyncio.Future()))  # Dump future
+            else:
+                self._read_queue.put_nowait((msg, fut))
 
-    def _send(self, msg: bytes) -> None:
+            await self._send(self.formatter(msg.cmd).encode(**ENCODING_KW))
+
+        return await fut
+
+    async def _send(self, msg: bytes) -> None:
         """This needs to be synchronous to maintain order of execution.
         asyncio.Queue is not thread-safe and using an asynchronous function to queue things does not guarantee order.
         Enforces minimum delay between commands.
         Args:
             msg (bytes): Raw bytes to be sent. Usually encoded in ISO-8859-1.
         """
-        # if self.min_spacing:
-        #     await asyncio.sleep(max(0, self.min_spacing - (time.monotonic() - self.t_lastcmd)))
+        if self.min_spacing:
+            await asyncio.sleep(max(0, self.min_spacing - (time.monotonic() - self.t_lastcmd)))
         self._serial.writer.write(msg)
         self.t_lastcmd = time.monotonic()
         logger.debug(f"{self.name}Tx: {msg}")
+
+    async def wait(self) -> None:
+        return await self._read_queue.join()
 
 
 async def interactive():
@@ -243,7 +276,7 @@ async def interactive():
         await asyncio.sleep(0.2)
         line = await aioconsole.ainput("Command? ")
         await aioconsole.aprint()
-        com.send(line)
+        await com.send(line)
 
 
 if __name__ == "__main__":

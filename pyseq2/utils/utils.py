@@ -1,11 +1,9 @@
 from __future__ import annotations
-from functools import wraps
-from logging import Logger
 
 import re
-from concurrent.futures import Future
 from math import ceil
-from typing import Callable, Dict, Literal, Optional, ParamSpec, Sequence, Tuple, TypedDict, TypeVar, cast
+from typing import (Callable, Dict, Literal, Optional, ParamSpec, Sequence,
+                    Tuple, TypedDict, TypeVar, cast)
 
 TILE_WIDTH = 0.769  # mm
 RESOLUTION = 0.375  # µm / px
@@ -25,25 +23,39 @@ Y_SPUM = 100
 T, P = TypeVar("T"), ParamSpec("P")
 
 
-def ok_if_match(target: Sequence[str] | str) -> Callable[[str], bool]:
+class InvalidResponse(Exception):
+    ...
+
+
+def ok_if_match(expected: Sequence[str] | str, exception_on_fail: bool = True) -> Callable[[str], bool]:
     def wrapped(resp: str) -> bool:
-        if isinstance(target, Sequence) and resp in target:
+        if isinstance(expected, Sequence) and resp in expected:
             return True
-        if isinstance(target, str) and resp == target:
+        if resp == expected:
             return True
-        raise Exception("InvalidResponse")
+        if exception_on_fail:
+            raise InvalidResponse(f"Got {resp}, expected {expected}.")
+        return False
 
     return wrapped
 
 
+def check_none(x: T | None) -> T:
+    if x is None:
+        raise InvalidResponse()
+    return x
+
+
 def ok_re(target: str, f: Callable[[str], T] = bool) -> Callable[[str], T]:
+    """f is your responsibility."""
     r = re.compile(target)
+    assert r.groups < 3
 
     def inner(resp: str) -> T:
-        try:
-            return f(not_none(r.search(resp)).group(1))
-        except IndexError:
-            return f(not_none(r.search(resp)).group(0))
+        match = r.search(resp)
+        if match is None:
+            raise InvalidResponse(f"Got {resp}, expected to match {target}.")
+        return f(match.group(r.groups))
 
     return inner
 
@@ -56,22 +68,6 @@ def chkrng(f: Callable[P, T], min_: int, max_: int) -> Callable[P, T]:
         return f(*args, **kwargs)
 
     return wrapper
-
-
-def gen_future(x: T) -> Future[T]:
-    fut: Future[T] = Future()
-    fut.set_result(x)
-    return fut
-
-
-class PatternNotFound(Exception):
-    ...
-
-
-def not_none(x: Optional[T]) -> T:
-    if x is None:
-        raise PatternNotFound()
-    return x
 
 
 class Pos(TypedDict):
