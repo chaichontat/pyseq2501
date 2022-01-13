@@ -20,6 +20,7 @@ from typing import (
     Literal,
     Mapping,
     MutableMapping,
+    Optional,
     TypeVar,
     cast,
     get_args,
@@ -28,7 +29,6 @@ from typing import (
 
 import numpy as np
 import numpy.typing as npt
-from pyseq2.com.thread_mgt import run_in_executor, warn_main_thread
 from pyseq2.imaging.camera.dcam_api import DCAM_CAPTURE_MODE
 
 from . import API, EXECUTOR
@@ -84,9 +84,14 @@ class _Camera:
         await asyncio.get_running_loop().run_in_executor(
             EXECUTOR, lambda: API.dcam_open(pointer(handle), c_int32(id_), None)
         )
-        return cls(id_, handle)
+        properties = await asyncio.get_running_loop().run_in_executor(
+            EXECUTOR, lambda: cls.init_properties(handle)
+        )
+        return cls(id_, handle, properties)
 
-    def __init__(self, id_: ID, handle: c_void_p | None = None) -> None:
+    def __init__(
+        self, id_: ID, handle: Optional[c_void_p] = None, properties: Optional[DCAMDict] = None
+    ) -> None:
         assert id_ in get_args(ID)
         self.id_ = id_
 
@@ -95,14 +100,19 @@ class _Camera:
             API.dcam_open(pointer(handle), c_int32(id_), None)
 
         self.handle = handle
-        if os.environ.get("FAKE_HISEQ", "0") == "1" or os.name != "nt":
-            self.properties = DCAMDict(
-                self.handle, pickle.loads((Path(__file__).parent / "saved_props.pk").read_bytes())
-            )
-        else:
-            self.properties = DCAMDict.from_dcam(self.handle)
+        if properties is None:
+            properties = self.init_properties(handle)
+
+        self.properties = properties
         self.capture_mode = DCAM_CAPTURE_MODE.SNAP
         logger.info(f"Connected to cam {id_}")
+
+    @staticmethod
+    def init_properties(handle: c_void_p) -> DCAMDict:
+        if os.environ.get("FAKE_HISEQ", "0") == "1" or os.name != "nt":
+            return DCAMDict(handle, pickle.loads((Path(__file__).parent / "saved_props.pk").read_bytes()))
+        else:
+            return DCAMDict.from_dcam(handle)
 
     def initialize(self) -> None:
         ...
@@ -201,7 +211,6 @@ class Cameras:
     IMG_WIDTH = 4096
     BUNDLE_HEIGHT = 128
 
-    # _cams: Future[tuple[_Camera, _Camera]]
     properties: TwoProps[str, float]
 
     @classmethod
@@ -235,14 +244,6 @@ class Cameras:
     def __getitem__(self, id_: ID) -> _Camera:
         return self._cams[id_]
 
-    # def __getattr__(self, name: str) -> Any:
-    #     if name == "properties":
-    #         logger.info("Waiting for DCAM API to finish initializing. Consider not setting properties now.")
-    #         self._cams.result(60)
-    #         return self.properties
-    #     raise AttributeError
-
-    @run_in_executor
     def initialize(self) -> None:
         [x.initialize() for x in self]
 
@@ -279,10 +280,6 @@ class Cameras:
     @property
     def mode(self) -> str:
         return self._mode
-
-    @mode.setter
-    def mode(self, m: Literal["TDI", "FOCUS_SWEEP"]) -> None:
-        self.set_mode(m)
 
     def set_mode(self, m: Literal["TDI", "FOCUS_SWEEP"]) -> None:
         self.properties.update(Mode[m].value)
@@ -324,8 +321,6 @@ class Cameras:
         bufs = cast(UInt16Array, bufs)
         return bufs.reshape(-1, 2, 2048).transpose(1, 0, 2)
 
-    @run_in_executor
-    @warn_main_thread
     def capture(
         self,
         n_bundles: int,
@@ -350,7 +345,6 @@ class Cameras:
         Returns:
             UInt16Array: Either (2, n_bundles × height, 2048) or (4, n_bundles × height, 2048).
         """
-        # self.wait_cam_ready()
 
         def in_ctx():
             fut = fut_capture()
