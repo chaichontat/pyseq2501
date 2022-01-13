@@ -29,11 +29,10 @@ class State:
     laser_power: tuple[int, int]
     pos: Position
 
-    @classmethod
-    def from_futures(cls, *args, **kwargs) -> State:
-        args = map(lambda x: x.result(), args)
-        kwargs = {k: v.result() for k, v in kwargs.items()}
-        return cls(*args, **kwargs)
+
+# Due to the optical arrangement, the actual channel ordering
+# is not in order of increasing wavelength.
+CHANNEL = {0: 1, 1: 3, 2: 2, 3: 0}
 
 
 class Imager:
@@ -49,7 +48,6 @@ class Imager:
             Laser.ainit("g", ports.laser_g),
             Laser.ainit("r", ports.laser_r),
         )
-
         return cls(fpga, x, y, Lasers(g=laser_g, r=laser_r), cams)
 
     def __init__(self, fpga: FPGA, x: XStage, y: YStage, lasers: Lasers, cams: Cameras) -> None:
@@ -94,25 +92,34 @@ class Imager:
         await self.x.com.wait()
         await self.y.com.wait()
         await self.fpga.com.wait()
-        # self.cams.wait_cam_ready()
         logger.info("All motions completed.")
 
-    async def take(self, n_bundles: int, dark: bool = False, cam: Literal[0, 1, 2] = 2) -> UInt16Array:
-        logger.info(f"Taking an image with {n_bundles} bundles using cam(s) {cam}.")
+    async def take(
+        self, n_bundles: int, dark: bool = False, channels: frozenset[Literal[0, 1, 2, 3]] = frozenset((2,))
+    ) -> UInt16Array:
+        logger.info(f"Taking an image with {n_bundles} from channel(s) {channels}.")
+
+        c = [CHANNEL[x] for x in sorted(channels)]
+        if (0 in c or 1 in c) and (2 in c or 3 in c):
+            cam = 2
+        elif 0 in c or 1 in c:
+            cam = 0
+        elif 2 in c or 3 in c:
+            cam = 1
+        else:
+            raise ValueError("Invalid channel(s).")
+
+        # TODO: Compensate actual start position.
         n_bundles += 1  # To flush CCD.
         await self.wait_ready()
 
         pos = await self.y.pos
         n_px_y = n_bundles * self.cams.BUNDLE_HEIGHT
-        end_y_pos = pos - (delta := self.calc_delta_pos(n_px_y)) - 100000
+        # Need overshoot for TDI to function properly.
+        end_y_pos = pos - self.calc_delta_pos(n_px_y) - 100000
 
         await asyncio.gather(self.tdi.prepare_for_imaging(n_px_y, pos), self.y.set_mode("IMAGING"))
-
-        async def test():
-            print("Called")
-            await self.y.move(end_y_pos, slowly=True)
-
-        cap = self.cams.acapture(n_bundles, fut_capture=test(), cam=cam)
+        cap = self.cams.acapture(n_bundles, fut_capture=self.y.move(end_y_pos, slowly=True), cam=cam)
 
         if dark:
             imgs = await cap
@@ -121,7 +128,10 @@ class Imager:
                 imgs = await cap
 
         logger.info(f"Done taking an image.")
+        asyncio.create_task(self.y.move(end_y_pos + 100000))  # Correct for overshoot.
         imgs = np.flip(imgs, axis=1)
+        if cam == 1:
+            return imgs[[x - 2 for x in c], :-128, :]
         return imgs[:, :-128, :]  # Remove oversaturated first bundle.
 
     @staticmethod
@@ -143,7 +153,7 @@ class Imager:
 
         n_bundles, height = 232, 5
         z_min, z_max = 2621, 60292
-        cam = 0 if channel in (0, 1) else 1
+        cam = 0 if CHANNEL[channel] in (0, 1) else 1
 
         async with self.z_obj.af_arm(z_min=z_min, z_max=z_max) as start_move:
             async with self.optics.open_shutter():
@@ -151,7 +161,9 @@ class Imager:
                     n_bundles, height, fut_capture=start_move, mode="FOCUS_SWEEP", cam=cam
                 )
 
-        intensity = np.mean(np.reshape(img[channel - 2 * cam], (n_bundles, height, 2048)), axis=(1, 2))
+        intensity = np.mean(
+            np.reshape(img[CHANNEL[channel] - 2 * cam], (n_bundles, height, 2048)), axis=(1, 2)
+        )
         target = int(z_max - (((z_max - z_min) / n_bundles) * np.argmax(intensity) + z_min))
         logger.info(f"Done autofocus. Optimum={target}")
         if 10000 < target < 50000:

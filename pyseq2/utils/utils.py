@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import re
 from math import ceil
-from typing import (Callable, Dict, Literal, Optional, ParamSpec, Sequence,
-                    Tuple, TypedDict, TypeVar, cast)
+from typing import Callable, Dict, Literal, Optional, ParamSpec, Sequence, Tuple, TypedDict, TypeVar, cast
 
 TILE_WIDTH = 0.769  # mm
 RESOLUTION = 0.375  # µm / px

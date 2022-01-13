@@ -118,7 +118,6 @@ class Laser(UsesSerial):
         await self.set_power(x)
 
 
-
 @dataclass
 class Lasers:
     g: Laser
