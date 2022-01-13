@@ -70,7 +70,7 @@ class CmdParse(Generic[T, P]):
     """
 
     cmd: str | Callable[P, str]
-    parser: Callable[[str], T]
+    parser: Callable[[str], T] | None
     n_lines: int = 1
     delayed_parser: Callable[[str], T] | None = None
     # If you're adding some new variables don't forget to add them to __call__.
@@ -145,12 +145,13 @@ class COM:
 
         self.min_spacing = min_spacing
         self.t_lastcmd = time.monotonic()
-        self.lock = asyncio.Lock()
+        self.big_lock = asyncio.Lock()
 
+        self._lock = asyncio.Lock()
         self._read_queue: asyncio.Queue[tuple[CmdParse[Any, Any], asyncio.Future[Any]]] = asyncio.Queue()
         self._serial: Channel
 
-        self._waiting = None
+        self._waiting = list()
 
     async def _read_forever(self) -> NoReturn:
         while True:
@@ -160,41 +161,42 @@ class COM:
                 logger.debug(resp)
                 continue
 
-            if not resp:  # len == 0
-                continue
-
             # For commands that can return later.
-            if self._waiting is not None:
+            for i in reversed(range(len(self._waiting))):
                 try:
-                    assert self._waiting[0].delayed_parser is not None
-                    parsed = self._waiting[0].delayed_parser(resp)
+                    assert self._waiting[i][0].delayed_parser is not None
+                    parsed = self._waiting[i][0].delayed_parser(resp)
                 except InvalidResponse as e:
                     ...
                 else:
                     logger.debug(f"{self.name}Delayed Rx: '{resp:20s}' [green]Parsed: '{parsed}'")
-                    self._waiting[1].set_result(parsed)
-                    self._waiting = None
+                    self._waiting[i][1].set_result(parsed)
+                    del self._waiting[i]
+                    break
+
+            else:
+                # No delayed command match.
+                # Process immediate commands.
+                try:
+                    cmd, fut = self._read_queue.get_nowait()
+                except asyncio.QueueEmpty:
+                    logger.warning(f"{self.name}Got mysterious return '{resp}'.")
                     continue
 
-            try:
-                cmd, fut = self._read_queue.get_nowait()
-            except asyncio.QueueEmpty:
-                logger.warning(f"{self.name}Got mysterious return '{resp}'.")
-                continue
-
-            try:
-                for _ in range(1, cmd.n_lines):
-                    resp += "\n" + (await self._serial.reader.readline()).decode(**ENCODING_KW).strip()
-                parsed = cmd.parser(resp)
-            except BaseException as e:
-                logger.error(f"{self.name}Exception {str(e)} while parsing '{resp}' from '{cmd.cmd}'.")
-                fut.set_exception(e)
-            else:
-                r = "'" + resp.replace("\n", "\\n") + "'"
-                logger.debug(f"{self.name}Rx:  {r:20s} [green]Parsed: '{parsed}'")
-                fut.set_result(parsed)
-            finally:
-                self._read_queue.task_done()
+                try:
+                    for _ in range(1, cmd.n_lines):
+                        resp += "\n" + (await self._serial.reader.readline()).decode(**ENCODING_KW).strip()
+                    assert cmd.parser is not None
+                    parsed = cmd.parser(resp)
+                except BaseException as e:
+                    logger.error(f"{self.name}Exception {str(e)} while parsing '{resp}' from '{cmd.cmd}'.")
+                    fut.set_exception(e)
+                else:
+                    r = "'" + resp.replace("\n", "\\n") + "'"
+                    logger.debug(f"{self.name}Rx:  {r:20s} [green]Parsed: '{parsed}'")
+                    fut.set_result(parsed)
+                finally:
+                    self._read_queue.task_done()
 
     @overload
     async def send(self, msg: str) -> None:
@@ -231,14 +233,13 @@ class COM:
         # Need lock as reversal can happen when two closely spaced commands enter.
         # While the former is waiting for min_spacing, the later could arrive just a
         # little later to pass the min_spacing check without waiting.
-        async with self.lock:
+        async with self._lock:
             if msg.delayed_parser is not None:
-                if self._waiting is not None:
-                    raise Exception("Cannot have >1 delayable commands at a time.")
-                self._waiting = (msg, fut)
-                self._read_queue.put_nowait((msg, asyncio.Future()))  # Dump future
-            else:
-                self._read_queue.put_nowait((msg, fut))
+                self._waiting.append((msg, fut))
+
+            if msg.parser is not None:
+                fut_ = asyncio.Future() if msg.delayed_parser is not None else fut
+                self._read_queue.put_nowait((msg, fut_))  # Dump future
 
             await self._send(self.formatter(msg.cmd).encode(**ENCODING_KW))
 
