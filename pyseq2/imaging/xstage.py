@@ -20,7 +20,7 @@ class XCmd:
     """
     IS_MOVING   = CmdParse("PR MV", ok_re(fr"\??PR MV\n(\-?\d+)", lambda x: bool(int(x))), n_lines=2)
     GET_POS     = CmdParse("PR P" , ok_re(fr"\??PR P\n(\-?\d+)", int), n_lines=2)
-    SET_POS     = CmdParse(chkrng(lambda x: f"MA {x},1", *RANGE), ok_re(r"\??MA (\d+),1"))  # Set mode and move to abs. position.
+    SET_POS     = CmdParse(chkrng(lambda x: f"MA {x},1", *RANGE), ok_re(r"\??MA (\d+),1"), delayed_parser=ok_if_match("?!"))  # Set mode and move to abs. position.
     SET_POS_REL = lambda x: f"MR {x}"  # Set mode and move to rel. position.
     RESET       = CmdParse("\x03", ok_re(r".*(Copyright© 2010 Schneider Electric Motion USA)|(Copyright© 2001-2009 by Intelligent Motion Systems, Inc.)"))
 # fmt: on

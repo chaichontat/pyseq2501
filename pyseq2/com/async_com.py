@@ -72,11 +72,15 @@ class CmdParse(Generic[T, P]):
     cmd: str | Callable[P, str]
     parser: Callable[[str], T]
     n_lines: int = 1
+    delayed_parser: Callable[[str], T] | None = None
+    # If you're adding some new variables don't forget to add them to __call__.
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> CmdParse[T, P]:
         if isinstance(self.cmd, str):
             raise TypeError("This command does not take argument(s).")
-        return CmdParse(self.cmd(*args, **kwargs), self.parser, n_lines=self.n_lines)
+        return CmdParse(
+            self.cmd(*args, **kwargs), self.parser, n_lines=self.n_lines, delayed_parser=self.delayed_parser
+        )
 
     def __str__(self) -> str:
         return str(self.cmd)
@@ -146,11 +150,10 @@ class COM:
         self._read_queue: asyncio.Queue[tuple[CmdParse[Any, Any], asyncio.Future[Any]]] = asyncio.Queue()
         self._serial: Channel
 
-        self.waiting = None
+        self._waiting = None
 
     async def _read_forever(self) -> NoReturn:
         while True:
-            print(time.time(), "waiting")
             resp = (await self._serial.reader.readline()).decode(**ENCODING_KW).strip()
 
             if self.no_check:
@@ -161,15 +164,16 @@ class COM:
                 continue
 
             # For commands that can return later.
-            if self.waiting is not None:
+            if self._waiting is not None:
                 try:
-                    parsed = self.waiting[0](resp)
+                    assert self._waiting[0].delayed_parser is not None
+                    parsed = self._waiting[0].delayed_parser(resp)
                 except InvalidResponse as e:
                     ...
                 else:
-                    logger.debug(f"{self.name}Rx: Waited {resp:20s} [green]Parsed: '{parsed}'")
-                    self.waiting[1].set_result(parsed)
-                    self.waiting = None
+                    logger.debug(f"{self.name}Delayed Rx: '{resp:20s}' [green]Parsed: '{parsed}'")
+                    self._waiting[1].set_result(parsed)
+                    self._waiting = None
                     continue
 
             try:
@@ -180,7 +184,6 @@ class COM:
 
             try:
                 for _ in range(1, cmd.n_lines):
-                    print(f"{time.time()} multiline")
                     resp += "\n" + (await self._serial.reader.readline()).decode(**ENCODING_KW).strip()
                 parsed = cmd.parser(resp)
             except BaseException as e:
@@ -201,7 +204,7 @@ class COM:
     async def send(self, msg: CmdParse[T, Any]) -> T:
         ...
 
-    async def send(self, msg: str | CmdParse[T, Any], option=None) -> None | T:
+    async def send(self, msg: str | CmdParse[T, Any]) -> None | T:
         """Sends a command to an instrument.
         If msg is string   => no responses expected.
         If msg is CmdParse => response expected and parsed by CmdParse.parser.
@@ -229,10 +232,10 @@ class COM:
         # While the former is waiting for min_spacing, the later could arrive just a
         # little later to pass the min_spacing check without waiting.
         async with self.lock:
-            if option:
-                if self.waiting is not None:
+            if msg.delayed_parser is not None:
+                if self._waiting is not None:
                     raise Exception("Cannot have >1 delayable commands at a time.")
-                self.waiting = (option, fut)
+                self._waiting = (msg, fut)
                 self._read_queue.put_nowait((msg, asyncio.Future()))  # Dump future
             else:
                 self._read_queue.put_nowait((msg, fut))
