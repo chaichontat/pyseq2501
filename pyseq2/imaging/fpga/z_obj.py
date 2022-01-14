@@ -44,10 +44,6 @@ class ZObj(FPGAControlled, Movable):
     async def pos(self) -> int | None:
         return await self.com.send(ObjCmd.GET_POS)
 
-    @pos.setter
-    async def pos(self, x: int) -> None:
-        await self.move(x)
-
     async def move(self, x: int) -> bool:
         return await self.com.send(ObjCmd.SET_POS(x))
 
