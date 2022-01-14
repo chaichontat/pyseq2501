@@ -1,11 +1,10 @@
 import asyncio
 from contextlib import asynccontextmanager
 from logging import getLogger
-from typing import AsyncGenerator, Literal, Optional
+from typing import AsyncGenerator, Literal
 
 from pyseq2.base.instruments import FPGAControlled
-from pyseq2.com.async_com import CmdParse
-from pyseq2.com.thread_mgt import run_in_executor
+from pyseq2.com.async_com import COM, CmdParse
 from pyseq2.utils.utils import ok_if_match
 
 logger = getLogger(__name__)
@@ -48,32 +47,51 @@ class OpticCmd:
 
 class Optics(FPGAControlled):
     """
-    No reason to change this.
-    Always set to no OD filters and emission filter in.
+    Set to no OD filters/closed and emission filter in.
+    Same as ZTilt, cannot run new commands while previous ones are pending.
     """
 
     cmd = OpticCmd
 
+    def __init__(self, fpga_com: COM) -> None:
+        super().__init__(fpga_com)
+        self.lock = asyncio.Lock()
+
     async def initialize(self) -> None:
-        await self.com.send(OpticCmd.EM_FILTER_DEFAULT)
-        await asyncio.gather(self.com.send(OpticCmd.HOME_OD(1)), self.com.send(OpticCmd.HOME_OD(2)))
-        await asyncio.gather(
-            self.com.send(OpticCmd.SET_OD(OD_GREEN["OPEN"], 1)),
-            self.com.send(OpticCmd.SET_OD(OD_RED["OPEN"], 2)),
-        )
+        async with self.lock:
+            logger.info(f"Initializing optics.")
+            await self.com.send(OpticCmd.EM_FILTER_DEFAULT)
+            await asyncio.gather(self.com.send(OpticCmd.HOME_OD(1)), self.com.send(OpticCmd.HOME_OD(2)))
+            await asyncio.gather(
+                self.com.send(OpticCmd.SET_OD(OD_GREEN["OPEN"], 1)),
+                self.com.send(OpticCmd.SET_OD(OD_RED["OPEN"], 2)),
+            )
+            logger.info(f"Done initializing optics.")
+
+    async def green(self, open_: bool) -> None:
+        async with self.lock:
+            cmd = OpticCmd.SET_OD(OD_GREEN["OPEN"], 1) if open_ else OpticCmd.HOME_OD(1)
+            await self.com.send(cmd)
+            logger.info(f"Green excitation filter {'opened' if open_ else 'closed'}.")
+
+    async def red(self, open_: bool) -> None:
+        async with self.lock:
+            cmd = OpticCmd.SET_OD(OD_RED["OPEN"], 2) if open_ else OpticCmd.HOME_OD(2)
+            await self.com.send(cmd)
+            logger.info(f"Red excitation filter {'opened' if open_ else 'closed'}.")
 
     @asynccontextmanager
     async def open_shutter(self) -> AsyncGenerator[None, None]:
         await self._open()
-        logger.info("Shutter opened.")
         try:
             yield
         finally:
             await self._close()
-            logger.info("Shutter closed.")
 
-    async def _open(self) -> bool:
-        return await self.com.send(OpticCmd.OPEN_SHUTTER)
+    async def _open(self) -> None:
+        await self.com.send(OpticCmd.OPEN_SHUTTER)
+        logger.info("Shutter opened.")
 
-    async def _close(self) -> bool:
-        return await self.com.send(OpticCmd.CLOSE_SHUTTER)
+    async def _close(self) -> None:
+        await self.com.send(OpticCmd.CLOSE_SHUTTER)
+        logger.info("Shutter closed.")
