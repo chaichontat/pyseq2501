@@ -55,7 +55,6 @@ class Movable(metaclass=ABCMeta):
 class FPGAControlled:
     com: COM
 
-    @final
     def __init__(self, fpga_com: COM) -> None:
         self.com = fpga_com
 

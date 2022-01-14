@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from logging import getLogger
 from typing import Annotated, Literal, cast
@@ -25,11 +26,9 @@ class LaserCmd:
     """
 
     @staticmethod
-    def v_get_status(resp: str) -> None | bool:
-        try:
-            return {"DISABLED": False, "ENABLED": True}[resp]
-        except KeyError:  # Tend to have status error on first calls.
-            return None
+    def v_get_status(resp: str) -> bool:
+        # Tend to have status error on first calls.
+        return {"DISABLED": False, "ENABLED": True}.get(resp, False)
 
     @staticmethod
     def v_get_power(resp: str) -> int:
@@ -98,7 +97,7 @@ class Laser(UsesSerial):
         #     return False
 
     @property
-    async def status(self) -> None | bool:
+    async def status(self) -> bool:
         return await self.com.send(LaserCmd.GET_STATUS)
 
     async def on(self) -> None:
@@ -108,10 +107,8 @@ class Laser(UsesSerial):
         return await self.set_onoff(False)
 
     @property
-    async def power(self) -> None | int:
-        if await self.status:
-            return await self.com.send(LaserCmd.GET_POWER)
-        return None
+    async def power(self) -> int:
+        return await self.com.send(LaserCmd.GET_POWER)
 
     @power.setter
     async def power(self, x: int) -> None:
@@ -122,6 +119,10 @@ class Laser(UsesSerial):
 class Lasers:
     g: Laser
     r: Laser
+
+    @property
+    async def power(self) -> tuple[int, int]:
+        return await asyncio.gather(self.g.power, self.r.power)
 
     # def initialize(self) -> list[Future[Any]]:
     #     return [getattr(self, f.name).initialize() for f in fields(self)]

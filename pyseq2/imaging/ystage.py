@@ -134,7 +134,7 @@ class YStage(UsesSerial, Movable):
         return True
 
     async def move(self, pos: int, slowly: bool = False) -> bool:
-        await self.set_mode("IMAGING") if slowly else self.set_mode("MOVING")
+        await self.set_mode("IMAGING") if slowly else await self.set_mode("MOVING")
         logger.info(f"Moving to {pos} for {self._mode}")
         await self.com.send(YCmd.SET_POS(pos))
         await self.com.send(YCmd.GO)

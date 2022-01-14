@@ -226,7 +226,7 @@ class Cameras:
                 logger.info(f"Still alive. dcam_init takes about 10s. Taken {t:.2f} s.")
             if t > 60:
                 raise TimeoutError("DCAM API initialization timeout.")
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(1)
 
         return cls((await _Camera.ainit(0), await _Camera.ainit(1)))
 

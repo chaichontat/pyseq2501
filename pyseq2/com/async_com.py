@@ -157,6 +157,9 @@ class COM:
         while True:
             resp = (await self._serial.reader.readline()).decode(**ENCODING_KW).strip()
 
+            if not resp:
+                continue
+
             if self.no_check:
                 logger.debug(resp)
                 continue
