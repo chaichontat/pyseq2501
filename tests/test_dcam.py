@@ -31,8 +31,8 @@ def test_two_props():
     assert t["same"] == -1
 
 
-def test_cameras():
-    cs = Cameras()
+# def test_cameras():
+#     cs = Cameras()
 
 
 class Failed:
@@ -53,5 +53,6 @@ def test_check_if_failed():
     f = Failed()
     with pytest.raises(DCAMException):
         f.bad()
+    with pytest.raises(DCAMException):
         f.what()
     f.good()

@@ -1,4 +1,5 @@
 #%%
+import asyncio
 import inspect
 import time
 from dataclasses import dataclass
@@ -41,7 +42,7 @@ name_map = dict(
 )
 
 
-def get_ports(timeout: int | float = 1, show_all=False) -> Ports:
+async def get_ports(timeout: int | float = 1, show_all=False) -> Ports:
     """
     See https://pyserial.readthedocs.io/en/latest/tools.html for more details.
 
@@ -52,7 +53,9 @@ def get_ports(timeout: int | float = 1, show_all=False) -> Ports:
     while time.monotonic() - t0 < timeout:
         ports = {
             dev.serial_number: dev.name
-            for dev in serial.tools.list_ports.comports()
+            for dev in await asyncio.get_running_loop().run_in_executor(
+                None, serial.tools.list_ports.comports
+            )
             if dev.serial_number is not None
         }
         try:
@@ -68,7 +71,7 @@ def get_ports(timeout: int | float = 1, show_all=False) -> Ports:
 
 
 if __name__ == "__main__":
-    print(get_ports())
+    print(asyncio.run(get_ports()))
 
 # REGEX_COM = re.compile(r"\((COM\d{1,2})\)")
 # REGEX_ID = re.compile(r"\+(\w+)\\")

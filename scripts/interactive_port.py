@@ -1,17 +1,30 @@
+import asyncio
 import logging
 
+from pyseq2.base.instruments_types import SerialInstruments
 from pyseq2.com.async_com import COM
-from pyseq2.utils.ports import get_ports
-from rich.logging import RichHandler
 
-logging.basicConfig(
-    level="NOTSET",
-    format="[yellow]%(name)-10s[/] %(message)s",
-    datefmt="[%X]",
-    handlers=[RichHandler(rich_tracebacks=True, markup=True)],
-)
 
-ports = get_ports(timeout=60)
-com = COM("y", ports.y, no_check=True)
-while True:
-    com.send(input())
+async def interactive():
+    import aioconsole
+    from pyseq2.utils.ports import get_ports
+    from rich.logging import RichHandler
+
+    logging.basicConfig(
+        level="NOTSET",
+        format="[yellow]%(name)-10s[/] %(message)s",
+        datefmt="[%X]",
+        handlers=[RichHandler(rich_tracebacks=True, markup=True)],
+    )
+
+    name: SerialInstruments = await aioconsole.ainput("Instrument? ")
+    com = await COM.ainit(name, getattr(get_ports(), name))
+    while True:
+        await asyncio.sleep(0.2)
+        line = await aioconsole.ainput("Command? ")
+        await aioconsole.aprint()
+        await com.send(line)
+
+
+if __name__ == "__main__":
+    asyncio.run(interactive())

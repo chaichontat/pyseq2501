@@ -1,6 +1,6 @@
 #%%
+import asyncio
 import logging
-import time
 
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -18,19 +18,22 @@ logging.basicConfig(
 )
 logging.getLogger("matplotlib.font_manager").setLevel(logging.WARNING)
 
-ports = get_ports(timeout=60)
-imager = Imager(ports, init_cam=True)
+
+async def take():
+    ports = await get_ports()
+    imager = await Imager.ainit(ports)
+    # await imager.initialize()  # If not initialized in this session (defined by HiSeq power cycle).
+
+    target, focus_plot = await imager.autofocus(channel=0)
+    plt.plot(focus_plot)
+
+    await imager.y.move(1000000)
+    img = await imager.take(12, dark=True, channels=frozenset((0, 1)))
+    Image.fromarray(img[0]).save("dark.tiff")
+
 
 #%%
-# imager.initialize()  # If not initialized in this session (defined by HiSeq power cycle).
 
-#%%
-imager.y.move(1000000)
-img = imager.take(12, dark=True, cam=0)
-Image.fromarray(img[0]).save("dark.tiff")
-time.sleep(0.5)
-
-#%%
-target, focus_plot = imager.autofocus(channel=0)
-plt.plot(focus_plot)
 # %%
+if __name__ == "__main__":
+    asyncio.run(take())
