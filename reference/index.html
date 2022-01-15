@@ -9,7 +9,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.5">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.1.6">
     
     
       
@@ -17,7 +17,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.ee0f47ba.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.cd566b2a.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.e6a45f82.min.css">
@@ -585,13 +585,17 @@ cmd        </code>
 
 
 
+
   <div class="doc doc-object doc-method">
 
 
 
 <h3 id="pyseq2.imaging.laser.Laser.set_power" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">set_power</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">power</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">set_power</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">power</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span></code>
 
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-async"><code>async</code></small>
+  </span>
 
 </h3>
 
@@ -626,27 +630,24 @@ cmd        </code>
 </table>
         <details class="quote">
           <summary>Source code in <code>pyseq2/imaging/laser.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="nd">@run_in_executor</span>
-<span class="k">def</span> <span class="nf">set_power</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span> <span class="n">power</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="s2">&quot;mW&quot;</span><span class="p">],</span> <span class="n">tol</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="s2">&quot;mW&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="s2">&quot;s&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">30</span>
-<span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">async</span> <span class="k">def</span> <span class="nf">set_power</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">power</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="s2">&quot;mW&quot;</span><span class="p">],</span> <span class="n">tol</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="s2">&quot;mW&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Laser can take a while to warm up.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        power (int): [description]</span>
 <span class="sd">        tol (int): [description]. Defaults to 3.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">assert</span> <span class="nb">all</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="n">power</span><span class="p">)</span> <span class="o">==</span> <span class="n">power</span> <span class="ow">and</span> <span class="n">power</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">timeout</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tol</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="nb">all</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="n">power</span><span class="p">)</span> <span class="o">==</span> <span class="n">power</span> <span class="ow">and</span> <span class="n">power</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tol</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">on</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_onoff</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">result</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">com</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">LaserCmd</span><span class="o">.</span><span class="n">SET_POWER</span><span class="p">(</span><span class="n">power</span><span class="p">))</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_onoff</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">com</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">LaserCmd</span><span class="o">.</span><span class="n">SET_POWER</span><span class="p">(</span><span class="n">power</span><span class="p">))</span>
 
-    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">timeout</span><span class="p">):</span>
-        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">power</span> <span class="o">-</span> <span class="n">not_none</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">power</span><span class="o">.</span><span class="n">result</span><span class="p">(</span><span class="mi">5</span><span class="p">)))</span> <span class="o">&lt;</span> <span class="n">tol</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">True</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">False</span>
+    <span class="c1"># for _ in range(timeout):</span>
+    <span class="c1">#     time.sleep(1)</span>
+    <span class="c1">#     if abs(power - not_none(self.power.result(5))) &lt; tol:</span>
+    <span class="c1">#         return True</span>
+    <span class="c1"># else:</span>
+    <span class="c1">#     return False</span>
 </code></pre></div>
         </details>
     </div>
@@ -747,14 +748,12 @@ Lasers        </code>
 
     <div class="doc doc-contents ">
 
-      <p>Lasers(g: pyseq2.imaging.laser.Laser, r: pyseq2.imaging.laser.Laser)</p>
+      <p>Lasers(g: 'Laser', r: 'Laser')</p>
 
 
 
 
   <div class="doc doc-children">
-
-
 
 
 
@@ -795,7 +794,7 @@ Lasers        </code>
   <small>
     
       Last update:
-      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime">2022-01-10 12:19:29</span>
+      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime">2022-01-15 11:29:33</span>
       
     
   </small>
@@ -868,10 +867,10 @@ Lasers        </code>
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "toc.integrate", "navigation.top"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.b6ff8c07.min.js"}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "toc.integrate", "navigation.top"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.22074ed6.min.js"}</script>
     
     
-      <script src="../assets/javascripts/bundle.5e13d264.min.js"></script>
+      <script src="../assets/javascripts/bundle.1514a9a0.min.js"></script>
       
         <script src="../javascripts/mathjax.js"></script>
       
