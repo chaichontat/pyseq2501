@@ -46,8 +46,9 @@ class FPGA(UsesSerial):
         self.z_tilt: ZTilt
 
     async def initialize(self) -> None:
-        await self.reset()
-        await asyncio.sleep(1)  # Otherwise the FPGA hangs.
+        async with self.com.big_lock:
+            await self.reset()
+            await asyncio.sleep(1)  # Otherwise the FPGA hangs.
 
     async def reset(self) -> bool:
         return await self.com.send(FPGACmd.RESET)

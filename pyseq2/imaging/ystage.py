@@ -30,7 +30,7 @@ Imaging velo == 200200 units/s.
 """
 MODES: Dict[ModeName, Dict[ModeParams, str]] = {
     "IMAGING": {"GAINS": "5,10,7,1.5,0", "VELO": "0.154"},
-    "MOVING": {"GAINS": "5,10,7,1.5,0", "VELO": "1"},
+    "MOVING": {"GAINS": "5,10,7,1.5,0", "VELO": "1.922"},
 }
 
 
@@ -113,32 +113,34 @@ class YStage(UsesSerial, Movable):
         def echo(s: str) -> CmdParse[bool, Any]:
             return CmdParse(s, ok_if_match(f"1{s}"))
 
-        logger.info("Initializing y-stage.")
-        [
-            await self.com.send(x)  # Wait until command returns before sending more.
-            for x in (
-                YCmd.RESET,  # Initialize Stage, wait 1-2 seconds
-                # Continuous execution. Necessary for update while waiting for move to complete.
-                echo("W(CQ,0)"),
-                *tuple(map(echo, ("DECLARE(CHKMV)", "CHKMV:", "TR(MV,=,0)", '"Move Done"', "END"))),
-                YCmd.BRAKE_OFF,
-                YCmd.GAINS("5,10,7,1.5,0"),
-                YCmd.VELO(MODES["MOVING"]["VELO"]),  # Moving
-                YCmd.MODE_ABSOLUTE,
-                YCmd.ON,
-                YCmd.GO_HOME,
-                YCmd.MOVE_DONE,
-            )
-        ]
-        logger.info("Completed y-stage initialization.")
-        return True
+        async with self.com.big_lock:
+            logger.info("Initializing y-stage.")
+            [
+                await self.com.send(x)  # Wait until command returns before sending more.
+                for x in (
+                    YCmd.RESET,  # Initialize Stage, wait 1-2 seconds
+                    # Continuous execution. Necessary for update while waiting for move to complete.
+                    echo("W(CQ,0)"),
+                    *tuple(map(echo, ("DECLARE(CHKMV)", "CHKMV:", "TR(MV,=,0)", '"Move Done"', "END"))),
+                    YCmd.BRAKE_OFF,
+                    YCmd.GAINS("5,10,7,1.5,0"),
+                    YCmd.VELO(MODES["MOVING"]["VELO"]),  # Moving
+                    YCmd.MODE_ABSOLUTE,
+                    YCmd.ON,
+                    YCmd.GO_HOME,
+                    YCmd.MOVE_DONE,
+                )
+            ]
+            logger.info("Completed y-stage initialization.")
+            return True
 
     async def move(self, pos: int, slowly: bool = False) -> bool:
-        await self.set_mode("IMAGING") if slowly else await self.set_mode("MOVING")
-        logger.info(f"Moving to {pos} for {self._mode}")
-        await self.com.send(YCmd.SET_POS(pos))
-        await self.com.send(YCmd.GO)
-        return await self.com.send(YCmd.MOVE_DONE)
+        async with self.com.big_lock:
+            await self.set_mode("IMAGING") if slowly else await self.set_mode("MOVING")
+            logger.info(f"Moving to {pos} for {self._mode}")
+            await self.com.send(YCmd.SET_POS(pos))
+            await self.com.send(YCmd.GO)
+            return await self.com.send(YCmd.MOVE_DONE)
 
     @property
     async def pos(self) -> int:

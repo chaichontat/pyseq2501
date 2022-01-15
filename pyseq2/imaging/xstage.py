@@ -52,50 +52,52 @@ class XStage(UsesSerial, Movable):
 
     async def move(self, pos: int) -> bool:
         """Returns when move is completed."""
-        return await self.com.send(XCmd.SET_POS(pos))
+        async with self.com.big_lock:
+            return await self.com.send(XCmd.SET_POS(pos))
 
     async def initialize(self) -> bool:
         """Initialize the xstage."""
-        logger.info("Initializing x-stage.")
+        async with self.com.big_lock:
+            logger.info("Initializing x-stage.")
 
-        def echo(s: str) -> CmdParse[bool, Any]:
-            return CmdParse(s, ok_if_match(f">{s}"))
+            def echo(s: str) -> CmdParse[bool, Any]:
+                return CmdParse(s, ok_if_match(f">{s}"))
 
-        await self.com.send(XCmd.RESET)
-        await asyncio.gather(
-            (
-                self.com.send(x)
-                for x in (
-                    echo("EM=0"),
-                    echo("EE=1"),
-                    echo("VI=640"),
-                    echo("VM=6144"),
-                    echo("A=4000"),
-                    echo("D=4000"),
-                    echo("S1=1,0,0"),
-                    echo("S2=3,1,0"),
-                    echo("S3=2,1,0"),
-                    echo("SM=0"),
-                    echo("LM=1"),
-                    echo("DB=8"),
-                    echo("D1=5"),
-                    echo("HC=20"),
-                    echo("RC=100"),
-                    # Program 1. Set Home to 30000.
+            await self.com.send(XCmd.RESET)
+            await asyncio.gather(
+                (
+                    self.com.send(x)
+                    for x in (
+                        echo("EM=0"),
+                        echo("EE=1"),
+                        echo("VI=640"),
+                        echo("VM=6144"),
+                        echo("A=4000"),
+                        echo("D=4000"),
+                        echo("S1=1,0,0"),
+                        echo("S2=3,1,0"),
+                        echo("S3=2,1,0"),
+                        echo("SM=0"),
+                        echo("LM=1"),
+                        echo("DB=8"),
+                        echo("D1=5"),
+                        echo("HC=20"),
+                        echo("RC=100"),
+                        # Program 1. Set Home to 30000.
+                    )
                 )
             )
-        )
 
-        for x in (
-            echo("PG 1"),
-            CmdParse("HM 1", ok_if_match("1  HM 1")),
-            CmdParse("H", ok_if_match("5  H")),
-            CmdParse("P=30000", ok_if_match("7  P=30000")),
-            CmdParse("E", ok_if_match("12  E")),
-            CmdParse("PG", ok_if_match("14  PG")),
-        ):
-            await self.com.send(x)
+            for x in (
+                echo("PG 1"),
+                CmdParse("HM 1", ok_if_match("1  HM 1")),
+                CmdParse("H", ok_if_match("5  H")),
+                CmdParse("P=30000", ok_if_match("7  P=30000")),
+                CmdParse("E", ok_if_match("12  E")),
+                CmdParse("PG", ok_if_match("14  PG")),
+            ):
+                await self.com.send(x)
 
-        await self.com.send(CmdParse("EX 1", ok_if_match(">EX 1\n>"), n_lines=2))
-        logger.info("Completed x-stage initialization.")
-        return True
+            await self.com.send(CmdParse("EX 1", ok_if_match(">EX 1\n>"), n_lines=2))
+            logger.info("Completed x-stage initialization.")
+            return True

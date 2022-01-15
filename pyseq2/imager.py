@@ -62,17 +62,19 @@ class Imager:
         self.z_obj = self.fpga.z_obj
 
         self.cams = cams
+        self.lock = asyncio.Lock()
 
     async def initialize(self) -> None:
-        logger.info("Starting initialization.")
-        await asyncio.gather(
-            self.x.initialize(),
-            self.y.initialize(),
-            self.z_tilt.initialize(),
-            self.z_obj.initialize(),
-            self.optics.initialize(),
-        )
-        logger.info("Initialization completed.")
+        async with self.lock:
+            logger.info("Starting initialization.")
+            await asyncio.gather(
+                self.x.initialize(),
+                self.y.initialize(),
+                self.z_tilt.initialize(),
+                self.z_obj.initialize(),
+                self.optics.initialize(),
+            )
+            logger.info("Initialization completed.")
 
     # def get_state(self) -> State:
     #     out = {
@@ -97,42 +99,43 @@ class Imager:
     async def take(
         self, n_bundles: int, dark: bool = False, channels: frozenset[Literal[0, 1, 2, 3]] = frozenset((2,))
     ) -> UInt16Array:
-        logger.info(f"Taking an image with {n_bundles} from channel(s) {channels}.")
+        async with self.lock:
+            logger.info(f"Taking an image with {n_bundles} from channel(s) {channels}.")
 
-        c = [CHANNEL[x] for x in sorted(channels)]
-        if (0 in c or 1 in c) and (2 in c or 3 in c):
-            cam = 2
-        elif 0 in c or 1 in c:
-            cam = 0
-        elif 2 in c or 3 in c:
-            cam = 1
-        else:
-            raise ValueError("Invalid channel(s).")
+            c = [CHANNEL[x] for x in sorted(channels)]
+            if (0 in c or 1 in c) and (2 in c or 3 in c):
+                cam = 2
+            elif 0 in c or 1 in c:
+                cam = 0
+            elif 2 in c or 3 in c:
+                cam = 1
+            else:
+                raise ValueError("Invalid channel(s).")
 
-        # TODO: Compensate actual start position.
-        n_bundles += 1  # To flush CCD.
-        await self.wait_ready()
+            # TODO: Compensate actual start position.
+            n_bundles += 1  # To flush CCD.
+            await self.wait_ready()
 
-        pos = await self.y.pos
-        n_px_y = n_bundles * self.cams.BUNDLE_HEIGHT
-        # Need overshoot for TDI to function properly.
-        end_y_pos = pos - self.calc_delta_pos(n_px_y) - 100000
+            pos = await self.y.pos
+            n_px_y = n_bundles * self.cams.BUNDLE_HEIGHT
+            # Need overshoot for TDI to function properly.
+            end_y_pos = pos - self.calc_delta_pos(n_px_y) - 100000
 
-        await asyncio.gather(self.tdi.prepare_for_imaging(n_px_y, pos), self.y.set_mode("IMAGING"))
-        cap = self.cams.acapture(n_bundles, fut_capture=self.y.move(end_y_pos, slowly=True), cam=cam)
+            await asyncio.gather(self.tdi.prepare_for_imaging(n_px_y, pos), self.y.set_mode("IMAGING"))
+            cap = self.cams.acapture(n_bundles, fut_capture=self.y.move(end_y_pos, slowly=True), cam=cam)
 
-        if dark:
-            imgs = await cap
-        else:
-            async with self.optics.open_shutter():
+            if dark:
                 imgs = await cap
+            else:
+                async with self.optics.open_shutter():
+                    imgs = await cap
 
-        logger.info(f"Done taking an image.")
-        asyncio.create_task(self.y.move(end_y_pos + 100000))  # Correct for overshoot.
-        imgs = np.flip(imgs, axis=1)
-        if cam == 1:
-            return imgs[[x - 2 for x in c], :-128, :]
-        return imgs[:, :-128, :]  # Remove oversaturated first bundle.
+            logger.info(f"Done taking an image.")
+            await self.y.move(end_y_pos + 100000)  # Correct for overshoot.
+            imgs = np.flip(imgs, axis=1)
+            if cam == 1:
+                return imgs[[x - 2 for x in c], :-128, :]  # type: ignore
+            return imgs[:, :-128, :]  # Remove oversaturated first bundle.
 
     @staticmethod
     def calc_delta_pos(n_px_y: int) -> int:
@@ -148,24 +151,25 @@ class Imager:
         """Moves to z_max and takes 232 (2048 × 5) images while moving to z_min.
         Returns the z position of maximum intensity and the images.
         """
-        logger.info(f"Starting autofocus using data from {channel=}.")
-        await self.wait_ready()
+        async with self.lock:
+            logger.info(f"Starting autofocus using data from {channel=}.")
+            await self.wait_ready()
 
-        n_bundles, height = 232, 5
-        z_min, z_max = 2621, 60292
-        cam = 0 if CHANNEL[channel] in (0, 1) else 1
+            n_bundles, height = 232, 5
+            z_min, z_max = 2621, 60292
+            cam = 0 if CHANNEL[channel] in (0, 1) else 1
 
-        async with self.z_obj.af_arm(z_min=z_min, z_max=z_max) as start_move:
-            async with self.optics.open_shutter():
-                img = await self.cams.acapture(
-                    n_bundles, height, fut_capture=start_move, mode="FOCUS_SWEEP", cam=cam
-                )
+            async with self.z_obj.af_arm(z_min=z_min, z_max=z_max) as start_move:
+                async with self.optics.open_shutter():
+                    img = await self.cams.acapture(
+                        n_bundles, height, fut_capture=start_move, mode="FOCUS_SWEEP", cam=cam
+                    )
 
-        intensity = np.mean(
-            np.reshape(img[CHANNEL[channel] - 2 * cam], (n_bundles, height, 2048)), axis=(1, 2)
-        )
-        target = int(z_max - (((z_max - z_min) / n_bundles) * np.argmax(intensity) + z_min))
-        logger.info(f"Done autofocus. Optimum={target}")
-        if 10000 < target < 50000:
-            logger.info(f"Target too close to edge, considering moving the tilt motors.")
-        return (target, intensity)
+            intensity = np.mean(
+                np.reshape(img[CHANNEL[channel] - 2 * cam], (n_bundles, height, 2048)), axis=(1, 2)
+            )
+            target = int(z_max - (((z_max - z_min) / n_bundles) * np.argmax(intensity) + z_min))
+            logger.info(f"Done autofocus. Optimum={target}")
+            if 10000 < target < 50000:
+                logger.info(f"Target too close to edge, considering moving the tilt motors.")
+            return (target, intensity)
