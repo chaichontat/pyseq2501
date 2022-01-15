@@ -100,6 +100,9 @@ class Imager:
         self, n_bundles: int, dark: bool = False, channels: frozenset[Literal[0, 1, 2, 3]] = frozenset((2,))
     ) -> UInt16Array:
         async with self.lock:
+            if not 0 < n_bundles < 1500:
+                raise ValueError("n_bundles should be between 0 and 1500.")
+
             logger.info(f"Taking an image with {n_bundles} from channel(s) {channels}.")
 
             c = [CHANNEL[x] for x in sorted(channels)]
@@ -120,6 +123,7 @@ class Imager:
             n_px_y = n_bundles * self.cams.BUNDLE_HEIGHT
             # Need overshoot for TDI to function properly.
             end_y_pos = pos - self.calc_delta_pos(n_px_y) - 100000
+            assert end_y_pos > -7e6
 
             await asyncio.gather(self.tdi.prepare_for_imaging(n_px_y, pos), self.y.set_mode("IMAGING"))
             cap = self.cams.acapture(n_bundles, fut_capture=self.y.move(end_y_pos, slowly=True), cam=cam)
@@ -153,6 +157,9 @@ class Imager:
         """
         async with self.lock:
             logger.info(f"Starting autofocus using data from {channel=}.")
+            if channel not in (0, 1, 2, 3):
+                raise ValueError(f"Invalid channel {channel}.")
+
             await self.wait_ready()
 
             n_bundles, height = 232, 5
@@ -170,6 +177,6 @@ class Imager:
             )
             target = int(z_max - (((z_max - z_min) / n_bundles) * np.argmax(intensity) + z_min))
             logger.info(f"Done autofocus. Optimum={target}")
-            if 10000 < target < 50000:
+            if not 10000 < target < 50000:
                 logger.info(f"Target too close to edge, considering moving the tilt motors.")
             return (target, intensity)
