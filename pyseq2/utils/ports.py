@@ -1,48 +1,34 @@
 #%%
 import asyncio
-import inspect
 import time
-from dataclasses import dataclass
-from typing import Type, TypeVar, cast
+from pprint import pprint
+from typing import TypeVar, cast
 
 import serial.tools.list_ports
+from pyseq2.base.instruments_types import SerialPorts
 
 T = TypeVar("T")
 
 
-@dataclass
-class Ports:
-    x: str
-    y: str
-    fpga: tuple[str, str]
-    laser_g: str
-    laser_r: str
-
-    @classmethod
-    def from_raw(cls: Type[T], res: dict[str, str]) -> T:
-        fpga = (res["fpgacommand"], res["fpgaresponse"])
-        kwargs = {k: v for k, v in res.items() if k in inspect.signature(cls).parameters}
-        return cls(fpga=fpga, **kwargs)
-
-
-name_map = dict(
+serial_names: dict[SerialPorts, str] = dict(
     x="IL000001A",
     y="IL000002A",
-    pumpa="KLOEHNAA",
-    pumpb="KLOEHNBA",
-    valvea24="VICIA2A",
-    valvea10="VICIA1A",
-    valveb24="VICIB2A",
-    valveb10="VICIB1A",
-    fpgacommand="IL000004A",
-    fpgaresponse="IL000005A",
     laser_g="IL000006A",
     laser_r="IL000007A",
     arm9chem="ARM9CHEMA",
-)
+    arm9pe="PCIOA",
+    pumpa="KLOEHNAA",
+    pumpb="KLOEHNBA",
+    va24="VICIA2A",
+    va10="VICIA1A",
+    vb24="VICIB2A",
+    vb10="VICIB1A",
+    fpgacmd="IL000004A",
+    fpgaresp="IL000005A",
+)  # type: ignore # Dict is invariant.
 
 
-async def get_ports(timeout: int | float = 1, show_all=False) -> Ports:
+async def get_ports(timeout: int | float = 1, show_all=False) -> dict[SerialPorts, str]:
     """
     See https://pyserial.readthedocs.io/en/latest/tools.html for more details.
 
@@ -59,10 +45,10 @@ async def get_ports(timeout: int | float = 1, show_all=False) -> Ports:
             if dev.serial_number is not None
         }
         try:
-            res = cast(dict[str, str], {name: ports[id_] for name, id_ in name_map.items()})
+            res = cast(dict[str, str], {name: ports[id_] for name, id_ in serial_names.items()})
             if show_all:
-                print(res)
-            return Ports.from_raw(res)
+                pprint(f"{ports}")
+            return cast(dict[SerialPorts, str], res)
         except KeyError as e:
             print(f"Cannot find {e}.")
             time.sleep(0.5)
@@ -71,7 +57,7 @@ async def get_ports(timeout: int | float = 1, show_all=False) -> Ports:
 
 
 if __name__ == "__main__":
-    print(asyncio.run(get_ports()))
+    print(asyncio.run(get_ports(show_all=True)))
 
 # REGEX_COM = re.compile(r"\((COM\d{1,2})\)")
 # REGEX_ID = re.compile(r"\+(\w+)\\")

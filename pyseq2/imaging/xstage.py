@@ -60,7 +60,7 @@ class XStage(UsesSerial, Movable):
         async with self.com.big_lock:
             logger.info("Initializing x-stage.")
 
-            def echo(s: str) -> CmdParse[bool, Any]:
+            def echo(s: str) -> CmdParse[Any, bool]:
                 return CmdParse(s, ok_if_match(f">{s}"))
 
             await self.com.send(XCmd.RESET)

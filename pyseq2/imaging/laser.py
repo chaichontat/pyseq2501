@@ -8,7 +8,7 @@ from typing import Annotated, Literal, cast
 from pyseq2.base.instruments import UsesSerial
 from pyseq2.base.instruments_types import SerialInstruments
 from pyseq2.com.async_com import COM, CmdParse
-from pyseq2.utils.utils import chkrng, ok_if_match
+from pyseq2.utils.utils import chkrng, ok_if_match, λ_int
 
 logger = getLogger(__name__)
 POWER_RANGE = (0, 500)
@@ -38,7 +38,7 @@ class LaserCmd:
     # fmt: off
     ON = "ON"
     OFF = "OFF"
-    SET_POWER  = chkrng(lambda x: f"POWER={x}", *POWER_RANGE) 
+    SET_POWER  = λ_int(chkrng(lambda x: f"POWER={x}", *POWER_RANGE))
     GET_POWER  = CmdParse("POWER?"  , v_get_power)
     GET_STATUS = CmdParse("STAT?"   , v_get_status)
     VERSION    = CmdParse("VERSION?", ok_if_match(("SMD-G-1.1.2", "SMD-G-1.1.1")))

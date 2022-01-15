@@ -7,12 +7,12 @@ from typing import Literal, NamedTuple
 
 import numpy as np
 
+from .base.instruments_types import SerialPorts
 from .imaging.camera.dcam import Cameras, UInt16Array
 from .imaging.fpga import FPGA
 from .imaging.laser import Laser, Lasers
 from .imaging.xstage import XStage
 from .imaging.ystage import YStage
-from .utils.ports import Ports
 
 logger = getLogger(__name__)
 
@@ -39,14 +39,14 @@ class Imager:
     UM_PER_PX = 0.375
 
     @classmethod
-    async def ainit(cls, ports: Ports) -> Imager:
+    async def ainit(cls, ports: dict[SerialPorts, str]) -> Imager:
         cams, fpga, x, y, laser_g, laser_r = await asyncio.gather(
             Cameras.ainit(),
-            FPGA.ainit(*ports.fpga),
-            XStage.ainit(ports.x),
-            YStage.ainit(ports.y),
-            Laser.ainit("g", ports.laser_g),
-            Laser.ainit("r", ports.laser_r),
+            FPGA.ainit(ports["fpgacmd"], ports["fpgaresp"]),
+            XStage.ainit(ports["x"]),
+            YStage.ainit(ports["y"]),
+            Laser.ainit("g", ports["laser_g"]),
+            Laser.ainit("r", ports["laser_r"]),
         )
         return cls(fpga, x, y, Lasers(g=laser_g, r=laser_r), cams)
 

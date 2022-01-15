@@ -4,7 +4,7 @@ from typing import Literal
 
 from pyseq2.base.instruments import FPGAControlled
 from pyseq2.com.async_com import CmdParse
-from pyseq2.utils.utils import ok_if_match
+from pyseq2.utils.utils import ok_if_match, λ_int
 
 logger = getLogger(__name__)
 
@@ -24,9 +24,9 @@ class LEDColor(IntEnum):
 
 # fmt: off
 class LEDCmd:
-    SET_MODE       = CmdParse(lambda x, i: f"LEDMODE{i} {x}" , ok_if_match(["LEDMODE1", "LEDMODE2"]))
-    SET_SWEEP_RATE = CmdParse(lambda x:    f"LEDSWPRATE {x}" , ok_if_match("LEDSWPRATE"))
-    SET_PULSE_RATE = CmdParse(lambda x:    f"LEDPULSRATE {x}", ok_if_match("LEDPULSRATE"))
+    SET_MODE       = CmdParse(λ_int(lambda x, i: f"LEDMODE{i} {x}") , ok_if_match(["LEDMODE1", "LEDMODE2"]))
+    SET_SWEEP_RATE = CmdParse(λ_int(lambda x:    f"LEDSWPRATE {x}") , ok_if_match("LEDSWPRATE"))
+    SET_PULSE_RATE = CmdParse(λ_int(lambda x:    f"LEDPULSRATE {x}"), ok_if_match("LEDPULSRATE"))
 # fmt:on
 
 

@@ -30,6 +30,7 @@ async def take():
     await imager.y.move(1000000)
     img = await imager.take(12, dark=True, channels=frozenset((0, 1)))
     Image.fromarray(img[0]).save("dark.tiff")
+    print("Done!")
 
 
 #%%

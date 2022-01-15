@@ -2,7 +2,20 @@ from __future__ import annotations
 
 import re
 from math import ceil
-from typing import Callable, Dict, Literal, Optional, ParamSpec, Sequence, Tuple, TypedDict, TypeVar, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Literal,
+    Optional,
+    ParamSpec,
+    Sequence,
+    Tuple,
+    TypedDict,
+    TypeVar,
+    cast,
+    overload,
+)
 
 TILE_WIDTH = 0.769  # mm
 RESOLUTION = 0.375  # µm / px
@@ -67,6 +80,30 @@ def chkrng(f: Callable[P, T], min_: int, max_: int) -> Callable[P, T]:
         return f(*args, **kwargs)
 
     return wrapper
+
+
+@overload
+def λ_int(λ: Callable[[Any, Any], T]) -> Callable[[int, int], T]:
+    ...
+
+
+@overload
+def λ_int(λ: Callable[[Any], T]) -> Callable[[int], T]:
+    ...
+
+
+def λ_int(λ: Callable[[Any], T] | Callable[[Any, Any], T]) -> Callable[[int], T] | Callable[[int, int], T]:
+    def inner(*args: int) -> T:
+        return λ(*args)
+
+    return inner
+
+
+def λ_float(λ: Callable[[Any], T]) -> Callable[[float | int], T]:
+    def inner(x: float | int) -> T:
+        return λ(x)
+
+    return inner
 
 
 class Pos(TypedDict):

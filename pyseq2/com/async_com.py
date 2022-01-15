@@ -1,47 +1,21 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import time
 from asyncio import Future, StreamReader, StreamWriter
 from dataclasses import dataclass
 from logging import getLogger
-from typing import (
-    Annotated,
-    Any,
-    Callable,
-    Generic,
-    NamedTuple,
-    NoReturn,
-    Optional,
-    ParamSpec,
-    TypeVar,
-    overload,
-)
+from typing import (Annotated, Any, Callable, Generic, NamedTuple, NoReturn,
+                    Optional, ParamSpec, TypeVar, overload)
 
-from pyseq2.base.instruments_types import SerialInstruments
+from pyseq2.base.instruments_types import COLOR, FORMATTER, SerialInstruments
 from pyseq2.utils.utils import InvalidResponse
 from serial_asyncio import open_serial_connection
 
 logger = getLogger(__name__)
 # © is not in ASCII. Looking at you Schneider Electrics (x-stage).
 ENCODING_KW = {"encoding": "ISO-8859-1", "errors": "replace"}
-# fmt: off
-# Pick from ANSI colors.
-COLOR: dict[SerialInstruments, str] = dict(
-    fpga="blue",
-    x="purple",
-    y="yellow",
-    laser_g="green",
-    laser_r="magenta"
-)  # type: ignore
-FORMATTER: dict[SerialInstruments, Callable[[str], str]] = dict(
-       fpga=lambda x:  f"{x}\n",
-          x=lambda x:  f"{x}\r",
-          y=lambda x: f"1{x}\r\n",  # Axis 1
-    laser_g=lambda x:  f"{x}\r",
-    laser_r=lambda x:  f"{x}\r",
-)   # type: ignore
-# fmt: on
 
 T = TypeVar("T", covariant=True)
 P = ParamSpec("P")
@@ -53,7 +27,7 @@ class Channel(NamedTuple):
 
 
 @dataclass(frozen=True)
-class CmdParse(Generic[T, P]):
+class CmdParse(Generic[P, T]):
     """A command with its parsing function.
 
     If the command is callable, this entire structure is callable and
@@ -74,7 +48,7 @@ class CmdParse(Generic[T, P]):
     delayed_parser: Callable[[str], T] | None = None
     # If you're adding some new variables don't forget to add them to __call__.
 
-    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> CmdParse[T, P]:
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> CmdParse[P, T]:
         if isinstance(self.cmd, str):
             raise TypeError("This command does not take argument(s).")
         return CmdParse(
@@ -117,15 +91,16 @@ class COM:
     ):
 
         self = cls(name, min_spacing, no_check)
+        baudrate = 115200 if name in ("fpga", "arm9chem", "arm9pe") else 9600
         if port_rx is not None:
             assert name == "fpga"
-            srx = await open_serial_connection(url=port_rx, baudrate=115200)
-            stx = await open_serial_connection(url=port_tx, baudrate=115200)
+            srx = await open_serial_connection(url=port_rx, baudrate=baudrate)
+            stx = await open_serial_connection(url=port_tx, baudrate=baudrate)
             self._serial = Channel(reader=srx[0], writer=stx[1])
             logger.info(f"{self.name}Started listening to ports {port_tx} and {port_rx}.")
         else:
             assert name != "fpga"
-            self._serial = Channel(*await open_serial_connection(url=port_tx, baudrate=9600))
+            self._serial = Channel(*await open_serial_connection(url=port_tx, baudrate=baudrate))
             logger.info(f"{self.name}Started listening to port {port_tx}.")
 
         asyncio.create_task(self._read_forever())
@@ -205,10 +180,10 @@ class COM:
         ...
 
     @overload
-    async def send(self, msg: CmdParse[T, Any]) -> T:
+    async def send(self, msg: CmdParse[Any, T]) -> T:
         ...
 
-    async def send(self, msg: str | CmdParse[T, Any]) -> None | T:
+    async def send(self, msg: str | CmdParse[Any, T]) -> None | T:
         """Sends a command to an instrument.
         If msg is string   => no responses expected.
         If msg is CmdParse => response expected and parsed by CmdParse.parser.
@@ -262,3 +237,28 @@ class COM:
 
     async def wait(self) -> None:
         return await self._read_queue.join()
+
+
+async def interactive():
+    import aioconsole
+    from pyseq2.utils.ports import get_ports
+    from rich.logging import RichHandler
+
+    logging.basicConfig(
+        level="NOTSET",
+        format="[yellow]%(name)-10s[/] %(message)s",
+        datefmt="[%X]",
+        handlers=[RichHandler(rich_tracebacks=True, markup=True)],
+    )
+
+    name: SerialInstruments = await aioconsole.ainput("Instrument? ")
+    com = await COM.ainit(name, getattr(get_ports(), name))
+    while True:
+        await asyncio.sleep(0.2)
+        line = await aioconsole.ainput("Command? ")
+        await aioconsole.aprint()
+        await com.send(line)
+
+
+if __name__ == "__main__":
+    asyncio.run(interactive())

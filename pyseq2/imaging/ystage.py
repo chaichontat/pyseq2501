@@ -1,15 +1,12 @@
 from __future__ import annotations
 
-import asyncio
 import logging
-from concurrent.futures import Future
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Literal, Optional
+from typing import Any, Callable, Literal, Optional
 
 from pyseq2.base.instruments import Movable, UsesSerial
 from pyseq2.com.async_com import COM, CmdParse
-from pyseq2.com.thread_mgt import run_in_executor
-from pyseq2.utils.utils import chkrng, ok_if_match, ok_re
+from pyseq2.utils.utils import chkrng, ok_if_match, ok_re, λ_float, λ_int
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +25,9 @@ Also tested from moving, pinging and linear regression.
 Imaging velo == 200200 units/s.
 
 """
-MODES: Dict[ModeName, Dict[ModeParams, str]] = {
-    "IMAGING": {"GAINS": "5,10,7,1.5,0", "VELO": "0.154"},
-    "MOVING": {"GAINS": "5,10,7,1.5,0", "VELO": "1.922"},
+MODES: dict[ModeName, dict[ModeParams, Any]] = {
+    "IMAGING": {"GAINS": "5,10,7,1.5,0", "VELO": 0.154},
+    "MOVING": {"GAINS": "5,10,7,1.5,0", "VELO": 1.922},
 }
 
 
@@ -61,8 +58,8 @@ def gen_reader(s: str) -> Callable[[str], int]:
     return ok_re(fr"1{s}\n\*([\d\+\-]+)", int)
 
 
-def gen_repeat(cmd: str) -> CmdParse[bool, Any]:
-    return CmdParse(cmd, ok_if_match("1" + cmd))
+def echo(s: str) -> CmdParse[Any, bool]:
+    return CmdParse(s, ok_if_match(f"1{s}"))
 
 
 class YCmd:
@@ -71,20 +68,20 @@ class YCmd:
     """
 
     # fmt: off
-    SET_POS    = CmdParse(chkrng(lambda x: f"D{x}", *RANGE), ok_re(r"1D\-?\d+"))
+    SET_POS    = CmdParse(λ_int(chkrng(lambda x: f"D{x}", *RANGE)), ok_re(r"1D\-?\d+"))
     GET_POS    = CmdParse("R(PA)",                    gen_reader(r"R\(PA\)"), n_lines=2)  # Report(Position Actual)
     IS_MOVING  = CmdParse("R(MV)", lambda x: bool(gen_reader(r"R\(MV\)")(x)), n_lines=2)
     MOVE_DONE  = CmdParse("GOTO(CHKMV)", ok_if_match("1GOTO(CHKMV)"), n_lines=1, delayed_parser=ok_if_match("Move Done"))  # Returns when move is completed.
     TARGET_POS = CmdParse("R(PT)",                    gen_reader(r"R\(PT\)")    , n_lines=2)
     GAINS      = CmdParse(lambda x: f"GAINS({x})", ok_re(r"GAINS\(([\d\.,]+)\)"))
-    VELO       = CmdParse(lambda x: f"V{x}"      , ok_re(r"V([\d\.]+)"))
+    VELO       = CmdParse(λ_float(lambda x: f"V{x}")      , ok_re(r"V([\d\.]+)"))
 
-    GO            = gen_repeat("G")
-    STOP          = gen_repeat("S")
-    ON            = gen_repeat("ON")
-    GO_HOME       = gen_repeat("GH")
-    MODE_ABSOLUTE = gen_repeat("MA")  # p.159
-    BRAKE_OFF     = gen_repeat("BRAKE0")
+    GO            = echo("G")
+    STOP          = echo("S")
+    ON            = echo("ON")
+    GO_HOME       = echo("GH")
+    MODE_ABSOLUTE = echo("MA")  # p.159
+    BRAKE_OFF     = echo("BRAKE0")
     # fmt: on
 
     RESET = CmdParse(
@@ -110,9 +107,6 @@ class YStage(UsesSerial, Movable):
         self._mode: Optional[ModeName] = None
 
     async def initialize(self) -> bool:
-        def echo(s: str) -> CmdParse[bool, Any]:
-            return CmdParse(s, ok_if_match(f"1{s}"))
-
         async with self.com.big_lock:
             logger.info("Initializing y-stage.")
             [

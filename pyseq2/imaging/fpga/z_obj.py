@@ -1,11 +1,11 @@
 import asyncio
 from contextlib import asynccontextmanager
 from logging import getLogger
-from typing import Any, AsyncGenerator, Awaitable, Callable, Coroutine
+from typing import Any, AsyncGenerator, Awaitable
 
 from pyseq2.base.instruments import FPGAControlled, Movable
 from pyseq2.com.async_com import CmdParse
-from pyseq2.utils.utils import chkrng, ok_if_match, ok_re
+from pyseq2.utils.utils import chkrng, ok_if_match, ok_re, λ_float, λ_int
 
 logger = getLogger(__name__)
 
@@ -17,16 +17,16 @@ RANGE = (0, 65535)
 class ObjCmd:
     # fmt: off
     # Callable[[Annotated[int, "mm/s"]], str]
-    SET_VELO = CmdParse(lambda x: f"ZSTEP {int(1288471 * x)}", ok_if_match("ZSTEP"))
-    SET_POS  = CmdParse(chkrng(lambda x: f"ZDACW {x}", *RANGE), ok_if_match("ZDACW"))
+    SET_VELO = CmdParse(λ_float(lambda x: f"ZSTEP {int(1288471 * x)}"), ok_if_match("ZSTEP"))
+    SET_POS  = CmdParse(chkrng(λ_int(lambda x: f"ZDACW {x}"), *RANGE), ok_if_match("ZDACW"))
     GET_TARGET_POS = CmdParse(     "ZDACR"              , ok_re(r"^ZDACR (\d+)$", int))  # D A
     GET_POS        = CmdParse(     "ZADCR"              , ok_re(r"^ZADCR (\d+)$", int))  # A D
     
     # Autofocus stuffs
-    SET_TRIGGER = CmdParse(lambda x: f"ZTRG {x}"   , ok_if_match("ZTRG"))
-    ARM_TRIGGER = CmdParse(           "ZYT 0 3"    , ok_if_match("ZYT"))
-    Z_MOVE      = CmdParse(lambda x: f"ZMV {x}"    , ok_if_match("@LOG Trigger Camera\nZMV"), n_lines=2)
-    SWYZ        = CmdParse(           "SWYZ_POS 1" , ok_if_match("SWYZ_POS"))
+    SET_TRIGGER = CmdParse(λ_int(lambda x: f"ZTRG {x}") , ok_if_match("ZTRG"))
+    ARM_TRIGGER = CmdParse(                 "ZYT 0 3"   , ok_if_match("ZYT"))
+    Z_MOVE      = CmdParse(λ_int(lambda x: f"ZMV {x}")  , ok_if_match("@LOG Trigger Camera\nZMV"), n_lines=2)
+    SWYZ        = CmdParse(                 "SWYZ_POS 1", ok_if_match("SWYZ_POS"))
     # fmt: on
 
 
