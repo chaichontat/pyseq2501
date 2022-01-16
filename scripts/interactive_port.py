@@ -18,7 +18,7 @@ async def interactive() -> None:
     )
 
     name: SerialInstruments = await aioconsole.ainput("Instrument? ")
-    com = await COM.ainit(name, getattr(await get_ports(), name))
+    com = await COM.ainit(name, (await get_ports())[name])  # type: ignore
     while True:
         await asyncio.sleep(0.2)
         line = await aioconsole.ainput("Command? ")
