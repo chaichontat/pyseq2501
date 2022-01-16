@@ -58,24 +58,25 @@ def check_none(x: T | None) -> T:
     return x
 
 
-def ok_re(target: str, f: Callable[[str], T] = bool) -> Callable[[str], T]:
+def ok_re(target: str, f: Callable[..., T] = bool) -> Callable[[str], T]:
     """f is your responsibility."""
     r = re.compile(target)
-    assert r.groups < 3
 
     def inner(resp: str) -> T:
         match = r.search(resp)
         if match is None:
             raise InvalidResponse(f"Got {resp}, expected to match {target}.")
-        return f(match.group(r.groups))
+        if r.groups < 2:
+            return f(match.group(r.groups))
+        return f(*(match.group(i) for i in range(1, r.groups + 1)))
 
     return inner
 
 
-def chkrng(f: Callable[P, T], min_: int, max_: int) -> Callable[P, T]:
+def chkrng(f: Callable[P, T], min_: int | float, max_: int | float) -> Callable[P, T]:
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
         x = cast(int, args[0])
-        if not (min_ <= x <= max_) or x != int(x):
+        if not (min_ <= x <= max_):
             raise ValueError(f"Invalid value for {f.__name__}: Got {x}. Expected [{min_}, {max_}].")
         return f(*args, **kwargs)
 
@@ -99,9 +100,24 @@ def λ_int(λ: Callable[[Any], T] | Callable[[Any, Any], T]) -> Callable[[int], 
     return inner
 
 
-def λ_float(λ: Callable[[Any], T]) -> Callable[[float | int], T]:
-    def inner(x: float | int) -> T:
-        return λ(x)
+IntFloat = int | float
+
+
+@overload
+def λ_float(λ: Callable[[Any, Any], T]) -> Callable[[IntFloat, IntFloat], T]:
+    ...
+
+
+@overload
+def λ_float(λ: Callable[[Any], T]) -> Callable[[IntFloat], T]:
+    ...
+
+
+def λ_float(
+    λ: Callable[[Any], T] | Callable[[Any, Any], T]
+) -> Callable[[IntFloat], T] | Callable[[IntFloat, IntFloat], T]:
+    def inner(*args: IntFloat) -> T:
+        return λ(*args)
 
     return inner
 
