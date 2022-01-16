@@ -19,10 +19,10 @@ serial_names: dict[SerialPorts, str] = dict(
     arm9pe="PCIOA",
     pumpa="KLOEHNAA",
     pumpb="KLOEHNBA",
-    va24="VICIA2A",
     va10="VICIA1A",
-    vb24="VICIB2A",
+    va24="VICIA2A",
     vb10="VICIB1A",
+    vb24="VICIB2A",
     fpgacmd="IL000004A",
     fpgaresp="IL000005A",
 )  # type: ignore # Dict is invariant.

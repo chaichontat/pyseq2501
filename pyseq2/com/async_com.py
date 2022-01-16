@@ -6,8 +6,18 @@ import time
 from asyncio import Future, StreamReader, StreamWriter
 from dataclasses import dataclass
 from logging import getLogger
-from typing import (Annotated, Any, Callable, Generic, NamedTuple, NoReturn,
-                    Optional, ParamSpec, TypeVar, overload)
+from typing import (
+    Annotated,
+    Any,
+    Callable,
+    Generic,
+    NamedTuple,
+    NoReturn,
+    Optional,
+    ParamSpec,
+    TypeVar,
+    overload,
+)
 
 from pyseq2.base.instruments_types import COLOR, FORMATTER, SerialInstruments
 from pyseq2.utils.utils import InvalidResponse
@@ -15,7 +25,7 @@ from serial_asyncio import open_serial_connection
 
 logger = getLogger(__name__)
 # © is not in ASCII. Looking at you Schneider Electrics (x-stage).
-ENCODING_KW = {"encoding": "ISO-8859-1", "errors": "replace"}
+ENCODING_KW = {"encoding": "ISO-8859-1"}
 
 T = TypeVar("T", covariant=True)
 P = ParamSpec("P")
