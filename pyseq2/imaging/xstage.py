@@ -50,10 +50,12 @@ class XStage(UsesSerial, Movable):
     async def is_moving(self) -> bool:
         return await self.com.send(XCmd.IS_MOVING)
 
-    async def move(self, pos: int) -> bool:
+    async def move(self, pos: int) -> None:
         """Returns when move is completed."""
         async with self.com.big_lock:
-            return await self.com.send(XCmd.SET_POS(pos))
+            logger.info(f"Moving to {pos}.")
+            await self.com.send(XCmd.SET_POS(pos))
+            logger.info("Move done.")
 
     async def initialize(self) -> bool:
         """Initialize the xstage."""

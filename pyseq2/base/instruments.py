@@ -38,5 +38,6 @@ class Movable(metaclass=ABCMeta):
 class FPGAControlled:
     com: COM
 
+    # All FPGA modules use the same port. Need local locks for each class.
     def __init__(self, fpga_com: COM) -> None:
         self.com = fpga_com

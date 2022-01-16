@@ -55,7 +55,7 @@ class Gains:
 
 
 def gen_reader(s: str) -> Callable[[str], int]:
-    return ok_re(fr"1{s}\n\*([\d\+\-]+)", int)
+    return ok_re(fr"1{s}\n1?\*([\d\+\-]+)", int)
 
 
 def echo(s: str) -> CmdParse[Any, bool]:
@@ -99,7 +99,7 @@ class YStage(UsesSerial, Movable):
     @classmethod
     async def ainit(cls, port_tx: str) -> YStage:
         self = cls()
-        self.com = await COM.ainit("y", port_tx, min_spacing=0.3)
+        self.com = await COM.ainit("y", port_tx)
         return self
 
     def __init__(self) -> None:
