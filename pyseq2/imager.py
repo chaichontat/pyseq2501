@@ -39,18 +39,23 @@ class Imager:
     UM_PER_PX = 0.375
 
     @classmethod
-    async def ainit(cls, ports: dict[SerialPorts, str]) -> Imager:
-        cams, fpga, x, y, laser_g, laser_r = await asyncio.gather(
-            Cameras.ainit(),
+    async def ainit(cls, ports: dict[SerialPorts, str], init_cam: bool = True) -> Imager:
+        to_init = (
             FPGA.ainit(ports["fpgacmd"], ports["fpgaresp"]),
             XStage.ainit(ports["x"]),
             YStage.ainit(ports["y"]),
             Laser.ainit("g", ports["laser_g"]),
             Laser.ainit("r", ports["laser_r"]),
         )
-        return cls(fpga, x, y, Lasers(g=laser_g, r=laser_r), cams)
 
-    def __init__(self, fpga: FPGA, x: XStage, y: YStage, lasers: Lasers, cams: Cameras) -> None:
+        if init_cam:
+            fpga, x, y, laser_g, laser_r, cams = await asyncio.gather(*to_init, Cameras.ainit())
+            return cls(fpga, x, y, Lasers(g=laser_g, r=laser_r), cams)
+
+        fpga, x, y, laser_g, laser_r = await asyncio.gather(*to_init)
+        return cls(fpga, x, y, Lasers(g=laser_g, r=laser_r), cams=None)
+
+    def __init__(self, fpga: FPGA, x: XStage, y: YStage, lasers: Lasers, cams: Cameras | None) -> None:
         self.fpga = fpga
         self.tdi = self.fpga.tdi
         self.optics = self.fpga.optics
@@ -99,6 +104,7 @@ class Imager:
     async def take(
         self, n_bundles: int, dark: bool = False, channels: frozenset[Literal[0, 1, 2, 3]] = frozenset((2,))
     ) -> UInt16Array:
+        assert self.cams is not None
         async with self.lock:
             if not 0 < n_bundles < 1500:
                 raise ValueError("n_bundles should be between 0 and 1500.")
@@ -155,6 +161,7 @@ class Imager:
         """Moves to z_max and takes 232 (2048 × 5) images while moving to z_min.
         Returns the z position of maximum intensity and the images.
         """
+        assert self.cams is not None
         async with self.lock:
             logger.info(f"Starting autofocus using data from {channel=}.")
             if channel not in (0, 1, 2, 3):
