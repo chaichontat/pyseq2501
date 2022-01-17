@@ -96,11 +96,13 @@ class COM:
         name: SerialInstruments,
         port_tx: str,
         port_rx: Optional[str] = None,
+        *,
         min_spacing: Annotated[int | float, "s"] = 0.01,
+        separator: bytes = b"\n",
         no_check: bool = False,
     ):
 
-        self = cls(name, min_spacing, no_check)
+        self = cls(name, min_spacing, separator, no_check)
         baudrate = 115200 if name in ("fpga", "arm9chem", "arm9pe") else 9600
         if port_rx is not None:
             assert name == "fpga"
@@ -119,12 +121,14 @@ class COM:
     def __init__(
         self,
         name: SerialInstruments,
-        min_spacing: Annotated[int | float, "s"] = 0.05,
+        min_spacing: Annotated[int | float, "s"] = 0.01,
+        separator: bytes = b"\n",
         no_check: bool = False,
     ) -> None:
 
         self.name = f"[{COLOR[name]}]{name:10s}[/{COLOR[name]}]"
         self.formatter = FORMATTER[name]
+        self.sep = separator
         self.no_check = no_check
 
         self.min_spacing = min_spacing
@@ -139,7 +143,7 @@ class COM:
 
     async def _read_forever(self) -> NoReturn:
         while True:
-            resp = (await self._serial.reader.readline()).decode(**ENCODING_KW).strip()
+            resp = (await self._serial.reader.readuntil(self.sep)).decode(**ENCODING_KW).strip()
 
             if not resp:
                 continue

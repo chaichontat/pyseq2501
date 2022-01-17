@@ -18,7 +18,8 @@ async def interactive() -> None:
     )
 
     name: SerialInstruments = await aioconsole.ainput("Instrument? ")
-    com = await COM.ainit(name, (await get_ports())[name])  # type: ignore
+    sep = b"\r" if name.startswith("v") else b"\n"
+    com = await COM.ainit(name, (await get_ports())[name], separator=sep)  # type: ignore
     while True:
         await asyncio.sleep(0.2)
         line = await aioconsole.ainput("Command? ")
@@ -30,3 +31,5 @@ async def interactive() -> None:
 
 if __name__ == "__main__":
     asyncio.run(interactive())
+
+# %%
