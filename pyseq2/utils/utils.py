@@ -74,8 +74,10 @@ def ok_re(target: str, f: Callable[..., T] = bool) -> Callable[[str], T]:
 
 
 def chkrng(f: Callable[P, T], min_: int | float, max_: int | float) -> Callable[P, T]:
+    """Check the (x := first argument) of a function if min_ <= x <= max."""
+
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-        x = cast(int, args[0])
+        x = cast(int | float, args[0])
         if not (min_ <= x <= max_):
             raise ValueError(f"Invalid value for {f.__name__}: Got {x}. Expected [{min_}, {max_}].")
         return f(*args, **kwargs)
