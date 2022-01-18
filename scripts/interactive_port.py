@@ -18,8 +18,19 @@ async def interactive() -> None:
     )
 
     name: SerialInstruments = await aioconsole.ainput("Instrument? ")
-    sep = b"\r" if name.startswith("v") else b"\n"
-    com = await COM.ainit(name, (await get_ports())[name], separator=sep)  # type: ignore
+    if name.startswith("v"):
+        sep = b"\r"
+    elif name.startswith("pump"):
+        sep = b"\r\n\xff"
+    else:
+        sep = b"\n"
+
+    ports = await get_ports()
+    if name == "fpga":
+        com = await COM.ainit(name, ports["fpgacmd"], ports["fpgaresp"], separator=sep)
+    else:
+        com = await COM.ainit(name, ports[name], separator=sep)
+
     while True:
         await asyncio.sleep(0.2)
         line = await aioconsole.ainput("Command? ")
