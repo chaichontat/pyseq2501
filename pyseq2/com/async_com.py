@@ -25,7 +25,7 @@ from serial_asyncio import open_serial_connection
 
 logger = getLogger(__name__)
 # © is not in ASCII. Looking at you Schneider Electrics (x-stage).
-ENCODING_KW = {"encoding": "ISO-8859-1"}
+ENCODING_KW = {"encoding": "ISO-8859-1", "errors": "strict"}
 
 T = TypeVar("T", covariant=True)
 P = ParamSpec("P")
@@ -143,7 +143,9 @@ class COM:
 
     async def _read_forever(self) -> NoReturn:
         while True:
-            resp = (await self._serial.reader.readuntil(self.sep)).decode(**ENCODING_KW).strip()
+            resp = (
+                (await self._serial.reader.readuntil(self.sep)).strip(b" \x03\r\n\xff").decode(**ENCODING_KW)
+            )
 
             if not resp:
                 continue
