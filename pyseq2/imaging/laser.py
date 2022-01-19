@@ -52,7 +52,7 @@ class Laser(UsesSerial):
     @classmethod
     async def ainit(cls, name: Literal["r", "g"], port_tx: str) -> Laser:
         self = cls()
-        self.com = await COM.ainit(cast(SerialInstruments, "laser_" + name), port_tx=port_tx, min_spacing=0.1)
+        self.com = await COM.ainit(cast(SerialInstruments, "laser_" + name), port_tx=port_tx)
         await self.initialize()
         return self
 

@@ -1,4 +1,3 @@
-from concurrent.futures import Future
 from logging import getLogger
 
 from pyseq2.base.instruments import FPGAControlled

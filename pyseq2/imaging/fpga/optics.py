@@ -36,12 +36,12 @@ OD_RED = {
 
 # fmt: off
 class OpticCmd:
-    EM_FILTER_DEFAULT = CmdParse("EM2I", ok_if_match("EM2I"))
-    EM_FILTER_OUT     = CmdParse("EM2O", ok_if_match("EM2O"))
-    HOME_OD           = CmdParse(λ_int(lambda i   : f"EX{i}HM"),     ok_if_match(("EX1HM", "EX2HM")))
-    SET_OD            = CmdParse(λ_int(lambda x, i: f"EX{i}MV {x}"), ok_if_match(("EX1MV", "EX2MV")))
-    OPEN_SHUTTER      = CmdParse("SWLSRSHUT 1", ok_if_match("SWLSRSHUT"))
-    CLOSE_SHUTTER     = CmdParse("SWLSRSHUT 0", ok_if_match("SWLSRSHUT"))
+    EM_FILTER_DEFAULT = CmdParse("EM2I"       , None, ok_if_match("EM2I"))
+    EM_FILTER_OUT     = CmdParse("EM2O"       , None, ok_if_match("EM2O"))
+    OPEN_SHUTTER      = CmdParse("SWLSRSHUT 1", None, ok_if_match("SWLSRSHUT"))
+    CLOSE_SHUTTER     = CmdParse("SWLSRSHUT 0", None, ok_if_match("SWLSRSHUT"))
+    HOME_OD           = CmdParse(λ_int(lambda i   : f"EX{i}HM")    , None, ok_if_match(("EX1HM", "EX2HM")))
+    SET_OD            = CmdParse(λ_int(lambda x, i: f"EX{i}MV {x}"), None, ok_if_match(("EX1MV", "EX2MV")))
 # fmt: on
 
 

@@ -41,9 +41,9 @@ class InvalidResponse(Exception):
 
 def ok_if_match(expected: Sequence[str] | str, exception_on_fail: bool = True) -> Callable[[str], bool]:
     def wrapped(resp: str) -> bool:
-        if isinstance(expected, Sequence) and resp in expected:
-            return True
         if resp == expected:
+            return True
+        if not isinstance(expected, str) and isinstance(expected, Sequence) and resp in expected:
             return True
         if exception_on_fail:
             raise InvalidResponse(f"Got {resp}, expected {expected}.")

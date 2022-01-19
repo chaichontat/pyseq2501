@@ -27,14 +27,14 @@ class FPGA(UsesSerial):
     @classmethod
     async def ainit(cls, port_tx: str, port_rx: str) -> FPGA:
         self = cls()
-        self.com = await COM.ainit("fpga", port_tx, port_rx, min_spacing=0.01)
+        self.com = await COM.ainit("fpga", port_tx, port_rx, separator=b"\r\n")
 
         self.tdi = TDI(self.com)
         self.led = LED(self.com)
         self.optics = Optics(self.com)
         self.z_obj = ZObj(self.com)
         self.z_tilt = ZTilt(self.com)
-        await self.initialize()
+        await self.reset()
         return self
 
     def __init__(self) -> None:
@@ -49,6 +49,9 @@ class FPGA(UsesSerial):
         async with self.com.big_lock:
             await self.reset()
             await asyncio.sleep(1)  # Otherwise the FPGA hangs.
+
+    async def initialize_all(self) -> None:
+        await asyncio.gather(self.z_tilt.initialize(), self.z_obj.initialize(), self.optics.initialize())
 
     async def reset(self) -> bool:
         return await self.com.send(FPGACmd.RESET)
