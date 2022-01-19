@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Annotated, Literal, Optional, cast
+from dataclasses import dataclass
+from typing import Annotated, Literal, Optional
 
 from pyseq2.base.instruments_types import SerialPorts
 from pyseq2.utils.utils import until
@@ -17,10 +18,14 @@ logger = logging.getLogger(__name__)
 μLpermin = Annotated[int | float, "μL/min"]
 
 
-class Speed:
-    FLUSH = 700
-    PRIME = 100
-    REAGENT = 40
+@dataclass(frozen=True)
+class Reagent:
+    name: str
+    port: ReagentPorts
+    v_pull: int | float = 100
+    v_prime: int | float = 250
+    v_push: int | float = 2000
+    wait: int | float = 26
 
 
 class _FlowCell:
@@ -62,7 +67,7 @@ class _FlowCell:
     async def initialize(self) -> None:
         await asyncio.gather(self.v.initialize(), self.p.initialize())
 
-    async def flow(
+    async def _flow(
         self,
         port: ReagentPorts,
         vol_barrel: μL = 250,
@@ -79,8 +84,11 @@ class _FlowCell:
                 wait=wait,
             )
 
-    async def wash(self, port: ReagentPorts) -> None:
-        return await self.flow(port)
+    async def prime(self, r: Reagent, vol_barrel: μL = 250):
+        return await self._flow(r.port, vol_barrel, v_pull=r.v_prime)
+
+    async def wash(self, r: Reagent, vol_barrel: μL = 250):
+        return await self._flow(r.port, vol_barrel, v_pull=r.v_pull)
 
     @property
     async def temp(self) -> float:
@@ -89,11 +97,11 @@ class _FlowCell:
     async def set_temp(self, t: int | float) -> None:
         await self.arm9chem.set_fc_temp(self.id_, t)
 
-    async def wait_temp(self, t: int | float, tol: int | float = 1) -> None:
+    async def wait_temp(self, t: int | float, tol: int | float = 1, timeout: int = 60) -> None:
         async def temp_ok() -> bool:
             return abs(await self.temp - t) < tol
 
-        await until(temp_ok)
+        await until(temp_ok, attempts=timeout)
 
     @staticmethod
     def steps_from_vol(vol: μL) -> int:
