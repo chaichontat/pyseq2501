@@ -1,17 +1,12 @@
 from __future__ import annotations
 
 import logging
-from typing import NamedTuple
 
 from pyseq2.base.instruments import UsesSerial
 from pyseq2.com.async_com import COM, CmdParse
 from pyseq2.utils.utils import chkrng, ok_if_match, ok_re
 
-from .valve import Valve
-
 logger = logging.getLogger(__name__)
-
-Valves = NamedTuple("Valves", A=Valve, B=Valve)
 
 
 class PEPortCmd:

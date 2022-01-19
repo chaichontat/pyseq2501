@@ -27,7 +27,7 @@ Imaging velo == 200200 units/s.
 """
 MODES: dict[ModeName, dict[ModeParams, Any]] = {
     "IMAGING": {"GAINS": "5,10,7,1.5,0", "VELO": 0.154},
-    "MOVING": {"GAINS": "5,10,7,1.5,0", "VELO": 1.922},
+    "MOVING": {"GAINS": "5,10,7,1.5,0", "VELO": 1.5},
 }
 
 
@@ -99,7 +99,7 @@ class YStage(UsesSerial, Movable):
     @classmethod
     async def ainit(cls, port_tx: str) -> YStage:
         self = cls()
-        self.com = await COM.ainit("y", port_tx)
+        self.com = await COM.ainit("y", port_tx, separator=b"\r\n", min_spacing=0.02)
         return self
 
     def __init__(self) -> None:

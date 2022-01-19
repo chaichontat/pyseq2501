@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import re
 from math import ceil
 from typing import (
     Any,
+    Awaitable,
     Callable,
     Dict,
     Literal,
@@ -36,6 +38,10 @@ T, P = TypeVar("T"), ParamSpec("P")
 
 
 class InvalidResponse(Exception):
+    ...
+
+
+class ParamChangeTimeout(Exception):
     ...
 
 
@@ -83,6 +89,19 @@ def chkrng(f: Callable[P, T], min_: int | float, max_: int | float) -> Callable[
         return f(*args, **kwargs)
 
     return wrapper
+
+
+async def until(
+    cond: Callable[[], Awaitable[bool]],
+    attempts: int = 120,
+    gap: int | float = 1,
+) -> None:
+    for _ in range(attempts):
+        if await cond():
+            return
+        await asyncio.sleep(gap)
+    else:
+        raise ParamChangeTimeout(f"Timeout after {attempts} attempts.")
 
 
 @overload

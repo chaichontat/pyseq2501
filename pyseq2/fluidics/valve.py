@@ -25,9 +25,9 @@ class ValveCmd:
 # fmt: on
 
 
-class Valve(Movable, UsesSerial):
+class _Valve(Movable, UsesSerial):
     @classmethod
-    async def ainit(cls, name: ValveName, port_tx: str) -> Valve:
+    async def ainit(cls, name: ValveName, port_tx: str) -> _Valve:
         self = cls(name)
         self.com = await COM.ainit(name, port_tx, separator=b"\r")  # VICI hates \n 🙄.
         return self
@@ -39,10 +39,12 @@ class Valve(Movable, UsesSerial):
 
     async def initialize(self) -> None:
         async with self.com.big_lock:
-            logger.info(f"Initializing valve {self.name}")
+            logger.info(f"Initializing {self.name}.")
             if (id_ := await self.com.send(ValveCmd.ID)) != "not used":
                 raise Exception(f"ID for {self.name} is {id_}. Need to add prefix.")
-            assert await self.com.send(ValveCmd.GET_N_PORTS) == 10  # All valves seem to have 10 ports.
+            # All valves seem to have 10 ports (at least on the 2000).
+            assert await self.com.send(ValveCmd.GET_N_PORTS) == 10
+            logger.info(f"{self.name} initialized.")
 
     @property
     async def pos(self) -> ValvePorts:
@@ -71,17 +73,17 @@ class Valves(Movable):
         self = cls(name)
         match name:
             case "A":
-                self.v = (await Valve.ainit("valve_a1", port1), await Valve.ainit("valve_a2", port2))
+                self.v = (await _Valve.ainit("valve_a1", port1), await _Valve.ainit("valve_a2", port2))
             case "B":
-                self.v = (await Valve.ainit("valve_b1", port1), await Valve.ainit("valve_b2", port2))
+                self.v = (await _Valve.ainit("valve_b1", port1), await _Valve.ainit("valve_b2", port2))
         return self
 
     def __init__(self, name: Literal["A", "B"]) -> None:
-        self.v: tuple[Valve, Valve]
+        self.v: tuple[_Valve, _Valve]
         self.name = name
         self.lock = asyncio.Lock()
 
-    def __getitem__(self, i: Literal[0, 1]) -> Valve:
+    def __getitem__(self, i: Literal[0, 1]) -> _Valve:
         return self.v[i]
 
     async def initialize(self) -> None:
@@ -96,6 +98,9 @@ class Valves(Movable):
         return p1
 
     async def _move(self, p: ReagentPorts) -> None:
+        # if self.lock.locked():
+        #     raise Exception("Do not send multiple move commands at once.")
+
         async with self.lock:
             if not 1 <= p <= 18 and p != 9:
                 raise ValueError("Invalid port number. Range is [1, 18], excluding 9.")

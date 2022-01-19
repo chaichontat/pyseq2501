@@ -1,9 +1,9 @@
 import asyncio
 import logging
 
-from pyseq2.fluidics.pump import Pump
 from pyseq2.fluidics.arm9chem import ARM9Chem
-from pyseq2.fluidics.valve import Valve
+from pyseq2.fluidics.pump import Pump
+from pyseq2.fluidics.valve import Valves
 from pyseq2.imaging.fpga import FPGA
 from pyseq2.imaging.xstage import XStage
 from pyseq2.imaging.ystage import YStage
@@ -66,26 +66,42 @@ async def fpga() -> None:
     fpga = await FPGA.ainit(ports["fpgacmd"], ports["fpgaresp"])
 
     zt = fpga.z_tilt
+    zo = fpga.z_obj
+    opt = fpga.optics
     await zt.pos
     await zt.move(15000)
     await zt.pos
+
+    await fpga.initialize_all()
     # FPGA commands do not support querying for pos while moving.
     # So these will run sequentially in random order.
     await asyncio.gather(zt.move(17000), zt.pos)
-    asyncio.create_task(zt.move(18000))
+    await asyncio.gather(zt.move(18000), zo.move(30000), opt._close())
     await zt.pos
     await asyncio.sleep(0.5)
     await zt.pos
     await asyncio.sleep(0.5)
 
-    zo = fpga.z_obj
     await zo.pos
     await zo.move(30000)
     await zo.pos
     await asyncio.gather(zo.move(40000), zo.move(50000), zo.pos)
 
 
+async def valves():
+    ports = await get_ports()
+    p = await Valves.ainit("A", ports["valve_a1"], ports["valve_a2"])
+    await p.initialize()
+    await p.pos
+    await asyncio.gather(p._move(3), p._move(4), p.pos)
+    await asyncio.gather(p._move(3), p._move(3), p.pos)
+
+
+async def pump():
+    p = await Pump.ainit("pumpa", (await get_ports())["pumpa"])
+    await p.initialize()
+    await p.pump(48000)
+
+
 if __name__ == "__main__":
-    asyncio.run(x())
-    asyncio.run(y())
-    asyncio.run(fpga())
+    asyncio.run(valves())

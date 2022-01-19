@@ -152,6 +152,8 @@ class COM:
                 .decode(**ENCODING_KW)
             )
 
+            logger.debug(f"{self.name}[cyan]Raw: {str(raw)[2:-1]}")
+
             if not resp:
                 continue
 
@@ -175,7 +177,9 @@ class COM:
                 except InvalidResponse:
                     ...
                 else:
-                    logger.debug(f"{self.name}Rx: {str(rbuffer):20s} [green]Parsed: '{parsed}'")
+                    logger.debug(
+                        f"{self.name}[yellow]Rx:  {str(rbuffer)[2:-1]:20s} [green]Parsed: '{parsed}'"
+                    )
                     fut.set_result(parsed)
                     del self._waiting[i]
                     buffer, rbuffer = "", b""
@@ -239,7 +243,7 @@ class COM:
             await asyncio.sleep(max(0, self.min_spacing - (time.monotonic() - self.t_lastcmd)))
         self._serial.writer.write(msg)
         self.t_lastcmd = time.monotonic()
-        logger.debug(f"{self.name}Tx: {msg}")
+        logger.debug(f"{self.name}[green]Tx:  {str(msg)[2:-1]}")
 
     async def wait(self) -> None:
         while self._waiting:

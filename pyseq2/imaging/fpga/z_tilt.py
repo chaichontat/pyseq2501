@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from logging import getLogger
-from typing import Any, Awaitable, Callable, Literal, TypeVar, cast
+from typing import Any, Callable, Literal, TypeVar, cast
 
 from pyseq2.base.instruments import FPGAControlled, Movable
 from pyseq2.com.async_com import COM, CmdParse
@@ -18,10 +18,10 @@ RANGE = (0, 25000)
 class TiltCmd:
     READ_POS = CmdParse(λ_int(       lambda i   : f"T{i}RD")                 , ok_re(r"^T[123]RD (\-?\d+)$", int))
     GO_HOME  = CmdParse(λ_int(       lambda i   : f"T{i}HM")                 , None, ok_re(r"@TILTPOS[123] \-?\d+\nT[123]HM"), n_lines=2)
-    SET_POS  = CmdParse(λ_int(chkrng(lambda x, i: f"T{i}MOVETO {x}", *RANGE)), None, ok_re(r"^T[123]MOVETO \d+$"))
+    SET_POS  = CmdParse(λ_int(chkrng(lambda i, x: f"T{i}MOVETO {x}", *RANGE)), None, ok_re(r"^T[123]MOVETO \d+$"))
     CLEAR_REGISTER = CmdParse(λ_int( lambda i   : f"T{i}CR"),         ok_re(r"^T[123]CR$"))
-    SET_VELO =    CmdParse(λ_int(    lambda x, i: f"T{i}VL {x}"),     ok_re(r"^T[123]VL$"))
-    SET_CURRENT = CmdParse(λ_int(    lambda x, i: f"T{i}CUR {x}"),    ok_re(r"^T[123]CUR$"))
+    SET_VELO =    CmdParse(λ_int(    lambda i, x: f"T{i}VL {x}"),     ok_re(r"^T[123]VL$"))
+    SET_CURRENT = CmdParse(λ_int(    lambda i, x: f"T{i}CUR {x}"),    ok_re(r"^T[123]CUR$"))
 # fmt:on
 
 
@@ -42,33 +42,28 @@ class ZTilt(FPGAControlled, Movable):
         super().__init__(fpga_com)
         self.lock = asyncio.Lock()
 
-    def all_z(
-        self, cmd: Callable[[int], CmdParse[Any, T]]
-    ) -> tuple[Awaitable[T], Awaitable[T], Awaitable[T]]:
-        return self.com.send(cmd(1)), self.com.send(cmd(3)), self.com.send(cmd(2))
+    async def all_z(self, cmd: Callable[[int], CmdParse[Any, T]]) -> tuple[T, T, T]:
+        return await asyncio.gather(self.com.send(cmd(1)), self.com.send(cmd(3)), self.com.send(cmd(2)))
 
     async def initialize(self) -> None:
         async with self.lock:
             logger.info("Initializing z-tilt.")
             await asyncio.gather(
-                *self.all_z(lambda i: TiltCmd.SET_CURRENT(35, i)),
-                *self.all_z(lambda i: TiltCmd.SET_VELO(62500, i)),
+                self.all_z(lambda i: TiltCmd.SET_CURRENT(i, 35)),
+                self.all_z(lambda i: TiltCmd.SET_VELO(i, 62500)),
             )
-            await asyncio.gather(*self.all_z(lambda i: TiltCmd.GO_HOME(i)))
-            await asyncio.gather(*self.all_z(lambda i: TiltCmd.CLEAR_REGISTER(i)))
-            assert all(x > -5 for x in await self.pos)
+            await self.all_z(TiltCmd.GO_HOME)
+            await self.all_z(TiltCmd.CLEAR_REGISTER)
             logger.info("Completed z-tilt initialization.")
 
     async def move(self, pos: int) -> tuple[int, int, int]:
         async with self.lock:
-            return await cast(
-                asyncio.Future[tuple[int, int, int]],
-                asyncio.gather(*self.all_z(lambda i: TiltCmd.SET_POS(pos, i))),
-            )
+            return await self.all_z(lambda i: TiltCmd.SET_POS(i, pos))
 
     @property
     async def pos(self) -> tuple[int, int, int]:
-        resp = cast(tuple[int, int, int], await asyncio.gather(*self.all_z(lambda i: TiltCmd.READ_POS(i))))
-        if not all(map(lambda x: x >= 0, resp)):
-            raise Exception("Invalid Z position. Initialize first.")
-        return resp
+        async with self.lock:
+            resp = cast(tuple[int, int, int], await self.all_z(TiltCmd.READ_POS))
+            if not all(map(lambda x: x >= 0, resp)):
+                raise Exception("Invalid Z position. Initialize first.")
+            return resp
