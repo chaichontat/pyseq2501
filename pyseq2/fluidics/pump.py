@@ -50,22 +50,27 @@ def check_range(prefix: Literal["pull", "push"]) -> Callable[[Step, Sps], str]:
 class PumpCmd:
     """
     https://www.jascoint.co.jp/products/contact-angle/pdf/ap48.pdf
+    R = Execute
+    O = Set valve to output
+    I = Set valve to input
+    V = Set speed
+    A = Set volume
+    Instructions can be combined and finished with R.
     """
 
     INIT = CmdParse("W4R", parser)
-    STATUS = CmdParse("", parser)  # b"/0`\x03"
+    STATUS = CmdParse("", parser)
     GET_POS = CmdParse("?", ok_re(r"/0[`@](\d+)", int))
-    PULL = CmdParse(check_range("pull"), parser)  # /0@\x03
+    PULL = CmdParse(check_range("pull"), parser)
     PUSH = CmdParse(check_range("push"), parser)
     STOP = CmdParse("T", parser)
-    # GOTO_WASTE = CmdParse("OR", parse())
-    # GOTO_INPUT = CmdParse("IR", parse())  # /0@\x03
 
 
 class Pump(UsesSerial):
     STEPS = 48000
     BARREL_VOL = 250
-    DISPENSE_SPEED: ClassVar[Sps] = 8000
+    PULL_SPEED = 1000
+    PUSH_SPEED: ClassVar[Sps] = 8000
 
     @classmethod
     async def ainit(cls, name: Literal["pumpa", "pumpb"], port_tx: str) -> Pump:
