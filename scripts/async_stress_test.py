@@ -1,7 +1,9 @@
 import asyncio
 import logging
 
-from pyseq2.fluidics.temperature import Temperature
+from pyseq2.fluidics.pump import Pump
+from pyseq2.fluidics.arm9chem import ARM9Chem
+from pyseq2.fluidics.valve import Valve
 from pyseq2.imaging.fpga import FPGA
 from pyseq2.imaging.xstage import XStage
 from pyseq2.imaging.ystage import YStage
@@ -17,7 +19,7 @@ logging.basicConfig(
 
 
 async def temp() -> None:
-    temp = await Temperature.ainit((await get_ports())["arm9chem"])
+    temp = await ARM9Chem.ainit((await get_ports())["arm9chem"])
     await temp.initialize()
 
 

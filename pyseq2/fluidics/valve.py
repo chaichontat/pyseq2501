@@ -95,7 +95,7 @@ class Valves(Movable):
             return p2 + 9
         return p1
 
-    async def move(self, p: ReagentPorts) -> None:
+    async def _move(self, p: ReagentPorts) -> None:
         async with self.lock:
             if not 1 <= p <= 18 and p != 9:
                 raise ValueError("Invalid port number. Range is [1, 18], excluding 9.")
@@ -106,9 +106,9 @@ class Valves(Movable):
             assert await self.pos == p
 
     @asynccontextmanager
-    async def port_safety(self, pos: ReagentPorts):
+    async def move(self, pos: ReagentPorts):
         try:
-            await self.move(pos)
+            await self._move(pos)
             yield
         finally:
-            await self.move(cast(ReagentPorts, 9))  # "Safe" position.
+            await self._move(cast(ReagentPorts, 9))  # "Safe" position.

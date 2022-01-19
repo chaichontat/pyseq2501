@@ -86,6 +86,7 @@ class ARM9Chem(UsesSerial):
         return await self.com.send(ARM9Cmd.GET_CHILLER_TEMP)
 
     async def set_fc_temp(self, i: Literal[0, 1], t: int | float) -> None:
+        await self.com.send(ARM9Cmd.FC_ON(i))
         await self.com.send(ARM9Cmd.SET_FC_TEMP(i, t))
 
     async def set_chiller_temp(self, i: Literal[0, 1, 2], t: int | float) -> None:
