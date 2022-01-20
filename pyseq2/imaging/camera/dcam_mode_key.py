@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import threading
-
 from ctypes import c_double, c_int32, pointer
 from logging import getLogger
 from typing import Optional, cast
@@ -17,7 +15,6 @@ from .dcam_types import (
 )
 
 logger = getLogger(__name__)
-LOCK = threading.Lock()
 DCAMPROP_ATTR_HASVALUETEXT = int("0x10000000", 0)
 
 
@@ -70,26 +67,25 @@ def get_mode_key(handle: Handle, prop_attr: DCAMParamPropertyAttr) -> Optional[d
     if not (prop_attr.attribute & DCAMPROP_ATTR_HASVALUETEXT):
         return None
 
-    with LOCK:
-        prop_text = DCAM_PARAM_PROPERTYVALUETEXT(prop_attr)  # type: ignore
-        v = c_double(prop_attr.valuemin)
+    prop_text = DCAM_PARAM_PROPERTYVALUETEXT(prop_attr)  # type: ignore
+    v = c_double(prop_attr.valuemin)
 
-        out: dict[str, int] = {}
+    out: dict[str, int] = {}
 
-        while True:
-            # Get text of current value.
-            API.dcam_getpropertyvaluetext(handle, pointer(prop_text))
-            out[cast(bytes, prop_text.text).decode()] = int(v.value)
+    while True:
+        # Get text of current value.
+        API.dcam_getpropertyvaluetext(handle, pointer(prop_text))
+        out[cast(bytes, prop_text.text).decode()] = int(v.value)
 
-            # Get next value.
-            try:
-                API.dcam_querypropertyvalue(
-                    handle,
-                    c_int32(prop_attr.iProp),
-                    pointer(v),
-                    c_int32(DCAMPROP_OPTION_NEXT),
-                )
-                prop_text.value = v
-            except DCAMReturnedZero:  # Done
-                break
-        return out
+        # Get next value.
+        try:
+            API.dcam_querypropertyvalue(
+                handle,
+                c_int32(prop_attr.iProp),
+                pointer(v),
+                c_int32(DCAMPROP_OPTION_NEXT),
+            )
+            prop_text.value = v
+        except DCAMReturnedZero:  # Done
+            break
+    return out
