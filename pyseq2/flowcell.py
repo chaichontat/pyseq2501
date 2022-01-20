@@ -15,16 +15,7 @@ logger = logging.getLogger(__name__)
 
 μL = Annotated[int | float, "μL"]
 μLpermin = Annotated[int | float, "μL/min"]
-
-
-@dataclass(frozen=True)
-class Reagent:
-    name: str
-    port: ReagentPorts
-    v_pull: int | float = 100
-    v_prime: int | float = 250
-    v_push: int | float = 2000
-    wait: int | float = 26
+Seconds = Annotated[int | float, "s"]
 
 
 class _FlowCell:
@@ -66,14 +57,14 @@ class _FlowCell:
     async def initialize(self) -> None:
         await asyncio.gather(self.v.initialize(), self.p.initialize())
 
-    async def _flow(
+    async def flow(
         self,
         port: ReagentPorts,
         vol_barrel: μL = 250,
         *,
         v_pull: μLpermin = 250,
         v_push: μLpermin = 2000,
-        wait: int | float = 26,
+        wait: Seconds = 26,
     ) -> None:
         async with self.arm9chem.shutoff_valve(), self.v.move(port):
             await self.p.pump(
@@ -83,11 +74,11 @@ class _FlowCell:
                 wait=wait,
             )
 
-    async def prime(self, r: Reagent, vol_barrel: μL = 250):
-        return await self._flow(r.port, vol_barrel, v_pull=r.v_prime)
+    # async def prime(self, r: Reagent, vol_barrel: μL = 250):
+    #     return await self._flow(r.port, vol_barrel, v_pull=r.v_prime)
 
-    async def wash(self, r: Reagent, vol_barrel: μL = 250):
-        return await self._flow(r.port, vol_barrel, v_pull=r.v_pull)
+    # async def wash(self, r: Reagent, vol_barrel: μL = 250):
+    #     return await self._flow(r.port, vol_barrel, v_pull=r.v_pull)
 
     @property
     async def temp(self) -> float:

@@ -10,6 +10,8 @@ dependencies:
   - returns
   - rich
   - setuptools
+  - pydantic
   - tifffile
+  - yaml
   - pip:
     - pyserial-asyncio
