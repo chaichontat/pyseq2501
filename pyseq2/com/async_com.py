@@ -19,9 +19,10 @@ from typing import (
     overload,
 )
 
+from serial_asyncio import open_serial_connection
+
 from pyseq2.base.instruments_types import COLOR, FORMATTER, SerialInstruments
 from pyseq2.utils.utils import InvalidResponse
-from serial_asyncio import open_serial_connection
 
 logger = getLogger(__name__)
 # © is not in ASCII. Looking at you Schneider Electrics (x-stage).
@@ -248,28 +249,3 @@ class COM:
     async def wait(self) -> None:
         while self._waiting:
             await asyncio.sleep(0.1)
-
-
-async def interactive():
-    import aioconsole
-    from pyseq2.utils.ports import get_ports
-    from rich.logging import RichHandler
-
-    logging.basicConfig(
-        level="NOTSET",
-        format="[yellow]%(name)-10s[/] %(message)s",
-        datefmt="[%X]",
-        handlers=[RichHandler(rich_tracebacks=True, markup=True)],
-    )
-
-    name: SerialInstruments = await aioconsole.ainput("Instrument? ")
-    com = await COM.ainit(name, getattr(get_ports(), name))
-    while True:
-        await asyncio.sleep(0.2)
-        line = await aioconsole.ainput("Command? ")
-        await aioconsole.aprint()
-        await com.send(line)
-
-
-if __name__ == "__main__":
-    asyncio.run(interactive())

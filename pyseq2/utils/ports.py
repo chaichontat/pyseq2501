@@ -5,6 +5,7 @@ from pprint import pprint
 from typing import TypeVar, cast
 
 import serial.tools.list_ports
+
 from pyseq2.base.instruments_types import SerialPorts
 
 T = TypeVar("T")

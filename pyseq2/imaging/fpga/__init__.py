@@ -4,15 +4,14 @@ import asyncio
 from logging import getLogger
 from typing import Awaitable
 
-from pyseq2.base.instruments import UsesSerial
-from pyseq2.com.async_com import COM, CmdParse
-from pyseq2.utils.utils import ok_if_match
-
 from .led import LED
 from .optics import Optics
 from .tdi import TDI
 from .z_obj import ZObj
 from .z_tilt import ZTilt
+from pyseq2.base.instruments import UsesSerial
+from pyseq2.com.async_com import COM, CmdParse
+from pyseq2.utils.utils import ok_if_match
 
 logger = getLogger(__name__)
 

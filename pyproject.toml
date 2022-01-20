@@ -10,3 +10,11 @@ target-version = ['py310']
 [tool.pyright]
 include = ["pyseq2"]
 reportPropertyTypeMismatch = "none"
+
+[tool.isort]
+known_first_party = ["pyseq2"]
+known_local_folder = ["pyseq2"]
+line_length = 110
+profile = "black"
+py_version = 310
+src_paths = ["pyseq2", "tests", "scripts"]

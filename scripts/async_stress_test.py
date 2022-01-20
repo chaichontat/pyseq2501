@@ -1,6 +1,8 @@
 import asyncio
 import logging
 
+from rich.logging import RichHandler
+
 from pyseq2.fluidics.arm9chem import ARM9Chem
 from pyseq2.fluidics.pump import Pump
 from pyseq2.fluidics.valve import Valves
@@ -8,7 +10,6 @@ from pyseq2.imaging.fpga import FPGA
 from pyseq2.imaging.xstage import XStage
 from pyseq2.imaging.ystage import YStage
 from pyseq2.utils.ports import get_ports
-from rich.logging import RichHandler
 
 logging.basicConfig(
     level="NOTSET",

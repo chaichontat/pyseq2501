@@ -5,12 +5,11 @@ import logging
 from dataclasses import dataclass
 from typing import Annotated, Literal, Optional
 
-from pyseq2.base.instruments_types import SerialPorts
-from pyseq2.utils.utils import until
-
+from .base.instruments_types import SerialPorts
 from .fluidics.arm9chem import ARM9Chem
 from .fluidics.pump import Pump
 from .fluidics.valve import ReagentPorts, Valves
+from .utils.utils import until
 
 logger = logging.getLogger(__name__)
 

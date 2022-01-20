@@ -1,9 +1,10 @@
 import asyncio
 import logging
 
+from rich.logging import RichHandler
+
 from pyseq2.flowcell import FlowCells, Reagent
 from pyseq2.utils.ports import get_ports
-from rich.logging import RichHandler
 
 logging.basicConfig(
     level="NOTSET",

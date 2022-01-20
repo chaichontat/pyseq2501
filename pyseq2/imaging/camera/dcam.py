@@ -29,11 +29,11 @@ from typing import (
 
 import numpy as np
 import numpy.typing as npt
-from pyseq2.imaging.camera.dcam_api import DCAM_CAPTURE_MODE
 
 from . import API, EXECUTOR
 from .dcam_api import DCAMException
 from .dcam_props import DCAMDict
+from pyseq2.imaging.camera.dcam_api import DCAM_CAPTURE_MODE
 
 logger = getLogger(__name__)
 

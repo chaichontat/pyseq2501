@@ -4,10 +4,11 @@ import logging
 
 import matplotlib.pyplot as plt
 from PIL import Image
-from pyseq2.imager import Imager
-from pyseq2.utils.ports import get_ports
 from rich.logging import RichHandler
 from rich.traceback import install
+
+from pyseq2.imager import Imager
+from pyseq2.utils.ports import get_ports
 
 install()
 logging.basicConfig(

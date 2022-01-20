@@ -1,6 +1,7 @@
 from ctypes import c_char_p, c_int32, c_void_p, pointer
 
 import pytest
+
 from pyseq2.imaging.camera import API
 from pyseq2.imaging.camera.dcam import Cameras, TwoProps, _Camera
 from pyseq2.imaging.camera.dcam_api import DCAM_CAPTURE_MODE, DCAMException, check_if_failed

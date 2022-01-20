@@ -7,8 +7,9 @@ from pyseq2.com.async_com import COM
 
 async def interactive() -> None:
     import aioconsole
-    from pyseq2.utils.ports import get_ports
     from rich.logging import RichHandler
+
+    from pyseq2.utils.ports import get_ports
 
     logging.basicConfig(
         level="NOTSET",
