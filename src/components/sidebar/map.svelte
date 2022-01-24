@@ -4,25 +4,15 @@
   import Slide from "./slide/slide.svelte";
   import XYInput from "./slide/xy_input.svelte";
   import { statusStore as store, userStore } from "$src/store";
-
-  const Y_UPPER = -180000;
-  const Y_STEP_MM = 1e5;
-  const X_STEP_MM = 409.6;
-  const A_LEFT = 7331;
-  const B_LEFT = 33070;
+  import { raw_to_local } from "./coords";
 
   const focus = (el) => {
     el.focus;
   };
 
-  let xy: XY = { x: $store.x, y: $store.y };
-  let x_offset = A_LEFT;
+  let xy: XY = { x: 0, y: 0 };
   $: {
-    x_offset = $userStore.flowcell ? B_LEFT : A_LEFT;
-    xy = {
-      x: ($store.x - x_offset) / X_STEP_MM,
-      y: ($store.y - Y_UPPER) / Y_STEP_MM,
-    };
+    xy = raw_to_local($userStore.flowcell, $store.x, $store.y);
   }
 
   // let moving = false;
@@ -69,7 +59,9 @@
   <section class="flex flex-grow space-x-8 self-center mt-4">
     <BigZ
       name="All Tilt"
-      value={typeof $userStore.z_tilt == "number" ? $userStore.z_tilt : "--"}
+      value={`${$store.z_tilt.reduce((a, b) => a + b) / $store.z_tilt.length} ± ${
+        (Math.max(...$store.z_tilt) - Math.min(...$store.z_tilt)) / 2
+      }`}
     />
     <BigZ name="Objective Z" value={$store.z_obj} bind:userValue={$userStore.z_obj} />
   </section>

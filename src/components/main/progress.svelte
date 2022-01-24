@@ -1,21 +1,35 @@
 <script lang="ts">
-  import { mainStore, userStore } from "../../store";
-  export let curr: null | number;
+  import { imgStore, userStore, cmdStore } from "../../store";
 
+  let curr: null | number;
   let _curr = "  --";
   let height = 0;
-
-  $: {
-    height = ($userStore.n * 128 * 0.375) / 1000;
-    curr = $mainStore ? $mainStore.n : -1;
-    _curr = curr == -1 ? "--" : curr;
-  }
+  let corrected: boolean = false;
 
   function start() {
     if (0 < $userStore.n && $userStore.n < 1000) {
-      $mainStore = { cmd: "take", n: $userStore.n };
+      $imgStore = { cmd: "take", n: $userStore.n };
     } else {
       alert("Invalid number of bundles.");
+    }
+  }
+
+  $: height = ($userStore.n * 128 * 0.375) / 1000;
+
+  $: {
+    if ($imgStore) {
+      if (!("cmd" in $imgStore)) {
+        curr = $imgStore ? $imgStore.n : -1;
+        _curr = curr == -1 ? "--" : curr;
+      }
+    }
+  }
+
+  $: {
+    if (corrected) {
+      $imgStore = { cmd: "corr", n: $userStore.n };
+    } else {
+      $imgStore = { cmd: "uncorr", n: $userStore.n };
     }
   }
 </script>
@@ -23,7 +37,10 @@
 <span class="flex flex-row gap-x-3 w-full">
   <content class="grid grid-row-2 gap-y-2 w-32">
     <button class="_btn btn--primary" on:click={start}>Start</button>
-    <button class="_btn btn--secondary">Autofocus</button>
+    <button
+      class="_btn btn--secondary"
+      on:click={() => ($imgStore = { cmd: "autofocus", n: $userStore.n })}>Autofocus</button
+    >
   </content>
 
   <div class="border stats border-base-300 flex-grow">
@@ -48,12 +65,25 @@
           <span>Height {height.toFixed(3)} mm</span>
           <span>Total time: {height / 2} s</span>
         </div>
+        <div class="flex flex-col ml-4">
+          <button
+            class="btn btn-sm btn--secondary"
+            on:click={() => ($imgStore = { cmd: "dark", n: $userStore.n })}>Take Dark</button
+          >
+          <span>
+            Dark Corrected<input
+              type="checkbox"
+              bind:checked={corrected}
+              class="toggle toggle-sm ml-4 mt-2"
+            />
+          </span>
+        </div>
       </div>
 
       <div class="stat-title">Bundles taken</div>
       <div class="stat-desc">
         <progress
-          value={$mainStore.n}
+          value={$imgStore.n}
           max={$userStore.n}
           class="progress progress-secondary transition-all"
         />

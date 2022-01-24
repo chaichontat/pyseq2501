@@ -13,7 +13,6 @@
   export let z_tilt: [number, number, number] = [19850, 19850, 19850];
 
   function handleKey(e: KeyboardEvent) {
-    console.log(e);
     switch (e.key) {
       case "ArrowDown":
         $userStore.y += 0.7;
@@ -54,7 +53,7 @@
     offset={[0.8, 1.65]}
   />
   <Shade />
-  <Tilt {z_tilt} />
+  <Tilt z={z_tilt} />
 
   <span class="name">
     {name}

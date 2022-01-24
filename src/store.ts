@@ -42,11 +42,16 @@ export type UserSettings = {
   flowcell: boolean,
 }
 
+export type Cmd = {
+  cmd: "take" | "x" | "y" | "autofocus",
+  n: number
+}
+
 let userDefault: UserSettings = { n: 8, x: 0, y: 0, z_tilt: 19850, z_obj: 32000, laser_r: 5, laser_g: 5, flowcell: false }
 
 let img = { n: 0, img: "" }
 
-export const mainStore = (!import.meta.env.SSR)
+export const imgStore = (!import.meta.env.SSR)
   ? websocketStore(`ws://${ window.location.hostname }:8000/img`, img, (x) => JSON.parse(JSON.parse(x)))
   : writable(img)
 
@@ -57,6 +62,11 @@ export const statusStore: Writable<Status> = (!import.meta.env.SSR)
 export const userStore: Writable<UserSettings> = (!import.meta.env.SSR)
   ? websocketStore(`ws://${ window.location.hostname }:8000/user`, userDefault, (x): Status => JSON.parse(JSON.parse(x)))
   : writable(userDefault)
+
+export const cmdStore: Writable<undefined | Cmd> = (!import.meta.env.SSR)
+  ? websocketStore(`ws://${ window.location.hostname }:8000/cmd`, undefined, (x): Status => JSON.parse(JSON.parse(x)))
+  : writable(undefined)
+
 
 // export let status: Status = {
 //   x: 2,

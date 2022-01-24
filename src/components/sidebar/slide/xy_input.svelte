@@ -1,13 +1,15 @@
 <script lang="ts">
   import Spinning from "$src/components/navbar/spinning.svelte";
   import type { XY } from "$src/store";
-  import { mainStore, userStore as user, statusStore as status } from "$src/store";
+  import { cmdStore, userStore as user, statusStore as status } from "$src/store";
+  import { local_to_raw } from "../coords";
 
   export let xy: XY = { x: -1, y: -1 };
 
   function move() {
-    $mainStore = { cmd: "x", n: $user.x };
-    $mainStore = { cmd: "y", n: $user.y };
+    const raw_coord = local_to_raw($user.flowcell, $user.x, $user.y);
+    $cmdStore = { cmd: "x", n: raw_coord.x };
+    $cmdStore = { cmd: "y", n: raw_coord.y };
   }
 </script>
 

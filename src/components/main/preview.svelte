@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import Panzoom, { PanzoomObject } from "@panzoom/panzoom";
-  import { mainStore, userStore } from "../../store";
+  import { imgStore, userStore } from "../../store";
 
   let canvas: HTMLCanvasElement;
   let img: HTMLImageElement;
@@ -12,7 +12,7 @@
   onMount(() => {
     ctx = canvas.getContext("2d");
     pz = Panzoom(canvas, { maxZoom: 5 });
-    pz.zoom(0.25, { animate: true });
+    // pz.zoom(0.5, { animate: true });
 
     // var width = 100;
     // var height = 100;
@@ -49,13 +49,18 @@
   function render() {}
 
   $: {
-    if (canvas && $mainStore) {
-      if ($mainStore.n == 1) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (canvas && $imgStore) {
+      if (!("cmd" in $imgStore)) {
+        console.log($imgStore);
+        if ($imgStore.n == 1) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        console.log($imgStore);
+
+        img = new Image();
+        img.onload = () => ctx.drawImage(img, 0, 256 * ($userStore.n - $imgStore.n));
+        img.src = $imgStore.img;
       }
-      img = new Image();
-      img.onload = () => ctx.drawImage(img, 0, 128 * ($userStore.n - $mainStore.n));
-      img.src = "data:image/jpg;base64," + $mainStore.img;
     }
   }
 
@@ -72,7 +77,7 @@
     bind:this={canvas}
     width={2048}
     height={128 * $userStore.n}
-    style="border:2px solid #000000;"
+    style="border:2px solid #000000; background-color: gray;"
   />
 </div>
 
