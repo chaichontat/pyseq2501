@@ -2,6 +2,8 @@ import type { Writable } from "svelte/store";
 import { writable } from "svelte/store";
 import websocketStore from "./ws_store";
 
+export type Action = "Hold" | "Wash" | "Prime" | "Change Temperature" | "Image" | "Move Stage"
+
 export type XY = {
   x: number;
   y: number;
@@ -40,6 +42,8 @@ export type UserSettings = {
   laser_r: number,
   laser_g: number,
   flowcell: boolean,
+  mode: "manual" | "automatic",
+
 }
 
 export type Cmd = {
@@ -47,9 +51,20 @@ export type Cmd = {
   n: number
 }
 
-let userDefault: UserSettings = { n: 8, x: 0, y: 0, z_tilt: 19850, z_obj: 32000, laser_r: 5, laser_g: 5, flowcell: false }
+export type Hist = {
+  counts: number[],
+  bin_edges: number[]
+}
 
-let img = { n: 0, img: "" }
+export type Img = {
+  img: string,
+  n: number,
+  hist: Hist
+}
+
+let userDefault: UserSettings = { n: 16, x: 0, y: 0, z_tilt: 19850, z_obj: 32000, laser_r: 5, laser_g: 5, flowcell: false, mode: "manual" }
+
+let img: Img = { n: 0, img: "", hist: { counts: [10], bin_edges: [0] } }
 
 export const imgStore = (!import.meta.env.SSR)
   ? websocketStore(`ws://${ window.location.hostname }:8000/img`, img, (x) => JSON.parse(JSON.parse(x)))
@@ -66,7 +81,6 @@ export const userStore: Writable<UserSettings> = (!import.meta.env.SSR)
 export const cmdStore: Writable<undefined | Cmd> = (!import.meta.env.SSR)
   ? websocketStore(`ws://${ window.location.hostname }:8000/cmd`, undefined, (x): Status => JSON.parse(JSON.parse(x)))
   : writable(undefined)
-
 
 // export let status: Status = {
 //   x: 2,

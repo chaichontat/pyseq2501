@@ -1,12 +1,13 @@
 import asyncio
 import logging
+import os
 from concurrent.futures import Future
 from dataclasses import dataclass
 from typing import AsyncGenerator, Callable, Coroutine, NoReturn
 
 from fastapi import Request, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
-from pyseq2.imager import Imager
+from pyseq2.imager import Imager, Position
 from websockets.exceptions import ConnectionClosedOK
 
 logger = logging.getLogger(__name__)
@@ -29,66 +30,18 @@ class Status(BaseModel):
     msg: str
 
 
-# @dataclass
-# class :
-#     x: Future[int]
-#     y: Future[int]
-#     z_tilt: Future[tuple[int, int, int]]
-#     z_obj: int
-#     laser_r: int
-#     laser_g: int
-#     shutter: bool
-#     moving: bool
-#     msg: str
-
-    # def to_status(self) -> Status:
-    #     return Status(
-    #         x=self.x.result(),
-    #         y=self.y.result(),
-    #         z_tilt=self.z_tilt.result(),
-    #         z_obj=self.z_obj.result(),
-    #         laser_r=self.laser_r.result(),
-    #         laser_g=self.laser_g.result(),
-    #         shutter=self.shutter,
-    #         moving=self.moving,
-    #         msg=self.msg,
-    #     )
-
-
-# def gen_poll(imager: Imager):
-#     async def poll(websocket: WebSocket) -> NoReturn:
-#         x = 10000
-#         y = -180000
-#         while True:
-#             await websocket.accept()
-#             while True:
-#                 try:
-#                     await websocket.send_json(
-#                         Status(
-#                             x=x,
-#                             y=y,
-#                             z_tilt=(1, 1, 1),
-#                             z_obj=1,
-#                             laser_r=int(x / 10000),
-#                             laser_g=1,
-#                             shutter=False,
-#                             moving=False,
-#                             msg="Imaging",
-#                         ).json()
-#                     )
-#                     await asyncio.sleep(1)
-#                 except WebSocketDisconnect:
-#                     ...
-#     return poll
-
-
 def gen_poll(imager: Imager):
     async def poll(websocket: WebSocket) -> NoReturn:
         while True:
             try:
                 await websocket.accept()
                 while True:
-                    pos, lasers = await asyncio.gather(imager.pos, imager.lasers.power)
+                    if os.name == "nt":
+                        pos, lasers = await asyncio.gather(
+                            imager.pos, imager.lasers.power
+                        )
+                    else:
+                        pos, lasers = Position(0, 0, (0, 0, 0), 0), (0, 0)
 
                     await websocket.send_json(
                         u := Status(
@@ -101,8 +54,7 @@ def gen_poll(imager: Imager):
                             shutter=False,
                             moving=False,
                             msg="Imaging",
-                        )
-                        .json()
+                        ).json()
                     )
                     logger.info(u)
                     await asyncio.sleep(1)

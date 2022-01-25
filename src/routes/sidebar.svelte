@@ -15,11 +15,13 @@
   //   };
   // });
   let status: Status = $statusStore;
+  let curr: "imaging" | "fluidics" | "misc" = "imaging";
 
   $: {
     status = $statusStore;
     connected = $statusStore != undefined ? true : false;
   }
+  $: console.log(curr);
 </script>
 
 <div class="drawer drawer-side">
@@ -30,7 +32,27 @@
     >
       <Logo />
     </div>
-    <div class="relative">
+
+    <div class="tabs w-full mt-2">
+      <a
+        class="tab tab-lg tab-lifted"
+        on:click={() => (curr = "imaging")}
+        class:tab-active={curr === "imaging"}>Imaging</a
+      >
+      <a
+        class="tab tab-lg tab-lifted"
+        on:click={() => (curr = "fluidics")}
+        class:tab-active={curr === "fluidics"}>Fluidics</a
+      >
+      <a
+        class="tab tab-lg tab-lifted"
+        on:click={() => (curr = "misc")}
+        class:tab-active={curr === "misc"}>Misc.</a
+      >
+      <div class="flex-1 cursor-default tab tab-lifted" />
+    </div>
+
+    <section class:hidden={curr !== "imaging"} class="relative">
       <!-- <div
         class:translucent={!connected}
         class="hidden absolute w-full h-full transition-all"
@@ -51,7 +73,13 @@
           </li>
         </Division>
       </ol>
-    </div>
+    </section>
+
+    <section class:hidden={curr !== "fluidics"} class="relative">
+      <ol class="menu p-2 ">
+        <Division name="Prime">Drop selection port volume speed up down</Division>
+      </ol>
+    </section>
   </aside>
 </div>
 
@@ -64,5 +92,14 @@
 
   .translucent {
     @apply bg-white opacity-40 z-50 block;
+  }
+
+  .circle {
+    background: #456bd9;
+    border: 0.1875em solid #0f1c3f;
+    border-radius: 50%;
+    box-shadow: 0.375em 0.375em 0 0 rgba(15, 28, 63, 0.125);
+    height: 5em;
+    width: 5em;
   }
 </style>

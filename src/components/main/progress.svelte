@@ -39,7 +39,7 @@
     <button class="_btn btn--primary" on:click={start}>Start</button>
     <button
       class="_btn btn--secondary"
-      on:click={() => ($imgStore = { cmd: "autofocus", n: $userStore.n })}>Autofocus</button
+      on:click={() => ($cmdStore = { cmd: "autofocus", n: $userStore.n })}>Autofocus</button
     >
   </content>
 
@@ -78,6 +78,13 @@
             />
           </span>
         </div>
+        <span>
+          Show Histogram<input
+            type="checkbox"
+            bind:checked={corrected}
+            class="toggle toggle-sm ml-4 mt-2"
+          />
+        </span>
       </div>
 
       <div class="stat-title">Bundles taken</div>

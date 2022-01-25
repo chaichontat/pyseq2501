@@ -1,4 +1,3 @@
-
 import asyncio
 import base64
 import logging
@@ -22,9 +21,12 @@ from fake_imager import FakeImager
 class Img(BaseModel):
     n: int
     img: str
-    
+
+
 logger = logging.getLogger(__name__)
-Cmds = Literal["take", "stop", "eject", "laser_r", "laser_g", "x", "y", "z_obj", "z_tilt", "init"]
+Cmds = Literal[
+    "take", "stop", "eject", "laser_r", "laser_g", "x", "y", "z_obj", "z_tilt", "init"
+]
 
 
 class Received(BaseModel):
@@ -53,10 +55,12 @@ async def image_endpoint(websocket: WebSocket) -> NoReturn:
                 match cmd:
                     case Received("take", n):
                         logger.info(f"Received: Take {n} bundles.")
-                        imgstr = await asyncio.get_running_loop().run_in_executor(thr, take_img(n))
+                        imgstr = await asyncio.get_running_loop().run_in_executor(
+                            thr, take_img(n)
+                        )
                         for i in range(8):
                             await asyncio.sleep(0.25)
-                            await websocket.send_json(Img(n=i+1, img=imgstr).json())
-                
+                            await websocket.send_json(Img(n=i + 1, img=imgstr).json())
+
             except WebSocketDisconnect:
                 ...

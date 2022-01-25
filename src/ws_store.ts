@@ -74,10 +74,10 @@ export function websocketStore<T>(url: string, initialValue: T | undefined = und
         };
 
         socket.onclose = (_: CloseEvent): void => {
-            subscribers.forEach((subscriber) => {
-                // @ts-ignore
-                subscriber(undefined)
-            });
+            // subscribers.forEach((subscriber) => {
+            //     // @ts-ignore
+            //     subscriber(undefined)
+            // });
             reopen();
         }
 

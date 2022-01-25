@@ -1,5 +1,7 @@
 <script lang="ts">
-  export let curr = "Wash";
+  import type { Action } from "$src/store";
+
+  export let curr: Action = "Wash";
   let showing: boolean = false;
 </script>
 
@@ -11,7 +13,7 @@
       class="relative text-lg pl-6 inline-flex w-64 rounded-md border border-gray-300 shadow-sm py-2 bg-white font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
       aria-expanded="true"
       aria-haspopup="true"
-      on:blur={() => (showing = false)}
+      on:blur={() => setTimeout(() => (showing = false), 100)}
       on:click={() => (showing = !showing)}
     >
       <b>{curr}</b>
@@ -45,9 +47,11 @@
     -->
   <div
     class:opacity-0={!showing}
+    class:invisible={!showing}
     class:scale-100={!showing}
     class="list transition ease-in scale-95 duration-75 z-10 absolute left-0 mt-2 w-64 rounded-md shadow-xl bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-200 focus:outline-none"
     role="menu"
+    id="list"
     tabindex="-1"
   >
     <section>

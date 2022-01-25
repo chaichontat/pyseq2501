@@ -27,7 +27,7 @@
         bind:userPower={$userStore.laser_g}
       />
       <Laser
-        name="633 nm"
+        name="660 nm"
         color="#ef4444"
         power={$statusStore.laser_r}
         bind:userPower={$userStore.laser_r}

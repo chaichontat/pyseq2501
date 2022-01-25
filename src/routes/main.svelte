@@ -1,6 +1,7 @@
 <script lang="ts">
   import Preview from "$comps/main/preview.svelte";
   import Progress from "$comps/main/progress.svelte";
+  import Steps from "$src/components/main/steps/steps.svelte";
 </script>
 
 <svelte:head>
@@ -11,5 +12,7 @@
 </script> -->
 
 <Progress />
+
+<Steps />
 <!-- <Graph /> -->
 <Preview />

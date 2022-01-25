@@ -2,51 +2,24 @@
   import { onMount } from "svelte";
   import Panzoom, { PanzoomObject } from "@panzoom/panzoom";
   import { imgStore, userStore } from "../../store";
+  import Hist from "./hist.svelte";
 
   let canvas: HTMLCanvasElement;
+  // let hist: HTMLCanvasElement;
+
   let img: HTMLImageElement;
+  // let hist_img: HTMLImageElement;
+
   let pz: PanzoomObject;
 
   let ctx: CanvasRenderingContext2D;
+  // let ctx_hist: CanvasRenderingContext2D;
 
   onMount(() => {
     ctx = canvas.getContext("2d");
+    // ctx_hist = hist.getContext("2d");
     pz = Panzoom(canvas, { maxZoom: 5 });
-    // pz.zoom(0.5, { animate: true });
-
-    // var width = 100;
-    // var height = 100;
-    // var exampledata = new Float32Array(height * width);
-
-    // var xoff = width / 3;
-    // var yoff = height / 3;
-
-    // for (let y = 0; y <= height; y++) {
-    //   for (let x = 0; x <= width; x++) {
-    //     // calculate sine based on distance
-    //     const x2 = x - xoff;
-    //     const y2 = y - yoff;
-    //     const d = Math.sqrt(x2 * x2 + y2 * y2);
-    //     const t = Math.sin(d / 6.0);
-
-    //     // save sine
-    //     exampledata[y * width + x] = t;
-    //   }
-    // }
-
-    //   const pl = new plot({
-    //     canvas: document.getElementById("canvas"),
-    //     data: exampledata,
-    //     width: width,
-    //     height: height,
-    //     domain: [-1, 1],
-    //     colorScale: "viridis",
-    //   });
-    //   pl.render();
-    //   // pz.pan(10, 10);
   });
-
-  function render() {}
 
   $: {
     if (canvas && $imgStore) {
@@ -68,7 +41,7 @@
 </script>
 
 <div
-  class="mt-4 center shadow border border-gray-400"
+  class="mt-4 center shadow border border-gray-400 relative"
   on:wheel={pz.zoomWithWheel}
   style="height:75vh;"
 >
@@ -79,6 +52,20 @@
     height={128 * $userStore.n}
     style="border:2px solid #000000; background-color: gray;"
   />
+  <div
+    id="histogram"
+    class="z-40 absolute bottom-8 right-8 shadow-lg rounded"
+    style="width:400px; height:300px; background-color:white;"
+  >
+    <Hist />
+  </div>
+  <!-- <canvas
+    
+    bind:this={hist}
+    width={500}
+    height={400}
+    style="background-color: gray;"
+  /> -->
 </div>
 
 <!-- <svelte:component /> -->

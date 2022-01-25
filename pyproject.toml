@@ -1,0 +1,12 @@
+[tool.black]
+include = 'python'
+line-length = 110
+target-version = ['py310']
+
+[tool.isort]
+known_first_party = ["pyseq2"]
+known_local_folder = ["python"]
+line_length = 110
+profile = "black"
+py_version = 310
+src_paths = ["python"]

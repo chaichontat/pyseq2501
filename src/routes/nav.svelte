@@ -1,7 +1,9 @@
-<script>
+<script lang="ts">
   import Logo from "$comps/logo.svelte";
   import Connected from "$comps/navbar/connected.svelte";
   import Status from "$comps/navbar/status.svelte";
+
+  let tab: "manual" | "automatic" = "manual";
 </script>
 
 <div
@@ -33,6 +35,19 @@
     <Status />
 
     <div class="flex-1" />
+    <div class="tabs">
+      <a
+        class="tab tab-lg tab-bordered"
+        on:click={() => (tab = "manual")}
+        class:tab-active={tab === "manual"}>Manual</a
+      >
+      <a
+        class="tab tab-lg tab-bordered"
+        on:click={() => (tab = "automatic")}
+        class:tab-active={tab === "automatic"}>Automatic</a
+      >
+    </div>
+
     <Connected />
     <!---->
     <div title="Change Theme" class="dropdown dropdown-end">
