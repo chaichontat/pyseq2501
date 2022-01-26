@@ -7,12 +7,7 @@
 </script>
 
 <li class="relative flex py-6 border-b border-gray-50">
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    class="absolute h-5 w-5 -mt-1 right-2"
-    viewBox="0 0 20 20"
-    fill="currentColor"
-  >
+  <svg xmlns="http://www.w3.org/2000/svg" class="absolute h-5 w-5 -mt-1 right-2" viewBox="0 0 20 20" fill="currentColor">
     <path
       fill-rule="evenodd"
       d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -21,10 +16,7 @@
   </svg>
 
   <div class="mr-8">
-    <span
-      class="flex justify-center items-center w-14 h-14 bg-blue-50 text-lg font-bold rounded-full"
-      >{n}</span
-    >
+    <span class="flex justify-center items-center w-14 h-14 bg-blue-50 text-lg font-bold rounded-full">{n}</span>
   </div>
 
   <div>
@@ -32,24 +24,13 @@
 
     <div class="clump grid grid-cols-3 divide-x font-medium">
       {#if curr === "Hold"}
-        <span>
-          Time <input type="number" class="mx-2 form w-32" placeholder="60" /> s
-        </span>
+        <span>Time <input type="number" class="mx-2 form w-32" placeholder="60" /> s</span>
       {:else if curr === "Wash"}
-        <span>
-          Reagent <input type="number" class="mx-2 form w-24" placeholder="250" /> μl/min
-        </span>
-        <span>
-          Volume <input type="number" class="mx-2 form w-24" placeholder="2000" /> μl
-        </span>
+        <span>Reagent<input type="number" class="mx-2 form w-24" placeholder="250" /> μl/min</span>
+        <span>Volume <input type="number" class="mx-2 form w-24" placeholder="2000" /> μl</span>
       {:else if curr === "Move Stage"}
-        <span>
-          X <input type="number" class="mx-2 form w-24" placeholder="2000" /> mm
-        </span>
-        <span>
-          Y
-          <input type="number" class="mx-2 form w-24" placeholder="2000" /> mm</span
-        >
+        <span>X <input type="number" class="mx-2 form w-24" placeholder="2000" /> mm</span>
+        <span>Y <input type="number" class="mx-2 form w-24" placeholder="2000" /> mm</span>
       {:else}{/if}
     </div>
 
@@ -59,9 +40,6 @@
 </li>
 
 <style lang="postcss">
-  .form {
-    @apply mt-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50;
-  }
   .clump span {
     @apply pr-4;
   }

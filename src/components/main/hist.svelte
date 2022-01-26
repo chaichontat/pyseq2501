@@ -42,9 +42,7 @@
       </Pancake.Columns>
 
       <Pancake.Grid vertical count={5} let:value>
-        <span class="x label">
-          {value}
-        </span>
+        <span class="x label">{value}</span>
       </Pancake.Grid>
     </Pancake.Chart>
   </div>

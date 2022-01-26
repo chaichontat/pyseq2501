@@ -2,17 +2,11 @@
   <div class="flex items-center flex-none">
     <span aria-label="Homepage" class="px-2 flex-0 md:px-4 "
       ><div class="inline-block text-3xl">
-        <span class="normal-case font-light">PySeq</span><span class="grad font-medium"
-          >&nbsp;2501</span
-        >
+        <span class="normal-case font-light">PySeq</span><span class="grad font-medium">&nbsp;2501</span>
       </div></span
     >
   </div>
-  <a
-    href="https://github.com/chaichontat/pyseq2501/"
-    target="_blank"
-    rel="nofollow"
-    class="font-mono text-xs opacity-50"
+  <a href="https://github.com/chaichontat/pyseq2501/" target="_blank" rel="nofollow" class="font-mono text-xs opacity-50"
     ><div data-tip="Changelog" class="tooltip tooltip-bottom">
       <span class="hidden lg:inline">version</span>&nbsp;0.0.1
     </div></a

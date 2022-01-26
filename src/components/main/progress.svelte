@@ -37,10 +37,7 @@
 <span class="flex flex-row gap-x-3 w-full">
   <content class="grid grid-row-2 gap-y-2 w-32">
     <button class="_btn btn--primary" on:click={start}>Start</button>
-    <button
-      class="_btn btn--secondary"
-      on:click={() => ($cmdStore = { cmd: "autofocus", n: $userStore.n })}>Autofocus</button
-    >
+    <button class="_btn btn--secondary" on:click={() => ($cmdStore = { cmd: "autofocus", n: $userStore.n })}>Autofocus</button>
   </content>
 
   <div class="border stats border-base-300 flex-grow">
@@ -52,48 +49,26 @@
         <span class="stat-value">
           <span class="font-mono">{_curr}</span>
           /
-          <input
-            type="number"
-            class="input stat-value w-36 text-right px-2"
-            min="1"
-            max="999"
-            placeholder="1"
-            bind:value={$userStore.n}
-          />
+          <input type="number" class="input stat-value w-36 text-right px-2" min="1" max="999" placeholder="1" bind:value={$userStore.n} />
         </span>
         <div class="flex flex-col ml-4 opacity-75">
           <span>Height {height.toFixed(3)} mm</span>
           <span>Total time: {height / 2} s</span>
         </div>
         <div class="flex flex-col ml-4">
-          <button
-            class="btn btn-sm btn--secondary"
-            on:click={() => ($imgStore = { cmd: "dark", n: $userStore.n })}>Take Dark</button
-          >
+          <button class="btn btn-sm btn--secondary" on:click={() => ($imgStore = { cmd: "dark", n: $userStore.n })}>Take Dark</button>
           <span>
-            Dark Corrected<input
-              type="checkbox"
-              bind:checked={corrected}
-              class="toggle toggle-sm ml-4 mt-2"
-            />
+            Dark Corrected<input type="checkbox" bind:checked={corrected} class="toggle toggle-sm ml-4 mt-2" />
           </span>
         </div>
         <span>
-          Show Histogram<input
-            type="checkbox"
-            bind:checked={corrected}
-            class="toggle toggle-sm ml-4 mt-2"
-          />
+          Show Histogram<input type="checkbox" bind:checked={corrected} class="toggle toggle-sm ml-4 mt-2" />
         </span>
       </div>
 
       <div class="stat-title">Bundles taken</div>
       <div class="stat-desc">
-        <progress
-          value={$imgStore.n}
-          max={$userStore.n}
-          class="progress progress-secondary transition-all"
-        />
+        <progress value={$imgStore.n} max={$userStore.n} class="progress progress-secondary transition-all" />
       </div>
     </div>
   </div>

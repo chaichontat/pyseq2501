@@ -40,23 +40,9 @@
   // $: if (canvas) ctx.canvas.height = 128 * $userStore.n;
 </script>
 
-<div
-  class="mt-4 center shadow border border-gray-400 relative"
-  on:wheel={pz.zoomWithWheel}
-  style="height:75vh;"
->
-  <canvas
-    id="canvas"
-    bind:this={canvas}
-    width={2048}
-    height={128 * $userStore.n}
-    style="border:2px solid #000000; background-color: gray;"
-  />
-  <div
-    id="histogram"
-    class="z-40 absolute bottom-8 right-8 shadow-lg rounded"
-    style="width:400px; height:300px; background-color:white;"
-  >
+<div class="mt-4 center shadow border border-gray-400 relative" on:wheel={pz.zoomWithWheel} style="height:75vh;">
+  <canvas id="canvas" bind:this={canvas} width={2048} height={128 * $userStore.n} style="border:2px solid #000000; background-color: gray;" />
+  <div id="histogram" class="z-40 absolute bottom-8 right-8 shadow-lg rounded" style="width:400px; height:300px; background-color:white;">
     <Hist />
   </div>
   <!-- <canvas

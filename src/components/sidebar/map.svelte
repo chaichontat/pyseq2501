@@ -37,11 +37,7 @@
   <!-- Toggle -->
   <span class="monomedium justify-center align-middle mb-4 -translate-y-8">
     <div class="text-base">A</div>
-    <input
-      type="checkbox"
-      bind:checked={$userStore.flowcell}
-      class="toggle toggle-md toggl-dark self-center mx-1"
-    />
+    <input type="checkbox" bind:checked={$userStore.flowcell} class="toggle toggle-md toggl-dark self-center mx-1" />
     <div class="text-base">B</div>
   </span>
   <!-- Need this since using negative margins on the checkbox did not move the clickable area. -->
@@ -59,9 +55,7 @@
   <section class="flex flex-grow space-x-8 self-center mt-4">
     <BigZ
       name="All Tilt"
-      value={`${$store.z_tilt.reduce((a, b) => a + b) / $store.z_tilt.length} ± ${
-        (Math.max(...$store.z_tilt) - Math.min(...$store.z_tilt)) / 2
-      }`}
+      value={`${$store.z_tilt.reduce((a, b) => a + b) / $store.z_tilt.length} ± ${(Math.max(...$store.z_tilt) - Math.min(...$store.z_tilt)) / 2}`}
     />
     <BigZ name="Objective Z" value={$store.z_obj} bind:userValue={$userStore.z_obj} />
   </section>

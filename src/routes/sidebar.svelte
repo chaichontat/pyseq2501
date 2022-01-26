@@ -34,21 +34,9 @@
     </div>
 
     <div class="tabs w-full mt-2">
-      <a
-        class="tab tab-lg tab-lifted"
-        on:click={() => (curr = "imaging")}
-        class:tab-active={curr === "imaging"}>Imaging</a
-      >
-      <a
-        class="tab tab-lg tab-lifted"
-        on:click={() => (curr = "fluidics")}
-        class:tab-active={curr === "fluidics"}>Fluidics</a
-      >
-      <a
-        class="tab tab-lg tab-lifted"
-        on:click={() => (curr = "misc")}
-        class:tab-active={curr === "misc"}>Misc.</a
-      >
+      <a class="tab tab-lg tab-lifted" on:click={() => (curr = "imaging")} class:tab-active={curr === "imaging"}>Imaging</a>
+      <a class="tab tab-lg tab-lifted" on:click={() => (curr = "fluidics")} class:tab-active={curr === "fluidics"}>Fluidics</a>
+      <a class="tab tab-lg tab-lifted" on:click={() => (curr = "misc")} class:tab-active={curr === "misc"}>Misc.</a>
       <div class="flex-1 cursor-default tab tab-lifted" />
     </div>
 

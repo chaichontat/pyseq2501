@@ -20,18 +20,8 @@
       </tr>
     </thead>
     <tbody>
-      <Laser
-        name="532 nm"
-        color="#84cc16"
-        power={$statusStore.laser_g}
-        bind:userPower={$userStore.laser_g}
-      />
-      <Laser
-        name="660 nm"
-        color="#ef4444"
-        power={$statusStore.laser_r}
-        bind:userPower={$userStore.laser_r}
-      />
+      <Laser name="532 nm" color="#84cc16" power={$statusStore.laser_g} bind:userPower={$userStore.laser_g} />
+      <Laser name="660 nm" color="#ef4444" power={$statusStore.laser_r} bind:userPower={$userStore.laser_r} />
     </tbody>
   </table>
 </li>
