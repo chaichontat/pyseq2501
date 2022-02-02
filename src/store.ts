@@ -2,7 +2,7 @@ import type { Writable } from "svelte/store";
 import { writable } from "svelte/store";
 import websocketStore from "./ws_store";
 
-export type Action = "Hold" | "Wash" | "Prime" | "Change Temperature" | "Image" | "Move Stage"
+
 
 export type XY = {
   x: number;
@@ -44,20 +44,6 @@ export type UserSettings = {
   flowcell: boolean,
   mode: "manual" | "automatic",
 
-}
-
-export type Reagent = {
-  name: string,
-  port: number,
-  v_pull: number,
-  v_prime: number,
-  v_push: number,
-  wait: number,
-}
-
-export type Cmd = {
-  cmd: "take" | "x" | "y" | "autofocus",
-  n: number
 }
 
 export type Hist = {

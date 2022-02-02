@@ -1,10 +1,18 @@
+<script lang="ts">
+  import { createEventDispatcher } from "svelte";
+
+  export let xy: [number, number] = [0, 0];
+
+  const dispatch = createEventDispatcher();
+</script>
+
 <div class="flex gap-4">
   <span>
-    X <input type="number" class="pretty w-24 text-right" placeholder="2000" />
+    X <input type="number" class="pretty w-24 text-right" placeholder="0" bind:value={xy[0]} min="0" max="25" />
     mm
   </span>
   <span>
-    Y <input type="number" class="pretty w-24 text-right" placeholder="2000" />
+    Y <input type="number" class="pretty w-24 text-right" placeholder="0" bind:value={xy[1]} min="0" max="75" />
     mm
   </span>
   <button type="button" class="white-button px-4 py-1 text-sm font-medium text-gray-900">

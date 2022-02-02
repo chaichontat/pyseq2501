@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Reagent } from "$src/store";
+  import type { Reagent } from "$src/cmds";
   import Reagentrow from "./reagentrow.svelte";
   export let rs: Reagent[] = [...Array(20).keys()].map((i) => ({
     port: i,
@@ -20,6 +20,16 @@
         break;
       }
     }
+  }
+
+  // TODO: Draggable
+  const flipDurationMs = 200;
+  function handleDndConsider(e: CustomEvent<DndEvent>) {
+    rs = e.detail.items as Reagent[];
+  }
+
+  function handleDndFinalize(e: CustomEvent<DndEvent>) {
+    rs = e.detail.items as Reagent[];
   }
 </script>
 
@@ -44,11 +54,11 @@
         <tbody>
           {#each show as x, i}
             {#if x}
-              <Reagentrow r={rs[i]} primed={true} />
+              <Reagentrow r={rs[i]} primed={false} />
             {/if}
           {/each}
-          <tr>
-            <td colspan="8" class="transition-all ease-in-out whitespace-nowrap h-12 border-b mx-0 px-0 py-0 font-medium white-clickable hover:font-semibold hover:bg-gray-50 " on:click={addReagent}>
+          <tr class="cursor-pointer" on:click={addReagent}>
+            <td colspan="8" class="transition-all ease-in-out whitespace-nowrap h-12 border-b mx-0 px-0 py-0 font-medium white-clickable hover:font-semibold hover:bg-gray-50 ">
               <span class="inline-flex justify-center w-full cursor-pointer align-middle">
                 <svg stroke-width="1.5" class="-ml-2 mr-1 w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />

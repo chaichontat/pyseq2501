@@ -1,12 +1,21 @@
 <script lang="ts">
-  import type { Action } from "$src/store";
+  import type { Ops } from "$src/cmds";
 
-  export let curr: Action = "Wash";
+  export let cmd: Ops = "pump";
   let showing: boolean = false;
 
-  function handleClick(target: Action) {
+  const namemap = {
+    pump: "Pump",
+    prime: "Prime",
+    temp: "Change Temperature",
+    hold: "Hold",
+    move: "Move",
+    image: "Image",
+  };
+
+  function handleClick(target: Ops) {
     return () => {
-      curr = target;
+      cmd = target;
       showing = false;
     };
   }
@@ -23,21 +32,11 @@
       on:click={() => (showing = !showing)}
       on:blur={() => (showing = false)}
     >
-      <b>{curr}</b>
+      <b>{namemap[cmd]}</b>
 
       <!-- Heroicon name: solid/chevron-down -->
-      <svg
-        class="absolute mr-2 ml-2 h-5 w-5 right-0 self-center"
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 20 20"
-        fill="currentColor"
-        aria-hidden="true"
-      >
-        <path
-          fill-rule="evenodd"
-          d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-          clip-rule="evenodd"
-        />
+      <svg class="absolute mr-2 ml-2 h-5 w-5 right-0 self-center" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
       </svg>
     </button>
   </div>
@@ -64,17 +63,17 @@
   >
     <section>
       <!-- Active: "bg-gray-100 text-gray-900", Not Active: "text-gray-700" -->
-      <div on:mousedown={handleClick("Hold")}>Hold</div>
+      <div on:mousedown={handleClick("hold")}>{namemap["hold"]}</div>
       <!-- Mousedown fires before blur -->
     </section>
     <section>
-      <div on:mousedown={handleClick("Wash")}>Wash</div>
-      <div on:mousedown={handleClick("Prime")}>Prime</div>
-      <div on:mousedown={handleClick("Change Temperature")}>Change Temperature</div>
+      <div on:mousedown={handleClick("pump")}>{namemap["pump"]}</div>
+      <div on:mousedown={handleClick("prime")}>{namemap["prime"]}</div>
+      <div on:mousedown={handleClick("temp")}>{namemap["temp"]}</div>
     </section>
     <section>
-      <div on:mousedown={handleClick("Image")}>Image</div>
-      <div on:mousedown={handleClick("Move Stage")}>Move Stage</div>
+      <div on:mousedown={handleClick("image")}>{namemap["image"]}</div>
+      <div on:mousedown={handleClick("move")}>{namemap["move"]}</div>
     </section>
   </div>
 </div>

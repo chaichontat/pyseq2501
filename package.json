@@ -30,6 +30,7 @@
     "@sveltejs/pancake": "^0.0.18",
     "@tailwindcss/forms": "^0.4.0",
     "svelte-canvas": "^0.7.1",
+    "svelte-dnd-action": "^0.9.14",
     "svelte-vega": "^1.1.0"
   }
 }

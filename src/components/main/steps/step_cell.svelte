@@ -1,10 +1,29 @@
 <script lang="ts">
   import Dropdown from "./dropdown.svelte";
-  import type { Action } from "$src/store";
+  import type { Cmds } from "$src/cmds";
+  import { defaults } from "$src/cmds";
   import Setxy from "./setxy.svelte";
+  import { fade } from "svelte/transition";
 
-  export let curr: Action = "Image";
   export let n: number = 1;
+  export let cmd: Cmds = { reagent: "", volume: 0, op: "pump" };
+
+  let channels: [boolean, boolean, boolean, boolean] = [true, true, true, true];
+  let laserOnOff: [boolean, boolean] = [true, true];
+
+  function genChannelSet(cs: [boolean, boolean, boolean, boolean]): Set<0 | 1 | 2 | 3> {
+    const s: Set<0 | 1 | 2 | 3> = new Set();
+    for (const [i, e] of cs.entries()) {
+      if (e) s.add(i as 0 | 1 | 2 | 3);
+    }
+    return s;
+  }
+
+  $: cmd = { ...defaults[cmd.op], ...cmd }; // Second overwrites first.
+  // @ts-ignore
+  $: cmd.channels = genChannelSet(channels);
+  // @ts-ignore
+  $: cmd.laser_onoff = laserOnOff;
 </script>
 
 <li class="relative flex py-4 pl-2 border-y border-gray-300 hover:bg-gray-50 hover:border-blue-400 transition-all ease-in-out hover:shadow-sm">
@@ -16,22 +35,28 @@
     />
   </svg>
 
+  <!-- n -->
   <div class="mr-8">
-    <span class="flex justify-center items-center w-14 h-14 bg-blue-100 text-lg font-bold rounded-full">{n}</span>
+    <span class="flex justify-center items-center w-14 h-14 bg-blue-100 text-lg font-bold rounded-full">
+      <!-- {#key n} -->
+      <div>{n}</div>
+      <!-- {/key} -->
+    </span>
   </div>
 
   <div class="w-full mr-8">
-    <Dropdown bind:curr />
+    <Dropdown bind:cmd={cmd.op} />
 
     <div class="clump mt-2 grid gap-x-4 grid-cols-4 divide-x font-medium">
       <!-- Hold -->
-      {#if curr === "Hold"}
+      {#if cmd.op === "hold"}
         <span>
-          Time <input type="number" class="mx-2 pretty w-32" placeholder="60" />
+          Time <input type="number" class="mx-2 pretty w-32" placeholder="60" bind:value={cmd.time} />
           s
         </span>
+
         <!-- Wash -->
-      {:else if curr === "Wash"}
+      {:else if cmd.op === "pump"}
         <span>
           Reagent
           <select class="drop text-sm w-1/2">
@@ -42,11 +67,12 @@
           </select>
         </span>
         <span>
-          Volume <input type="number" class="mx-2 pretty w-24" placeholder="2000" />
+          Volume <input type="number" class="mx-2 pretty w-24" placeholder="2000" bind:value={cmd.volume} />
           μl
         </span>
+
         <!-- Prime -->
-      {:else if curr === "Prime"}
+      {:else if cmd.op === "prime"}
         <span>
           Reagent
           <select class="drop text-sm">
@@ -57,42 +83,39 @@
           </select>
         </span>
         <span>
-          Volume <input type="number" class="mx-2 pretty w-24" placeholder="2000" />
+          Volume <input type="number" class="mx-2 pretty w-24" placeholder="2000" bind:value={cmd.volume} />
           μl
         </span>
+
         <!-- Temp -->
-      {:else if curr === "Change Temperature"}
+      {:else if cmd.op === "temp"}
         <span>
-          Temperature <input type="number" class="mx-2 pretty w-24" placeholder="20" />
+          Temperature <input type="number" class="mx-2 pretty w-24" placeholder="20" bind:value={cmd.temp} />
           °C
         </span>
+
         <!-- Move -->
-      {:else if curr === "Move Stage"}
-        <span>
-          X <input type="number" class="mx-2 pretty w-24" placeholder="2000" />
-          mm
-        </span>
-        <span>
-          Y <input type="number" class="mx-2 pretty w-24" placeholder="2000" />
-          mm
-        </span>
+      {:else if cmd.op === "move"}
+        <div class="col-span-4 mt-4">
+          <Setxy bind:xy={cmd.xy} />
+        </div>
         <!-- Image -->
-      {:else if curr === "Image"}
+      {:else if cmd.op === "image"}
         <span>
-          Z <input type="number" class="mx-2 pretty w-24" placeholder="2000" />
+          Z <input type="number" class="mx-2 pretty w-24" placeholder="2000" bind:value={cmd.z_tilt} />
         </span>
         <span>
-          Autofocus <input type="checkbox" class="ml-2 rounded" />
+          Autofocus <input type="checkbox" class="ml-2 rounded" bind:value={cmd.autofocus} />
         </span>
 
         <div class="col-span-4 mt-4 ml-2 pl-4">
           <p class="text-lg mb-2 gap-x-8">Lower right</p>
-          <Setxy />
+          <Setxy bind:xy={cmd.xy_start} />
         </div>
 
         <div class="col-span-4 mt-4 ml-2 pl-4">
           <p class="text-lg mb-2">Upper left</p>
-          <Setxy />
+          <Setxy bind:xy={cmd.xy_end} />
         </div>
 
         <!-- Channels -->
@@ -101,36 +124,36 @@
           <div class="grid grid-cols-3">
             <div id="green">
               <span class="mb-1">
-                <input type="checkbox" class="ml-2 mr-1 rounded text-lime-500 focus:ring-lime-300" />
+                <input type="checkbox" class="ml-2 mr-1 rounded text-lime-500 focus:ring-lime-300" bind:checked={laserOnOff[0]} />
                 532 nm laser
-                <input type="number" class="mr-1 pretty w-20 h-8" placeholder="50" />
+                <input type="number" class="mr-1 pretty w-20 h-8" placeholder="0" bind:value={cmd.lasers[0]} disabled={!laserOnOff[0]} />
                 mW
               </span>
               <ol>
                 <li class="channel">
-                  <input type="checkbox" class="mr-1 rounded text-green-500 focus:ring-green-300" />
+                  <input type="checkbox" class="mr-1 rounded text-green-500 focus:ring-green-300" bind:checked={channels[0]} />
                   Channel 0
                 </li>
                 <li class="channel">
-                  <input type="checkbox" class="mr-1 rounded text-orange-600 focus:ring-orange-300" />
+                  <input type="checkbox" class="mr-1 rounded text-orange-600 focus:ring-orange-300" bind:checked={channels[1]} />
                   Channel 1
                 </li>
               </ol>
             </div>
             <div id="red">
               <span class="mb-1">
-                <input type="checkbox" class="ml-2 mr-1 rounded text-red-600 focus:ring-red-300" />
+                <input type="checkbox" class="ml-2 mr-1 rounded text-red-600 focus:ring-red-300" bind:checked={laserOnOff[1]} />
                 660 nm laser
-                <input type="number" class="mr-1 pretty w-20 h-8" placeholder="50" />
+                <input type="number" class="mr-1 pretty w-20 h-8" placeholder="0" bind:value={cmd.lasers[1]} disabled={!laserOnOff[1]} />
                 mW
               </span>
               <ol>
                 <li class="channel">
-                  <input type="checkbox" class="mr-1 rounded text-rose-700 focus:ring-rose-500" />
+                  <input type="checkbox" class="mr-1 rounded text-rose-700 focus:ring-rose-500" bind:checked={channels[2]} />
                   Channel 2
                 </li>
                 <li class="channel">
-                  <input type="checkbox" class="mr-1 rounded text-amber-900 focus:ring-amber-700" />
+                  <input type="checkbox" class="mr-1 rounded text-amber-900 focus:ring-amber-700" bind:checked={channels[3]} />
                   Channel 3
                 </li>
               </ol>
