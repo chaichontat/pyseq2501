@@ -55,7 +55,7 @@ class Gains:
 
 
 def gen_reader(s: str) -> Callable[[str], int]:
-    return ok_re(fr"1{s}\n1?\*([\d\+\-]+)", int)
+    return ok_re(rf"1{s}\n1?\*([\d\+\-]+)", int)
 
 
 def echo(s: str) -> CmdParse[Any, bool]:
