@@ -46,6 +46,15 @@ export type UserSettings = {
 
 }
 
+export type Reagent = {
+  name: string,
+  port: number,
+  v_pull: number,
+  v_prime: number,
+  v_push: number,
+  wait: number,
+}
+
 export type Cmd = {
   cmd: "take" | "x" | "y" | "autofocus",
   n: number

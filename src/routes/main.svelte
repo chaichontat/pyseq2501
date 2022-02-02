@@ -15,4 +15,5 @@
 
 <Steps />
 <!-- <Graph /> -->
+<p class="text-gray-600 font-bold text-2xl mt-6 mb-1">Preview</p>
 <Preview />

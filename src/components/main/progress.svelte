@@ -36,7 +36,16 @@
 
 <span class="flex flex-row gap-x-3 w-full">
   <content class="grid grid-row-2 gap-y-2 w-32">
-    <button class="_btn btn--primary" on:click={start}>Start</button>
+    <button
+      type="button"
+      class="text-lg mt-2 transition-colors shadow-md shadow-blue-500/50 text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg px-4 py-2.5 text-center inline-flex items-center mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+      on:click={start}
+    >
+      <svg class="-ml-2 mr-1 w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+      </svg>
+      Start
+    </button>
     <button class="_btn btn--secondary" on:click={() => ($cmdStore = { cmd: "autofocus", n: $userStore.n })}>Autofocus</button>
   </content>
 
@@ -58,11 +67,13 @@
         <div class="flex flex-col ml-4">
           <button class="btn btn-sm btn--secondary" on:click={() => ($imgStore = { cmd: "dark", n: $userStore.n })}>Take Dark</button>
           <span>
-            Dark Corrected<input type="checkbox" bind:checked={corrected} class="toggle toggle-sm ml-4 mt-2" />
+            Dark Corrected
+            <input type="checkbox" bind:checked={corrected} class="toggle toggle-sm ml-4 mt-2" />
           </span>
         </div>
         <span>
-          Show Histogram<input type="checkbox" bind:checked={corrected} class="toggle toggle-sm ml-4 mt-2" />
+          Show Histogram
+          <input type="checkbox" bind:checked={corrected} class="toggle toggle-sm ml-4 mt-2" />
         </span>
       </div>
 

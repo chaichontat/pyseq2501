@@ -3,6 +3,13 @@
 
   export let curr: Action = "Wash";
   let showing: boolean = false;
+
+  function handleClick(target: Action) {
+    return () => {
+      curr = target;
+      showing = false;
+    };
+  }
 </script>
 
 <!-- This example requires Tailwind CSS v2.0+ -->
@@ -10,11 +17,11 @@
   <div>
     <button
       type="button"
-      class="relative text-lg pl-6 inline-flex w-64 rounded-md border border-gray-300 shadow-sm py-2 bg-white font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
+      class="relative text-lg pl-6 inline-flex w-64 rounded-md border border-gray-300 shadow-sm py-2 bg-white font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
       aria-expanded="true"
       aria-haspopup="true"
-      on:blur={() => setTimeout(() => (showing = false), 100)}
       on:click={() => (showing = !showing)}
+      on:blur={() => (showing = false)}
     >
       <b>{curr}</b>
 
@@ -53,20 +60,21 @@
     role="menu"
     id="list"
     tabindex="-1"
+    on:blur={() => (showing = false)}
   >
     <section>
       <!-- Active: "bg-gray-100 text-gray-900", Not Active: "text-gray-700" -->
-      <div href="#" on:click={() => (curr = "Hold")}>Hold</div>
+      <div on:mousedown={handleClick("Hold")}>Hold</div>
+      <!-- Mousedown fires before blur -->
     </section>
     <section>
-      <!-- Active: "bg-gray-100 text-gray-900", Not Active: "text-gray-700" -->
-      <div on:click={() => (curr = "Wash")}>Wash</div>
-      <div on:click={() => (curr = "Prime")}>Prime</div>
-      <div on:click={() => (curr = "Change Temperature")}>Change Temperature</div>
+      <div on:mousedown={handleClick("Wash")}>Wash</div>
+      <div on:mousedown={handleClick("Prime")}>Prime</div>
+      <div on:mousedown={handleClick("Change Temperature")}>Change Temperature</div>
     </section>
     <section>
-      <div on:click={() => (curr = "Image")}>Image</div>
-      <div on:click={() => (curr = "Move Stage")}>Move Stage</div>
+      <div on:mousedown={handleClick("Image")}>Image</div>
+      <div on:mousedown={handleClick("Move Stage")}>Move Stage</div>
     </section>
   </div>
 </div>
@@ -76,7 +84,7 @@
     @apply py-1;
   }
   .list > * > * {
-    @apply text-gray-900 block px-4 py-2 font-medium cursor-pointer;
+    @apply text-gray-900 block px-4 py-2 font-medium cursor-pointer bg-white;
   }
   .list > * > :hover {
     @apply bg-gray-100 text-black;

@@ -63,6 +63,15 @@ export function websocketStore<T>(url: string, initialValue: T | undefined = und
         //         await new Promise(r => setTimeout(r, 1000));
         //     }
         // }
+        // while (true) {
+        //     try {
+        //         socket = new WebSocket(url);
+        //         break
+        //     } catch (e) {
+        //         console.error(`Cannot connect to ${ url }. Retrying in one second.`)
+        //         await new Promise(r => setTimeout(r, 1000));
+        //     }
+        // }
         socket = new WebSocket(url);
 
         socket.onmessage = (event: MessageEvent): void => {
