@@ -6,7 +6,7 @@
 </script>
 
 <div
-  class="box-border absolute w-full text-sm"
+  class="absolute w-full text-sm box-border"
   style="transform: translateX(-4.25px); width: calc(100% + 1px);"
 >
   {#each [...Array(cm).keys()] as c}

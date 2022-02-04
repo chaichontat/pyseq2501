@@ -8,17 +8,17 @@
   export let primed: boolean = false;
 </script>
 
-<td class="text-gray-900 py-2 px-6 whitespace-nowrap font-bold ">
-  <input bind:value={reagent.port} type="number" class="pretty w-16" min="1" max="19" required />
+<td class="px-6 py-2 font-bold text-gray-900 whitespace-nowrap ">
+  <input bind:value={reagent.port} type="number" class="w-16 pretty" min="1" max="19" required />
 </td>
-<td class="text-gray-900 px-4 whitespace-nowrap"><input bind:value={reagent.name} type="text" class="pretty w-full" min="1" max="2000" required /></td>
-<td class="text-gray-900 px-4 whitespace-nowrap"><input bind:value={reagent.v_prime} type="number" class="pretty w-full" min="1" max="2000" required /></td>
-<td class="text-gray-900 px-4 whitespace-nowrap"><input bind:value={reagent.v_pull} type="number" class="pretty w-full" min="1" max="2000" required /></td>
-<td class="text-gray-900 px-4 whitespace-nowrap"><input bind:value={reagent.v_push} type="number" class="pretty w-full" min="1" max="2000" required /></td>
-<td class="text-gray-900 px-4 whitespace-nowrap"><input bind:value={reagent.wait} type="number" class="pretty w-full" min="1" required /></td>
+<td class="px-4 text-gray-900 whitespace-nowrap"><input bind:value={reagent.name} type="text" class="w-full pretty" min="1" max="2000" required /></td>
+<td class="px-4 text-gray-900 whitespace-nowrap"><input bind:value={reagent.v_prime} type="number" class="w-full pretty" min="1" max="2000" required /></td>
+<td class="px-4 text-gray-900 whitespace-nowrap"><input bind:value={reagent.v_pull} type="number" class="w-full pretty" min="1" max="2000" required /></td>
+<td class="px-4 text-gray-900 whitespace-nowrap"><input bind:value={reagent.v_push} type="number" class="w-full pretty" min="1" max="2000" required /></td>
+<td class="px-4 text-gray-900 whitespace-nowrap"><input bind:value={reagent.wait} type="number" class="w-full pretty" min="1" required /></td>
 <td>
   <button type="button" class="transition-colors shadow focus:ring-4 font-semibold rounded-lg px-4 py-2.5 text-center inline-flex items-center mr-2 text-sm" class:blue={!primed} class:green={primed}>
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
     </svg>
     Prime
@@ -26,7 +26,7 @@
 </td>
 <!-- Close -->
 <td on:click={() => dispatch("delete")}>
-  <svg xmlns="http://www.w3.org/2000/svg" class="ml-2 w-4 h-4 cursor-pointer" viewBox="0 0 20 20" fill="currentColor">
+  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-2 cursor-pointer" viewBox="0 0 20 20" fill="currentColor">
     <path
       fill-rule="evenodd"
       d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"

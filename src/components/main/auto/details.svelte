@@ -3,7 +3,7 @@
   export let path: string = "";
 </script>
 
-<div class="grid grid-cols-4 font-medium mt-2 text-lg">
+<div class="mt-2 text-lg font-medium grid grid-cols-4">
   <div>
     Name <input type="text" class="pretty" bind:value={name} />
   </div>

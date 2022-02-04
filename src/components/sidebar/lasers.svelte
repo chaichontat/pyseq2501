@@ -4,7 +4,7 @@
 </script>
 
 <li>
-  <table class="table table-fixed w-full" style="margin-top:-1.5rem;">
+  <table class="table w-full table-fixed" style="margin-top:-1.5rem;">
     <colgroup>
       <col style="width:30%" />
       <col style="width:30%" />
@@ -14,8 +14,8 @@
     <thead class="text-right">
       <tr>
         <th style="background:transparent" />
-        <th class="rounded-l-lg text-center text-sm">Target</th>
-        <th class="rounded-r-lg text-center text-sm">Actual</th>
+        <th class="text-sm text-center rounded-l-lg">Target</th>
+        <th class="text-sm text-center rounded-r-lg">Actual</th>
         <th style="background:transparent" />
       </tr>
     </thead>

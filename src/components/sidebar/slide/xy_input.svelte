@@ -15,7 +15,7 @@
 
 <!-- XY Input -->
 
-<div class="form-control self-center mt-4">
+<div class="self-center mt-4 form-control">
   <label class="font-medium input-group">
     <span
       ><div data-tip={`${xy.x.toFixed(2)} mm`} class="tooltip tooltip-bottom">
@@ -28,7 +28,7 @@
       min="-5"
       max="30"
       step="0.01"
-      class="text-lg text-center input input-bordered inputcheck w-28 h-10"
+      class="h-10 text-lg text-center input input-bordered inputcheck w-28"
     />
     <span
       ><div data-tip={`${xy.y.toFixed(2)} mm`} class="tooltip tooltip-bottom">
@@ -41,11 +41,11 @@
       min="-5"
       max="80"
       step="0.01"
-      class="text-lg text-center input input-bordered inputcheck w-28 h-10"
+      class="h-10 text-lg text-center input input-bordered inputcheck w-28"
     />
 
     <button
-      class="font-sans content-center w-12 text-indigo-100 transition-all duration-150 bg-indigo-700 rounded-lg focus:shadow-outline hover:bg-indigo-800"
+      class="content-center w-12 font-sans text-indigo-100 bg-indigo-700 rounded-lg transition-all duration-150 focus:shadow-outline hover:bg-indigo-800"
       tabindex="0"
       on:click={move}
     >

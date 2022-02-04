@@ -35,9 +35,9 @@
 
 <li>
   <!-- Toggle -->
-  <span class="monomedium justify-center align-middle mb-4 -translate-y-8">
+  <span class="justify-center mb-4 align-middle monomedium -translate-y-8">
     <div class="text-base">A</div>
-    <input type="checkbox" bind:checked={$userStore.flowcell} class="toggle toggle-md toggl-dark self-center mx-1" />
+    <input type="checkbox" bind:checked={$userStore.flowcell} class="self-center mx-1 toggle toggle-md toggl-dark" />
     <div class="text-base">B</div>
   </span>
   <!-- Need this since using negative margins on the checkbox did not move the clickable area. -->
@@ -46,13 +46,13 @@
   <!-- <div
     on:mousedown={onMouseDown}
     style="left: {left}px; top: {top}px;"
-    class="indicator-item indicator-center indicator-middle badge badge-primary shadow-xl draggable z-50 opacity-70"
+    class="z-50 shadow-xl indicator-item indicator-center indicator-middle badge badge-primary draggable opacity-70"
   /> -->
 
   <Slide name={$userStore.flowcell ? "B" : "A"} x={xy.x} y={xy.y} z_tilt={$store.z_tilt} />
 
   <!-- Z Objective -->
-  <section class="flex flex-grow space-x-8 self-center mt-4">
+  <section class="flex self-center flex-grow mt-4 space-x-8">
     <BigZ
       name="All Tilt"
       value={`${$store.z_tilt.reduce((a, b) => a + b) / $store.z_tilt.length} ± ${(Math.max(...$store.z_tilt) - Math.min(...$store.z_tilt)) / 2}`}
@@ -63,7 +63,7 @@
   <XYInput {xy} />
 
   <!-- Eject button -->
-  <button class="self-center btn btn-secondary btn-sm w-16 mt-2">
+  <button class="self-center w-16 mt-2 btn btn-secondary btn-sm">
     <svg
       class="w-4 h-4 fill-current "
       version="1.1"

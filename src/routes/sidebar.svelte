@@ -26,24 +26,24 @@
 
 <div class="drawer drawer-side">
   <label for="main-menu" class="drawer-overlay" />
-  <aside class="sidebar flex flex-col overflow-y-auto bg-base-100">
-    <div class="hidden lg:block sticky inset-x-0 top-0 z-40 w-full py-1 transition duration-200 ease-in-out ring-1 ring-gray-900 ring-opacity-5 shadow-sm bg-white">
+  <aside class="flex flex-col overflow-y-auto sidebar bg-base-100">
+    <div class="sticky inset-x-0 top-0 z-40 hidden w-full h-16 bg-white transition duration-200 ease-in-out shadow-sm lg:block ring-1 ring-gray-900 ring-opacity-5">
       <Logo />
     </div>
 
-    <div class="tabs w-full mt-2">
-      <a class="tab tab-lg tab-lifted" on:click={() => (curr = "imaging")} class:tab-active={curr === "imaging"}>Imaging</a>
-      <a class="tab tab-lg tab-lifted" on:click={() => (curr = "fluidics")} class:tab-active={curr === "fluidics"}>Fluidics</a>
-      <a class="tab tab-lg tab-lifted" on:click={() => (curr = "misc")} class:tab-active={curr === "misc"}>Misc.</a>
+    <div class="w-full mt-2 tabs">
+      <button class="font-medium tab tab-lg tab-lifted" on:click={() => (curr = "imaging")} class:tab-active={curr === "imaging"} class:text-gray-800={curr === "imaging"}>Imaging</button>
+      <button class="font-medium tab tab-lg tab-lifted" on:click={() => (curr = "fluidics")} class:tab-active={curr === "fluidics"} class:text-gray-800={curr === "fluidics"}>Fluidics</button>
+      <button class="font-medium tab tab-lg tab-lifted" on:click={() => (curr = "misc")} class:tab-active={curr === "misc"} class:text-gray-800={curr === "misc"}>Misc.</button>
       <div class="flex-1 cursor-default tab tab-lifted" />
     </div>
 
     <section class:hidden={curr !== "imaging"} class="relative">
       <!-- <div
         class:translucent={!connected}
-        class="hidden absolute w-full h-full transition-all"
+        class="absolute hidden w-full h-full transition-all"
       /> -->
-      <ol class="menu p-2 ">
+      <ol class="p-2 menu ">
         <Division name="Map">
           <Map {...status} />
         </Division>
@@ -62,7 +62,7 @@
     </section>
 
     <section class:hidden={curr !== "fluidics"} class="relative">
-      <ol class="menu p-2 ">
+      <ol class="p-2 menu ">
         <Division name="Prime">Drop selection port volume speed up down</Division>
       </ol>
     </section>

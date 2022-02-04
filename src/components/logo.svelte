@@ -2,7 +2,7 @@
   <div class="flex items-center flex-none">
     <span aria-label="Homepage" class="px-2 flex-0 md:px-4 "
       ><div class="inline-block text-3xl">
-        <span class="normal-case font-light">PySeq</span><span class="grad font-medium">&nbsp;2501</span>
+        <span class="font-light normal-case">PySeq</span><span class="font-medium grad">&nbsp;2501</span>
       </div></span
     >
   </div>

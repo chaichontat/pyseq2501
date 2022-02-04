@@ -11,7 +11,7 @@
 
 <div class="flex self-center">
   <div class="flex flex-col">
-    <span class="w-24 text-center font-medium">{name}</span>
+    <span class="w-24 font-medium text-center">{name}</span>
     <Editable
       bind:editable
       bind:userValue

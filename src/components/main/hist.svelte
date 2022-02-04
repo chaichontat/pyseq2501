@@ -33,12 +33,12 @@
   <div class="foreground">
     <Pancake.Chart x1={0} x2={4096} y1={0} y2={max}>
       <Pancake.Grid horizontal count={5} let:value>
-        <div class="relative block w-full left-0 border-b border-gray-100" />
+        <div class="relative left-0 block w-full border-b border-gray-100" />
         <span class="y label">{value}</span>
       </Pancake.Grid>
 
       <Pancake.Columns data={f} width={5}>
-        <div class="column f z-10" />
+        <div class="z-10 column f" />
       </Pancake.Columns>
 
       <Pancake.Grid vertical count={5} let:value>

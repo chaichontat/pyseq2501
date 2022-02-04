@@ -26,7 +26,7 @@
   <div>
     <button
       type="button"
-      class="relative text-lg pl-6 inline-flex w-64 rounded-md border border-gray-300 shadow-sm py-2 bg-white font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
+      class="relative inline-flex w-64 py-2 pl-6 text-lg font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
       aria-expanded="true"
       aria-haspopup="true"
       on:click={() => (showing = !showing)}
@@ -35,7 +35,7 @@
       <b>{namemap[cmd]}</b>
 
       <!-- Heroicon name: solid/chevron-down -->
-      <svg class="absolute mr-2 ml-2 h-5 w-5 right-0 self-center" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <svg class="absolute right-0 self-center w-5 h-5 ml-2 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
       </svg>
     </button>
@@ -55,7 +55,7 @@
     class:opacity-0={!showing}
     class:invisible={!showing}
     class:scale-100={!showing}
-    class="list transition ease-in scale-95 duration-75 z-10 absolute left-0 mt-2 w-64 rounded-md shadow-xl bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-200 focus:outline-none"
+    class="absolute left-0 z-10 w-64 mt-2 bg-white shadow-xl transition duration-75 ease-in scale-95 divide-y divide-gray-200 rounded-md list ring-1 ring-black ring-opacity-5 focus:outline-none"
     role="menu"
     id="list"
     tabindex="-1"

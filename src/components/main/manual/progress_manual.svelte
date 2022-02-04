@@ -34,14 +34,14 @@
   }
 </script>
 
-<span class="flex flex-row gap-x-3 w-full">
-  <content class="grid grid-row-2 gap-y-2 w-32">
+<span class="flex flex-row w-full gap-x-3">
+  <content class="w-32 grid grid-row-2 gap-y-2">
     <button
       type="button"
       class="text-lg mt-2 transition-colors shadow-md shadow-blue-500/50 text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg px-4 py-2.5 text-center inline-flex items-center mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
       on:click={start}
     >
-      <svg class="-ml-2 mr-1 w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <svg class="w-6 h-6 mr-1 -ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
       </svg>
       Start
@@ -49,7 +49,7 @@
     <button class="_btn btn--secondary" on:click={() => ($cmdStore = { cmd: "autofocus", n: $userStore.n })}>Autofocus</button>
   </content>
 
-  <div class="border stats border-base-300 flex-grow">
+  <div class="flex-grow border stats border-base-300">
     <div class="stat">
       <div class="stat-figure text-primary">
         <button class="btn loading btn-circle btn-lg bg-base-200 btn-ghost" />
@@ -58,7 +58,7 @@
         <span class="stat-value">
           <span class="font-mono">{_curr}</span>
           /
-          <input type="number" class="input stat-value w-36 text-right px-2" min="1" max="999" placeholder="1" bind:value={$userStore.n} />
+          <input type="number" class="px-2 text-right input stat-value w-36" min="1" max="999" placeholder="1" bind:value={$userStore.n} />
         </span>
         <div class="flex flex-col ml-4 opacity-75">
           <span>Height {height.toFixed(3)} mm</span>
@@ -68,13 +68,9 @@
           <button class="btn btn-sm btn--secondary" on:click={() => ($imgStore = { cmd: "dark", n: $userStore.n })}>Take Dark</button>
           <span>
             Dark Corrected
-            <input type="checkbox" bind:checked={corrected} class="toggle toggle-sm ml-4 mt-2" />
+            <input type="checkbox" bind:checked={corrected} class="mt-2 ml-4 toggle toggle-sm" />
           </span>
         </div>
-        <span>
-          Show Histogram
-          <input type="checkbox" bind:checked={corrected} class="toggle toggle-sm ml-4 mt-2" />
-        </span>
       </div>
 
       <div class="stat-title">Bundles taken</div>

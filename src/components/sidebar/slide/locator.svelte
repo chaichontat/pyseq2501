@@ -27,7 +27,7 @@
   {#if y >= 0 && y <= 75}
     <div
       id="horz"
-      class="absolute w-full border-t border-blue-200 transition-all z-30"
+      class="absolute z-30 w-full border-t border-blue-200 transition-all"
       style="top:calc({real_y}% - 1px); right:{25 - x > 0 ? 0 : 100 - real_x}%; width:{Math.abs(
         100 - real_x
       )}%;"
@@ -36,7 +36,7 @@
   {#if x >= 0 && x <= 25}
     <div
       id="vert"
-      class="absolute h-full border-l border-blue-200 transition-all z-30"
+      class="absolute z-30 h-full border-l border-blue-200 transition-all"
       style="top:{real_y > 0 ? 0 : real_y}%; left:calc({real_x}% - 1px); height:{Math.abs(
         real_y
       )}%;"
@@ -47,7 +47,7 @@
 {#if legend}
   <span
     id="legend"
-    class="z-20 absolute font-mono font-bold text-center w-36 transition-all text-blue-700"
+    class="absolute z-20 font-mono font-bold text-center text-blue-700 w-36 transition-all"
     style="top:calc({(100 * y) /
       75}% + 0.6rem); left:calc({real_x}% - 4.5rem); text-shadow: 0px 0px 2px white, 0px 0px 5px white, 0px 0px 10px white"
   >

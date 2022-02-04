@@ -1,58 +1,38 @@
-<script lang="ts" context="module">
-  export type NCmd = { n: number; id: number; cmd: Cmds };
-</script>
-
 <script lang="ts">
-  import type { Cmds } from "$src/cmds";
   import { defaults } from "$src/cmds";
+  import type { NCmd } from "$src/store";
+  import { userStore as us } from "$src/store";
   import { dndzone } from "svelte-dnd-action";
   import { flip } from "svelte/animate";
   import Cell from "./step_cell.svelte";
-
-  export let cmds: NCmd[] = [{ n: 1, id: 0, cmd: { ...defaults.pump } }];
 
   let uid: number = 1;
 
   const flipDurationMs = 200;
   function handleDndConsider(e: CustomEvent<DndEvent>) {
-    cmds = e.detail.items as NCmd[];
+    $us.cmds = e.detail.items as NCmd[];
   }
 
   function handleDndFinalize(e: CustomEvent<DndEvent>) {
-    cmds = e.detail.items as NCmd[];
-  }
-
-  $: {
-    // Update indices.
-    for (const [i, ncmd] of cmds.entries()) {
-      ncmd.n = i + 1;
-    }
-    cmds = cmds;
+    $us.cmds = e.detail.items as NCmd[];
   }
 </script>
 
-<div class="my-8 w-full">
-  <p class="text-gray-600 font-bold text-2xl py-3 border-b mt-6">Steps</p>
+<div class="w-full my-8">
+  <p class="py-3 mt-6 text-2xl font-bold text-gray-600 border-b">Steps</p>
 
-  <section use:dndzone={{ items: cmds, dropTargetStyle: { outline: "none" }, flipDurationMs }} on:consider={handleDndConsider} on:finalize={handleDndFinalize}>
-    {#each cmds as { n, id, cmd }, i (id)}
+  <section use:dndzone={{ items: $us.cmds, dropTargetStyle: { outline: "none" }, flipDurationMs }} on:consider={handleDndConsider} on:finalize={handleDndFinalize}>
+    {#each $us.cmds as { id, cmd }, i (id)}
       <div animate:flip={{ duration: flipDurationMs }}>
-        <Cell
-          {n}
-          bind:cmd
-          on:delete={() => {
-            cmds.splice(i, 1);
-            cmds = cmds;
-          }}
-        />
+        <Cell n={i + 1} bind:cmd on:delete={() => ($us.cmds = $us.cmds.filter((v, j) => i != j))} />
       </div>
     {/each}
   </section>
 
   <div
     id="add"
-    class="text-lg transition-all border-y border-gray-400 hover:border-blue-500 inline-flex items-center justify-center cursor-pointer w-full h-16 font-medium hover:font-semibold white-clickable hover:bg-gray-50"
-    on:click={() => (cmds = [...cmds, { n: cmds.length + 1, id: uid++, cmd: { ...defaults.pump } }])}
+    class="inline-flex items-center justify-center w-full h-16 text-lg font-medium border-gray-400 cursor-pointer transition-all border-y hover:border-blue-500 hover:font-semibold white-clickable hover:bg-gray-50"
+    on:click={() => ($us.cmds = [...$us.cmds, { id: uid++, cmd: { ...defaults.pump } }])}
   >
     <span class="inline-flex">
       <svg id="inner" stroke-width="1.5" class="-ml-2 mr-1 w-6 h-6 transition-all my-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">

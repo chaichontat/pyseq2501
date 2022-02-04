@@ -31,13 +31,13 @@
       min="0"
       max="1000"
       step="1"
-      class="font-medium text-base input input-bordered w-10/12 h-8 block"
+      class="block w-10/12 h-8 text-base font-medium input input-bordered"
       style="margin: 0 auto;"
       bind:value={pow}
       on:blur={update}
     />
   </td>
-  <td class="text-center font-bold font-mono">{power}</td>
+  <td class="font-mono font-bold text-center">{power}</td>
   <td class="text-right">mW</td>
 </tr>
 

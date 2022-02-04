@@ -37,16 +37,16 @@
 </script>
 
 <!-- Somehow mx-auto is centering -->
-<div class="mt-4 shadow border border-gray-300 relative rounded-md w-11/12 mx-auto" style="height:75vh;">
+<div class="relative w-11/12 mx-auto mt-4 border border-gray-300 shadow rounded-md" style="height:75vh;">
   <canvas id="canvas" bind:this={canvas} width={2048} height={128 * $userStore.n} on:wheel={pz.zoomWithWheel} style="background-color: gray;" />
-  <div class="border items-center inline-flex z-40 absolute top-4 right-8 shadow-md rounded-lg bg-white h-10 opacity-90">
-    <span class="mx-4 cursor-pointer font-medium" on:click={() => (showHistogram = !showHistogram)}>
-      <input type="checkbox" class="mr-1 rounded text-blue-500 focus:ring-blue-300" bind:checked={showHistogram} />
+  <div class="absolute z-40 inline-flex items-center h-10 bg-white border rounded-lg shadow-md top-4 right-8 opacity-90">
+    <span class="mx-4 font-medium cursor-pointer" on:click={() => (showHistogram = !showHistogram)}>
+      <input type="checkbox" class="mr-1 text-blue-500 rounded focus:ring-blue-300" bind:checked={showHistogram} />
       Show Histogram
     </span>
   </div>
   {#if showHistogram}
-    <div transition:fade={{ duration: 100, easing: cubicInOut }} id="histogram" class="z-40 absolute bottom-8 right-8 shadow-lg rounded opacity-90 bg-white" style="width:400px; height:300px">
+    <div transition:fade={{ duration: 100, easing: cubicInOut }} id="histogram" class="absolute z-40 bg-white rounded shadow-lg bottom-8 right-8 opacity-90" style="width:400px; height:300px">
       <Hist />
     </div>
   {/if}
