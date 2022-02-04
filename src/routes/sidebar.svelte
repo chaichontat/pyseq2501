@@ -27,9 +27,7 @@
 <div class="drawer drawer-side">
   <label for="main-menu" class="drawer-overlay" />
   <aside class="sidebar flex flex-col overflow-y-auto bg-base-100">
-    <div
-      class="hidden lg:block sticky inset-x-0 top-0 z-40 w-full py-1 transition duration-200 ease-in-out ring-1 ring-gray-900 ring-opacity-5 shadow-sm bg-white"
-    >
+    <div class="hidden lg:block sticky inset-x-0 top-0 z-40 w-full py-1 transition duration-200 ease-in-out ring-1 ring-gray-900 ring-opacity-5 shadow-sm bg-white">
       <Logo />
     </div>
 
@@ -73,8 +71,7 @@
 
 <style lang="postcss">
   .sidebar {
-    @apply text-base-content;
-    @apply border-r border-base-200;
+    @apply border-r border-gray-300;
     width: 26rem;
   }
 

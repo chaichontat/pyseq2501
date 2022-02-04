@@ -3,10 +3,13 @@
   import type { Cmds } from "$src/cmds";
   import { defaults } from "$src/cmds";
   import Setxy from "./setxy.svelte";
-  import { fade } from "svelte/transition";
+  import { createEventDispatcher } from "svelte";
 
-  export let n: number = 1;
-  export let cmd: Cmds = { reagent: "", volume: 0, op: "pump" };
+  export let n: number;
+  export let cmd: Cmds;
+
+  // Can dispatch `delete`.
+  const dispatch = createEventDispatcher();
 
   let channels: [boolean, boolean, boolean, boolean] = [true, true, true, true];
   let laserOnOff: [boolean, boolean] = [true, true];
@@ -27,7 +30,8 @@
 </script>
 
 <li class="relative flex py-4 pl-2 border-y border-gray-300 hover:bg-gray-50 hover:border-blue-400 transition-all ease-in-out hover:shadow-sm">
-  <svg xmlns="http://www.w3.org/2000/svg" class="absolute h-5 w-5 -mt-1 right-2" viewBox="0 0 20 20" fill="currentColor">
+  <!-- Close -->
+  <svg xmlns="http://www.w3.org/2000/svg" class="absolute h-5 w-5 -mt-1 right-2 cursor-pointer" viewBox="0 0 20 20" fill="currentColor" on:click={() => dispatch("delete")}>
     <path
       fill-rule="evenodd"
       d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"

@@ -11,6 +11,15 @@ export type Reagent = {
     wait: number
 }
 
+export const reagentDefault = {
+    name: "",
+    port: 1,
+    v_pull: 100,
+    v_prime: 200,
+    v_push: 2000,
+    wait: 26,
+}
+
 export type Pump = Cmd & {
     reagent: string,
     volume: number,

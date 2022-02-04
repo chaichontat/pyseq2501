@@ -1,35 +1,25 @@
+<script lang="ts" context="module">
+  export type NReagent = { id: number; reagent: Reagent };
+</script>
+
 <script lang="ts">
+  import { dndzone } from "svelte-dnd-action";
+  import { flip } from "svelte/animate";
+  import { fade } from "svelte/transition";
   import type { Reagent } from "$src/cmds";
+  import { reagentDefault } from "$src/cmds";
   import Reagentrow from "./reagentrow.svelte";
-  export let rs: Reagent[] = [...Array(20).keys()].map((i) => ({
-    port: i,
-    name: "",
-    v_pull: 100,
-    v_prime: 200,
-    v_push: 2000,
-    wait: 26,
-  }));
+  import { cubicInOut } from "svelte/easing";
+  export let rs: NReagent[] = [{ id: 0, reagent: { ...reagentDefault } }];
 
-  export let show: boolean[] = [...Array(20).keys()].map((i) => false);
-  show[1] = true;
-
-  function addReagent() {
-    for (const [i, s] of show.entries()) {
-      if (!s && i > 0 && i != 9) {
-        show[i] = true;
-        break;
-      }
-    }
-  }
-
-  // TODO: Draggable
+  let uid: number = 1;
   const flipDurationMs = 200;
   function handleDndConsider(e: CustomEvent<DndEvent>) {
-    rs = e.detail.items as Reagent[];
+    rs = e.detail.items as NReagent[];
   }
 
   function handleDndFinalize(e: CustomEvent<DndEvent>) {
-    rs = e.detail.items as Reagent[];
+    rs = e.detail.items as NReagent[];
   }
 </script>
 
@@ -51,29 +41,40 @@
           </tr>
         </thead>
 
-        <tbody>
-          {#each show as x, i}
-            {#if x}
-              <Reagentrow r={rs[i]} primed={false} />
-            {/if}
+        <tbody use:dndzone={{ items: rs, dropTargetStyle: { outline: "none" }, flipDurationMs }} on:consider={handleDndConsider} on:finalize={handleDndFinalize}>
+          {#each rs as { id, reagent }, i (id)}
+            <tr animate:flip={{ duration: flipDurationMs }} in:fade={{ duration: 150, easing: cubicInOut }} class="bg-white border-b border-gray-300 hover:bg-gray-50">
+              <Reagentrow
+                {reagent}
+                primed={false}
+                on:delete={() => {
+                  rs.splice(i, 1);
+                  rs = rs;
+                }}
+              />
+            </tr>
           {/each}
-          <tr class="cursor-pointer" on:click={addReagent}>
-            <td colspan="8" class="transition-all ease-in-out whitespace-nowrap h-12 border-b mx-0 px-0 py-0 font-medium white-clickable hover:font-semibold hover:bg-gray-50 ">
-              <span class="inline-flex justify-center w-full cursor-pointer align-middle">
-                <svg stroke-width="1.5" class="-ml-2 mr-1 w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Add Reagent
-              </span>
-            </td>
-          </tr>
+
+          <!-- Add reagent -->
+          {#key rs}
+            <tr class="cursor-pointer" on:click={() => (rs = [...rs, { id: uid++, reagent: { ...reagentDefault, port: 1 } }])}>
+              <td colspan="8" class="transition-all ease-in-out whitespace-nowrap h-12 border-b mx-0 px-0 py-0 font-medium white-clickable hover:font-semibold hover:bg-gray-50 ">
+                <span class="inline-flex justify-center w-full cursor-pointer align-middle items-center">
+                  <svg stroke-width="1.75" class="-ml-2 mr-0.5 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Add Reagent
+                </span>
+              </td>
+            </tr>
+          {/key}
         </tbody>
       </table>
     </div>
   </div>
 </div>
 
-<button
+<!-- <button
   type="button"
   class="mt-2 transition-colors shadow-lg shadow-blue-500/50 text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg px-4 py-2.5 text-center inline-flex items-center mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
 >
@@ -81,4 +82,4 @@
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
   </svg>
   Add Reagent
-</button>
+</button> -->

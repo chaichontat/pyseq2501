@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { imgStore, userStore, cmdStore } from "../../store";
+  import { imgStore, userStore, cmdStore } from "$src/store";
 
   let curr: null | number;
   let _curr = "  --";
