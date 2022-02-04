@@ -2,11 +2,12 @@
   import Logo from "$comps/logo.svelte";
   import Connected from "$comps/navbar/connected.svelte";
   import Status from "$comps/navbar/status.svelte";
+  import { userStore as us } from "$src/store";
 
-  export let tab: "manual" | "automatic";
+  // Mode controlled here.
 </script>
 
-<div id="nav" class="inset-x-0 top-0 z-50 w-full transition duration-200 ease-in-out text-base-content sticky ring-1 ring-gray-900 ring-opacity-5 shadow-sm bg-white">
+<div id="nav" class="sticky inset-x-0 top-0 z-50 w-full h-16 bg-white transition duration-200 ease-in-out shadow-sm opacity-95 text-base-content ring-1 ring-gray-900 ring-opacity-5">
   <div class="mx-auto space-x-1 navbar max-w-none">
     <div class="flex-none">
       <label for="main-menu" class="btn btn-square btn-ghost drawer-button lg:hidden">
@@ -23,15 +24,31 @@
     <Status />
 
     <div class="flex-1" />
-    <div class="tabs">
-      <button class="tab tab-lg tab-bordered" on:click={() => (tab = "manual")} class:tab-active={tab === "manual"}>Manual</button>
-      <button class="tab tab-lg tab-bordered" on:click={() => (tab = "automatic")} class:tab-active={tab === "automatic"}>Automatic</button>
-    </div>
 
     <Connected />
+
+    <div class="tabs">
+      <button
+        class="font-medium transition-colors h-14 tab tab-lg tab-bordered"
+        on:click={() => ($us.mode = "manual")}
+        class:tab-active={$us.mode === "manual"}
+        class:text-gray-800={$us.mode === "manual"}
+      >
+        Manual
+      </button>
+      <button
+        class="font-medium transition-colors h-14 tab tab-lg tab-bordered"
+        on:click={() => ($us.mode = "automatic")}
+        class:tab-active={$us.mode === "automatic"}
+        class:text-gray-800={$us.mode === "automatic"}
+      >
+        Automatic
+      </button>
+    </div>
+
     <!---->
-    <div title="Change Theme" class="dropdown dropdown-end">
-      <div tabindex="0" class="m-1 normal-case btn-ghost btn pr-0">
+    <!-- <div title="Change Theme" class="dropdown dropdown-end">
+      <div tabindex="0" class="pr-0 m-1 normal-case btn-ghost btn">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-6 h-6 stroke-current md:mr-2">
           <path
             stroke-linecap="round"
@@ -48,7 +65,7 @@
       <div class="mt-16 overflow-y-auto shadow-2xl top-px dropdown-content h-96 w-52 rounded-b-box bg-base-200 text-base-content">
         <ul class="p-4 menu compact" />
       </div>
-    </div>
+    </div> -->
     <div title="Github ↗︎" class="items-center flex-none pr-4">
       <a aria-label="Github" target="_blank" href="https://github.com/saadeghi/daisyui" rel="noopener" class="normal-case btn btn-ghost drawer-button btn-square">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="inline-block w-6 h-6 fill-current">
