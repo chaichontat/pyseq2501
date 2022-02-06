@@ -92,10 +92,10 @@ class Temp(BaseModel):
     op: Literal["temp"] = "temp"
 
 
-class Wait(BaseModel):
+class Hold(BaseModel):
     time: Seconds
     temp: float
-    op: Literal["wait"] = "wait"
+    op: Literal["hold"] = "hold"
 
 
 class Autofocus(BaseModel):
@@ -106,20 +106,23 @@ class Image(BaseModel):
     xy_start: tuple[float, float]
     xy_end: tuple[float, float]
     z_tilt: int
-    channels: frozenset[Literal[0, 1, 2, 3]] = frozenset((0, 1, 2, 3))
+    channels: tuple[bool, bool, bool, bool] = (True, True, True, True)
+    laser_onoff: tuple[bool, bool] = (True, True)
     lasers: tuple[int, int]
     autofocus: bool = True
     op: Literal["image"] = "image"
 
 
-Command = Annotated[Pump | Prime | Temp | Wait | Autofocus | Image, Field(discriminator="op")]
+class Move(BaseModel):
+    xy: tuple[float, float]
+    op: Literal["move"] = "move"
 
 
 class Experiment(BaseModel):
     name: str
     flowcell: Literal[0, 1]
     reagents: Optional[dict[str, Reagent]] = None
-    ops: Sequence[Command]  # One level tree for simultaneous events.
+    ops: Sequence[Annotated[Pump | Prime | Temp | Hold | Autofocus | Image | Move, Field(discriminator="op")]]
 
     def __init__(self, name: str, flowcell: Literal[0, 1], **data) -> None:
         super().__init__(name=name, flowcell=flowcell, **data)
@@ -155,7 +158,7 @@ class Experiment(BaseModel):
 
     def _combi(self) -> Experiment:
         new = Experiment.parse_obj(super(Experiment, self).dict())
-        reagents = dict()
+        reagents: dict[str, Reagent] = dict()
         for op in new.ops:
             try:
                 if isinstance(r := op.reagent, Reagent):  # type: ignore
@@ -182,11 +185,14 @@ class Experiment(BaseModel):
 if __name__ == "__main__":
     # Flush ports 1, 2, 3 with 250 μL per barrel simultaneously.
     waters = [Reagent(name=f"water{port}", port=port) for port in (1, 2, 3)]
-    ops: list[Command] = [Pump(reagent=water) for water in waters]
+    ops: list[Annotated[Pump | Prime | Temp | Hold | Autofocus | Image | Move, Field(discriminator="op")]] = [
+        Pump(reagent=water) for water in waters
+    ]
     ops.append(Autofocus())
+    ops.append(Temp(temp=25))
 
     experiment = Experiment("wash_all_ports", 0, ops=ops)
     print(yaml.dump(experiment._combi().dict()))
-
+    assert Experiment.parse_raw(experiment._combi().json()) == experiment
     print(Experiment.parse_obj(yaml.safe_load(yaml.dump(experiment.dict()))))
     assert Experiment.parse_obj(yaml.safe_load(yaml.dump(experiment.dict()))) == experiment
