@@ -4,8 +4,8 @@
 
   const dispatch = createEventDispatcher();
 
-  export let reagent: Reagent;
   export let primed: boolean = false;
+  export let reagent: Reagent;
 </script>
 
 <td class="px-6 py-2 font-bold text-gray-900 whitespace-nowrap ">

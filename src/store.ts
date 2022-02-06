@@ -47,11 +47,11 @@ export type UserSettings = {
   mode: "manual" | "automatic",
   reagents: NReagent[],
   cmds: NCmd[],
-  uid: number
+  max_uid: number
 }
 
-export type NReagent = { id: number; reagent: Reagent };
-export type NCmd = { id: number; cmd: Cmds };
+export type NReagent = { uid: number; reagent: Reagent };
+export type NCmd = { uid: number; cmd: Cmds };
 
 export type Hist = {
   counts: number[],
@@ -66,7 +66,7 @@ export type Img = {
 
 let userDefault: UserSettings = {
   n: 16, x: 0, y: 0, z_tilt: 19850, z_obj: 32000, laser_r: 5, laser_g: 5, flowcell: false,
-  mode: "automatic", reagents: [{ id: 0, reagent: { ...reagentDefault } }], cmds: [{ id: 0, cmd: { ...defaults.pump } }], uid: 2
+  mode: "automatic", reagents: [{ uid: 0, reagent: { ...reagentDefault } }], cmds: [{ uid: 0, cmd: { ...defaults.image } }], max_uid: 2
 }
 
 let img: Img = { n: 0, img: "", hist: { counts: [10], bin_edges: [0] } }

@@ -12,22 +12,7 @@
   // Can dispatch `delete`.
   const dispatch = createEventDispatcher();
 
-  let channels: [boolean, boolean, boolean, boolean] = [true, true, true, true];
-  let laserOnOff: [boolean, boolean] = [true, true];
-
-  function genChannelSet(cs: [boolean, boolean, boolean, boolean]): Set<0 | 1 | 2 | 3> {
-    const s: Set<0 | 1 | 2 | 3> = new Set();
-    for (const [i, e] of cs.entries()) {
-      if (e) s.add(i as 0 | 1 | 2 | 3);
-    }
-    return s;
-  }
-
-  $: cmd = { ...defaults[cmd.op], ...cmd }; // Second overwrites first.
-  // @ts-ignore
-  $: cmd.channels = genChannelSet(channels);
-  // @ts-ignore
-  $: cmd.laser_onoff = laserOnOff;
+  // $: cmd = { ...defaults[cmd.op], ...cmd }; // Second overwrites first.
 </script>
 
 <li class="relative flex py-4 pl-2 border-gray-300 transition-all ease-in-out border-y hover:bg-gray-50 hover:border-blue-400 hover:shadow-sm">
@@ -51,7 +36,7 @@
 
   <div class="w-full mr-8">
     <span class="items-center grid grid-cols-3">
-      <div><Dropdown bind:cmd={cmd.op} /></div>
+      <div><Dropdown bind:cmd /></div>
       <div class="text-lg font-medium text-gray-700">Total time: 60 s</div>
     </span>
 
@@ -68,7 +53,7 @@
         <span>
           Reagent
           <select class="text-sm drop">
-            {#each $us.reagents as { id, reagent }}
+            {#each $us.reagents as { uid, reagent }}
               <option>{reagent.name}</option>
             {/each}
           </select>
@@ -83,7 +68,7 @@
         <span>
           Reagent
           <select class="text-sm drop">
-            {#each $us.reagents as { id, reagent }}
+            {#each $us.reagents as { uid, reagent }}
               <option>{reagent.name}</option>
             {/each}
           </select>
@@ -130,36 +115,36 @@
           <div class="grid grid-cols-3">
             <div id="green">
               <span class="mb-1">
-                <input type="checkbox" class="ml-2 mr-1 rounded text-lime-500 focus:ring-lime-300" bind:checked={laserOnOff[0]} />
+                <input type="checkbox" class="ml-2 mr-1 rounded text-lime-500 focus:ring-lime-300" bind:checked={cmd.laser_onoff[0]} />
                 532 nm laser
-                <input type="number" class="w-20 h-8 mr-1 pretty" placeholder="0" bind:value={cmd.lasers[0]} disabled={!laserOnOff[0]} />
+                <input type="number" class="w-20 h-8 mr-1 pretty" placeholder="0" bind:value={cmd.lasers[0]} disabled={cmd.laser_onoff[0]} />
                 mW
               </span>
               <ol>
                 <li class="channel">
-                  <input type="checkbox" class="mr-1 text-green-500 rounded focus:ring-green-300" bind:checked={channels[0]} />
+                  <input type="checkbox" class="mr-1 text-green-500 rounded focus:ring-green-300" bind:checked={cmd.channels[0]} />
                   Channel 0
                 </li>
                 <li class="channel">
-                  <input type="checkbox" class="mr-1 text-orange-600 rounded focus:ring-orange-300" bind:checked={channels[1]} />
+                  <input type="checkbox" class="mr-1 text-orange-600 rounded focus:ring-orange-300" bind:checked={cmd.channels[1]} />
                   Channel 1
                 </li>
               </ol>
             </div>
             <div id="red">
               <span class="mb-1">
-                <input type="checkbox" class="ml-2 mr-1 text-red-600 rounded focus:ring-red-300" bind:checked={laserOnOff[1]} />
+                <input type="checkbox" class="ml-2 mr-1 text-red-600 rounded focus:ring-red-300" bind:checked={cmd.laser_onoff[1]} />
                 660 nm laser
-                <input type="number" class="w-20 h-8 mr-1 pretty" placeholder="0" bind:value={cmd.lasers[1]} disabled={!laserOnOff[1]} />
+                <input type="number" class="w-20 h-8 mr-1 pretty" placeholder="0" bind:value={cmd.lasers[1]} disabled={cmd.laser_onoff[1]} />
                 mW
               </span>
               <ol>
                 <li class="channel">
-                  <input type="checkbox" class="mr-1 rounded text-rose-700 focus:ring-rose-500" bind:checked={channels[2]} />
+                  <input type="checkbox" class="mr-1 rounded text-rose-700 focus:ring-rose-500" bind:checked={cmd.channels[2]} />
                   Channel 2
                 </li>
                 <li class="channel">
-                  <input type="checkbox" class="mr-1 rounded text-amber-900 focus:ring-amber-700" bind:checked={channels[3]} />
+                  <input type="checkbox" class="mr-1 rounded text-amber-900 focus:ring-amber-700" bind:checked={cmd.channels[3]} />
                   Channel 3
                 </li>
               </ol>

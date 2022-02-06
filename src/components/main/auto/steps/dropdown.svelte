@@ -1,7 +1,8 @@
 <script lang="ts">
-  import type { Ops } from "$src/cmds";
+  import type { Cmd, Ops } from "$src/cmds";
+  import { defaults } from "$src/cmds";
 
-  export let cmd: Ops = "pump";
+  export let cmd: Cmd = { ...defaults.pump };
   let showing: boolean = false;
 
   const namemap = {
@@ -15,7 +16,7 @@
 
   function handleClick(target: Ops) {
     return () => {
-      cmd = target;
+      cmd = { ...defaults[target] };
       showing = false;
     };
   }
@@ -32,7 +33,7 @@
       on:click={() => (showing = !showing)}
       on:blur={() => (showing = false)}
     >
-      <b>{namemap[cmd]}</b>
+      <b>{namemap[cmd.op]}</b>
 
       <!-- Heroicon name: solid/chevron-down -->
       <svg class="absolute right-0 self-center w-5 h-5 ml-2 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">

@@ -37,10 +37,10 @@
         </thead>
 
         <tbody use:dndzone={{ items: $us.reagents, dropTargetStyle: { outline: "none" }, flipDurationMs }} on:consider={handleDndConsider} on:finalize={handleDndFinalize}>
-          {#each $us.reagents as { id, reagent }, i (id)}
+          {#each $us.reagents as { uid, reagent }, i (uid)}
             <tr animate:flip={{ duration: flipDurationMs }} in:fade={{ duration: 150, easing: cubicInOut }} class="bg-white border-b border-gray-300 hover:bg-gray-50">
               <Reagentrow
-                {reagent}
+                bind:reagent
                 primed={false}
                 on:delete={() => {
                   $us.reagents = $us.reagents.filter((v, j) => i != j);
@@ -51,7 +51,7 @@
 
           <!-- Add reagent -->
 
-          <tr class="cursor-pointer" on:click={() => ($us.reagents = [...$us.reagents, { id: $us.uid++, reagent: { ...reagentDefault, port: 1 } }])}>
+          <tr class="cursor-pointer" on:click={() => ($us.reagents = [...$us.reagents, { uid: $us.max_uid++, reagent: { ...reagentDefault, port: 1 } }])}>
             <td colspan="8" class="h-12 px-0 py-0 mx-0 font-medium border-b transition-all ease-in-out whitespace-nowrap white-clickable hover:font-semibold hover:bg-gray-50 ">
               <span class="inline-flex items-center justify-center w-full align-middle cursor-pointer">
                 <svg stroke-width="1.75" class="-ml-2 mr-0.5 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">

@@ -53,7 +53,7 @@ export type Image = Cmd & {
     xy_start: [number, number],
     xy_end: [number, number],
     z_tilt: number,
-    channels: Set<0 | 1 | 2 | 3>,
+    channels: [boolean, boolean, boolean, boolean]
     laser_onoff: [boolean, boolean],
     lasers: [number, number],
     autofocus: boolean,
@@ -69,5 +69,9 @@ export const defaults: { [key: string]: Cmds } = {
     "temp": { temp: 25, op: "temp" },
     "hold": { time: 0, temp: 25, op: "hold" },
     "move": { xy: [0, 0], op: "move" },
-    "image": { xy_start: [0, 0], xy_end: [0, 0], z_tilt: 20000, channels: new Set([0, 1, 2, 3]), laser_onoff: [true, true], lasers: [50, 50], autofocus: true, op: "image" }
+    "image": {
+        xy_start: [0, 0], xy_end: [0, 0], z_tilt: 20000,
+        channels: [true, true, true, true], laser_onoff: [true, true],
+        lasers: [50, 50], autofocus: true, op: "image"
+    }
 }

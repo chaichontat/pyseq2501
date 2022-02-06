@@ -6,7 +6,7 @@ import os
 from asyncio import Queue
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
-from typing import Literal, NoReturn, Optional
+from typing import Annotated, Literal, NoReturn, Optional
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -15,10 +15,11 @@ import seaborn as sns
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, root_validator, validator
 from rich.logging import RichHandler
 from websockets.exceptions import ConnectionClosedOK
 
+from pyseq2.experiment import *
 from pyseq2.imager import Imager, Position
 from pyseq2.utils.ports import get_ports
 
@@ -190,6 +191,16 @@ async def image_endpoint(websocket: WebSocket) -> NoReturn:
             ...
 
 
+class NReagent(BaseModel):
+    uid: str | int
+    reagent: Reagent | str
+
+
+class NCmd(BaseModel):
+    uid: str | int
+    cmd: Annotated[Pump | Prime | Temp | Hold | Autofocus | Image | Move, Field(discriminator="op")]
+
+
 class UserSettings(BaseModel):
     """None happens when the user left the input empty."""
 
@@ -201,9 +212,26 @@ class UserSettings(BaseModel):
     laser_r: int | None
     laser_g: int | None
     flowcell: bool
+    mode: Literal["automatic", "manual"]
+    reagents: list[NReagent]
+    cmds: list[NCmd]
+    max_uid: int  # Counter
 
 
-USERSETTINGS = UserSettings(n=16, x=0, y=0, z_tilt=19850, z_obj=32000, laser_r=5, laser_g=5, flowcell=False)
+USERSETTINGS = UserSettings(
+    n=16,
+    x=0,
+    y=0,
+    z_tilt=19850,
+    z_obj=32000,
+    laser_r=5,
+    laser_g=5,
+    flowcell=False,
+    mode="automatic",
+    reagents=[NReagent(uid=0, reagent=Reagent(name="", port=1))],
+    cmds=[NCmd(uid=0, cmd=Pump(reagent=""))],
+    max_uid=2,
+)
 
 
 @app.websocket("/user")
@@ -214,8 +242,9 @@ async def user_endpoint(websocket: WebSocket) -> NoReturn:
             await websocket.accept()
             await websocket.send_json(USERSETTINGS.json())
             while True:
-                USERSETTINGS = UserSettings.parse_raw(await websocket.receive_text())
-                logger.info(USERSETTINGS)
+                ret = await websocket.receive_json()
+                logger.info(ret)
+                USERSETTINGS = UserSettings.parse_obj(ret)
         except (WebSocketDisconnect, ConnectionClosedOK):
             ...
 
@@ -256,7 +285,7 @@ async def poll(websocket: WebSocket) -> NoReturn:
                         msg="Imaging",
                     ).json()
                 )
-                logger.info(u)
+                # logger.info(u)
                 await asyncio.sleep(1)
         except (WebSocketDisconnect, ConnectionClosedOK):
             ...
