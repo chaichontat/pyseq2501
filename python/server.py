@@ -201,6 +201,12 @@ class NCmd(BaseModel):
     cmd: Annotated[Pump | Prime | Temp | Hold | Autofocus | Image | Move, Field(discriminator="op")]
 
 
+class Recipe(BaseModel):
+    reagents: list[NReagent]
+    cmds: list[NCmd]
+    max_uid: int  # Counter
+
+
 class UserSettings(BaseModel):
     """None happens when the user left the input empty."""
 
@@ -212,10 +218,15 @@ class UserSettings(BaseModel):
     laser_r: int | None
     laser_g: int | None
     flowcell: bool
-    mode: Literal["automatic", "manual"]
-    reagents: list[NReagent]
-    cmds: list[NCmd]
-    max_uid: int  # Counter
+    mode: Literal["automatic", "manual", "editingA", "editingB"]
+    recipes: tuple[Recipe | None, Recipe | None]
+
+
+recipe_default = Recipe(
+    reagents=[NReagent(uid=0, reagent=Reagent(name="", port=1))],
+    cmds=[NCmd(uid=0, cmd=Pump(reagent=""))],
+    max_uid=2,
+)
 
 
 USERSETTINGS = UserSettings(
@@ -228,9 +239,7 @@ USERSETTINGS = UserSettings(
     laser_g=5,
     flowcell=False,
     mode="automatic",
-    reagents=[NReagent(uid=0, reagent=Reagent(name="", port=1))],
-    cmds=[NCmd(uid=0, cmd=Pump(reagent=""))],
-    max_uid=2,
+    recipes=(recipe_default.copy(), recipe_default.copy()),
 )
 
 

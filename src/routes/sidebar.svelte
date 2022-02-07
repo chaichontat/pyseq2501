@@ -27,7 +27,7 @@
 <div class="drawer drawer-side">
   <label for="main-menu" class="drawer-overlay" />
   <aside class="flex flex-col overflow-y-auto sidebar bg-base-100">
-    <div class="sticky inset-x-0 top-0 z-40 hidden w-full h-16 bg-white transition duration-200 ease-in-out shadow-sm lg:block ring-1 ring-gray-900 ring-opacity-5">
+    <div class="sticky inset-x-0 top-0 z-40 hidden w-full h-16 transition duration-200 ease-in-out bg-white shadow-sm lg:block ring-1 ring-gray-900 ring-opacity-5">
       <Logo />
     </div>
 

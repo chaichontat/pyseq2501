@@ -8,13 +8,15 @@
   import { fade } from "svelte/transition";
   import Reagentrow from "./reagentrow.svelte";
 
+  export let fc: 0 | 1;
+
   const flipDurationMs = 200;
   function handleDndConsider(e: CustomEvent<DndEvent>) {
-    $us.reagents = e.detail.items as NReagent[];
+    $us.recipes[fc].reagents = e.detail.items as NReagent[];
   }
 
   function handleDndFinalize(e: CustomEvent<DndEvent>) {
-    $us.reagents = e.detail.items as NReagent[];
+    $us.recipes[fc].reagents = e.detail.items as NReagent[];
   }
 </script>
 
@@ -36,14 +38,14 @@
           </tr>
         </thead>
 
-        <tbody use:dndzone={{ items: $us.reagents, dropTargetStyle: { outline: "none" }, flipDurationMs }} on:consider={handleDndConsider} on:finalize={handleDndFinalize}>
-          {#each $us.reagents as { uid, reagent }, i (uid)}
+        <tbody use:dndzone={{ items: $us.recipes[fc].reagents, dropTargetStyle: { outline: "none" }, flipDurationMs }} on:consider={handleDndConsider} on:finalize={handleDndFinalize}>
+          {#each $us.recipes[fc].reagents as { uid, reagent }, i (uid)}
             <tr animate:flip={{ duration: flipDurationMs }} in:fade={{ duration: 150, easing: cubicInOut }} class="bg-white border-b border-gray-300 hover:bg-gray-50">
               <Reagentrow
                 bind:reagent
                 primed={false}
                 on:delete={() => {
-                  $us.reagents = $us.reagents.filter((v, j) => i != j);
+                  $us.recipes[fc].reagents = $us.recipes[fc].reagents.filter((v, j) => i != j);
                 }}
               />
             </tr>
@@ -51,8 +53,8 @@
 
           <!-- Add reagent -->
 
-          <tr class="cursor-pointer" on:click={() => ($us.reagents = [...$us.reagents, { uid: $us.max_uid++, reagent: { ...reagentDefault, port: 1 } }])}>
-            <td colspan="8" class="h-12 px-0 py-0 mx-0 font-medium border-b transition-all ease-in-out whitespace-nowrap white-clickable hover:font-semibold hover:bg-gray-50 ">
+          <tr class="cursor-pointer" on:click={() => ($us.recipes[fc].reagents = [...$us.recipes[fc].reagents, { uid: $us.recipes[fc].max_uid++, reagent: { ...reagentDefault, port: 1 } }])}>
+            <td colspan="8" class="h-12 px-0 py-0 mx-0 font-medium transition-all ease-in-out border-b whitespace-nowrap white-clickable hover:font-semibold hover:bg-gray-50 ">
               <span class="inline-flex items-center justify-center w-full align-middle cursor-pointer">
                 <svg stroke-width="1.75" class="-ml-2 mr-0.5 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />

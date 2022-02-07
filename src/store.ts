@@ -35,6 +35,12 @@ let status: Status = {
   msg: "",
 };
 
+export type Recipe = {
+  reagents: NReagent[],
+  cmds: NCmd[],
+  max_uid: number
+}
+
 export type UserSettings = {
   n: number;
   x: number
@@ -44,10 +50,8 @@ export type UserSettings = {
   laser_r: number,
   laser_g: number,
   flowcell: boolean,
-  mode: "manual" | "automatic",
-  reagents: NReagent[],
-  cmds: NCmd[],
-  max_uid: number
+  mode: "manual" | "automatic" | "editingA" | "editingB",
+  recipes: [Recipe | null, Recipe | null]
 }
 
 export type NReagent = { uid: number; reagent: Reagent };
@@ -64,9 +68,13 @@ export type Img = {
   hist: Hist
 }
 
-let userDefault: UserSettings = {
+export const recipeDefault: Recipe = {
+  reagents: [{ uid: 0, reagent: { ...reagentDefault } }], cmds: [{ uid: 0, cmd: { ...defaults.image } }], max_uid: 2
+}
+
+const userDefault: UserSettings = {
   n: 16, x: 0, y: 0, z_tilt: 19850, z_obj: 32000, laser_r: 5, laser_g: 5, flowcell: false,
-  mode: "automatic", reagents: [{ uid: 0, reagent: { ...reagentDefault } }], cmds: [{ uid: 0, cmd: { ...defaults.image } }], max_uid: 2
+  mode: "automatic", recipes: [{ ...recipeDefault }, { ...recipeDefault }]
 }
 
 let img: Img = { n: 0, img: "", hist: { counts: [10], bin_edges: [0] } }

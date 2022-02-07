@@ -2,7 +2,7 @@
   export let z: [number, number, number] = [-1, -1, -1];
   export let user_z: number | [number, number, number] = [-1, -1, -1];
 
-  let editable = [false, false, false];
+  let editing = [false, false, false];
 
   import Pencil from "../../svgs/pencil.svelte";
   import Editable from "./editable.svelte";
@@ -10,38 +10,23 @@
 
 <div class="dot left top-8">
   <div>
-    Tilt 3<Editable
-      bind:editable={editable[2]}
-      value={z[2]}
-      clDisp="absolute right-8 leading-6 font-mono font-medium"
-      clInp="absolute text-base top-5 right-6 input input-smaller w-16 text-right"
-    />
+    Tilt 3<Editable bind:editing={editing[2]} value={z[2]} clDisp="absolute right-8 leading-6 font-mono font-medium" clInp="absolute text-base top-5 right-6 input input-smaller w-16 text-right" />
   </div>
-  <Pencil class="ml-2" on:click={() => (editable[2] = true)} />
+  <Pencil class="ml-2" on:click={() => (editing[2] = true)} />
 </div>
 
 <span class="dot left" style="top: 19rem;">
   <div>
-    Tilt 2<Editable
-      bind:editable={editable[1]}
-      value={z[1]}
-      clDisp="absolute right-8 leading-6 font-mono font-medium"
-      clInp="absolute text-base top-5 right-6 input input-smaller w-16 text-right"
-    />
+    Tilt 2<Editable bind:editing={editing[1]} value={z[1]} clDisp="absolute right-8 leading-6 font-mono font-medium" clInp="absolute text-base top-5 right-6 input input-smaller w-16 text-right" />
   </div>
-  <Pencil class="ml-2" on:click={() => (editable[1] = true)} />
+  <Pencil class="ml-2" on:click={() => (editing[1] = true)} />
 </span>
 
 <span class="dot right">
-  <Pencil class="mr-2" on:click={() => (editable[0] = true)} />
+  <Pencil class="mr-2" on:click={() => (editing[0] = true)} />
   <div>
     Tilt 1
-    <Editable
-      bind:editable={editable[0]}
-      value={z[0]}
-      clDisp="absolute left-6 leading-6 font-mono font-medium"
-      clInp="absolute top-5 left-4 text-base input input-smaller w-16"
-    />
+    <Editable bind:editing={editing[0]} value={z[0]} clDisp="absolute left-6 leading-6 font-mono font-medium" clInp="absolute top-5 left-4 text-base input input-smaller w-16" />
   </div>
 </span>
 

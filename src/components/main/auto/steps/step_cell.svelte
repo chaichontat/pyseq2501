@@ -6,6 +6,7 @@
   import Setxy from "./setxy.svelte";
   import { createEventDispatcher } from "svelte";
 
+  export let fc: 0 | 1;
   export let n: number;
   export let cmd: Cmds;
 
@@ -15,7 +16,7 @@
   // $: cmd = { ...defaults[cmd.op], ...cmd }; // Second overwrites first.
 </script>
 
-<li class="relative flex py-4 pl-2 border-gray-300 transition-all ease-in-out border-y hover:bg-gray-50 hover:border-blue-400 hover:shadow-sm">
+<li class="relative flex py-4 pl-2 transition-all ease-in-out border-gray-300 border-y hover:bg-gray-50 hover:border-blue-400 hover:shadow-sm">
   <!-- Close -->
   <svg xmlns="http://www.w3.org/2000/svg" class="absolute w-5 h-5 -mt-1 cursor-pointer right-2" viewBox="0 0 20 20" fill="currentColor" on:click={() => dispatch("delete")}>
     <path
@@ -35,12 +36,12 @@
   </div>
 
   <div class="w-full mr-8">
-    <span class="items-center grid grid-cols-3">
+    <span class="grid items-center grid-cols-3">
       <div><Dropdown bind:cmd /></div>
       <div class="text-lg font-medium text-gray-700">Total time: 60 s</div>
     </span>
 
-    <div class="mt-2 font-medium grid grid-cols-4 divide-x clump gap-x-4">
+    <div class="grid grid-cols-4 mt-2 font-medium divide-x clump gap-x-4">
       <!-- Hold -->
       {#if cmd.op === "hold"}
         <span>
@@ -53,7 +54,7 @@
         <span>
           Reagent
           <select class="text-sm drop">
-            {#each $us.reagents as { uid, reagent }}
+            {#each $us.recipes[fc].reagents as { uid, reagent }}
               <option>{reagent.name}</option>
             {/each}
           </select>
@@ -68,7 +69,7 @@
         <span>
           Reagent
           <select class="text-sm drop">
-            {#each $us.reagents as { uid, reagent }}
+            {#each $us.recipes[fc].reagents as { uid, reagent }}
               <option>{reagent.name}</option>
             {/each}
           </select>
@@ -87,30 +88,37 @@
 
         <!-- Move -->
       {:else if cmd.op === "move"}
-        <div class="mt-4 col-span-4">
+        <div class="col-span-4 mt-4">
           <Setxy bind:xy={cmd.xy} />
         </div>
         <!-- Image -->
       {:else if cmd.op === "image"}
         <span>
           Z <input type="number" class="w-24 mx-2 pretty" placeholder="2000" bind:value={cmd.z_tilt} />
+          <button type="button" class="px-4 py-1 text-sm font-medium text-gray-900 rounded-lg white-button">
+            <span>Move Z</span>
+          </button>
         </span>
         <span>
           Autofocus <input type="checkbox" class="ml-2 rounded" bind:value={cmd.autofocus} />
+          <input type="number" class="w-24 mx-2 pretty" placeholder="20000" />
+          <button type="button" class="px-4 py-1 text-sm font-medium text-gray-900 rounded-lg white-button">
+            <span>Autofocus Now</span>
+          </button>
         </span>
 
-        <div class="pl-4 mt-4 ml-2 col-span-4">
+        <div class="col-span-4 pl-4 mt-4 ml-2">
           <p class="mb-2 text-lg gap-x-8">Lower right</p>
           <Setxy bind:xy={cmd.xy_start} />
         </div>
 
-        <div class="pl-4 mt-4 ml-2 col-span-4">
+        <div class="col-span-4 pl-4 mt-4 ml-2">
           <p class="mb-2 text-lg">Upper left</p>
           <Setxy bind:xy={cmd.xy_end} />
         </div>
 
         <!-- Channels -->
-        <div class="pl-4 mt-4 ml-2 col-span-4">
+        <div class="col-span-4 pl-4 mt-4 ml-2">
           <p class="mb-2 text-lg">Channel(s)</p>
           <div class="grid grid-cols-3">
             <div id="green">

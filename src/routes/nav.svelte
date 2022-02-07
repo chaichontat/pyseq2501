@@ -7,7 +7,7 @@
   // Mode controlled here.
 </script>
 
-<div id="nav" class="sticky inset-x-0 top-0 z-50 w-full h-16 bg-white transition duration-200 ease-in-out shadow-sm opacity-95 text-base-content ring-1 ring-gray-900 ring-opacity-5">
+<div id="nav" class="sticky inset-x-0 top-0 z-50 w-full h-16 transition duration-200 ease-in-out bg-white shadow-sm opacity-95 text-base-content ring-1 ring-gray-900 ring-opacity-5">
   <div class="mx-auto space-x-1 navbar max-w-none">
     <div class="flex-none">
       <label for="main-menu" class="btn btn-square btn-ghost drawer-button lg:hidden">
@@ -39,8 +39,8 @@
       <button
         class="font-medium transition-colors h-14 tab tab-lg tab-bordered"
         on:click={() => ($us.mode = "automatic")}
-        class:tab-active={$us.mode === "automatic"}
-        class:text-gray-800={$us.mode === "automatic"}
+        class:tab-active={$us.mode !== "manual"}
+        class:text-gray-800={$us.mode !== "manual"}
       >
         Automatic
       </button>

@@ -3,6 +3,7 @@
   export let color: string;
   export let userPower: number;
   export let power: number;
+  import { userStore as us } from "$src/store";
 
   function update() {
     // Update only when focus lost.
@@ -35,6 +36,7 @@
       style="margin: 0 auto;"
       bind:value={pow}
       on:blur={update}
+      disabled={$us.mode === "automatic"}
     />
   </td>
   <td class="font-mono font-bold text-center">{power}</td>

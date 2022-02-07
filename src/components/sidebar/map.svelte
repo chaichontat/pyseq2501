@@ -3,7 +3,7 @@
   import BigZ from "./slide/big_z.svelte";
   import Slide from "./slide/slide.svelte";
   import XYInput from "./slide/xy_input.svelte";
-  import { statusStore as store, userStore } from "$src/store";
+  import { statusStore as store, userStore as us } from "$src/store";
   import { raw_to_local } from "./coords";
 
   const focus = (el) => {
@@ -12,7 +12,7 @@
 
   let xy: XY = { x: 0, y: 0 };
   $: {
-    xy = raw_to_local($userStore.flowcell, $store.x, $store.y);
+    xy = raw_to_local($us.flowcell, $store.x, $store.y);
   }
 
   // let moving = false;
@@ -35,9 +35,15 @@
 
 <li>
   <!-- Toggle -->
-  <span class="justify-center mb-4 align-middle monomedium -translate-y-8">
+  <span class="justify-center mb-4 align-middle -translate-y-8 monomedium">
     <div class="text-base">A</div>
-    <input type="checkbox" bind:checked={$userStore.flowcell} class="self-center mx-1 toggle toggle-md toggl-dark" />
+    <input
+      type="checkbox"
+      bind:checked={$us.flowcell}
+      class="self-center mx-1 toggle toggle-md toggl-dark"
+      class:opacity-40={$us.mode.startsWith("editing")}
+      disabled={$us.mode.startsWith("editing")}
+    />
     <div class="text-base">B</div>
   </span>
   <!-- Need this since using negative margins on the checkbox did not move the clickable area. -->
@@ -49,39 +55,15 @@
     class="z-50 shadow-xl indicator-item indicator-center indicator-middle badge badge-primary draggable opacity-70"
   /> -->
 
-  <Slide name={$userStore.flowcell ? "B" : "A"} x={xy.x} y={xy.y} z_tilt={$store.z_tilt} />
+  <Slide name={$us.flowcell ? "B" : "A"} x={xy.x} y={xy.y} z_tilt={$store.z_tilt} />
 
   <!-- Z Objective -->
   <section class="flex self-center flex-grow mt-4 space-x-8">
-    <BigZ
-      name="All Tilt"
-      value={`${$store.z_tilt.reduce((a, b) => a + b) / $store.z_tilt.length} ± ${(Math.max(...$store.z_tilt) - Math.min(...$store.z_tilt)) / 2}`}
-    />
-    <BigZ name="Objective Z" value={$store.z_obj} bind:userValue={$userStore.z_obj} />
+    <BigZ name="All Tilt" value={`${$store.z_tilt.reduce((a, b) => a + b) / $store.z_tilt.length} ± ${(Math.max(...$store.z_tilt) - Math.min(...$store.z_tilt)) / 2}`} />
+    <BigZ name="Objective Z" value={$store.z_obj} bind:userValue={$us.z_obj} />
   </section>
 
   <XYInput {xy} />
-
-  <!-- Eject button -->
-  <button class="self-center w-16 mt-2 btn btn-secondary btn-sm">
-    <svg
-      class="w-4 h-4 fill-current "
-      version="1.1"
-      viewBox="0 0 300.02 300.02"
-      style="enable-background:new 0 0 300.02 300.02; border-top-right-radius:initial; border-bottom-right-radius:initial;"
-      xml:space="preserve"
-    >
-      <path
-        d="M285,260.01H15c-8.284,0-15,6.716-15,15s6.716,15,15,15h270c8.284,0,15-6.716,15-15
-            S293.284,260.01,285,260.01z"
-      />
-      <path
-        d="M15,210.01h270c0.006-0.001,0.013-0.001,0.02,0c8.284,0,15-6.716,15-15c0-3.774-1.394-7.223-3.695-9.859
-            L161.747,15.682c-2.845-3.583-7.171-5.672-11.747-5.672c-4.576,0-8.901,2.088-11.747,5.672l-135,170
-            c-3.58,4.508-4.264,10.667-1.761,15.85C3.995,206.716,9.244,210.01,15,210.01z M150,49.13l103.934,130.88H46.066L150,49.13z"
-      />
-    </svg>
-  </button>
 </li>
 
 <!-- <svelte:window on:mouseup={onMouseUp} on:mousemove={onMouseMove} /> -->

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
 
-  export let editable: boolean = false;
+  export let editing: boolean = false;
   export let value: number | string = 0;
   export let userValue: number = 0;
   export let clInp: string = "text-center self-center";
@@ -25,23 +25,15 @@
   }
 
   function focuslost() {
-    editable = false;
+    editing = false;
     dispatch("set", userValue);
   }
 </script>
 
-{#if editable}
-  <input
-    type="number"
-    class={clInp}
-    bind:value={userValue}
-    on:keypress={handleInput}
-    on:blur={focuslost}
-    bind:this={elem}
-    use:focus
-  />
+{#if editing}
+  <input type="number" class={clInp} bind:value={userValue} on:keypress={handleInput} on:blur={focuslost} bind:this={elem} use:focus />
 {:else}
-  <div class={clDisp} on:dblclick={() => (editable = true)}>
+  <div class={clDisp} on:dblclick={() => (editing = true)}>
     {value}
   </div>
 {/if}
