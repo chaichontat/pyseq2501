@@ -14,6 +14,7 @@ import numpy as np
 import seaborn as sns
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, PlainTextResponse, Response
 from PIL import Image
 from pydantic import BaseModel, Field, root_validator, validator
 from rich.logging import RichHandler
@@ -193,7 +194,7 @@ async def image_endpoint(websocket: WebSocket) -> NoReturn:
 
 class NReagent(BaseModel):
     uid: str | int
-    reagent: Reagent | str
+    reagent: Reagent
 
 
 class NCmd(BaseModel):
@@ -202,9 +203,19 @@ class NCmd(BaseModel):
 
 
 class Recipe(BaseModel):
+    name: str
+    flowcell: Literal[0, 1]
     reagents: list[NReagent]
     cmds: list[NCmd]
-    max_uid: int  # Counter
+
+    def to_experiment(self) -> Experiment:
+        print(self.dict())
+        return Experiment(
+            name=self.name,
+            flowcell=self.flowcell,
+            reagents={r.reagent.name: r.reagent for r in self.reagents},
+            cmds=[c.cmd for c in self.cmds],
+        )
 
 
 class UserSettings(BaseModel):
@@ -218,14 +229,16 @@ class UserSettings(BaseModel):
     laser_r: int | None
     laser_g: int | None
     flowcell: bool
+    max_uid: int
     mode: Literal["automatic", "manual", "editingA", "editingB"]
     recipes: tuple[Recipe | None, Recipe | None]
 
 
 recipe_default = Recipe(
-    reagents=[NReagent(uid=0, reagent=Reagent(name="", port=1))],
-    cmds=[NCmd(uid=0, cmd=Pump(reagent=""))],
-    max_uid=2,
+    name="default",
+    flowcell=0,
+    reagents=[NReagent(uid=0, reagent=Reagent(name="water", port=1))],
+    cmds=[NCmd(uid=0, cmd=Pump(reagent="water"))],
 )
 
 
@@ -238,6 +251,7 @@ USERSETTINGS = UserSettings(
     laser_r=5,
     laser_g=5,
     flowcell=False,
+    max_uid=2,
     mode="automatic",
     recipes=(recipe_default.copy(), recipe_default.copy()),
 )
@@ -256,6 +270,14 @@ async def user_endpoint(websocket: WebSocket) -> NoReturn:
                 USERSETTINGS = UserSettings.parse_obj(ret)
         except (WebSocketDisconnect, ConnectionClosedOK):
             ...
+
+
+@app.get("/download")
+async def download():
+    assert (r := USERSETTINGS.recipes[0]) is not None
+    return Response(
+        yaml.dump(recipe_default.to_experiment().dict(), sort_keys=False), media_type="application/yaml"
+    )
 
 
 class Status(BaseModel):

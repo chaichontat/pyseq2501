@@ -55,7 +55,7 @@
           Reagent
           <select class="text-sm drop">
             {#each $us.recipes[fc].reagents as { uid, reagent }}
-              <option>{reagent.name}</option>
+              <option>{`${reagent.port} - ${reagent.name}`}</option>
             {/each}
           </select>
         </span>
@@ -70,7 +70,7 @@
           Reagent
           <select class="text-sm drop">
             {#each $us.recipes[fc].reagents as { uid, reagent }}
-              <option>{reagent.name}</option>
+              <option>{`${reagent.port} - ${reagent.name}`}</option>
             {/each}
           </select>
         </span>

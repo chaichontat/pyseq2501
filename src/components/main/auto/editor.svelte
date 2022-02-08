@@ -7,8 +7,7 @@
   import { recipeDefault } from "$src/store";
   import ProgressAuto from "./progress_auto.svelte";
 
-  export let flowcell: "A" | "B";
-  const idx = flowcell === "B" ? 1 : 0;
+  export let fc: 0 | 1;
 </script>
 
 <!-- New or Upload -->
@@ -19,7 +18,7 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
       </svg>
     </button>
-    <p class="inline-block my-4 text-3xl font-extrabold tracking-tight text-gray-700 dark:text-white">Flowcell {flowcell}</p>
+    <p class="inline-block my-4 text-3xl font-extrabold tracking-tight text-gray-700 dark:text-white">Flowcell {fc ? "B" : "A"}</p>
   </span>
   <div class="flex-grow" />
   <button type="button" class="h-10 px-4 py-1 text-base font-medium rounded-lg white-button">
@@ -29,13 +28,13 @@
     Download
   </button>
 </div>
-<!-- <ProgressAuto fc={idx} /> -->
+<!-- <ProgressAuto fc={fc} /> -->
 
-{#if $us.recipes[idx]}
+{#if $us.recipes[fc]}
   <p class="pb-3 mt-8 text-2xl font-bold text-gray-600 border-b">Details</p>
   <Details />
-  <Reagents fc={idx} />
-  <Steps fc={idx} />
+  <Reagents {fc} />
+  <Steps {fc} />
   <p class="mt-6 mb-1 text-2xl font-bold text-gray-600">Preview</p>
   <Preview />
 
@@ -43,7 +42,7 @@
 {:else}
   <div class="flex items-center justify-center w-full h-[50vh]">
     <div class="inline-flex text-2xl rounded-md shadow-sm" role="group">
-      <button type="button" class="px-8 py-6 font-medium rounded-l-lg white-button" on:click={() => ($us.recipes[idx] = { ...recipeDefault })}>
+      <button type="button" class="px-8 py-6 font-medium rounded-l-lg white-button" on:click={() => ($us.recipes[fc] = { ...recipeDefault })}>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>

@@ -14,13 +14,13 @@
 {#if $us.mode === "automatic"}
   <p class="inline-block my-4 text-3xl font-extrabold tracking-tight text-gray-700 dark:text-white">Flowcells</p>
   <div class="flex max-w-screen-lg space-x-6">
-    <FlowcellCard name="A" />
-    <FlowcellCard name="B" />
+    <FlowcellCard fc={0} />
+    <FlowcellCard fc={1} />
   </div>
 {:else if $us.mode === "editingA"}
-  <Editor flowcell="A" />
+  <Editor fc={0} />
 {:else if $us.mode === "editingB"}
-  <Editor flowcell="B" />
+  <Editor fc={1} />
 {:else}
   YOU SHOULD NOT SEE THIS
 {/if}

@@ -1,18 +1,18 @@
 <script lang="ts">
-  export let name: "A" | "B";
+  export let fc: 0 | 1;
   import { userStore as us } from "$src/store";
 
   function handleEditClick(): () => void {
     return () => {
-      $us.mode = `editing${name}`;
-      $us.flowcell = name === "B";
+      $us.mode = fc === 0 ? "editingA" : "editingB";
+      $us.flowcell = fc === 1;
     };
   }
 </script>
 
-<div class="w-4/12 max-w-md p-6 space-y-2 bg-white border border-gray-200 rounded-lg shadow-md dark:bg-gray-800 dark:border-gray-700">
+<div class="w-4/12 max-w-md p-6 space-y-2 bg-white border border-gray-200 rounded-lg shadow shadow-md dark:bg-gray-800 dark:border-gray-700">
   <div class="flex">
-    <p class="mb-4 text-6xl font-bold text-gray-600">{name}</p>
+    <p class="mb-4 text-6xl font-bold text-gray-600">{fc ? "B" : "A"}</p>
     <!-- Spacer -->
     <div class="grow" />
     <button type="button" class="px-4 py-2 font-medium rounded-lg max-h-10 white-button" on:click={handleEditClick()}>
@@ -31,6 +31,6 @@
   </div>
 
   <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-    <div class="bg-blue-600 h-2.5 rounded-full" style="width: 45%" />
+    <div class="bg-blue-600 h-2.5 rounded-full" class:bg-indigo-600={fc === 1} style="width: 45%" />
   </div>
 </div>

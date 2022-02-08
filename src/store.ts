@@ -36,9 +36,10 @@ let status: Status = {
 };
 
 export type Recipe = {
+  name: string,
+  flowcell: 0 | 1,
   reagents: NReagent[],
   cmds: NCmd[],
-  max_uid: number
 }
 
 export type UserSettings = {
@@ -50,6 +51,7 @@ export type UserSettings = {
   laser_r: number,
   laser_g: number,
   flowcell: boolean,
+  max_uid: 2,
   mode: "manual" | "automatic" | "editingA" | "editingB",
   recipes: [Recipe | null, Recipe | null]
 }
@@ -69,11 +71,14 @@ export type Img = {
 }
 
 export const recipeDefault: Recipe = {
-  reagents: [{ uid: 0, reagent: { ...reagentDefault } }], cmds: [{ uid: 0, cmd: { ...defaults.image } }], max_uid: 2
+  name: "",
+  flowcell: 0,
+  reagents: [{ uid: 0, reagent: { ...reagentDefault } }],
+  cmds: [{ uid: 0, cmd: { ...defaults.image } }]
 }
 
 const userDefault: UserSettings = {
-  n: 16, x: 0, y: 0, z_tilt: 19850, z_obj: 32000, laser_r: 5, laser_g: 5, flowcell: false,
+  n: 16, x: 0, y: 0, z_tilt: 19850, z_obj: 32000, laser_r: 5, laser_g: 5, flowcell: false, max_uid: 2,
   mode: "automatic", recipes: [{ ...recipeDefault }, { ...recipeDefault }]
 }
 
