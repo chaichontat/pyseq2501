@@ -15,7 +15,6 @@ const config = {
   ],
 
   kit: {
-    target: "#svelte",
     vite: {
       resolve: {
         alias: {
