@@ -71,7 +71,7 @@ class Imager:
 
     async def initialize(self) -> None:
         async with self.lock:
-            logger.info("Starting initialization.")
+            logger.info("Starting imager initialization.")
             await asyncio.gather(
                 self.x.initialize(),
                 self.y.initialize(),
@@ -79,7 +79,7 @@ class Imager:
                 self.z_obj.initialize(),
                 self.optics.initialize(),
             )
-            logger.info("Initialization completed.")
+            logger.info("Imager initialization completed.")
 
     # def get_state(self) -> State:
     #     out = {
@@ -105,6 +105,9 @@ class Imager:
         self, n_bundles: int, dark: bool = False, channels: frozenset[Literal[0, 1, 2, 3]] = frozenset((2,))
     ) -> UInt16Array:
         assert self.cams is not None
+        if self.lock.locked():
+            logger.info("Waiting for the previous imaging operation to complete.")
+
         async with self.lock:
             if not 0 < n_bundles < 1500:
                 raise ValueError("n_bundles should be between 0 and 1500.")
@@ -162,6 +165,9 @@ class Imager:
         Returns the z position of maximum intensity and the images.
         """
         assert self.cams is not None
+        if self.lock.locked():
+            logger.info("Waiting for the previous imaging operation to complete.")
+
         async with self.lock:
             logger.info(f"Starting autofocus using data from {channel=}.")
             if channel not in (0, 1, 2, 3):

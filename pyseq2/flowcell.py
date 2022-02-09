@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from dataclasses import dataclass
-from typing import Annotated, Literal, Optional
+from typing import Annotated, Literal, Optional, cast
 
 from .base.instruments_types import SerialPorts
 from .fluidics.arm9chem import ARM9Chem
@@ -59,26 +58,24 @@ class _FlowCell:
 
     async def flow(
         self,
-        port: ReagentPorts,
+        port: int,
         vol_barrel: μL = 250,
         *,
         v_pull: μLpermin = 250,
         v_push: μLpermin = 2000,
         wait: Seconds = 26,
     ) -> None:
-        async with self.arm9chem.shutoff_valve(), self.v.move(port):
+
+        if not (1 <= port <= 19) and port != 9:
+            raise ValueError("Invalid port number.")
+
+        async with self.arm9chem.shutoff_valve(), self.v.move(cast(ReagentPorts, port)):
             await self.p.pump(
                 vol=self.steps_from_vol(vol_barrel),
                 v_pull=self.sps_from_μLpermin(v_pull),
                 v_push=self.sps_from_μLpermin(v_push),
                 wait=wait,
             )
-
-    # async def prime(self, r: Reagent, vol_barrel: μL = 250):
-    #     return await self._flow(r.port, vol_barrel, v_pull=r.v_prime)
-
-    # async def wash(self, r: Reagent, vol_barrel: μL = 250):
-    #     return await self._flow(r.port, vol_barrel, v_pull=r.v_pull)
 
     @property
     async def temp(self) -> float:
@@ -87,11 +84,8 @@ class _FlowCell:
     async def set_temp(self, t: int | float) -> None:
         await self.arm9chem.set_fc_temp(self.id_, t)
 
-    async def wait_temp(self, t: int | float, tol: int | float = 1, timeout: int = 60) -> None:
-        async def temp_ok() -> bool:
-            return abs(await self.temp - t) < tol
-
-        await until(temp_ok, attempts=timeout)
+    async def temp_ok(self, t: int | float, tol: int | float = 1) -> bool:
+        return abs(await self.temp - t) < tol
 
     @staticmethod
     def steps_from_vol(vol: μL) -> int:

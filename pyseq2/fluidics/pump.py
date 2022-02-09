@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from contextlib import asynccontextmanager
-from typing import Annotated, Any, Callable, ClassVar, Literal, TypeVar
+from typing import Annotated, Callable, ClassVar, Literal, TypeVar
 
-from pyseq2.base.instruments import Movable, UsesSerial
+from pyseq2.base.instruments import UsesSerial
 from pyseq2.com.async_com import COM, CmdParse
-from pyseq2.utils.utils import chkrng, ok_if_match, ok_re, λ_float, λ_int
+from pyseq2.utils.utils import ok_re
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +21,8 @@ def status_byte(s: str) -> bool:
             return False
         case "`":
             return True
-        case _:
-            raise Exception("Pump has some error.")
+        case x:
+            raise Exception(f"Pump has some error {x}.")
 
 
 T = TypeVar("T")
