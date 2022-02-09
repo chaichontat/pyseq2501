@@ -45,10 +45,10 @@ jobs:
           conda install black
           black --line-length 110 --check pyseq2/
 
-      - name: Type check with Pyright
-        run: |
-          npm i -g pyright
-          pyright --warnings
+#       - name: Type check with Pyright
+#         run: |
+#           npm i -g pyright
+#           pyright --warnings
 
 #       - name: Debug with tmate
 #         uses: mxschmitt/action-tmate@v3
