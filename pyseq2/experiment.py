@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from typing import Annotated, Any, Awaitable, Callable, Literal, Optional, Protocol, Sequence
 
 import yaml
@@ -75,13 +76,13 @@ async def image(flowcells: FlowCells, imager: Imager, i: Literal[0, 1]):
 
 
 class Pump(BaseModel):
-    reagent: Reagent | str
+    reagent: str
     volume: μL = 250
     op: Literal["pump"] = "pump"
 
 
 class Prime(BaseModel):
-    reagent: Reagent | str
+    reagent: str
     volume: μL = 250
     op: Literal["prime"] = "prime"
 
@@ -118,63 +119,41 @@ class Move(BaseModel):
     op: Literal["move"] = "move"
 
 
+Cmd = Annotated[Pump | Prime | Temp | Hold | Autofocus | Image | Move, Field(discriminator="op")]
+
+
 class Experiment(BaseModel):
     name: str
     flowcell: Literal[0, 1]
-    reagents: Optional[dict[str, Reagent]] = None
-    ops: Sequence[Annotated[Pump | Prime | Temp | Hold | Autofocus | Image | Move, Field(discriminator="op")]]
+    reagents: Sequence[Reagent]
+    cmds: Sequence[Cmd]
 
-    def __init__(self, name: str, flowcell: Literal[0, 1], **data) -> None:
-        super().__init__(name=name, flowcell=flowcell, **data)
+    def __init__(
+        self, name: str, flowcell: Literal[0, 1], *, reagents: Sequence[Reagent], cmds: Sequence[Cmd]
+    ) -> None:
+        # This is here to allow the first two arguments to be positional.
+        super().__init__(name=name, flowcell=flowcell, reagents=reagents, cmds=cmds)
 
     @root_validator
     def check_reagents(cls, values: dict[str, Any]) -> dict[str, Any]:
-        ops, reagents = values["ops"], values["reagents"]
+        cmds: Sequence[Cmd] = values["cmds"]
+        reagents: Sequence[Reagent] = values["reagents"]
+        reagents_name = [r.name for r in reagents]
 
-        # rs: dict[str, Reagent] = dict()
-        for op in ops:
-            try:
-                if isinstance(r := op.reagent, str):
-                    if reagents is None:
-                        raise ValueError(f"No global reagent manifest but have reagent {r} as string.")
-                    if r not in reagents:  # type: ignore
-                        raise ValueError(f"Unknown reagent {r} not in manifest.")  # type: ignore
-                    op.reagent = reagents[r]
+        if len(reagents_name) != len(set(reagents_name)):
+            raise ValueError("Reagent name not unique.")
 
-                else:
-                    r: Reagent
-                    if (r_ := reagents.get(r.name, None)) is not None and r_ != r:
-                        raise ValueError(f"Reagent {r.name} has inconsistent properties. {r} != {r_}.")
-                    reagents[r.name] = r
+        seen: set[str] = set()
+        for cmd in cmds:
+            if isinstance(cmd, Pump | Prime):
+                if (r := cmd.reagent) not in reagents_name:
+                    raise ValueError(f"Unknown reagent {r} at {cmd} not in reagent manifest.")
+                seen.add(cmd.reagent)
 
-            except AttributeError:
-                ...
+        if len(reagents_name) > len(seen):
+            warnings.warn("Unused reagents found.")
 
-        values["reagents"] = None
         return values
-
-    def dict(self, **kwargs):
-        return super(Experiment, self._combi()).dict(**kwargs)
-
-    def _combi(self) -> Experiment:
-        new = Experiment.parse_obj(super(Experiment, self).dict())
-        reagents: dict[str, Reagent] = dict()
-        for op in new.ops:
-            try:
-                if isinstance(r := op.reagent, Reagent):  # type: ignore
-                    if (saved := reagents.get(r.name, None)) is not None and saved != r:
-                        raise ValueError(f"Reagent {r.name} has inconsistent properties. {r} != {saved}.")
-                    reagents[r.name] = r
-                    op.reagent = r.name
-            except AttributeError:
-                ...
-
-        if new.reagents is None:
-            new.reagents = reagents
-        else:
-            new.reagents.update(reagents)
-
-        return new
 
     @validator("flowcell")
     def fc_check(cls, fc: int):
@@ -185,14 +164,11 @@ class Experiment(BaseModel):
 if __name__ == "__main__":
     # Flush ports 1, 2, 3 with 250 μL per barrel simultaneously.
     waters = [Reagent(name=f"water{port}", port=port) for port in (1, 2, 3)]
-    ops: list[Annotated[Pump | Prime | Temp | Hold | Autofocus | Image | Move, Field(discriminator="op")]] = [
-        Pump(reagent=water) for water in waters
-    ]
+    ops: list[Cmd] = [Pump(reagent=water.name) for water in waters]
     ops.append(Autofocus())
     ops.append(Temp(temp=25))
 
-    experiment = Experiment("wash_all_ports", 0, ops=ops)
-    print(yaml.dump(experiment._combi().dict()))
-    assert Experiment.parse_raw(experiment._combi().json()) == experiment
-    print(Experiment.parse_obj(yaml.safe_load(yaml.dump(experiment.dict()))))
+    experiment = Experiment("wash_ports_123", 0, cmds=ops, reagents=waters)
+    assert Experiment.parse_raw(experiment.json()) == experiment
     assert Experiment.parse_obj(yaml.safe_load(yaml.dump(experiment.dict()))) == experiment
+    print(Experiment.parse_obj(yaml.safe_load(yaml.dump(experiment.dict()))))
