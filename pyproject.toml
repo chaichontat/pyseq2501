@@ -18,3 +18,9 @@ line_length = 110
 profile = "black"
 py_version = 310
 src_paths = ["pyseq2", "tests", "scripts"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = [
+  "tests",
+]
