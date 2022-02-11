@@ -1,4 +1,5 @@
 from __future__ import annotations
+import asyncio
 
 import logging
 from dataclasses import dataclass
@@ -71,7 +72,7 @@ class YCmd:
     SET_POS    = CmdParse(λ_int(chkrng(lambda x: f"D{x}", *RANGE)), ok_re(r"1D\-?\d+"))
     GET_POS    = CmdParse("R(PA)",                    gen_reader(r"R\(PA\)"), n_lines=2)  # Report(Position Actual)
     IS_MOVING  = CmdParse("R(MV)", lambda x: bool(gen_reader(r"R\(MV\)")(x)), n_lines=2)
-    MOVE_DONE  = CmdParse("GOTO(CHKMV)", ok_if_match("1GOTO(CHKMV)"), n_lines=1, delayed_parser=ok_if_match("Move Done"))  # Returns when move is completed.
+    RETURN_WHEN_MOVE_DONE  = CmdParse("GOTO(CHKMV)", ok_if_match("1GOTO(CHKMV)"), n_lines=1, delayed_parser=ok_if_match("Move Done"))  # Returns when move is completed.
     TARGET_POS = CmdParse("R(PT)",                    gen_reader(r"R\(PT\)")    , n_lines=2)
     GAINS      = CmdParse(lambda x: f"GAINS({x})", ok_re(r"GAINS\(([\d\.,]+)\)"))
     VELO       = CmdParse(λ_float(lambda x: f"V{x}")      , ok_re(r"V([\d\.]+)"))
@@ -109,12 +110,14 @@ class YStage(UsesSerial, Movable):
     async def initialize(self) -> bool:
         async with self.com.big_lock:
             logger.info("Initializing y-stage.")
+            await self.com.send(YCmd.RESET)
+            await asyncio.sleep(2)  # Otherwise, the return of the next command will get cut midway.
             [
                 await self.com.send(x)  # Wait until command returns before sending more.
                 for x in (
-                    YCmd.RESET,  # Initialize Stage, wait 1-2 seconds
-                    # Continuous execution. Necessary for update while waiting for move to complete.
-                    echo("W(CQ,0)"),
+                    echo(
+                        "W(CQ,0)"
+                    ),  # Continuous execution. Necessary for update while waiting for move to complete.
                     *tuple(map(echo, ("DECLARE(CHKMV)", "CHKMV:", "TR(MV,=,0)", '"Move Done"', "END"))),
                     YCmd.BRAKE_OFF,
                     YCmd.GAINS("5,10,7,1.5,0"),
@@ -122,7 +125,7 @@ class YStage(UsesSerial, Movable):
                     YCmd.MODE_ABSOLUTE,
                     YCmd.ON,
                     YCmd.GO_HOME,
-                    YCmd.MOVE_DONE,
+                    YCmd.RETURN_WHEN_MOVE_DONE,
                 )
             ]
             logger.info("Completed y-stage initialization.")
@@ -134,7 +137,7 @@ class YStage(UsesSerial, Movable):
             logger.info(f"Moving to {pos} for {self._mode}")
             await self.com.send(YCmd.SET_POS(pos))
             await self.com.send(YCmd.GO)
-            return await self.com.send(YCmd.MOVE_DONE)
+            return await self.com.send(YCmd.RETURN_WHEN_MOVE_DONE)
 
     @property
     async def pos(self) -> int:
