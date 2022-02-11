@@ -96,7 +96,9 @@ class _FlowCell:
 
     @staticmethod
     def sps_from_μLpermin(speed: μLpermin) -> int:
-        return int(_FlowCell.steps_from_vol(speed) / 60)
+        if not 0 < speed <= 2000:
+            raise ValueError("Invalid barrel speed. Range is (0, 2000] μL/min.")
+        return int((speed / Pump.BARREL_VOL) * Pump.STEPS / 60)
 
 
 class FlowCells:
