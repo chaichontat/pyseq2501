@@ -10,36 +10,71 @@
   export let fc: 0 | 1;
 </script>
 
-<!-- New or Upload -->
-<div class="flex items-center">
+<div class="flex items-center space-x-2">
   <span>
+    <!-- Back -->
     <button on:click={() => ($us.mode = "automatic")}>
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 mr-1 translate-y-0.5 stroke-gray-700 hover:stroke-gray-800 active:stroke-black" fill="none" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
       </svg>
     </button>
-    <p class="inline-block my-4 text-3xl font-extrabold tracking-tight text-gray-700 dark:text-white">Flowcell {fc ? "B" : "A"}</p>
+    <p class="inline-block my-8 ml-2 text-4xl font-extrabold tracking-tight text-gray-700 dark:text-white">Flowcell {fc ? "B" : "A"}</p>
   </span>
-  <div class="flex-grow" />
-  <button type="button" class="h-10 px-4 py-1 text-base font-medium rounded-lg white-button">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+
+  <!-- Download -->
+  <button type="button" class="px-4 py-1 ml-6 text-base font-medium rounded-lg h-11 white-button">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
     </svg>
-    Download
+    Download Recipe
   </button>
+
+  <button class="inline-block w-12 overflow-visible rounded-lg white-button h-11">
+    <svg
+      aria-hidden="true"
+      role="img"
+      class="octicon octicon-plus"
+      viewBox="0 0 16 16"
+      width="16"
+      height="16"
+      fill="currentColor"
+      style="display: inline-block; vertical-align: text-bottom; overflow: visible"
+    >
+      <path fill-rule="evenodd" d="M7.75 2a.75.75 0 01.75.75V7h4.25a.75.75 0 110 1.5H8.5v4.25a.75.75 0 11-1.5 0V8.5H2.75a.75.75 0 010-1.5H7V2.75A.75.75 0 017.75 2z" />
+    </svg>
+    <span class="ml-1 dropdown-caret" />
+  </button>
+
+  <div class="inline-flex text-2xl rounded-md shadow-sm" role="group">
+    <button type="button" class="px-8 py-6 font-medium rounded-l-lg white-button" on:click={() => ($us.recipes[fc] = { ...recipeDefault })}>
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+      </svg>
+      New Experiment
+    </button>
+
+    <button type="button" class="px-8 py-6 font-medium border-l-0 rounded-r-lg white-button ">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+      </svg>
+      Upload
+    </button>
+  </div>
 </div>
 <!-- <ProgressAuto fc={fc} /> -->
 
 {#if $us.recipes[fc]}
-  <p class="pb-3 mt-8 text-2xl font-bold text-gray-600 border-b">Details</p>
+  Total Time
+  <p class="pb-3 mt-8 text-2xl font-bold text-gray-800 border-b">Details</p>
   <Details />
   <Reagents {fc} />
   <Steps {fc} />
-  <p class="mt-6 mb-1 text-2xl font-bold text-gray-600">Preview</p>
+  <p class="mt-6 mb-1 text-2xl font-bold text-gray-800">Preview</p>
   <Preview />
 
   <!-- Editor -->
 {:else}
+  <!-- New or Upload -->
   <div class="flex items-center justify-center w-full h-[50vh]">
     <div class="inline-flex text-2xl rounded-md shadow-sm" role="group">
       <button type="button" class="px-8 py-6 font-medium rounded-l-lg white-button" on:click={() => ($us.recipes[fc] = { ...recipeDefault })}>
@@ -61,6 +96,19 @@
 
 <style lang="postcss">
   svg {
-    @apply w-8 h-8 mr-1;
+    @apply mr-1;
+  }
+
+  .dropdown-caret {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    vertical-align: middle;
+    content: "";
+    border-style: solid;
+    border-width: 4px 4px 0;
+    border-right-color: transparent;
+    border-bottom-color: transparent;
+    border-left-color: transparent;
   }
 </style>

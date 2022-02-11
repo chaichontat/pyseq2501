@@ -6,12 +6,14 @@
   let showing: boolean = false;
 
   const namemap = {
+    autofocus: "Autofocus",
     pump: "Pump",
     prime: "Prime",
     temp: "Change Temperature",
     hold: "Hold",
     move: "Move",
     image: "Image",
+    goto: "Go to",
   };
 
   function handleClick(target: Ops) {
@@ -56,7 +58,7 @@
     class:opacity-0={!showing}
     class:invisible={!showing}
     class:scale-100={!showing}
-    class="absolute left-0 z-10 w-64 mt-2 bg-white shadow-xl transition duration-75 ease-in scale-95 divide-y divide-gray-200 rounded-md list ring-1 ring-black ring-opacity-5 focus:outline-none"
+    class="absolute left-0 z-10 w-64 mt-2 transition duration-75 ease-in scale-95 bg-white divide-y divide-gray-200 rounded-md shadow-xl list ring-1 ring-black ring-opacity-5 focus:outline-none"
     role="menu"
     id="list"
     tabindex="-1"
@@ -65,6 +67,7 @@
     <section>
       <!-- Active: "bg-gray-100 text-gray-900", Not Active: "text-gray-700" -->
       <div on:mousedown={handleClick("hold")}>{namemap["hold"]}</div>
+      <div on:mousedown={handleClick("goto")}>{namemap["goto"]}</div>
       <!-- Mousedown fires before blur -->
     </section>
     <section>
@@ -73,6 +76,7 @@
       <div on:mousedown={handleClick("temp")}>{namemap["temp"]}</div>
     </section>
     <section>
+      <div on:mousedown={handleClick("autofocus")}>{namemap["autofocus"]}</div>
       <div on:mousedown={handleClick("image")}>{namemap["image"]}</div>
       <div on:mousedown={handleClick("move")}>{namemap["move"]}</div>
     </section>

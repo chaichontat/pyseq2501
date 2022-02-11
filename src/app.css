@@ -5,7 +5,7 @@
 
 @layer components {
   .pretty {
-    @apply text-gray-800 border-gray-300 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50;
+    @apply text-gray-800 border-gray-400 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50;
   }
 
   .drop {

@@ -1,7 +1,7 @@
 import { browser } from "$app/env";
 import type { Writable } from "svelte/store";
 import { writable } from "svelte/store";
-import type { Cmds, Reagent } from "./cmds";
+import type { Cmds, Reagent, ReagentGroup } from "./cmds";
 import { defaults, reagentDefault } from "./cmds";
 import websocketStore from "./ws_store";
 
@@ -56,7 +56,7 @@ export type UserSettings = {
   recipes: [Recipe | null, Recipe | null]
 }
 
-export type NReagent = { uid: number; reagent: Reagent };
+export type NReagent = { uid: number; reagent: Reagent | ReagentGroup };
 export type NCmd = { uid: number; cmd: Cmds };
 
 export type Hist = {

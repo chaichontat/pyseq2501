@@ -3,11 +3,10 @@
   export let path: string = "";
 </script>
 
-<div class="flex flex-col mt-2 space-y-2 text-lg font-medium">
-  <div>
-    Name <input type="text" class="pretty" bind:value={name} />
-  </div>
-  <div>
-    Image Path <input type="text" class="pretty" bind:value={path} />
-  </div>
+<div class="flex flex-col mt-2 text-lg font-medium">
+  <p class="text-lg">Name</p>
+  <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={name} />
+
+  <p class="text-lg">Image Path</p>
+  <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={path} />
 </div>

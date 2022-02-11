@@ -53,14 +53,28 @@
 
           <!-- Add reagent -->
 
-          <tr class="cursor-pointer" on:click={() => ($us.recipes[fc].reagents = [...$us.recipes[fc].reagents, { uid: $us.recipes[fc].max_uid++, reagent: { ...reagentDefault, port: 1 } }])}>
-            <td colspan="8" class="h-12 px-0 py-0 mx-0 font-medium transition-all ease-in-out border-b whitespace-nowrap white-clickable hover:font-semibold hover:bg-gray-50 ">
-              <span class="inline-flex items-center justify-center w-full align-middle cursor-pointer">
-                <svg stroke-width="1.75" class="-ml-2 mr-0.5 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Add Reagent
-              </span>
+          <tr class="cursor-pointer">
+            <td colspan="8" class="h-16 px-0 py-0 mx-0 font-medium transition-all">
+              <div class="flex h-full">
+                <button
+                  class="inline-flex items-center justify-center flex-grow align-middle cursor-pointer whitespace-nowrap white-clickable hover:font-semibold hover:bg-gray-50"
+                  on:click={() => ($us.recipes[fc].reagents = [...$us.recipes[fc].reagents, { uid: $us.max_uid++, reagent: { group: "" } }])}
+                >
+                  <svg stroke-width="1.75" class="-ml-2 mr-0.5 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Add Group
+                </button>
+                <button
+                  class="inline-flex items-center justify-center flex-grow align-middle cursor-pointer whitespace-nowrap white-clickable hover:font-semibold hover:bg-gray-50"
+                  on:click={() => ($us.recipes[fc].reagents = [...$us.recipes[fc].reagents, { uid: $us.max_uid++, reagent: { ...reagentDefault, port: 1 } }])}
+                >
+                  <svg stroke-width="1.75" class="-ml-2 mr-0.5 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Add Reagent
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>

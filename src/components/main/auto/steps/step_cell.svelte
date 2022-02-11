@@ -49,13 +49,26 @@
           s
         </span>
 
+        <!--  Goto considered harmful -->
+      {:else if cmd.op === "goto"}
+        <span class="col-span-4">
+          Go to <input type="number" class="w-24 mx-2 pretty" bind:value={cmd.step} placeholder="1" />
+          for
+          <input type="number" class="w-24 mx-2 pretty" bind:value={cmd.n} placeholder="4" />
+          times.
+        </span>
+
         <!-- Wash -->
       {:else if cmd.op === "pump"}
         <span>
           Reagent
           <select class="text-sm drop">
             {#each $us.recipes[fc].reagents as { uid, reagent }}
-              <option>{`${reagent.port} - ${reagent.name}`}</option>
+              {#if "group" in reagent}
+                <option>{`Group ${reagent.group}`}</option>
+              {:else}
+                <option>{`${reagent.port} - ${reagent.name}`}</option>
+              {/if}
             {/each}
           </select>
         </span>
@@ -70,7 +83,11 @@
           Reagent
           <select class="text-sm drop">
             {#each $us.recipes[fc].reagents as { uid, reagent }}
-              <option>{`${reagent.port} - ${reagent.name}`}</option>
+              {#if "group" in reagent}
+                <option>{`Group ${reagent.group}`}</option>
+              {:else}
+                <option>{`${reagent.port} - ${reagent.name}`}</option>
+              {/if}
             {/each}
           </select>
         </span>
@@ -97,13 +114,6 @@
           Z <input type="number" class="w-24 mx-2 pretty" placeholder="2000" bind:value={cmd.z_tilt} />
           <button type="button" class="px-4 py-1 text-sm font-medium text-gray-900 rounded-lg white-button">
             <span>Move Z</span>
-          </button>
-        </span>
-        <span>
-          Autofocus <input type="checkbox" class="ml-2 rounded" bind:value={cmd.autofocus} />
-          <input type="number" class="w-24 mx-2 pretty" placeholder="20000" />
-          <button type="button" class="px-4 py-1 text-sm font-medium text-gray-900 rounded-lg white-button">
-            <span>Autofocus Now</span>
           </button>
         </span>
 

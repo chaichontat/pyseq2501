@@ -11,6 +11,10 @@ export type Reagent = {
     wait: number
 }
 
+export type ReagentGroup = {
+    group: string
+}
+
 export const reagentDefault = {
     name: "",
     port: 1,
@@ -56,11 +60,23 @@ export type Image = Cmd & {
     channels: [boolean, boolean, boolean, boolean]
     laser_onoff: [boolean, boolean],
     lasers: [number, number],
-    autofocus: boolean,
     op: "image"
 }
 
-export type Cmds = Pump | Prime | Temp | Hold | Move | Image
+export type Autofocus = Cmd & {
+    channels: [boolean, boolean, boolean, boolean]
+    laser_onoff: [boolean, boolean],
+    lasers: [number, number],
+    op: "autofocus"
+}
+
+export type Goto = Cmd & {
+    step: number,
+    n: number,
+    op: "goto"
+}
+
+export type Cmds = Pump | Prime | Temp | Hold | Move | Image | Autofocus | Goto
 export type Ops = Cmds["op"]
 
 export const defaults: { [key: string]: Cmds } = {
@@ -72,6 +88,11 @@ export const defaults: { [key: string]: Cmds } = {
     "image": {
         xy_start: [0, 0], xy_end: [0, 0], z_tilt: 20000,
         channels: [true, true, true, true], laser_onoff: [true, true],
-        lasers: [50, 50], autofocus: true, op: "image"
-    }
+        lasers: [50, 50], op: "image"
+    },
+    "autofocus": {
+        channels: [true, true, true, true], laser_onoff: [true, true],
+        lasers: [50, 50], op: "autofocus"
+    },
+    "goto": { step: 1, n: 4, op: "goto" }
 }
