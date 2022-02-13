@@ -6,7 +6,6 @@
   export let userValue: number = 0;
   export let clInp: string = "text-center self-center";
   export let clDisp: string = "text-center self-center";
-  let elem: HTMLInputElement;
 
   const dispatch = createEventDispatcher();
   const focus = (el: HTMLInputElement) => {
@@ -31,7 +30,7 @@
 </script>
 
 {#if editing}
-  <input type="number" class={clInp} bind:value={userValue} on:keypress={handleInput} on:blur={focuslost} bind:this={elem} use:focus />
+  <input type="number" class={clInp} bind:value={userValue} on:keypress={handleInput} on:blur={focuslost} use:focus />
 {:else}
   <div class={clDisp} on:dblclick={() => (editing = true)}>
     {value}

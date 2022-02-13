@@ -32,7 +32,7 @@
   <div
     id="add"
     class="inline-flex items-center justify-center w-full h-16 text-lg font-medium transition-all border-gray-400 cursor-pointer border-y hover:border-blue-500 hover:font-semibold white-clickable hover:bg-gray-50"
-    on:click={() => ($us.recipes[fc].cmds = [...$us.recipes[fc].cmds, { uid: $us.recipes[fc].max_uid++, cmd: { ...defaults.image } }])}
+    on:click={() => ($us.recipes[fc].cmds = [...$us.recipes[fc].cmds, { uid: $us.max_uid++, cmd: { ...defaults.image } }])}
   >
     <span class="inline-flex">
       <svg id="inner" stroke-width="1.5" class="-ml-2 mr-1 w-6 h-6 transition-all my-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">

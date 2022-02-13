@@ -1,7 +1,7 @@
 import { browser } from "$app/env";
 import type { Writable } from "svelte/store";
 import { writable } from "svelte/store";
-import type { Cmds, Reagent } from "./cmds";
+import type { Cmds, Reagent, ReagentGroup } from "./cmds";
 import { defaults, reagentDefault } from "./cmds";
 import websocketStore from "./ws_store";
 
@@ -36,9 +36,10 @@ let status: Status = {
 };
 
 export type Recipe = {
+  name: string,
+  flowcell: 0 | 1,
   reagents: NReagent[],
   cmds: NCmd[],
-  max_uid: number
 }
 
 export type UserSettings = {
@@ -50,11 +51,12 @@ export type UserSettings = {
   laser_r: number,
   laser_g: number,
   flowcell: boolean,
+  max_uid: 2,
   mode: "manual" | "automatic" | "editingA" | "editingB",
   recipes: [Recipe | null, Recipe | null]
 }
 
-export type NReagent = { uid: number; reagent: Reagent };
+export type NReagent = { uid: number; reagent: Reagent | ReagentGroup };
 export type NCmd = { uid: number; cmd: Cmds };
 
 export type Hist = {
@@ -69,11 +71,14 @@ export type Img = {
 }
 
 export const recipeDefault: Recipe = {
-  reagents: [{ uid: 0, reagent: { ...reagentDefault } }], cmds: [{ uid: 0, cmd: { ...defaults.image } }], max_uid: 2
+  name: "",
+  flowcell: 0,
+  reagents: [{ uid: 0, reagent: { ...reagentDefault } }],
+  cmds: [{ uid: 0, cmd: { ...defaults.image } }]
 }
 
 const userDefault: UserSettings = {
-  n: 16, x: 0, y: 0, z_tilt: 19850, z_obj: 32000, laser_r: 5, laser_g: 5, flowcell: false,
+  n: 16, x: 0, y: 0, z_tilt: 19850, z_obj: 32000, laser_r: 5, laser_g: 5, flowcell: false, max_uid: 2,
   mode: "automatic", recipes: [{ ...recipeDefault }, { ...recipeDefault }]
 }
 
