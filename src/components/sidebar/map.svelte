@@ -5,6 +5,7 @@
   import XYInput from "./slide/xy_input.svelte";
   import { statusStore as store, userStore as us } from "$src/store";
   import { raw_to_local } from "./coords";
+  import Toggle from "./toggle.svelte";
 
   const focus = (el) => {
     el.focus;
@@ -35,26 +36,19 @@
 
 <li>
   <!-- Toggle -->
-  <span class="justify-center mb-4 align-middle -translate-y-8 monomedium">
-    <div class="text-base">A</div>
-    <input
+  <span class="flex items-center justify-center mb-4 space-x-2 text-lg -translate-y-6 monomedium">
+    <div>A</div>
+    <Toggle bind:checked={$us.flowcell} />
+    <!-- <input
       type="checkbox"
       bind:checked={$us.flowcell}
       class="self-center mx-1 toggle toggle-md toggl-dark"
       class:opacity-40={$us.mode.startsWith("editing")}
       disabled={$us.mode.startsWith("editing")}
-    />
-    <div class="text-base">B</div>
+    /> -->
+    <div>B</div>
   </span>
-  <!-- Need this since using negative margins on the checkbox did not move the clickable area. -->
-  <div class="-mt-8" />
-
-  <!-- <div
-    on:mousedown={onMouseDown}
-    style="left: {left}px; top: {top}px;"
-    class="z-50 shadow-xl indicator-item indicator-center indicator-middle badge badge-primary draggable opacity-70"
-  /> -->
-
+  <div class="-mt-4" />
   <Slide name={$us.flowcell ? "B" : "A"} x={xy.x} y={xy.y} z_tilt={$store.z_tilt} />
 
   <!-- Z Objective -->
