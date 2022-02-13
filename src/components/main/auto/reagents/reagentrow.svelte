@@ -1,28 +1,40 @@
 <script lang="ts">
   import type { Reagent, ReagentGroup } from "$src/cmds";
   import { createEventDispatcher } from "svelte";
+  import { checkRange } from "$src/utils";
 
   const dispatch = createEventDispatcher();
 
   export let primed: boolean = false;
   export let reagent: Reagent | ReagentGroup;
+
+  const count = (names) => names.reduce((a, b) => ({ ...a, [b]: (a[b] || 0) + 1 }), {}); // don't forget to initialize the accumulator
+  const duplicates = (dict) => Object.keys(dict).filter((a) => dict[a] > 1);
 </script>
 
 {#if "group" in reagent}
   <!-- Reagent group -->
-  <td colspan="7" class="h-12 px-4 mx-4 text-xl font-medium">
-    Group <input bind:value={reagent.group} type="text" class="w-32 m-2 text-xl pretty" min="1" required />
+  <td colspan="7" class="h-12 px-4 mx-4 text-xl font-medium transition-colors bg-orange-50 hover:bg-orange-100">
+    Group <input bind:value={reagent.group} type="text" class="w-32 m-2 text-xl pretty bg-orange-50" required class:invalid={!reagent.group} />
   </td>
 {:else}
   <!-- Reagent proper -->
   <td class="px-6 py-2 font-bold text-gray-900 whitespace-nowrap ">
     <input bind:value={reagent.port} type="number" class="w-16 pretty" min="1" max="19" required />
   </td>
-  <td class="px-4 text-gray-900 whitespace-nowrap"><input bind:value={reagent.name} type="text" class="w-full pretty" min="1" max="2000" required /></td>
-  <td class="px-4 text-gray-900 whitespace-nowrap"><input bind:value={reagent.v_prime} type="number" class="w-full pretty" min="1" max="2000" required /></td>
-  <td class="px-4 text-gray-900 whitespace-nowrap"><input bind:value={reagent.v_pull} type="number" class="w-full pretty" min="1" max="2000" required /></td>
-  <td class="px-4 text-gray-900 whitespace-nowrap"><input bind:value={reagent.v_push} type="number" class="w-full pretty" min="1" max="2000" required /></td>
-  <td class="px-4 text-gray-900 whitespace-nowrap"><input bind:value={reagent.wait} type="number" class="w-full pretty" min="1" required /></td>
+  <td class="px-4 text-gray-900 whitespace-nowrap"><input bind:value={reagent.name} class:invalid={!reagent.name} type="text" class="w-full pretty" min="1" max="2000" required /></td>
+  <td class="px-4 text-gray-900 whitespace-nowrap">
+    <input bind:value={reagent.v_prime} class:invalid={!(1 <= reagent.v_prime && reagent.v_prime <= 2000)} type="number" class="w-full pretty" min="1" max="2000" required />
+  </td>
+  <td class="px-4 text-gray-900 whitespace-nowrap">
+    <input bind:value={reagent.v_pull} type="number" class="w-full pretty" class:invalid={!(1 <= reagent.v_pull && reagent.v_pull <= 2000)} min="1" max="2000" required />
+  </td>
+  <td class="px-4 text-gray-900 whitespace-nowrap">
+    <input bind:value={reagent.v_push} type="number" class="w-full pretty" class:invalid={!(1 <= reagent.v_push && reagent.v_push <= 2000)} min="1" max="2000" required />
+  </td>
+  <td class="px-4 text-gray-900 whitespace-nowrap">
+    <input bind:value={reagent.wait} type="number" class="w-full pretty" class:invalid={!(0 < reagent.wait)} use:checkRange={0} min="0" required />
+  </td>
   <td>
     <button
       type="button"

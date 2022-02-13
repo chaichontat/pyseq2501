@@ -13,10 +13,16 @@
   }
 
   .white-clickable {
-    @apply transition-all duration-100 border border-gray-300 shadow bg-gray-50 hover:bg-gray-100 active:bg-gray-200 hover:text-blue-800 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700;
+    @apply transition-all duration-100 border-gray-300 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 hover:text-blue-800 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700;
   }
 
   .white-button {
-    @apply flex items-center white-clickable;
+    @apply flex items-center border white-clickable;
+  }
+}
+
+@layer utilities {
+  .invalid {
+    @apply border-red-500 focus:border-red-500 bg-red-50 focus:ring-red-500 focus:ring-opacity-50;
   }
 }

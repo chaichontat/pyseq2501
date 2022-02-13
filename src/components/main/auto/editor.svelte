@@ -6,11 +6,14 @@
   import { userStore as us } from "$src/store";
   import { recipeDefault } from "$src/store";
   import ProgressAuto from "./progress_auto.svelte";
+  import { Menu, MenuButton, MenuItem, MenuItems } from "@rgossiaux/svelte-headlessui";
+  import { cubicInOut } from "svelte/easing";
+  import { fade } from "svelte/transition";
 
   export let fc: 0 | 1;
 </script>
 
-<div class="flex items-center space-x-2">
+<div class="flex items-center">
   <span>
     <!-- Back -->
     <button on:click={() => ($us.mode = "automatic")}>
@@ -22,45 +25,33 @@
   </span>
 
   <!-- Download -->
-  <button type="button" class="px-4 py-1 ml-6 text-base font-medium rounded-lg h-11 white-button">
+  <button type="button" class="px-4 py-1 ml-8 text-base font-medium rounded-lg h-11 white-button">
     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
     </svg>
     Download Recipe
   </button>
 
-  <button class="inline-block w-12 overflow-visible rounded-lg white-button h-11">
-    <svg
-      aria-hidden="true"
-      role="img"
-      class="octicon octicon-plus"
-      viewBox="0 0 16 16"
-      width="16"
-      height="16"
-      fill="currentColor"
-      style="display: inline-block; vertical-align: text-bottom; overflow: visible"
-    >
-      <path fill-rule="evenodd" d="M7.75 2a.75.75 0 01.75.75V7h4.25a.75.75 0 110 1.5H8.5v4.25a.75.75 0 11-1.5 0V8.5H2.75a.75.75 0 010-1.5H7V2.75A.75.75 0 017.75 2z" />
-    </svg>
-    <span class="ml-1 dropdown-caret" />
-  </button>
-
-  <div class="inline-flex text-2xl rounded-md shadow-sm" role="group">
-    <button type="button" class="px-8 py-6 font-medium rounded-l-lg white-button" on:click={() => ($us.recipes[fc] = { ...recipeDefault })}>
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+  <Menu class="relative inline-block ">
+    <MenuButton class="inline-flex justify-center w-full py-1 mx-2 font-medium rounded-lg h-11 white-button">
+      <!-- Plus -->
+      <svg aria-hidden="true" class="w-5 h-5 ml-1 text-gray-600 " viewBox="0 0 16 16" fill="currentColor" style="display: inline-block; vertical-align: text-bottom; overflow: visible">
+        <path fill-rule="evenodd" d="M7.75 2a.75.75 0 01.75.75V7h4.25a.75.75 0 110 1.5H8.5v4.25a.75.75 0 11-1.5 0V8.5H2.75a.75.75 0 010-1.5H7V2.75A.75.75 0 017.75 2z" />
       </svg>
-      New Experiment
-    </button>
-
-    <button type="button" class="px-8 py-6 font-medium border-l-0 rounded-r-lg white-button ">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+      <!-- Chevron down -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 ml-2 -mr-1 text-gray-800" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
       </svg>
-      Upload
-    </button>
-  </div>
+    </MenuButton>
+    <MenuItems class="absolute right-0 z-10 mt-2 space-y-1 overflow-hidden origin-top-right bg-white border divide-gray-100 rounded-md shadow w-36 focus:outline-none">
+      <div transition:fade={{ duration: 100, easing: cubicInOut }}>
+        <MenuItem let:active><div class:bg-blue-700={active} class:text-white={active} class="z-0 w-full px-2 py-2 pl-4">New</div></MenuItem>
+        <MenuItem let:active><div class:bg-blue-700={active} class:text-white={active} class="z-0 w-full px-2 py-2 pl-4">Upload</div></MenuItem>
+      </div>
+    </MenuItems>
+  </Menu>
 </div>
+
 <!-- <ProgressAuto fc={fc} /> -->
 
 {#if $us.recipes[fc]}

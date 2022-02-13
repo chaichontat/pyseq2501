@@ -5,7 +5,7 @@
   import { defaults } from "$src/cmds";
   import Setxy from "./setxy.svelte";
   import { createEventDispatcher } from "svelte";
-
+  import { checkRange } from "$src/utils";
   export let fc: 0 | 1;
   export let n: number;
   export let cmd: Cmds;
@@ -16,7 +16,7 @@
   // $: cmd = { ...defaults[cmd.op], ...cmd }; // Second overwrites first.
 </script>
 
-<li class="relative flex py-4 pl-2 transition-all ease-in-out border-gray-300 border-y hover:bg-gray-50 hover:border-blue-400 hover:shadow-sm">
+<li class="relative flex py-4 pl-2 transition-all ease-in-out border-t border-gray-300 hover:bg-gray-50">
   <!-- Close -->
   <svg xmlns="http://www.w3.org/2000/svg" class="absolute w-5 h-5 -mt-1 cursor-pointer right-2" viewBox="0 0 20 20" fill="currentColor" on:click={() => dispatch("delete")}>
     <path
@@ -36,16 +36,19 @@
   </div>
 
   <div class="w-full mr-8">
-    <span class="grid items-center grid-cols-3">
+    <span class="flex items-center space-x-16">
       <div><Dropdown bind:cmd /></div>
-      <div class="text-lg font-medium text-gray-700">Total time: 60 s</div>
+      <span class="text-lg font-medium text-gray-700">
+        Total time: <div class="inline-block font-mono whitespace-nowrap">60</div>
+        s
+      </span>
     </span>
 
     <div class="grid grid-cols-4 mt-2 font-medium divide-x clump gap-x-4">
       <!-- Hold -->
       {#if cmd.op === "hold"}
         <span>
-          Time <input type="number" class="w-32 mx-2 pretty" placeholder="60" bind:value={cmd.time} />
+          Time <input type="number" class="w-32 mx-2 pretty" bind:value={cmd.time} use:checkRange={0} min="0" />
           s
         </span>
 
@@ -118,13 +121,13 @@
         </span>
 
         <div class="col-span-4 pl-4 mt-4 ml-2">
-          <p class="mb-2 text-lg gap-x-8">Lower right</p>
-          <Setxy bind:xy={cmd.xy_start} />
+          <p class="mb-2 text-lg">Upper left</p>
+          <Setxy bind:xy={cmd.xy_end} />
         </div>
 
         <div class="col-span-4 pl-4 mt-4 ml-2">
-          <p class="mb-2 text-lg">Upper left</p>
-          <Setxy bind:xy={cmd.xy_end} />
+          <p class="mb-2 text-lg gap-x-8">Lower right</p>
+          <Setxy bind:xy={cmd.xy_start} />
         </div>
 
         <!-- Channels -->

@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { Switch, SwitchLabel } from "@rgossiaux/svelte-headlessui";
-
+  import { Switch } from "@rgossiaux/svelte-headlessui";
   export let checked = false;
 </script>
 

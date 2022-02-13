@@ -29,9 +29,10 @@
     {/each}
   </section>
 
-  <div
+  <!-- Add step -->
+  <button
     id="add"
-    class="inline-flex items-center justify-center w-full h-16 text-lg font-medium transition-all border-gray-400 cursor-pointer border-y hover:border-blue-500 hover:font-semibold white-clickable hover:bg-gray-50"
+    class="inline-flex items-center justify-center w-full h-16 text-lg font-medium transition-all border-gray-300 border-y hover:font-semibold white-clickable"
     on:click={() => ($us.recipes[fc].cmds = [...$us.recipes[fc].cmds, { uid: $us.max_uid++, cmd: { ...defaults.image } }])}
   >
     <span class="inline-flex">
@@ -40,7 +41,7 @@
       </svg>
       Add Step
     </span>
-  </div>
+  </button>
 </div>
 
 <style lang="postcss">

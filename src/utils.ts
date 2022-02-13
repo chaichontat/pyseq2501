@@ -11,3 +11,42 @@ export function flash(element: HTMLElement) {
         });
     });
 }
+
+// Does not call on load. User needs to edit something first to see error.
+
+export function checkRange(el: HTMLInputElement, min: number = 0, max: number = Infinity): { destroy: () => void } {
+    const handleValueChange = (e: InputEvent) => {
+        const n = parseFloat(el.value)
+        if (min < n && n < max) {
+            el.classList.remove("invalid")
+        } else {
+            el.classList.add("invalid")
+        }
+    }
+
+    document.addEventListener("input", handleValueChange)
+
+    return {
+        destroy: () => {
+            document.removeEventListener("input", handleValueChange)
+        }
+    }
+}
+
+export function notEmpty(el: HTMLInputElement): { update: () => void, destroy: () => void } {
+    const handleValueChange = (e?: InputEvent) => {
+        if (el.value) {
+            el.classList.remove("invalid")
+        } else {
+            el.classList.add("invalid")
+        }
+    }
+    document.addEventListener("input", handleValueChange)
+
+    return {
+        update: handleValueChange,
+        destroy: () => {
+            document.removeEventListener("input", handleValueChange)
+        }
+    }
+}

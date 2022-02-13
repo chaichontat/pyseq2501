@@ -5,6 +5,7 @@ import type { Cmds, Reagent, ReagentGroup } from "./cmds";
 import { defaults, reagentDefault } from "./cmds";
 import websocketStore from "./ws_store";
 
+export let try_connect: boolean = true
 
 export type XY = {
   x: number;
@@ -84,19 +85,19 @@ const userDefault: UserSettings = {
 
 let img: Img = { n: 0, img: "", hist: { counts: [10], bin_edges: [0] } }
 
-export const imgStore = (browser)
+export const imgStore: Writable<Img> = (try_connect && browser)
   ? websocketStore(`ws://${ window.location.hostname }:8000/img`, img, (x) => JSON.parse(JSON.parse(x)))
   : writable(img)
 
-export const statusStore: Writable<Status> = (browser)
+export const statusStore: Writable<Status> = (try_connect && browser)
   ? websocketStore(`ws://${ window.location.hostname }:8000/status`, status, (x): Status => JSON.parse(JSON.parse(x)))
   : writable(status)
 
-export const userStore: Writable<UserSettings> = (browser)
+export const userStore: Writable<UserSettings> = (try_connect && browser)
   ? websocketStore(`ws://${ window.location.hostname }:8000/user`, userDefault, (x): Status => JSON.parse(JSON.parse(x)))
   : writable(userDefault)
 
-export const cmdStore: Writable<undefined> = (browser)
+export const cmdStore: Writable<undefined> = (try_connect && browser)
   ? websocketStore(`ws://${ window.location.hostname }:8000/cmd`, undefined, (x): Status => JSON.parse(JSON.parse(x)))
   : writable(undefined)
 
