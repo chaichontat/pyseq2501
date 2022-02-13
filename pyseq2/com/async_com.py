@@ -106,30 +106,20 @@ class COM:
         no_check: bool = False,
         test_params: Optional[dict] = None,
     ):
-        if test_params is None:
-            test_params = {}
-
-        self = cls(name, test_params, min_spacing, separator, no_check)
         baudrate = 115200 if name in ("fpga", "arm9chem", "arm9pe") else 9600
+        kwargs = {"name": name, "test_params": test_params} if test_params is not None else {}
+        self = cls(name, test_params, min_spacing, separator, no_check)
 
         if port_rx is not None:
             assert name == "fpga"
             # Name and test_params is for fakeserial. Ignored in the real thing.
-            srx = await open_serial_connection(
-                url=port_rx, name=name, baudrate=baudrate, test_params=test_params
-            )
-            stx = await open_serial_connection(
-                url=port_tx, name=name, baudrate=baudrate, test_params=test_params
-            )
+            srx = await open_serial_connection(url=port_rx, baudrate=baudrate, **kwargs)
+            stx = await open_serial_connection(url=port_tx, baudrate=baudrate, **kwargs)
             self._serial = Channel(reader=srx[0], writer=stx[1])
             logger.info(f"{self.name}Started listening to ports {port_tx} and {port_rx}.")
         else:
             assert name != "fpga"
-            self._serial = Channel(
-                *await open_serial_connection(
-                    url=port_tx, name=name, baudrate=baudrate, test_params=test_params
-                )
-            )
+            self._serial = Channel(*await open_serial_connection(url=port_tx, baudrate=baudrate, **kwargs))
             logger.info(f"{self.name}Started listening to port {port_tx}.")
 
         asyncio.create_task(self._read_forever())
@@ -138,7 +128,7 @@ class COM:
     def __init__(
         self,
         name: SerialInstruments,
-        test_params: dict,
+        test_params: Optional[dict],
         min_spacing: Annotated[int | float, "s"] = 0.01,
         separator: bytes = b"\n",
         no_check: bool = False,
