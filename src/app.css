@@ -19,6 +19,10 @@
   .white-button {
     @apply flex items-center border white-clickable;
   }
+
+  .title {
+    @apply pb-2 mt-8 mb-4 text-2xl font-bold text-gray-600 border-b;
+  }
 }
 
 @layer utilities {

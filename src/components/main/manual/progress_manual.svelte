@@ -35,7 +35,7 @@
 </script>
 
 <span class="flex flex-row w-full gap-x-3">
-  <content class="w-32 grid grid-row-2 gap-y-2">
+  <content class="grid w-32 grid-row-2 gap-y-2">
     <button
       type="button"
       class="text-lg mt-2 transition-colors shadow-md shadow-blue-500/50 text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg px-4 py-2.5 text-center inline-flex items-center mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
@@ -75,7 +75,7 @@
 
       <div class="stat-title">Bundles taken</div>
       <div class="stat-desc">
-        <progress value={$imgStore.n} max={$userStore.n} class="progress progress-secondary transition-all" />
+        <progress value={$imgStore.n} max={$userStore.n} class="transition-all progress progress-secondary" />
       </div>
     </div>
   </div>

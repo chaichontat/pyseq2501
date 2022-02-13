@@ -43,6 +43,14 @@ export type Recipe = {
   cmds: NCmd[],
 }
 
+export type ManualParams = {
+  name: string,
+  path: string,
+  channels: [boolean, boolean, boolean, boolean],
+  laser_onoff: [boolean, boolean],
+  lasers: [number, number],
+}
+
 export type UserSettings = {
   n: number;
   x: number
@@ -54,7 +62,8 @@ export type UserSettings = {
   flowcell: boolean,
   max_uid: 2,
   mode: "manual" | "automatic" | "editingA" | "editingB",
-  recipes: [Recipe | null, Recipe | null]
+  recipes: [Recipe | null, Recipe | null],
+  man_params: ManualParams
 }
 
 export type NReagent = { uid: number; reagent: Reagent | ReagentGroup };
@@ -66,10 +75,13 @@ export type Hist = {
 }
 
 export type Img = {
-  img: string,
+  img: string[],
   n: number,
-  hist: Hist
+  hist: Hist[],
+  channels: [boolean, boolean, boolean, boolean],
 }
+
+
 
 export const recipeDefault: Recipe = {
   name: "",
@@ -80,7 +92,11 @@ export const recipeDefault: Recipe = {
 
 const userDefault: UserSettings = {
   n: 16, x: 0, y: 0, z_tilt: 19850, z_obj: 32000, laser_r: 5, laser_g: 5, flowcell: false, max_uid: 2,
-  mode: "automatic", recipes: [{ ...recipeDefault }, { ...recipeDefault }]
+  mode: "automatic", recipes: [{ ...recipeDefault }, { ...recipeDefault }],
+  man_params: {
+    name: "Test", path: ".", channels: [true, true, true, true], laser_onoff: [true, true],
+    lasers: [50, 50],
+  }
 }
 
 let img: Img = { n: 0, img: "", hist: { counts: [10], bin_edges: [0] } }
