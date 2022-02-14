@@ -640,7 +640,7 @@ cmd        </code>
     <span class="k">assert</span> <span class="nb">all</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="n">power</span><span class="p">)</span> <span class="o">==</span> <span class="n">power</span> <span class="ow">and</span> <span class="n">power</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tol</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">))</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">on</span><span class="p">:</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_onoff</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">com</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">LaserCmd</span><span class="o">.</span><span class="n">SET_POWER</span><span class="p">(</span><span class="n">power</span><span class="p">))</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">com</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">LaserCmd</span><span class="o">.</span><span class="n">SET_POWER</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">power</span><span class="p">)))</span>
 
     <span class="c1"># for _ in range(timeout):</span>
     <span class="c1">#     time.sleep(1)</span>
@@ -795,7 +795,7 @@ Lasers        </code>
   <small>
     
       Last update:
-      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime">2022-02-14 20:35:55</span>
+      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime">2022-02-14 20:37:16</span>
       
     
   </small>
