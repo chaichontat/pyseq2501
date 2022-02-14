@@ -124,6 +124,15 @@ class Lasers:
     async def power(self) -> tuple[int, int]:
         return await asyncio.gather(self.g.power, self.r.power)
 
+    def __getitem__(self, id_: Literal[0, 1]) -> Laser:
+        match id_:
+            case 0:
+                return self.g
+            case 1:
+                return self.r
+            case _:
+                raise ValueError("Invalid laser id.")
+
     # def initialize(self) -> list[Future[Any]]:
     #     return [getattr(self, f.name).initialize() for f in fields(self)]
 

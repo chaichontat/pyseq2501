@@ -102,7 +102,10 @@ class Imager:
         logger.info("All motions completed.")
 
     async def take(
-        self, n_bundles: int, dark: bool = False, channels: frozenset[Literal[0, 1, 2, 3]] = frozenset((2,))
+        self,
+        n_bundles: int,
+        dark: bool = False,
+        channels: frozenset[Literal[0, 1, 2, 3]] = frozenset((0, 1, 2, 3)),
     ) -> UInt16Array:
         assert self.cams is not None
         if self.lock.locked():
