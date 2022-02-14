@@ -58,7 +58,7 @@ class ZTilt(FPGAControlled, Movable):
 
     async def move(self, pos: int) -> tuple[int, int, int]:
         async with self.lock:
-            return await self.all_z(lambda i: TiltCmd.SET_POS(i, pos))
+            return await self.all_z(lambda i: TiltCmd.SET_POS(i, int(pos)))
 
     @property
     async def pos(self) -> tuple[int, int, int]:

@@ -45,7 +45,7 @@ class ZObj(FPGAControlled, Movable):
         return await self.com.send(ObjCmd.GET_POS)
 
     async def move(self, x: int) -> bool:
-        return await self.com.send(ObjCmd.SET_POS(x))
+        return await self.com.send(ObjCmd.SET_POS(int(x)))
 
     @asynccontextmanager
     async def af_arm(self, z_min: int = 2621, z_max: int = 60292) -> AsyncGenerator[Awaitable[Any], None]:

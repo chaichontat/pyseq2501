@@ -63,10 +63,7 @@ class Laser(UsesSerial):
         await self.com.send(LaserCmd.VERSION)
 
     async def set_onoff(self, state: bool, attempts: int = 3) -> None:
-        for i in range(attempts):
-            if i > 0:
-                logger.warning(f"Laser did not switch to {state}, Trying again.")
-            await self.com.send({False: LaserCmd.OFF, True: LaserCmd.ON}[state])
+        await self.com.send({False: LaserCmd.OFF, True: LaserCmd.ON}[state])
         #     while (resp := self.status.result(5)) is None:
         #         ...
         #     if resp == state:
@@ -87,7 +84,7 @@ class Laser(UsesSerial):
         assert all((int(power) == power and power > 0, tol > 0))
         if not self.on:
             await self.set_onoff(True)
-        await self.com.send(LaserCmd.SET_POWER(power))
+        await self.com.send(LaserCmd.SET_POWER(int(power)))
 
         # for _ in range(timeout):
         #     time.sleep(1)

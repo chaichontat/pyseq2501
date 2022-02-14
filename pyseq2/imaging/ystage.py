@@ -1,6 +1,6 @@
 from __future__ import annotations
-import asyncio
 
+import asyncio
 import logging
 from dataclasses import dataclass
 from typing import Any, Callable, Literal, Optional
@@ -135,7 +135,7 @@ class YStage(UsesSerial, Movable):
         async with self.com.big_lock:
             await self.set_mode("IMAGING") if slowly else await self.set_mode("MOVING")
             logger.info(f"Moving to {pos} for {self._mode}")
-            await self.com.send(YCmd.SET_POS(pos))
+            await self.com.send(YCmd.SET_POS(int(pos)))
             await self.com.send(YCmd.GO)
             return await self.com.send(YCmd.RETURN_WHEN_MOVE_DONE)
 
