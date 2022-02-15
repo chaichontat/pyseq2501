@@ -13,7 +13,6 @@
   let pz: PanzoomObject;
   let ctx: CanvasRenderingContext2D;
   let showHistogram: boolean = true;
-  let currImg: Img;
   let currChannel: 0 | 1 | 2 | 3 = 0;
 
   onMount(() => {
@@ -52,7 +51,7 @@
 
 <!-- Somehow mx-auto is centering -->
 <!-- Image -->
-<div class="relative w-11/12 mx-auto mt-4 border border-gray-300 rounded-md " style="height:75vh;">
+<div class="relative z-10 w-11/12 mx-auto mt-4 border border-gray-300 rounded-md " style="height:75vh;">
   <canvas id="canvas" class="bg-gray-600" bind:this={canvas} width={1024} height={128 * $us.man_params.n} on:wheel={pz.zoomWithWheel} />
 
   <!-- Tabs -->
@@ -75,7 +74,7 @@
     </span>
   </div>
 
-  <div class:hidden={!showHistogram} id="histogram" class="absolute z-30 bg-white rounded-lg shadow-lg bottom-8 right-8 opacity-90" style="width:400px; height:300px">
+  <div class:hidden={!showHistogram} id="histogram" class="absolute z-30 p-6 pb-3 bg-white rounded-lg shadow-lg shadow-gray-500 bottom-8 right-8 opacity-90 w-[400px] h-[300px]">
     <Hist hist={$imgStore?.hist[currChannel]} />
   </div>
 </div>

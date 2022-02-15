@@ -12,10 +12,10 @@ import type { Subscriber, Unsubscriber, Updater, Readable, Writable } from "svel
 const reopenTimeouts = [2000, 5000, 10000, 30000, 60000];
 type ValidType = string; // | ArrayBufferLike | Blob | ArrayBufferView;
 
-export function websocketStore<T>(url: string, initialValue: T | undefined = undefined, f: (x: ValidType) => any = (x: ValidType) => x): Writable<T> {
+export function websocketStore<T>(url: string, initialValue: T | undefined = undefined, f: (x: ValidType) => any = (x: ValidType) => x, subscribeSet: boolean = true): Writable<T> {
     let socket: WebSocket | undefined
     let openPromise: Promise<boolean> | undefined
-    let reopenTimeoutHandler: number | undefined;
+    let reopenTimeoutHandler: ReturnType<typeof setTimeout> | undefined;
     let reopenCount: number = 0;
 
     const subscribers: Set<Subscriber<T>> = new Set();
@@ -55,27 +55,9 @@ export function websocketStore<T>(url: string, initialValue: T | undefined = und
         // we are still in the opening phase
         if (openPromise) return openPromise;
 
-        // while (true) {
-        //     try {
-        //         WebSocket
-        //         break
-        //     } catch (e) {
-        //         await new Promise(r => setTimeout(r, 1000));
-        //     }
-        // }
-        // while (true) {
-        //     try {
-        //         socket = new WebSocket(url);
-        //         break
-        //     } catch (e) {
-        //         console.error(`Cannot connect to ${ url }. Retrying in one second.`)
-        //         await new Promise(r => setTimeout(r, 1000));
-        //     }
-        // }
         socket = new WebSocket(url);
 
         socket.onmessage = (event: MessageEvent): void => {
-            // initialValue = JSON.parse(event.data);
             console.log(event.data)
             subscribers.forEach((subscriber) => {
                 // @ts-ignore
@@ -83,13 +65,7 @@ export function websocketStore<T>(url: string, initialValue: T | undefined = und
             });
         };
 
-        socket.onclose = (_: CloseEvent): void => {
-            // subscribers.forEach((subscriber) => {
-            //     // @ts-ignore
-            //     subscriber(undefined)
-            // });
-            reopen();
-        }
+        socket.onclose = (_: CloseEvent): void => (reopen())
 
         openPromise = new Promise((resolve, reject) => {
             if (socket) {
@@ -120,12 +96,15 @@ export function websocketStore<T>(url: string, initialValue: T | undefined = und
                     open().then(send)
                 } else { send() }
             }
-            subscribers.forEach((subscriber) => {
-                subscriber(value)
-            });
+
+            if (subscribeSet) {
+                subscribers.forEach((subscriber) => {
+                    subscriber(value)
+                });
+            }
         },
 
-        update(_: Updater<any>): void { console.log("update") },
+        update(_: Updater<any>): void { },
 
         subscribe(subscriber: Subscriber<T>): Unsubscriber {
             open();

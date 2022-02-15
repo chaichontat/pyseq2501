@@ -28,41 +28,34 @@
   }
 </script>
 
-<div class="chart">
-  <div class="z-10 foreground">
-    <Pancake.Chart x1={0} x2={4096} y1={0} y2={max}>
-      <Pancake.Grid horizontal count={5} let:value>
+<div class="box-border w-full h-full">
+  <Pancake.Chart x1={-10} x2={4096 + 10} y1={0} y2={max}>
+    <!-- <Pancake.Grid horizontal count={5} let:value>
         <div class="relative left-0 block w-full border-b border-gray-100" />
         <span class="y label">{value}</span>
-      </Pancake.Grid>
+      </Pancake.Grid> -->
 
-      <Pancake.Columns data={f} width={1}>
-        <div class="bg-blue-800 column" />
-      </Pancake.Columns>
+    <Pancake.Columns data={f} width={80}>
+      <div class="absolute w-full bg-blue-800 bottom-6 h-[90%] opacity-60" />
+    </Pancake.Columns>
 
-      <Pancake.Grid vertical count={5} let:value>
-        <span class="x label">{value}</span>
-      </Pancake.Grid>
-    </Pancake.Chart>
-  </div>
+    <Pancake.Grid vertical count={5} let:value>
+      <span class="absolute bottom-0 right-0 text-sm text-center translate-x-1 vert">{value}</span>
+    </Pancake.Grid>
+  </Pancake.Chart>
 </div>
 
 <style lang="postcss">
-  .chart {
-    @apply relative h-full w-full box-border;
-    /* height: 300px; */
-  }
-
-  .foreground {
-    @apply absolute box-border left-8 top-4;
-    height: 80%;
-    width: 80%;
+  .vert::before {
+    content: "";
+    left: calc(50% - 1px);
+    @apply absolute -mt-1.5 w-[1px] h-1.5 top-0 rounded bg-gray-500/[0.8];
   }
 
   .horizontal {
     width: 100%;
     left: 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.5);
   }
 
   .label {
@@ -79,21 +72,8 @@
     line-height: 1;
   }
 
-  .x.label {
-    width: 4em;
-    left: -2em;
-    bottom: 5px;
-    text-align: center;
-  }
-
   .foreground .x.label {
     bottom: -36px;
-  }
-
-  .column {
-    @apply absolute left-0 w-full h-full opacity-60 rounded-t-box box-border;
-    border-left: 1px solid rgba(255, 255, 255, 0.4);
-    border-right: 1px solid rgba(255, 255, 255, 0.4);
   }
 
   .column.m {

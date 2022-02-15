@@ -93,7 +93,7 @@ const userDefault: UserSettings = {
   mode: "automatic",
   recipes: [{ ...recipeDefault }, { ...recipeDefault }],
   man_params: {
-    n: 16, name: "Test", path: ".", channels: [true, true, true, true]
+    n: 8, name: "Test", path: ".", channels: [true, true, true, true]
   }
 }
 
@@ -110,7 +110,7 @@ export const userStore: Writable<UserSettings> = (try_connect && browser)
   : writable(userDefault)
 
 export const cmdStore: Writable<string> = (try_connect && browser)
-  ? websocketStore(`ws://${ window.location.hostname }:8000/cmd`, "", (x): Status => JSON.parse(JSON.parse(x)))
+  ? websocketStore(`ws://${ window.location.hostname }:8000/cmd`, "", (x) => x, false)
   : writable("")
 
 // export let status: Status = {

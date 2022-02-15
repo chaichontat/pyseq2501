@@ -103,7 +103,7 @@ dark = np.zeros((2, 2048, 2048), dtype=np.uint8)
 def update_img(arr: np.ndarray):
     img = [process_img(i) for i in arr]
     hist = [gen_hist(i) for i in arr]
-    return Img(n=16, img=img, hist=hist, channels=(True, True, True, True))
+    return Img(n=8, img=img, hist=hist, channels=(True, True, True, True))
 
 
 IMG = update_img(LATEST)
@@ -129,7 +129,7 @@ async def cmd_endpoint(websocket: WebSocket) -> NoReturn:
                     case ["take"]:
                         LATEST = np.random.randint(0, 4096, (4, 1024, 1024))
                         IMG = update_img(LATEST)
-                        q.put_nowait("")
+                        await websocket.send_text("ready")
                     case ["autofocus"]:
                         logger.info(f"Autofocus")
                         # q.put_nowait(Img(n=16, img="", hist=hist(np.random.randint(0, 4096, 1000000))))
@@ -137,52 +137,6 @@ async def cmd_endpoint(websocket: WebSocket) -> NoReturn:
                     #     logger.info(f"Autofocus")
                     #     target, img = await imager.autofocus(channel=1)
                     #     await imager.z_obj.move(target)
-
-        except (WebSocketDisconnect):
-            ...
-
-
-@app.websocket("/img")
-async def image_endpoint(websocket: WebSocket) -> NoReturn:
-    global latest, dark, IMG
-    while True:
-        try:
-            await websocket.accept()
-            while True:
-                img: Img = await q.get()
-                print("hi1")
-                await websocket.send_json({"hi": "hi"})
-                q.task_done()
-
-                # cmd = Received.parse_raw(await websocket.receive_text())
-                # match cmd:
-                #     case Received("take", n):
-                #         logger.info(f"Received: Take {n} bundles.")
-                #         latest = await imager.take(n, channels=frozenset((0,)))
-                #         await websocket.send_json(Img(n=n, img=process_img(latest), hist=hist(latest)).json())
-
-                #     case Received("dark", n):
-                #         logger.info(f"Received: Take 16 dark bundles.")
-                #         dark = await imager.take(n, channels=frozenset((0,)), dark=True)
-                #         await websocket.send_json(Img(n=n, img=process_img(dark), hist=hist(latest)).json())
-
-                #     case Received("corr", n):
-                #         await websocket.send_json(
-                #             Img(
-                #                 n=n,
-                #                 img=process_img(np.clip(latest - dark, 0, 65535)),
-                #                 hist=hist(latest),
-                #             ).json()
-                #         )
-
-                #     case Received("uncorr", n):
-                #         await websocket.send_json(Img(n=n, img=process_img(latest), hist=hist(latest)).json())
-
-                #     case Received("autofocus", _):
-                #         logger.info(f"Autofocus")
-                #         await websocket.send_json(
-                #             Img(n=16, img="", hist=hist(np.random.randint(0, 4096, 1000000))).json()
-                #         )
 
         except (WebSocketDisconnect):
             ...
@@ -278,9 +232,9 @@ async def user_endpoint(websocket: WebSocket) -> NoReturn:
 @app.get("/img")
 async def get_img():
     global LATEST, IMG
-    LATEST = np.random.randint(0, 4096, (4, 1024, 1024))
+    # LATEST = np.random.randint(0, 4096, (4, 1024, 1024))
     # LATEST = np.random.randint(0, 4096) * np.ones((4, 1024, 1024))
-    IMG = update_img(LATEST)
+    # IMG = update_img(LATEST)
     return Response(IMG.json())
 
 

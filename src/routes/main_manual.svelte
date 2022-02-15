@@ -3,49 +3,30 @@
   import { userStore as us } from "$src/store";
   import ProgressManual from "$src/components/main/manual/progress_manual.svelte";
   import Details from "$src/components/main/auto/details.svelte";
+
+  let height = 0;
+
+  $: height = ($us.man_params.n * 128 * 0.375) / 1000;
 </script>
 
-<div class="z-40 bg-white h-48 sticky top-[4rem] pb-4 border-b box-border ">
-  <!-- <div class="w-full h-4 bg-white" /> -->
+<div class="box-border sticky z-40 -mx-10 px-10 pb-6 shadow-md bg-white/[0.95] border-b top-16 ">
+  <div class="w-full h-4" />
   <ProgressManual />
 </div>
 
-<p class="title">Capture Parameters</p>
+<p class="mt-6 title">Capture Parameters</p>
 <!-- Capture params. -->
-<div class="grid grid-cols-2">
+<div class="grid grid-cols-2 space-x-2">
   <div>
     <Details />
-  </div>
-
-  <div class="grid grid-cols-2 font-medium">
-    <div id="green">
-      532nm
-      <ol>
-        <li class="channel" class:text-gray-500={!$us.man_params.channels[0]}>
-          <input type="checkbox" class="mr-1 text-green-500 rounded focus:ring-green-300" bind:checked={$us.man_params.channels[0]} />
-          Channel 0
-        </li>
-        <li class="channel" class:text-gray-500={!$us.man_params.channels[1]}>
-          <input type="checkbox" class="mr-1 text-orange-600 rounded focus:ring-orange-300" bind:checked={$us.man_params.channels[1]} />
-          Channel 1
-        </li>
-      </ol>
-    </div>
-    <div id="red">
-      633nm
-      <ol>
-        <li class="channel" class:text-gray-500={!$us.man_params.channels[2]}>
-          <input type="checkbox" class="mr-1 rounded text-rose-700 focus:ring-rose-500" bind:checked={$us.man_params.channels[2]} />
-          Channel 2
-        </li>
-        <li class="channel" class:text-gray-500={!$us.man_params.channels[3]}>
-          <input type="checkbox" class="mr-1 rounded text-amber-900 focus:ring-amber-700" bind:checked={$us.man_params.channels[3]} />
-          Channel 3
-        </li>
-      </ol>
-    </div>
   </div>
 </div>
 
 <p class="title">Preview</p>
 <Preview />
+
+<style lang="postcss">
+  .channel {
+    @apply mr-4;
+  }
+</style>
