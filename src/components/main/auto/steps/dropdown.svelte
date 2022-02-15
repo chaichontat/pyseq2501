@@ -32,8 +32,8 @@
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
     </svg>
   </MenuButton>
-  <MenuItems class="absolute left-0 z-10 w-64 mt-2 bg-white divide-y divide-gray-200 rounded-md shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none">
-    <div transition:fade={{ duration: 100, easing: cubicInOut }}>
+  <MenuItems class="absolute left-0 z-10 w-64 mt-2 bg-white border border-gray-200 rounded-md shadow-xl focus:outline-none">
+    <div class="divide-y divide-gray-200 dropp" transition:fade={{ duration: 100, easing: cubicInOut }}>
       <section>
         <MenuItem let:active><div on:click={handleClick("hold")} class:bg-blue-200={active} class="item">{namemap["hold"]}</div></MenuItem>
         <MenuItem let:active><div on:click={handleClick("goto")} class:bg-blue-200={active} class="item">{namemap["goto"]}</div></MenuItem>
@@ -59,5 +59,26 @@
   }
   .item {
     @apply block w-full px-4 py-2 font-medium text-left bg-white hover:bg-blue-100 hover:text-blue-800;
+  }
+
+  .dropp::before {
+    @apply absolute inline-block;
+    content: "";
+    border: 8px solid transparent;
+    border-bottom-color: #e5e7eb;
+
+    top: -15px;
+    right: 11px;
+    left: auto;
+  }
+
+  .dropp::after {
+    @apply absolute inline-block;
+    border: 7px solid transparent;
+    content: "";
+    border-bottom-color: white;
+    top: -12px;
+    right: 12px;
+    left: auto;
   }
 </style>
