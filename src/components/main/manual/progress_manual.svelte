@@ -38,20 +38,31 @@
   // }
 </script>
 
-<span class="z-40 flex w-full gap-x-3">
+<span class="z-40 flex w-full space-x-2">
   <!-- Buttons -->
-  <content class="grid w-32 grid-row-2 gap-y-2">
+  <div class="grid grid-flow-row w-36">
     <button
       type="button"
-      class="text-lg mt-2 transition-colors shadow-md shadow-blue-500/50 text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg px-4 py-2.5 text-center inline-flex items-center mr-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+      class="text-lg transition-colors shadow-md shadow-blue-500/50 text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 active:bg-blue-800 focus:ring-blue-300 font-medium rounded-lg px-4 py-2.5 text-center inline-flex items-center mr-2"
       on:click={() => ($cmdStore = "take")}
     >
       <svg class="w-6 h-6 mr-1 -ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
       </svg>
-      Start
+      Capture
     </button>
-  </content>
+
+    <button
+      type="button"
+      class="text-lg mt-2 transition-colors shadow-md shadow-blue-500/50 text-white bg-sky-500 hover:bg-sky-600 focus:ring-4 active:bg-sky-700 focus:ring-sky-300 font-medium rounded-lg px-4 py-2.5 text-center inline-flex items-center mr-2"
+      on:click={() => ($cmdStore = "take")}
+    >
+      <svg class="w-6 h-6 mr-1 -ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+      </svg>
+      Preview
+    </button>
+  </div>
 
   <!-- Big box -->
   <content class="flex-grow px-4 py-2 border rounded-lg border-base-300">

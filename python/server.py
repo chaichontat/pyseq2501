@@ -142,9 +142,13 @@ async def cmd_endpoint(websocket: WebSocket) -> NoReturn:
             ...
 
 
+class ReagentGroup(BaseModel):
+    group: str
+
+
 class NReagent(BaseModel):
     uid: str | int
-    reagent: Reagent
+    reagent: Reagent | ReagentGroup
 
 
 class NCmd(BaseModel):
@@ -218,15 +222,16 @@ USERSETTINGS = UserSettings(
 async def user_endpoint(websocket: WebSocket) -> NoReturn:
     global USERSETTINGS
     while True:
-        try:
-            await websocket.accept()
-            await websocket.send_json(USERSETTINGS.json())
-            while True:
-                ret = await websocket.receive_json()
-                logger.info(ret)
-                USERSETTINGS = UserSettings.parse_obj(ret)
-        except (WebSocketDisconnect, ConnectionClosedOK):
-            ...
+        await websocket.accept()
+        while True:
+            try:
+                await websocket.send_json(USERSETTINGS.json())
+                while True:
+                    ret = await websocket.receive_json()
+                    USERSETTINGS = UserSettings.parse_obj(ret)
+                    logger.info(USERSETTINGS)
+            except (WebSocketDisconnect, ConnectionClosedOK):
+                ...
 
 
 @app.get("/img")

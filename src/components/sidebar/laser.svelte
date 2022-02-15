@@ -27,17 +27,7 @@
   </th>
 
   <td>
-    <input
-      type="number"
-      min="0"
-      max="1000"
-      step="1"
-      class="block w-10/12 h-8 text-base font-medium input input-bordered"
-      style="margin: 0 auto;"
-      bind:value={pow}
-      on:blur={update}
-      disabled={$us.mode === "automatic"}
-    />
+    <input type="number" min="0" max="1000" step="1" class="block w-10/12 h-8 pretty mx-auto" bind:value={pow} on:blur={update} disabled={$us.mode === "automatic"} />
   </td>
   <td class="font-mono font-bold text-center">{power}</td>
   <td class="text-right">mW</td>

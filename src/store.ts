@@ -90,7 +90,7 @@ export const recipeDefault: Recipe = {
 
 const userDefault: UserSettings = {
   x: 0, y: 0, z_tilt: 19850, z_obj: 32000, laser_r: 5, laser_g: 5, flowcell: false, max_uid: 2,
-  mode: "automatic",
+  mode: "editingA",
   recipes: [{ ...recipeDefault }, { ...recipeDefault }],
   man_params: {
     n: 8, name: "Test", path: ".", channels: [true, true, true, true]

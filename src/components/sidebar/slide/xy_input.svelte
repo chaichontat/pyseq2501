@@ -42,9 +42,9 @@
     </label>
 
     <!-- Eject button -->
-    <button class="self-center w-16 mt-2 btn btn-secondary btn-sm">
+    <button class="self-center w-16 h-8 mt-2 text-white transition-colors bg-indigo-500 pretty hover:bg-indigo-600 active:bg-indigo-700">
       <svg
-        class="w-4 h-4 fill-current "
+        class="w-4 h-4 mx-auto -translate-x-0.5 fill-current"
         version="1.1"
         viewBox="0 0 300.02 300.02"
         style="enable-background:new 0 0 300.02 300.02; border-top-right-radius:initial; border-bottom-right-radius:initial;"

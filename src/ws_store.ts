@@ -86,6 +86,7 @@ export function websocketStore<T>(url: string, initialValue: T | undefined = und
 
     return {
         set(value: T): void {
+            console.log(value)
             if (socket) {
                 const send =
                     (typeof value == "object")

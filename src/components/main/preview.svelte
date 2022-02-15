@@ -22,7 +22,7 @@
 
   if (browser) {
     imgFrame = new Image();
-    imgFrame.onload = () => ctx.drawImage(imgFrame, 0, 0);
+    imgFrame.onload = () => ctx?.drawImage(imgFrame, 0, 0);
   }
 
   // function receivedImage() {
@@ -51,8 +51,8 @@
 
 <!-- Somehow mx-auto is centering -->
 <!-- Image -->
-<div class="relative z-10 w-11/12 mx-auto mt-4 border border-gray-300 rounded-md " style="height:75vh;">
-  <canvas id="canvas" class="bg-gray-600" bind:this={canvas} width={1024} height={128 * $us.man_params.n} on:wheel={pz.zoomWithWheel} />
+<div id="frame" class="relative z-10 w-11/12 mx-auto mt-4 border border-gray-300 rounded-md " style="height:75vh;">
+  <canvas id="canvas" bind:this={canvas} width={1024} height={128 * $us.man_params.n} on:wheel={pz.zoomWithWheel} />
 
   <!-- Tabs -->
   <div class="absolute z-40 w-2/5 h-10 top-4 left-4">
@@ -82,5 +82,15 @@
 <style lang="postcss">
   .tab-button {
     @apply transition-all duration-100 w-full py-2.5 text-sm leading-5 font-medium rounded-lg focus:outline-none focus:ring-2;
+  }
+
+  #canvas {
+    @apply shadow-lg  bg-gray-700 rounded-xl ring-4 ring-gray-600 ring-opacity-50;
+    background-size: 10rem 10rem;
+    background-image: linear-gradient(to right, #ccc 1px, transparent 1px), linear-gradient(to bottom, #ccc 1px, transparent 1px);
+  }
+
+  #frame {
+    @apply bg-gray-300;
   }
 </style>

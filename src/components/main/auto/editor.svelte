@@ -52,19 +52,19 @@
 
 <!-- <ProgressAuto fc={fc} /> -->
 
-{#if $us.recipes[fc]}
-  Total Time
-  <p class="pb-3 mt-8 text-2xl font-bold text-gray-800 border-b">Details</p>
-  <Details />
-  <Reagents {fc} />
-  <Steps {fc} />
-  <p class="mt-6 mb-1 text-2xl font-bold text-gray-800">Preview</p>
-  <Preview />
+<!-- {#if $us.recipes[fc]} -->
+Total Time
+<p class="pb-3 mt-8 text-2xl font-bold text-gray-800 border-b">Details</p>
+<Details />
+<Reagents {fc} />
+<Steps {fc} />
+<p class="mt-6 mb-1 text-2xl font-bold text-gray-800">Preview</p>
+<!-- <Preview /> -->
 
-  <!-- Editor -->
-{:else}
-  <!-- New or Upload -->
-  <div class="flex items-center justify-center w-full h-[50vh]">
+<!-- Editor -->
+<!-- {:else} -->
+<!-- New or Upload -->
+<!-- <div class="flex items-center justify-center w-full h-[50vh]">
     <div class="inline-flex text-2xl rounded-md shadow-sm" role="group">
       <button type="button" class="px-8 py-6 font-medium rounded-l-lg white-button" on:click={() => ($us.recipes[fc] = { ...recipeDefault })}>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -80,24 +80,11 @@
         Upload
       </button>
     </div>
-  </div>
-{/if}
+  </div> -->
 
+<!-- {/if} -->
 <style lang="postcss">
   svg {
     @apply mr-1;
-  }
-
-  .dropdown-caret {
-    display: inline-block;
-    width: 0;
-    height: 0;
-    vertical-align: middle;
-    content: "";
-    border-style: solid;
-    border-width: 4px 4px 0;
-    border-right-color: transparent;
-    border-bottom-color: transparent;
-    border-left-color: transparent;
   }
 </style>
