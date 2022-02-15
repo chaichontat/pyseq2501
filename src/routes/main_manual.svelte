@@ -5,7 +5,10 @@
   import Details from "$src/components/main/auto/details.svelte";
 </script>
 
-<ProgressManual />
+<div class="z-40 bg-white h-48 sticky top-[4rem] pb-4 border-b box-border ">
+  <!-- <div class="w-full h-4 bg-white" /> -->
+  <ProgressManual />
+</div>
 
 <p class="title">Capture Parameters</p>
 <!-- Capture params. -->

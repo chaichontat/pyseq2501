@@ -76,6 +76,7 @@ export function websocketStore<T>(url: string, initialValue: T | undefined = und
 
         socket.onmessage = (event: MessageEvent): void => {
             // initialValue = JSON.parse(event.data);
+            console.log(event.data)
             subscribers.forEach((subscriber) => {
                 // @ts-ignore
                 subscriber(f(event.data))
@@ -93,6 +94,7 @@ export function websocketStore<T>(url: string, initialValue: T | undefined = und
         openPromise = new Promise((resolve, reject) => {
             if (socket) {
                 socket.onerror = (error: Event): void => {
+                    console.error("Websocket error")
                     reject(error);
                     openPromise = undefined;
                 };
@@ -109,7 +111,6 @@ export function websocketStore<T>(url: string, initialValue: T | undefined = und
     return {
         set(value: T): void {
             if (socket) {
-                // console.log(JSON.stringify(value))
                 const send =
                     (typeof value == "object")
                         ? () => socket.send(JSON.stringify(value))

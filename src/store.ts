@@ -44,15 +44,13 @@ export type Recipe = {
 }
 
 export type ManualParams = {
+  n: number,
   name: string,
   path: string,
-  channels: [boolean, boolean, boolean, boolean],
-  laser_onoff: [boolean, boolean],
-  lasers: [number, number],
+  channels: [boolean, boolean, boolean, boolean]
 }
 
 export type UserSettings = {
-  n: number;
   x: number
   y: number
   z_tilt: number | [number, number, number],
@@ -75,8 +73,8 @@ export type Hist = {
 }
 
 export type Img = {
-  img: string[],
   n: number,
+  img: string[],
   hist: Hist[],
   channels: [boolean, boolean, boolean, boolean],
 }
@@ -91,19 +89,17 @@ export const recipeDefault: Recipe = {
 }
 
 const userDefault: UserSettings = {
-  n: 16, x: 0, y: 0, z_tilt: 19850, z_obj: 32000, laser_r: 5, laser_g: 5, flowcell: false, max_uid: 2,
-  mode: "automatic", recipes: [{ ...recipeDefault }, { ...recipeDefault }],
+  x: 0, y: 0, z_tilt: 19850, z_obj: 32000, laser_r: 5, laser_g: 5, flowcell: false, max_uid: 2,
+  mode: "automatic",
+  recipes: [{ ...recipeDefault }, { ...recipeDefault }],
   man_params: {
-    name: "Test", path: ".", channels: [true, true, true, true], laser_onoff: [true, true],
-    lasers: [50, 50],
+    n: 16, name: "Test", path: ".", channels: [true, true, true, true]
   }
 }
 
-let img: Img = { n: 0, img: "", hist: { counts: [10], bin_edges: [0] } }
+let img: Img = { n: 0, img: [""], hist: [{ counts: [10], bin_edges: [0] }], channels: [false, false, false, false] }
 
-export const imgStore: Writable<Img> = (try_connect && browser)
-  ? websocketStore(`ws://${ window.location.hostname }:8000/img`, img, (x) => JSON.parse(JSON.parse(x)))
-  : writable(img)
+export const imgStore: Writable<Img> = writable(img)
 
 export const statusStore: Writable<Status> = (try_connect && browser)
   ? websocketStore(`ws://${ window.location.hostname }:8000/status`, status, (x): Status => JSON.parse(JSON.parse(x)))
@@ -113,9 +109,9 @@ export const userStore: Writable<UserSettings> = (try_connect && browser)
   ? websocketStore(`ws://${ window.location.hostname }:8000/user`, userDefault, (x): Status => JSON.parse(JSON.parse(x)))
   : writable(userDefault)
 
-export const cmdStore: Writable<undefined> = (try_connect && browser)
-  ? websocketStore(`ws://${ window.location.hostname }:8000/cmd`, undefined, (x): Status => JSON.parse(JSON.parse(x)))
-  : writable(undefined)
+export const cmdStore: Writable<string> = (try_connect && browser)
+  ? websocketStore(`ws://${ window.location.hostname }:8000/cmd`, "", (x): Status => JSON.parse(JSON.parse(x)))
+  : writable("")
 
 // export let status: Status = {
 //   x: 2,

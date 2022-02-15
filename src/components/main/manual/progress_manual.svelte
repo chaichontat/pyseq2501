@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { imgStore, userStore, cmdStore } from "$src/store";
+  import { imgStore, userStore, cmdStore, Img } from "$src/store";
 
   let curr: null | number;
   let _curr = "  --";
@@ -7,31 +7,37 @@
   let corrected: boolean = false;
 
   function start() {
-    if (0 < $userStore.n && $userStore.n < 1000) {
-      $imgStore = { cmd: "take", n: $userStore.n };
-    } else {
-      alert("Invalid number of bundles.");
-    }
+    // if (0 < $userStore.man_params.n && $userStore.man_params.n < 1000) {
+    //   $cmdStore = "take";
+    // } else {
+    //   alert("Invalid number of bundles.");
+    // }
+    fetch(`http://${window.location.hostname}:8000/img`)
+      .then((response: Response) => response.json())
+      .then((i: Img) => {
+        // ctx.clearRect(0, 0, canvas.width, canvas.height);
+        $imgStore = i;
+      });
   }
 
-  $: height = ($userStore.n * 128 * 0.375) / 1000;
+  $: height = ($userStore.man_params.n * 128 * 0.375) / 1000;
 
-  $: {
-    if ($imgStore) {
-      if (!("cmd" in $imgStore)) {
-        curr = $imgStore ? $imgStore.n : -1;
-        _curr = curr == -1 ? "--" : curr;
-      }
-    }
-  }
+  // $: {
+  //   if ($imgStore) {
+  //     if (!("cmd" in $imgStore)) {
+  //       curr = $imgStore ? $imgStore.n : -1;
+  //       _curr = curr == -1 ? "--" : curr;
+  //     }
+  //   }
+  // }
 
-  $: {
-    if (corrected) {
-      $imgStore = { cmd: "corr", n: $userStore.n };
-    } else {
-      $imgStore = { cmd: "uncorr", n: $userStore.n };
-    }
-  }
+  // $: {
+  //   if (corrected) {
+  //     $cmdStore = "corr";
+  //   } else {
+  //     $cmdStore = "uncorr";
+  //   }
+  // }
 </script>
 
 <span class="flex flex-row w-full gap-x-3">
@@ -46,7 +52,7 @@
       </svg>
       Start
     </button>
-    <button class="_btn btn--secondary" on:click={() => ($cmdStore = { cmd: "autofocus", n: $userStore.n })}>Autofocus</button>
+    <button class="_btn btn--secondary" on:click={() => ($cmdStore = "autofocus")}>Autofocus</button>
   </content>
 
   <div class="flex-grow border stats border-base-300">
@@ -58,14 +64,14 @@
         <span class="stat-value">
           <span class="font-mono">{_curr}</span>
           /
-          <input type="number" class="px-2 text-right input stat-value w-36" min="1" max="999" placeholder="1" bind:value={$userStore.n} />
+          <input type="number" class="px-2 text-right input stat-value w-36" min="1" max="999" placeholder="1" bind:value={$userStore.man_params.n} />
         </span>
         <div class="flex flex-col ml-4 opacity-75">
           <span>Height {height.toFixed(3)} mm</span>
           <span>Total time: {height / 2} s</span>
         </div>
         <div class="flex flex-col ml-4">
-          <button class="btn btn-sm btn--secondary" on:click={() => ($imgStore = { cmd: "dark", n: $userStore.n })}>Take Dark</button>
+          <button class="btn btn-sm btn--secondary" on:click={() => ($cmdStore = "dark")}>Take Dark</button>
           <span>
             Dark Corrected
             <input type="checkbox" bind:checked={corrected} class="mt-2 ml-4 toggle toggle-sm" />
@@ -75,7 +81,7 @@
 
       <div class="stat-title">Bundles taken</div>
       <div class="stat-desc">
-        <progress value={$imgStore.n} max={$userStore.n} class="transition-all progress progress-secondary" />
+        <progress value={16} max={$userStore.man_params.n} class="transition-all progress progress-secondary" />
       </div>
     </div>
   </div>

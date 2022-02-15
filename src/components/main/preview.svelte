@@ -1,60 +1,68 @@
 <script lang="ts">
   import Panzoom, { PanzoomObject } from "@panzoom/panzoom";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import { cubicInOut } from "svelte/easing";
   import { fade } from "svelte/transition";
-  import { imgStore, userStore as us } from "$src/store";
+  import { Img, imgStore, userStore as us } from "$src/store";
   import Hist from "./hist.svelte";
   import { Tab, TabGroup, TabList } from "@rgossiaux/svelte-headlessui";
+  import { browser } from "$app/env";
 
   let canvas: HTMLCanvasElement;
-  let img: HTMLImageElement;
+  let imgFrame: HTMLImageElement;
   let pz: PanzoomObject;
   let ctx: CanvasRenderingContext2D;
   let showHistogram: boolean = true;
+  let currImg: Img;
+  let currChannel: 0 | 1 | 2 | 3 = 0;
 
   onMount(() => {
     ctx = canvas.getContext("2d");
     pz = Panzoom(canvas, { maxZoom: 5 });
   });
 
-  $: {
-    if (canvas && $imgStore) {
-      if (!("cmd" in $imgStore)) {
-        console.log($imgStore);
-        if ($imgStore.n == 1) {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-        console.log($imgStore);
+  if (browser) {
+    imgFrame = new Image();
+    imgFrame.onload = () => ctx.drawImage(imgFrame, 0, 0);
+  }
 
-        img = new Image();
-        img.onload = () => ctx.drawImage(img, 0, 256 * ($us.n - $imgStore.n));
-        img.src = $imgStore.img;
-      }
-    }
+  // function receivedImage() {
+  //   fetch(`http://${window.location.hostname}:8000/img`)
+  //     .then((response: Response) => response.json())
+  //     .then((i: Img) => {
+  //       // ctx.clearRect(0, 0, canvas.width, canvas.height);
+  //       currImg = i;
+  //     });
+  // }
+
+  // const unsubscribe = imgStore.subscribe((value) => receivedImage());
+  // onDestroy(unsubscribe);
+
+  $: {
+    if (browser) imgFrame.src = $imgStore?.img[currChannel];
   }
 
   // $: if (canvas) ctx.canvas.height = 128 * $userStore.n;
 
-  function genTabClass(color: string, level: number, selected: boolean, enabled: boolean): string {
-    let out = `tab-button ${selected ? `bg-white-shadow text-white bg-${color}-${level}` : `${enabled ? `text-gray-700 hover:text-black hover:bg-${color}-300` : "text-gray-400"}`}`;
-    console.log(out);
+  function genTabClass(color: string, selected: boolean, enabled: boolean): string {
+    let out = `tab-button ${selected ? `text-white` : `${enabled ? `text-gray-700 hover:text-black bg-white hover:bg-${color}-300` : "text-gray-400"}`}`;
     return out;
   }
 </script>
 
 <!-- Somehow mx-auto is centering -->
-<div class="relative w-11/12 mx-auto mt-4 border border-gray-300 rounded-md" style="height:75vh;">
-  <canvas id="canvas" bind:this={canvas} width={2048} height={128 * $us.n} on:wheel={pz.zoomWithWheel} style="background-color: gray;" />
+<!-- Image -->
+<div class="relative w-11/12 mx-auto mt-4 border border-gray-300 rounded-md " style="height:75vh;">
+  <canvas id="canvas" class="bg-gray-600" bind:this={canvas} width={1024} height={128 * $us.man_params.n} on:wheel={pz.zoomWithWheel} />
 
   <!-- Tabs -->
   <div class="absolute z-40 w-2/5 h-10 top-4 left-4">
-    <TabGroup>
+    <TabGroup on:change={(idx) => (currChannel = idx.detail)}>
       <TabList class="grid grid-cols-4 p-1 space-x-1 bg-white shadow rounded-xl opacity-90 ">
-        <Tab disabled={!$us.man_params.channels[0]} let:selected><button class={genTabClass("green", 600, selected, $us.man_params.channels[0])}>Channel 0</button></Tab>
-        <Tab disabled={!$us.man_params.channels[1]} let:selected><button class={genTabClass("orange", 500, selected, $us.man_params.channels[1])}>Channel 1</button></Tab>
-        <Tab disabled={!$us.man_params.channels[2]} let:selected><button class={genTabClass("rose", 600, selected, $us.man_params.channels[2])}>Channel 2</button></Tab>
-        <Tab disabled={!$us.man_params.channels[3]} let:selected><button class={genTabClass("amber", 800, selected, $us.man_params.channels[3])}>Channel 3</button></Tab>
+        <Tab disabled={!$us.man_params.channels[0]} let:selected><button class:bg-green-600={selected} class={genTabClass("green", selected, $us.man_params.channels[0])}>Channel 0</button></Tab>
+        <Tab disabled={!$us.man_params.channels[1]} let:selected><button class:bg-orange-500={selected} class={genTabClass("orange", selected, $us.man_params.channels[1])}>Channel 1</button></Tab>
+        <Tab disabled={!$us.man_params.channels[2]} let:selected><button class:bg-rose-600={selected} class={genTabClass("rose", selected, $us.man_params.channels[2])}>Channel 2</button></Tab>
+        <Tab disabled={!$us.man_params.channels[3]} let:selected><button class:bg-amber-800={selected} class={genTabClass("amber", selected, $us.man_params.channels[3])}>Channel 3</button></Tab>
       </TabList>
     </TabGroup>
   </div>
@@ -67,11 +75,9 @@
     </span>
   </div>
 
-  {#if showHistogram}
-    <div transition:fade={{ duration: 100, easing: cubicInOut }} id="histogram" class="absolute z-40 bg-white rounded-lg shadow-lg bottom-8 right-8 opacity-90" style="width:400px; height:300px">
-      <Hist />
-    </div>
-  {/if}
+  <div class:hidden={!showHistogram} id="histogram" class="absolute z-30 bg-white rounded-lg shadow-lg bottom-8 right-8 opacity-90" style="width:400px; height:300px">
+    <Hist hist={$imgStore?.hist[currChannel]} />
+  </div>
 </div>
 
 <style lang="postcss">

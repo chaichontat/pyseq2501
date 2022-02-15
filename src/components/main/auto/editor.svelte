@@ -3,9 +3,7 @@
   import Reagents from "$comps/main/auto/reagents/reagents.svelte";
   import Steps from "$comps/main/auto/steps/steps.svelte";
   import Preview from "$comps/main/preview.svelte";
-  import { userStore as us } from "$src/store";
-  import { recipeDefault } from "$src/store";
-  import ProgressAuto from "./progress_auto.svelte";
+  import { recipeDefault, userStore as us } from "$src/store";
   import { Menu, MenuButton, MenuItem, MenuItems } from "@rgossiaux/svelte-headlessui";
   import { cubicInOut } from "svelte/easing";
   import { fade } from "svelte/transition";

@@ -1,7 +1,8 @@
 <script lang="ts">
   import * as Pancake from "@sveltejs/pancake";
-  import { imgStore } from "$src/store";
+  import type { Hist } from "$src/store";
 
+  export let hist: Hist;
   let max: number;
 
   function range(a, b, step) {
@@ -20,25 +21,23 @@
   ];
 
   $: {
-    const h = $imgStore?.hist;
-    if (h) {
-      console.log(h);
-      f = gen_xy(h.bin_edges, h.counts);
-      max = Math.max(...h.counts);
+    if (hist) {
+      f = gen_xy(hist.bin_edges, hist.counts);
+      max = Math.max(...hist.counts);
     }
   }
 </script>
 
 <div class="chart">
-  <div class="foreground">
+  <div class="z-10 foreground">
     <Pancake.Chart x1={0} x2={4096} y1={0} y2={max}>
       <Pancake.Grid horizontal count={5} let:value>
         <div class="relative left-0 block w-full border-b border-gray-100" />
         <span class="y label">{value}</span>
       </Pancake.Grid>
 
-      <Pancake.Columns data={f} width={5}>
-        <div class="z-10 column f" />
+      <Pancake.Columns data={f} width={1}>
+        <div class="bg-blue-800 column" />
       </Pancake.Columns>
 
       <Pancake.Grid vertical count={5} let:value>
@@ -51,7 +50,6 @@
 <style lang="postcss">
   .chart {
     @apply relative h-full w-full box-border;
-
     /* height: 300px; */
   }
 

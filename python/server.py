@@ -11,7 +11,6 @@ from typing import Annotated, Literal, NoReturn, Optional
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse, Response
@@ -20,14 +19,10 @@ from pydantic import BaseModel, Field, root_validator, validator
 from rich.logging import RichHandler
 from websockets.exceptions import ConnectionClosedOK
 
+from fake_imager import FakeImager
 from pyseq2.experiment import *
 from pyseq2.imager import Imager, Position
 from pyseq2.utils.ports import get_ports
-
-sns.set()
-matplotlib.use("Agg")
-import status
-from fake_imager import FakeImager
 
 logging.basicConfig(
     level="INFO",
@@ -48,13 +43,6 @@ app.add_middleware(
 )
 
 
-DEBUG = False
-imager: Imager
-q = asyncio.Queue()
-latest = np.zeros((2, 2048, 2048), dtype=np.uint8)
-dark = np.zeros((2, 2048, 2048), dtype=np.uint8)
-
-
 class Hist(BaseModel):
     counts: list[int]
     bin_edges: list[float]
@@ -62,9 +50,14 @@ class Hist(BaseModel):
 
 class Img(BaseModel):
     n: int
-    img: str
-    hist: Hist
+    img: list[str]
+    hist: list[Hist]
+    channels: tuple[bool, bool, bool, bool]
 
+
+DEBUG = False
+imager: Imager
+q: asyncio.Queue[Img] = asyncio.Queue()
 
 Cmds = Literal[
     "take",
@@ -87,16 +80,10 @@ async def startup_event():
     imager = None  # await Imager.ainit(await get_ports(60))
 
 
-class Received(BaseModel):
-    __match_args__ = ("cmd", "n")
-    cmd: str
-    n: Optional[int]
-
-
 def process_img(img: np.ndarray) -> str:
     cmap = plt.cm.get_cmap()
-    norm = plt.Normalize(vmin=img[1].min(), vmax=img[1].max())
-    img = (cmap(norm(img[1])) * 256).astype(np.uint8)
+    norm = plt.Normalize(vmin=img.min(), vmax=img.max())
+    img = (cmap(norm(img)) * 256).astype(np.uint8)
 
     buff = BytesIO()
     pil_img = Image.fromarray(img).convert("RGB")
@@ -104,40 +91,48 @@ def process_img(img: np.ndarray) -> str:
     return "data:image/jpg;base64," + base64.b64encode(buff.getvalue()).decode("utf-8")
 
 
-def hist(img: np.ndarray) -> Hist:
+def gen_hist(img: np.ndarray) -> Hist:
     hist, bin_edges = np.histogram(img.flatten(), 40)
     return Hist(counts=list(hist), bin_edges=list(bin_edges))
 
-    # fig, ax = plt.subplots(figsize=(5,4), dpi=100)
 
-    # sns.histplot(img.flatten(), ax=ax)
-    # ax.set_xlabel("Intensity")
-    # plt.tight_layout()
-    # buf = BytesIO()
-    # fig.savefig(buf, format="png")  # matplotlib does not support jpg.
-    # out = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("utf-8")
-    # plt.close(fig)
-    # return out
+LATEST = np.random.randint(0, 256, (4, 1024, 1024), dtype=np.uint8)
+dark = np.zeros((2, 2048, 2048), dtype=np.uint8)
+
+
+def update_img(arr: np.ndarray):
+    img = [process_img(i) for i in arr]
+    hist = [gen_hist(i) for i in arr]
+    return Img(n=16, img=img, hist=hist, channels=(True, True, True, True))
+
+
+IMG = update_img(LATEST)
 
 
 @app.websocket("/cmd")
 async def cmd_endpoint(websocket: WebSocket) -> NoReturn:
+    global LATEST, IMG
     while True:
         try:
             await websocket.accept()
             while True:
-                cmd = Received.parse_raw(await websocket.receive_text())
-                match cmd:
+                cmd = await websocket.receive_text()
+                print(cmd)
+                match cmd.split("_"):
                     # TODO Need to block UI when moving.
-                    case Received("x", n):
+                    case ["x", n]:
                         logger.info(f"X Go: {n}")
-                        await imager.x.move(n)
-                    case Received("y", n):
+                        await imager.x.move(int(n))
+                    case ["y", n]:
                         logger.info(f"Y Go: {n}")
-                        await imager.y.move(n)
-                    case Received("autofocus", _):
+                        await imager.y.move(int(n))
+                    case ["take"]:
+                        LATEST = np.random.randint(0, 4096, (4, 1024, 1024))
+                        IMG = update_img(LATEST)
+                        q.put_nowait("")
+                    case ["autofocus"]:
                         logger.info(f"Autofocus")
-                        q.put_nowait(Img(n=16, img="", hist=hist(np.random.randint(0, 4096, 1000000))))
+                        # q.put_nowait(Img(n=16, img="", hist=hist(np.random.randint(0, 4096, 1000000))))
                     # case Received("autofocus", _):
                     #     logger.info(f"Autofocus")
                     #     target, img = await imager.autofocus(channel=1)
@@ -149,13 +144,14 @@ async def cmd_endpoint(websocket: WebSocket) -> NoReturn:
 
 @app.websocket("/img")
 async def image_endpoint(websocket: WebSocket) -> NoReturn:
-    global latest, dark
+    global latest, dark, IMG
     while True:
         try:
             await websocket.accept()
             while True:
-                img = await q.get()
-                await websocket.send_json(img.json())
+                img: Img = await q.get()
+                print("hi1")
+                await websocket.send_json({"hi": "hi"})
                 q.task_done()
 
                 # cmd = Received.parse_raw(await websocket.receive_text())
@@ -199,7 +195,7 @@ class NReagent(BaseModel):
 
 class NCmd(BaseModel):
     uid: str | int
-    cmd: Annotated[Pump | Prime | Temp | Hold | Autofocus | Image | Move, Field(discriminator="op")]
+    cmd: Annotated[Pump | Prime | Temp | Hold | Autofocus | TakeImage | Move, Field(discriminator="op")]
 
 
 class Recipe(BaseModel):
@@ -218,10 +214,16 @@ class Recipe(BaseModel):
         )
 
 
+class ManualParams(BaseModel):
+    n: int
+    name: str
+    path: str
+    channels: tuple[bool, bool, bool, bool]
+
+
 class UserSettings(BaseModel):
     """None happens when the user left the input empty."""
 
-    n: int | None
     x: float | None
     y: float | None
     z_tilt: int | None
@@ -232,6 +234,7 @@ class UserSettings(BaseModel):
     max_uid: int
     mode: Literal["automatic", "manual", "editingA", "editingB"]
     recipes: tuple[Recipe | None, Recipe | None]
+    man_params: ManualParams
 
 
 recipe_default = Recipe(
@@ -243,7 +246,6 @@ recipe_default = Recipe(
 
 
 USERSETTINGS = UserSettings(
-    n=16,
     x=0,
     y=0,
     z_tilt=19850,
@@ -254,6 +256,7 @@ USERSETTINGS = UserSettings(
     max_uid=2,
     mode="automatic",
     recipes=(recipe_default.copy(), recipe_default.copy()),
+    man_params=ManualParams(n=16, name="", path="", channels=(True, True, True, True)),
 )
 
 
@@ -270,6 +273,15 @@ async def user_endpoint(websocket: WebSocket) -> NoReturn:
                 USERSETTINGS = UserSettings.parse_obj(ret)
         except (WebSocketDisconnect, ConnectionClosedOK):
             ...
+
+
+@app.get("/img")
+async def get_img():
+    global LATEST, IMG
+    LATEST = np.random.randint(0, 4096, (4, 1024, 1024))
+    # LATEST = np.random.randint(0, 4096) * np.ones((4, 1024, 1024))
+    IMG = update_img(LATEST)
+    return Response(IMG.json())
 
 
 @app.get("/download")
@@ -317,7 +329,7 @@ async def poll(websocket: WebSocket) -> NoReturn:
                     ).json()
                 )
                 # logger.info(u)
-                await asyncio.sleep(1)
+                await asyncio.sleep(5)
         except (WebSocketDisconnect, ConnectionClosedOK):
             ...
 
