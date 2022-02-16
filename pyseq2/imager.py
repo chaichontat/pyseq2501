@@ -3,9 +3,11 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 from logging import getLogger
+from pathlib import Path
 from typing import Literal, NamedTuple
 
 import numpy as np
+from tifffile import TiffWriter
 
 from .base.instruments_types import SerialPorts
 from .imaging.camera.dcam import Cameras, UInt16Array
@@ -17,17 +19,13 @@ from .imaging.ystage import YStage
 logger = getLogger(__name__)
 
 
-class Position(NamedTuple):
+class State(NamedTuple):
     x: int
     y: int
     z_tilt: tuple[int, int, int]
     z_obj: int
-
-
-@dataclass(frozen=True)
-class State:
-    laser_power: tuple[int, int]
-    pos: Position
+    laser_g: int
+    laser_r: int
 
 
 # Due to the optical arrangement, the actual channel ordering
@@ -81,15 +79,18 @@ class Imager:
             )
             logger.info("Imager initialization completed.")
 
-    # def get_state(self) -> State:
-    #     out = {
-    #         "laser_power": (self.lasers.g.power, self.lasers.r.power),
-    #         "x_pos": self.x.pos,
-    #         "y_pos": self.y.pos,
-    #         "z_pos": self.z_tilt.pos,
-    #         "z_obj_pos": self.z_obj.pos,
-    #     }
-    #     return State.from_futures(**out)
+    @property
+    async def state(self) -> State:
+        names = {
+            "x": self.x.pos,
+            "y": self.y.pos,
+            "z_tilt": self.z_tilt.pos,
+            "z_obj": self.z_obj.pos,
+            "laser_g": self.lasers.g.power,
+            "laser_r": self.lasers.r.power,
+        }
+        res = await asyncio.gather(*names.values())
+        return State(**dict(zip(names.keys(), res)))
 
     async def wait_ready(self) -> None:
         """Returns when no commands are pending return which indicates that all motors are idle.
@@ -106,7 +107,8 @@ class Imager:
         n_bundles: int,
         dark: bool = False,
         channels: frozenset[Literal[0, 1, 2, 3]] = frozenset((0, 1, 2, 3)),
-    ) -> UInt16Array:
+        move_back_to_start: bool = True,
+    ) -> tuple[UInt16Array, State]:
         assert self.cams is not None
         if self.lock.locked():
             logger.info("Waiting for the previous imaging operation to complete.")
@@ -131,7 +133,8 @@ class Imager:
             n_bundles += 1  # To flush CCD.
             await self.wait_ready()
 
-            pos = await self.y.pos
+            state = await self.state
+            pos = state.y
             n_px_y = n_bundles * self.cams.BUNDLE_HEIGHT
             # Need overshoot for TDI to function properly.
             end_y_pos = pos - self.calc_delta_pos(n_px_y) - 100000
@@ -147,21 +150,16 @@ class Imager:
                     imgs = await cap
 
             logger.info(f"Done taking an image.")
-            await self.y.move(end_y_pos + 100000)  # Correct for overshoot.
+
+            await self.y.move(pos if move_back_to_start else end_y_pos + 100000)  # Correct for overshoot.
             imgs = np.clip(np.flip(imgs, axis=1), 0, 4096)
             if cam == 1:
                 return imgs[[x - 2 for x in c], :-128, :]  # type: ignore
-            return imgs[:, :-128, :]  # Remove oversaturated first bundle.
+            return imgs[:, :-128, :], state  # Remove oversaturated first bundle.
 
     @staticmethod
     def calc_delta_pos(n_px_y: int) -> int:
         return int(n_px_y * Imager.UM_PER_PX * YStage.STEPS_PER_UM)
-
-    @property
-    async def pos(self) -> Position:
-        names = ("x", "y", "z_tilt", "z_obj")
-        res = await asyncio.gather(self.x.pos, self.y.pos, self.z_tilt.pos, self.z_obj.pos)
-        return Position(**dict(zip(names, res)))  # type: ignore
 
     async def autofocus(self, channel: Literal[0, 1, 2, 3] = 1) -> tuple[int, UInt16Array]:
         """Moves to z_max and takes 232 (2048 × 5) images while moving to z_min.
@@ -196,3 +194,35 @@ class Imager:
             if not 10000 < target < 50000:
                 logger.info(f"Target too close to edge, considering moving the tilt motors.")
             return (target, intensity)
+
+    @staticmethod
+    def save_image(path: str | Path, img: UInt16Array, state: State) -> None:
+        """
+        Based on 2016-06
+        http://www.openmicroscopy.org/Schemas/Documentation/Generated/OME-2016-06/ome.html
+
+        Focus on the Image/Pixel attribute.
+        https://github.com/cgohlke/tifffile/issues/92#issuecomment-879309911
+        TODO: Find some way to embed metadata in the OME-XML https://github.com/cgohlke/tifffile/issues/65
+
+        Args:
+            path (str | Path): _description_
+            img (UInt16Array): _description_
+            state (State): _description_
+        """
+        if isinstance(path, Path):
+            path = path.as_posix()
+
+        if not (path.endswith(".tif") or path.endswith(".tiff")):
+            logger.warning("File name does not end with a tif extension.")
+
+        try:
+            with TiffWriter(path, ome=True) as tif:
+                tif.write(
+                    img,
+                    compression="ZLIB",
+                    resolution=(1 / (0.375 * 10**-4), 1 / (0.375 * 10**-4), "CENTIMETER"),  # 0.375 μm/px
+                    metadata={"axes": "CYX", "SignificantBits": 12},
+                )
+        except BaseException as e:
+            logger.error(f"Exception {e}")
