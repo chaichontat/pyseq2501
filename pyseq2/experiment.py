@@ -103,7 +103,7 @@ class Autofocus(BaseModel):
     op: Literal["autofocus"] = "autofocus"
 
 
-class Image(BaseModel):
+class TakeImage(BaseModel):
     xy_start: tuple[float, float]
     xy_end: tuple[float, float]
     z_tilt: int
@@ -119,7 +119,7 @@ class Move(BaseModel):
     op: Literal["move"] = "move"
 
 
-Cmd = Annotated[Pump | Prime | Temp | Hold | Autofocus | Image | Move, Field(discriminator="op")]
+Cmd = Annotated[Pump | Prime | Temp | Hold | Autofocus | TakeImage | Move, Field(discriminator="op")]
 
 
 class Experiment(BaseModel):
