@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { browser } from "$app/env";
+
   import { imgStore, userStore as us, cmdStore, Img } from "$src/store";
   import { onDestroy } from "svelte";
 
@@ -9,14 +11,16 @@
   let n_cols: number = 1;
   let n_bundles: number = 1;
 
-  const unsubscribe = cmdStore.subscribe((x: string) =>
-    fetch(`http://${window.location.hostname}:8000/img`)
-      .then((response: Response) => response.json())
-      .then((i: Img) => {
-        // ctx.clearRect(0, 0, canvas.width, canvas.height);
-        $imgStore = i;
-      })
-  );
+  const unsubscribe = cmdStore.subscribe((x: string) => {
+    if (browser) {
+      fetch(`http://${window.location.hostname}:8000/img`)
+        .then((response: Response) => response.json())
+        .then((i: Img) => {
+          // ctx.clearRect(0, 0, canvas.width, canvas.height);
+          $imgStore = i;
+        });
+    }
+  });
 
   onDestroy(unsubscribe);
 
