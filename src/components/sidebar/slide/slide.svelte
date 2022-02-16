@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { XY } from "src/store";
-  import { userStore, statusStore } from "$src/store";
+  import { userStore as us, statusStore } from "$src/store";
   import Locator from "./locator.svelte";
   import RulerX from "./ruler_x.svelte";
   import RulerY from "./ruler_y.svelte";
@@ -12,48 +12,40 @@
   export let y;
   export let z_tilt: [number, number, number] = [19850, 19850, 19850];
 
-  function handleKey(e: KeyboardEvent) {
-    switch (e.key) {
-      case "ArrowDown":
-        $userStore.y += 0.7;
-        break;
+  // function handleKey(e: KeyboardEvent) {
+  //   switch (e.key) {
+  //     case "ArrowDown":
+  //       $userStore.y += 0.7;
+  //       break;
 
-      case "ArrowLeft":
-        $userStore.x -= 0.7;
-        break;
+  //     case "ArrowLeft":
+  //       $userStore.x -= 0.7;
+  //       break;
 
-      case "ArrowRight":
-        $userStore.x += 0.7;
-        break;
+  //     case "ArrowRight":
+  //       $userStore.x += 0.7;
+  //       break;
 
-      case "ArrowUp":
-        $userStore.y -= 0.7;
-        break;
+  //     case "ArrowUp":
+  //       $userStore.y -= 0.7;
+  //       break;
 
-      default:
-        break;
-    }
-  }
+  //     default:
+  //       break;
+  //   }
+  // }
 </script>
 
-<svelte:window on:keydown={handleKey} />
+<!-- <svelte:window on:keydown={handleKey} /> -->
 
-<div
-  class="relative flex self-center justify-center border border-gray-400 shadow bg-light-200 slide box-border"
->
+<div class="box-border relative flex self-center justify-center border border-gray-400 shadow bg-light-200 slide">
   <RulerX />
   <RulerY />
   <Locator {x} {y} />
-  <Locator
-    line={false}
-    legend={false}
-    char="📍"
-    x={$userStore.x}
-    y={$userStore.y}
-    offset={[0.8, 1.65]}
-  />
+  <Locator line={false} legend={false} char="📌" x={$us.image_params.xy0[0]} y={$us.image_params.xy0[1]} offset={[0.8, 1.65]} />
+  <Locator line={false} legend={false} char="📍" x={$us.image_params.xy1[0]} y={$us.image_params.xy1[1]} offset={[0.8, 1.65]} />
   <Shade />
-  <Tilt z={z_tilt} />
+  <Tilt />
 
   <span class="name">
     {name}

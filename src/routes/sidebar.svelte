@@ -2,7 +2,7 @@
   import type { Status } from "$src/store";
   import { statusStore } from "$src/store";
   import Logo from "$comps/logo.svelte";
-  import Division from "$comps/sidebar/division.svelte";
+  import Division from "$src/components/sidebar/division.svelte";
   import Lasers from "$comps/sidebar/lasers.svelte";
   import Map from "$src/components/sidebar/map.svelte";
 
@@ -45,7 +45,7 @@
       /> -->
       <ol class="p-2 menu ">
         <Division name="Map">
-          <Map {...status} />
+          <Map />
         </Division>
 
         <Division name="Lasers">

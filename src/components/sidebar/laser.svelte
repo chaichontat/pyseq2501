@@ -14,7 +14,7 @@
   $: pow = userPower;
 </script>
 
-<tr style="--this-color: {color}">
+<tr class="align-middle" style="--this-color: {color}">
   <th>
     <svg class="h-4 w-4 inline-block -translate-y-0.5" viewBox="0 0 20 20" fill={color}>
       <path
@@ -26,9 +26,7 @@
     {name}
   </th>
 
-  <td>
-    <input type="number" min="0" max="1000" step="1" class="block w-10/12 h-8 pretty mx-auto" bind:value={pow} on:blur={update} disabled={$us.mode === "automatic"} />
-  </td>
+  <td class="h-10 font-bold text-center text-gray-600 align-middle" on:blur={update}>{pow}</td>
   <td class="font-mono font-bold text-center">{power}</td>
   <td class="text-right">mW</td>
 </tr>

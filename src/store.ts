@@ -43,25 +43,25 @@ export type Recipe = {
   cmds: NCmd[],
 }
 
-export type ManualParams = {
-  n: number,
+export type ImageParams = {
   name: string,
   path: string,
+  xy0: [number, number],
+  xy1: [number, number],
   channels: [boolean, boolean, boolean, boolean]
+  z_tilt: number | [number, number, number],
+  laser_onoff: [boolean, boolean]
+  lasers: [number, number]
+  z_obj: number,
+  flowcell: boolean,
+  od: [number, number]
 }
 
 export type UserSettings = {
-  x: number
-  y: number
-  z_tilt: number | [number, number, number],
-  z_obj: number,
-  laser_r: number,
-  laser_g: number,
-  flowcell: boolean,
   max_uid: 2,
   mode: "manual" | "automatic" | "editingA" | "editingB",
   recipes: [Recipe | null, Recipe | null],
-  man_params: ManualParams
+  image_params: ImageParams
 }
 
 export type NReagent = { uid: number; reagent: Reagent | ReagentGroup };
@@ -79,8 +79,6 @@ export type Img = {
   channels: [boolean, boolean, boolean, boolean],
 }
 
-
-
 export const recipeDefault: Recipe = {
   name: "",
   flowcell: 0,
@@ -89,11 +87,11 @@ export const recipeDefault: Recipe = {
 }
 
 const userDefault: UserSettings = {
-  x: 0, y: 0, z_tilt: 19850, z_obj: 32000, laser_r: 5, laser_g: 5, flowcell: false, max_uid: 2,
+  max_uid: 2,
   mode: "editingA",
   recipes: [{ ...recipeDefault }, { ...recipeDefault }],
-  man_params: {
-    n: 8, name: "Test", path: ".", channels: [true, true, true, true]
+  image_params: {
+    name: "Test", path: ".", xy0: [0, 0], xy1: [1, 1], channels: [true, true, true, true], z_tilt: 19850, z_obj: 32000, lasers: [0, 0], laser_onoff: [true, true], od: [0, 0], flowcell: false
   }
 }
 

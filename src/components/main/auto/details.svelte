@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Setxy from "./steps/setxy.svelte";
+
   export let name: string = "";
   export let path: string = "";
 </script>

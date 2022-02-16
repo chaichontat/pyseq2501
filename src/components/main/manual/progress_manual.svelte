@@ -4,8 +4,10 @@
 
   let curr: null | number;
   let _curr = "  --";
-  let height = 0;
-  let corrected: boolean = false;
+  let height: number = 0;
+  let width: number = 0;
+  let n_cols: number = 1;
+  let n_bundles: number = 1;
 
   const unsubscribe = cmdStore.subscribe((x: string) =>
     fetch(`http://${window.location.hostname}:8000/img`)
@@ -18,7 +20,10 @@
 
   onDestroy(unsubscribe);
 
-  $: height = ($us.man_params.n * 128 * 0.375) / 1000;
+  $: height = Math.max($us.image_params.xy1[1], $us.image_params.xy0[1]) - Math.min($us.image_params.xy1[1], $us.image_params.xy0[1]);
+  $: width = Math.max($us.image_params.xy1[0], $us.image_params.xy0[0]) - Math.min($us.image_params.xy1[0], $us.image_params.xy0[0]);
+  $: n_cols = Math.ceil(width / 0.768);
+  $: n_bundles = Math.ceil(height / 0.048);
 
   // $: {
   //   if ($imgStore) {
@@ -65,51 +70,32 @@
   </div>
 
   <!-- Big box -->
-  <content class="flex-grow px-4 py-2 border rounded-lg border-base-300">
-    <div class="grid grid-cols-2 ">
+  <content class="flex-grow px-4 py-2 border rounded-lg border-base-300 ">
+    <div class="grid max-w-2xl grid-cols-3">
       <!-- N Bundles -->
-      <div class="flex items-center">
+      <section class="flex items-center">
         <span class="text-4xl font-bold">
           <span class="font-mono">{_curr}</span>
           /
-          <input type="number" class="w-32 px-2 text-4xl font-bold text-right pretty rounded-xl" min="1" max="999" placeholder="1" bind:value={$us.man_params.n} />
+          <span class="w-32 px-2 font-mono text-4xl font-bold ">{n_bundles * n_cols}</span>
         </span>
-        <div class="flex flex-col ml-4 opacity-75">
-          <span>Height {height.toFixed(3)} mm</span>
-          <span>Total time: {height / 2} s</span>
-        </div>
-      </div>
+      </section>
 
-      <div class="grid max-w-sm grid-cols-2">
-        <p class="font-medium">532nm</p>
-        <p class="font-medium">633nm</p>
-        <p class="flex flex-col">
-          <label class="channel" class:text-gray-500={!$us.man_params.channels[0]}>
-            <input type="checkbox" class="mr-1 text-green-500 rounded focus:ring-green-300" bind:checked={$us.man_params.channels[0]} />
-            Channel 0
-          </label>
+      <section class="flex flex-col tabular-nums">
+        <span>Width {width.toFixed(3)} mm</span>
+        <span>Height {height.toFixed(3)} mm</span>
+      </section>
 
-          <label class="channel" class:text-gray-500={!$us.man_params.channels[1]}>
-            <input type="checkbox" class="mr-1 text-orange-600 rounded focus:ring-orange-300" bind:checked={$us.man_params.channels[1]} />
-            Channel 1
-          </label>
-        </p>
-        <p class="flex flex-col">
-          <label class="channel" class:text-gray-500={!$us.man_params.channels[2]}>
-            <input type="checkbox" class="mr-1 rounded text-rose-700 focus:ring-rose-500" bind:checked={$us.man_params.channels[2]} />
-            Channel 2
-          </label>
-          <label class="channel" class:text-gray-500={!$us.man_params.channels[3]}>
-            <input type="checkbox" class="mr-1 rounded text-amber-900 focus:ring-amber-700" bind:checked={$us.man_params.channels[3]} />
-            Channel 3
-          </label>
-        </p>
-      </div>
+      <section class="flex flex-col">
+        <span>{n_cols} columns of {n_bundles} bundles</span>
+        <span class="opacity-100">Total time: {(n_bundles * n_cols) / 10} s</span>
+      </section>
     </div>
 
+    <!-- Lower bar -->
     <div class="">
       Bundles taken
-      <progress value={16} max={$us.man_params.n} class="transition-all progress progress-secondary" />
+      <progress value={16} class="transition-all progress progress-secondary" />
     </div>
   </content>
 </span>
