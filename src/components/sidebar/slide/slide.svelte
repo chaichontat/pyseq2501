@@ -38,12 +38,12 @@
 
 <!-- <svelte:window on:keydown={handleKey} /> -->
 
-<div class="relative flex self-center justify-center border border-gray-400 shadow box-border bg-light-200 slide">
+<div class="box-border relative flex self-center justify-center border border-gray-400 shadow bg-light-200 slide">
   <RulerX />
   <RulerY />
   <Locator {x} {y} />
-  <Locator line={false} legend={false} char="📌" x={$us.image_params.xy0[0]} y={$us.image_params.xy0[1]} offset={[0.8, 1.65]} />
-  <Locator line={false} legend={false} char="📍" x={$us.image_params.xy1[0]} y={$us.image_params.xy1[1]} offset={[0.8, 1.65]} />
+  <Locator line={false} legend={false} char="📌" x={$us.image_params.xy0[0]} y={$us.image_params.xy0[1]} offset={[0.3, 1.65]} />
+  <Locator line={false} legend={false} char="📍" x={$us.image_params.xy1[0]} y={$us.image_params.xy1[1]} offset={[0.85, 1.6]} />
   <Shade />
   <Tilt />
 
