@@ -10,7 +10,7 @@
   }
 </script>
 
-<div class="w-4/12 max-w-md p-6 space-y-3 text-lg bg-white border rounded-lg shadow shadow-blue-300 dark:bg-gray-800 dark:border-gray-700" class:shadow-indigo-300={fc}>
+<div class="w-4/12 max-w-md p-6 text-lg bg-white border rounded-lg shadow space-y-3 shadow-blue-300 dark:bg-gray-800 dark:border-gray-700" class:shadow-indigo-300={fc}>
   <div class="flex">
     <p class="mb-4 text-6xl font-bold text-gray-700">{fc ? "B" : "A"}</p>
     <!-- Spacer -->

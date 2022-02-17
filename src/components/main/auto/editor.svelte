@@ -41,7 +41,7 @@
         <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
       </svg>
     </MenuButton>
-    <MenuItems class="absolute right-0 z-10 mt-2 space-y-1 overflow-hidden origin-top-right bg-white border divide-gray-100 rounded-md shadow w-36 focus:outline-none">
+    <MenuItems class="absolute right-0 z-10 mt-2 overflow-hidden bg-white border shadow space-y-1 origin-top-right divide-gray-100 rounded-md w-36 focus:outline-none">
       <div transition:fade={{ duration: 100, easing: cubicInOut }}>
         <MenuItem let:active><div class:bg-blue-700={active} class:text-white={active} class="z-0 w-full px-2 py-2 pl-4">New</div></MenuItem>
         <MenuItem let:active><div class:bg-blue-700={active} class:text-white={active} class="z-0 w-full px-2 py-2 pl-4">Upload</div></MenuItem>

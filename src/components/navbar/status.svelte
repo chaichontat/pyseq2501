@@ -1,7 +1,7 @@
 <script lang="ts">
   import { statusStore } from "../../store";
   import { flash } from "../../utils";
-  import Spinning from "./spinning.svelte";
+  import Spinning from "$comps/spinning.svelte";
 
   let message = "";
 

@@ -2,13 +2,10 @@
   import Logo from "$comps/logo.svelte";
   import Connected from "$comps/navbar/connected.svelte";
   import Status from "$comps/navbar/status.svelte";
-  import ProgressManual from "$src/components/main/manual/progress_manual.svelte";
   import { userStore as us } from "$src/store";
-
-  // Mode controlled here.
 </script>
 
-<div id="nav" class="sticky inset-x-0 top-0 z-50 w-full h-16 transition duration-200 ease-in-out bg-white shadow-sm opacity-95 text-base-content ring-1 ring-gray-900 ring-opacity-5">
+<div id="nav" class="sticky inset-x-0 top-0 z-50 w-full h-16 bg-white transition duration-200 ease-in-out shadow-sm opacity-95 text-base-content ring-1 ring-gray-900 ring-opacity-5">
   <div class="mx-auto space-x-1 navbar max-w-none">
     <div class="flex-none">
       <label for="main-menu" class="btn btn-square btn-ghost drawer-button lg:hidden">

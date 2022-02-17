@@ -32,7 +32,7 @@
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
     </svg>
   </MenuButton>
-  <MenuItems class="absolute left-0 z-10 w-64 mt-2 bg-white border border-gray-200 rounded-md shadow-xl focus:outline-none">
+  <MenuItems class="absolute left-0 z-10 w-64 mt-2 bg-white border border-gray-200 shadow-xl rounded-md focus:outline-none">
     <div class="divide-y divide-gray-200 dropp" transition:fade={{ duration: 100, easing: cubicInOut }}>
       <section>
         <MenuItem let:active><div on:click={handleClick("hold")} class:bg-blue-200={active} class="item">{namemap["hold"]}</div></MenuItem>

@@ -57,7 +57,7 @@
   <!-- Tabs -->
   <div class="absolute z-40 w-2/5 h-10 top-4 left-4">
     <TabGroup on:change={(idx) => (currChannel = idx.detail)}>
-      <TabList class="grid grid-cols-4 p-1 space-x-1 bg-white shadow rounded-xl opacity-90 ">
+      <TabList class="p-1 bg-white shadow grid grid-cols-4 space-x-1 rounded-xl opacity-90 ">
         <Tab disabled={!$us.image_params.channels[0]} let:selected><button class:bg-green-600={selected} class={genTabClass("green", selected, $us.image_params.channels[0])}>Channel 0</button></Tab>
         <Tab disabled={!$us.image_params.channels[1]} let:selected><button class:bg-orange-500={selected} class={genTabClass("orange", selected, $us.image_params.channels[1])}>Channel 1</button></Tab>
         <Tab disabled={!$us.image_params.channels[2]} let:selected><button class:bg-rose-600={selected} class={genTabClass("rose", selected, $us.image_params.channels[2])}>Channel 2</button></Tab>

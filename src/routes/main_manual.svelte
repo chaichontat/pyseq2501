@@ -2,13 +2,22 @@
   import Preview from "$comps/main/preview.svelte";
   import { userStore as us } from "$src/store";
   import ProgressManual from "$src/components/main/manual/progress_manual.svelte";
-  import Details from "$src/components/main/auto/details.svelte";
-  import Setxy from "$src/components/main/auto/steps/setxy.svelte";
   import XYInput from "$comps/main/xy_input.svelte";
+  import { browser } from "$app/env";
 
   let height = 0;
 
   $: height = (128 * 0.375) / 1000;
+
+  function blockControls(div: HTMLElement | undefined, changeTo: boolean): void {
+    if (div) {
+      div.querySelectorAll("input").forEach((el) => (el.disabled = changeTo));
+      div.querySelectorAll("select").forEach((el) => (el.disabled = changeTo));
+      div.querySelectorAll("button").forEach((el) => (el.disabled = changeTo));
+    }
+  }
+
+  $: if (browser) blockControls(document.getElementById("control"), $us.block);
 </script>
 
 <div class="box-border sticky z-40 -mx-10 px-10 pb-6 shadow-md bg-white/[0.95] border-b top-16 ">
@@ -17,8 +26,9 @@
 </div>
 
 <p class="mt-6 title">Capture Parameters</p>
+<!-- <div class:hidden={$us.block} class="absolute z-50  -mx-10 w-full h-96 bg-black/[0.1]" /> -->
 <!-- Capture params. -->
-<div class="grid grid-cols-2 gap-y-6 gap-x-4">
+<div id="control" class="grid grid-cols-2 gap-y-6 gap-x-4">
   <section class="flex flex-col text-lg font-medium">
     <p class="text-lg">Name</p>
     <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={$us.image_params.name} />
@@ -30,8 +40,9 @@
   <!-- Optics -->
   <section class="font-medium leading-10">
     <h2 class="">Laser and Channels</h2>
-    <div class="grid grid-cols-2">
+    <div class="grid grid-cols-2" class:opacity-70={$us.block}>
       <p class="flex flex-col">
+        <!-- Green -->
         <span class:text-gray-400={!$us.image_params.laser_onoff[0]}>
           <label>
             <input type="checkbox" class="mr-1 rounded text-lime-500 focus:ring-lime-300" bind:checked={$us.image_params.laser_onoff[0]} />
@@ -59,6 +70,20 @@
           <input type="checkbox" class="mr-1 text-orange-600 rounded focus:ring-orange-300" bind:checked={$us.image_params.channels[1]} />
           Channel 1
         </label>
+
+        <span class="ml-8 font-normal opacity-85">
+          Filter OD
+          <select class="py-1 text-sm border-gray-400 rounded disabled:border-gray-300">
+            <option>Open</option>
+            <option>1.0</option>
+            <option>2.0</option>
+            <option>3.5</option>
+            <option>3.8</option>
+            <option>4.0</option>
+            <option>4.5</option>
+            <option>Closed</option>
+          </select>
+        </span>
       </p>
 
       <p class="flex flex-col">
@@ -77,6 +102,7 @@
           />
           mW
         </span>
+
         <label class="channel" class:text-gray-500={!$us.image_params.channels[2]}>
           <input type="checkbox" class="mr-1 rounded text-rose-700 focus:ring-rose-500" bind:checked={$us.image_params.channels[2]} />
           Channel 2
@@ -85,6 +111,20 @@
           <input type="checkbox" class="mr-1 rounded text-amber-900 focus:ring-amber-700" bind:checked={$us.image_params.channels[3]} />
           Channel 3
         </label>
+
+        <span class="ml-8 font-normal opacity-85">
+          Filter OD
+          <select class="py-1 text-sm border-gray-400 rounded disabled:border-gray-300">
+            <option>Open</option>
+            <option>0.2</option>
+            <option>0.5</option>
+            <option>0.6</option>
+            <option>1.0</option>
+            <option>2.4</option>
+            <option>4.0</option>
+            <option>Closed</option>
+          </select>
+        </span>
       </p>
     </div>
   </section>

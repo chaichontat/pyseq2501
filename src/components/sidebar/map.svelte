@@ -35,7 +35,7 @@
 
 <li>
   <!-- Toggle -->
-  <span class="flex items-center justify-center mb-4 space-x-2 text-lg -translate-y-6 monomedium">
+  <span class="flex items-center justify-center mb-4 text-lg space-x-2 -translate-y-6 monomedium">
     <div>A</div>
     <Toggle bind:checked={$us.image_params.flowcell} />
     <!-- <input
@@ -57,7 +57,10 @@
   </section>
 
   <!-- Eject button -->
-  <button class="self-center w-16 h-8 mt-2 text-white transition-colors bg-indigo-500 border shadow-md shadow-indigo-300 pretty hover:bg-indigo-600 active:bg-indigo-700">
+  <button
+    class="self-center w-16 h-8 mt-2 text-white bg-indigo-500 border shadow-md transition-colors shadow-indigo-300 pretty hover:bg-indigo-600 active:bg-indigo-700 disabled:bg-gray-200 disabled:shadow-gray-200"
+    disabled={$us.block}
+  >
     <svg
       class="w-4 h-4 mx-auto -translate-x-0.5 fill-white"
       version="1.1"

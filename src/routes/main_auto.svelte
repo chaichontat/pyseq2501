@@ -7,7 +7,7 @@
 <!-- <ProgressAuto /> -->
 {#if $us.mode === "automatic"}
   <p class="inline-block my-4 text-4xl font-extrabold tracking-tight text-gray-700 dark:text-white">Flowcells</p>
-  <div class="flex max-w-screen-lg mt-4 space-x-6">
+  <div class="flex mt-4 max-w-screen-lg space-x-6">
     <FlowcellCard fc={0} />
     <FlowcellCard fc={1} />
   </div>

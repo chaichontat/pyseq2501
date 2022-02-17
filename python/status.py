@@ -7,8 +7,9 @@ from typing import AsyncGenerator, Callable, Coroutine, NoReturn
 
 from fastapi import Request, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
-from pyseq2.imager import Imager, Position
 from websockets.exceptions import ConnectionClosedOK
+
+from pyseq2.imager import Imager, Position
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +38,7 @@ def gen_poll(imager: Imager):
                 await websocket.accept()
                 while True:
                     if os.name == "nt":
-                        pos, lasers = await asyncio.gather(
-                            imager.pos, imager.lasers.power
-                        )
+                        pos, lasers = await asyncio.gather(imager.pos, imager.lasers.power)
                     else:
                         pos, lasers = Position(0, 0, (0, 0, 0), 0), (0, 0)
 

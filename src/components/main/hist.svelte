@@ -28,7 +28,7 @@
   }
 </script>
 
-<div class="box-border w-full h-full">
+<div class="w-full h-full box-border">
   <Pancake.Chart x1={-10} x2={4096 + 10} y1={0} y2={max}>
     <!-- <Pancake.Grid horizontal count={5} let:value>
         <div class="relative left-0 block w-full border-b border-gray-100" />

@@ -21,7 +21,7 @@ from websockets.exceptions import ConnectionClosedOK
 
 from fake_imager import FakeImager
 from pyseq2.experiment import *
-from pyseq2.imager import Imager, Position
+from pyseq2.imager import Imager, State
 from pyseq2.utils.ports import get_ports
 
 logging.basicConfig(
@@ -57,7 +57,7 @@ class Img(BaseModel):
 
 DEBUG = False
 imager: Imager
-q: asyncio.Queue[Img] = asyncio.Queue()
+q: asyncio.Queue[bool] = asyncio.Queue()
 
 Cmds = Literal[
     "take",
@@ -263,32 +263,44 @@ class Status(BaseModel):
     msg: str
 
 
+async def gen_status() -> Status:
+    if os.name == "nt":
+        pos, lasers = await asyncio.gather(imager.pos, imager.lasers.power)
+    else:
+        state = State(0, 0, (0, 0, 0), 0, 0, 0)
+
+    return Status(
+        x=state.x,
+        y=state.y,
+        z_tilt=state.z_tilt,
+        z_obj=state.z_obj,
+        laser_r=state.laser_r,
+        laser_g=state.laser_g,
+        shutter=False,
+        moving=False,
+        msg="Imaging",
+    )
+
+
 @app.websocket("/status")
 async def poll(websocket: WebSocket) -> NoReturn:
+    # async def status_ping():
+    #     while True:
+    #         await websocket.send_json((await gen_status()).json())
+    #         await asyncio.sleep(5)
+
+    # task = asyncio.create_task(status_ping())
     while True:
         try:
             await websocket.accept()
             while True:
-                if os.name == "nt":
-                    pos, lasers = await asyncio.gather(imager.pos, imager.lasers.power)
-                else:
-                    pos, lasers = Position(0, 0, (0, 0, 0), 0), (0, 0)
-
-                await websocket.send_json(
-                    u := Status(
-                        x=pos.x,
-                        y=pos.y,
-                        z_tilt=pos.z_tilt,
-                        z_obj=pos.z_obj,
-                        laser_r=lasers[1],
-                        laser_g=lasers[0],
-                        shutter=False,
-                        moving=False,
-                        msg="Imaging",
-                    ).json()
-                )
+                try:
+                    await asyncio.wait_for(q.get(), 5)
+                except asyncio.TimeoutError:
+                    ...
+                finally:
+                    await websocket.send_json((await gen_status()).json())
                 # logger.info(u)
-                await asyncio.sleep(5)
         except (WebSocketDisconnect, ConnectionClosedOK):
             ...
 

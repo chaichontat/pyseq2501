@@ -4,7 +4,7 @@
   export let duration: string = "1s";
 </script>
 
-<div class="circle transition-all" style="--size: {size}; --color: {color}; --duration: {duration}" />
+<div class="transition-all circle" style="--size: {size}; --color: {color}; --duration: {duration}" />
 
 <style>
   .circle {

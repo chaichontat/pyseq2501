@@ -16,7 +16,7 @@
   // $: cmd = { ...defaults[cmd.op], ...cmd }; // Second overwrites first.
 </script>
 
-<li class="relative flex py-4 pl-2 transition-all ease-in-out border-t border-gray-300 hover:bg-gray-50">
+<li class="relative flex py-4 pl-2 border-t border-gray-300 transition-all ease-in-out hover:bg-gray-50">
   <!-- Close -->
   <svg xmlns="http://www.w3.org/2000/svg" class="absolute w-5 h-5 -mt-1 cursor-pointer right-2" viewBox="0 0 20 20" fill="currentColor" on:click={() => dispatch("delete")}>
     <path
@@ -44,7 +44,7 @@
       </span>
     </span>
 
-    <div class="grid grid-cols-4 mt-2 font-medium divide-x clump gap-x-4">
+    <div class="mt-2 font-medium grid grid-cols-4 divide-x clump gap-x-4">
       <!-- Hold -->
       {#if cmd.op === "hold"}
         <span>
@@ -108,7 +108,7 @@
 
         <!-- Move -->
       {:else if cmd.op === "move"}
-        <div class="col-span-4 mt-4">
+        <div class="mt-4 col-span-4">
           <Setxy bind:xy={cmd.xy} />
         </div>
         <!-- Image -->
@@ -120,18 +120,18 @@
           </button>
         </span>
 
-        <div class="col-span-4 pl-4 mt-4 ml-2">
+        <div class="pl-4 mt-4 ml-2 col-span-4">
           <p class="mb-2 text-lg">Upper left</p>
           <Setxy bind:xy={cmd.xy_end} />
         </div>
 
-        <div class="col-span-4 pl-4 mt-4 ml-2">
+        <div class="pl-4 mt-4 ml-2 col-span-4">
           <p class="mb-2 text-lg gap-x-8">Lower right</p>
           <Setxy bind:xy={cmd.xy_start} />
         </div>
 
         <!-- Channels -->
-        <div class="col-span-4 pl-4 mt-4 ml-2">
+        <div class="pl-4 mt-4 ml-2 col-span-4">
           <p class="mb-2 text-lg">Channel(s)</p>
           <div class="grid grid-cols-3">
             <div id="green">

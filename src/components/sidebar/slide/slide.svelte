@@ -38,7 +38,7 @@
 
 <!-- <svelte:window on:keydown={handleKey} /> -->
 
-<div class="box-border relative flex self-center justify-center border border-gray-400 shadow bg-light-200 slide">
+<div class="relative flex self-center justify-center border border-gray-400 shadow box-border bg-light-200 slide">
   <RulerX />
   <RulerY />
   <Locator {x} {y} />

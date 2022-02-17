@@ -58,7 +58,8 @@ export type ImageParams = {
 }
 
 export type UserSettings = {
-  max_uid: 2,
+  block: boolean
+  max_uid: number,
   mode: "manual" | "automatic" | "editingA" | "editingB",
   recipes: [Recipe | null, Recipe | null],
   image_params: ImageParams
@@ -87,6 +88,7 @@ export const recipeDefault: Recipe = {
 }
 
 const userDefault: UserSettings = {
+  block: false,
   max_uid: 2,
   mode: "editingA",
   recipes: [{ ...recipeDefault }, { ...recipeDefault }],

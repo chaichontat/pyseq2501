@@ -1,8 +1,9 @@
 <script lang="ts">
   import { browser } from "$app/env";
-
+  import tooltip from "$src/tooltip";
   import { imgStore, userStore as us, cmdStore, Img } from "$src/store";
   import { onDestroy } from "svelte";
+  import Spinning from "$src/components/spinning.svelte";
 
   let curr: null | number;
   let _curr = "  --";
@@ -51,31 +52,54 @@
   <!-- Buttons -->
   <div class="grid grid-flow-row w-36">
     <button
+      use:tooltip={"Take image and save."}
       type="button"
-      class="text-lg transition-colors shadow-md shadow-blue-500/50 text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 active:bg-blue-800 focus:ring-blue-300 font-medium rounded-lg px-4 py-2.5 text-center inline-flex items-center mr-2"
-      on:click={() => ($cmdStore = "take")}
+      class="text-lg text-white focus:ring-4 focus:ring-blue-300 shadow-lg font-medium rounded-lg px-5 py-2.5 text-center mr-2 mb-2"
+      class:start={!$us.block}
+      class:stop={$us.block}
+      on:click={() => ($us.block = !$us.block)}
     >
-      <svg class="w-6 h-6 mr-1 -ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-      </svg>
-      Capture
+      <div class="flex items-center h-12 text-lg">
+        {#if $us.block}
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+          </svg>
+          <p class="flex-grow">Stop</p>
+        {:else}
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 -ml-0.5 mr-1 -translate-y-[0.25px]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Capture
+        {/if}
+      </div>
     </button>
 
     <button
       type="button"
-      class="text-lg mt-2 transition-colors shadow-md shadow-blue-500/50 text-white bg-sky-500 hover:bg-sky-600 focus:ring-4 active:bg-sky-700 focus:ring-sky-300 font-medium rounded-lg px-4 py-2.5 text-center inline-flex items-center mr-2"
+      id="preview"
+      class="text-lg mt-2 text-white focus:ring-4 focus:ring-sky-300 font-medium rounded-lg shadow px-4 py-2.5 text-center inline-flex items-center mr-2"
+      disabled={$us.block}
       on:click={() => ($cmdStore = "take")}
     >
-      <svg class="w-6 h-6 mr-1 -ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-      </svg>
-      Preview
+      <div class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        Preview
+      </div>
     </button>
   </div>
 
   <!-- Big box -->
-  <content class="flex-grow px-4 py-2 border rounded-lg border-base-300 ">
-    <div class="grid max-w-2xl grid-cols-3">
+  <content class="flex-grow px-4 py-2 border rounded-lg border-base-300">
+    <div class="grid max-w-2xl grid-cols-3 mt-1">
       <!-- N Bundles -->
       <section class="flex items-center">
         <span class="text-4xl font-bold">
@@ -91,18 +115,35 @@
       </section>
 
       <section class="flex flex-col">
-        <span>{n_cols} columns of {n_bundles} bundles</span>
-        <span class="opacity-100">Total time: {(n_bundles * n_cols) / 10} s</span>
+        <span>{n_cols} Columns of {n_bundles} Bundles</span>
+        <span class="font-medium">Total time: {(n_bundles * n_cols) / 10} s</span>
       </section>
     </div>
 
     <!-- Lower bar -->
     <div class="">
       Bundles taken
-      <progress value={16} class="transition-all progress progress-secondary" />
+      <div class="w-full h-2 mt-4 transition-all bg-gray-200 rounded-full">
+        <div class="h-2 bg-gray-300 rounded-full" class:running={$us.block} style="width: 50%" />
+      </div>
     </div>
   </content>
 </span>
 
 <style lang="postcss">
+  .start {
+    @apply transition-all bg-gradient-to-r from-blue-500 to-blue-700 shadow-blue-500/50 hover:from-blue-600 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 active:from-blue-700;
+  }
+
+  .stop {
+    @apply transition-all bg-gradient-to-r from-orange-500 to-orange-700 shadow-orange-500/50 hover:from-orange-600 hover:to-orange-800 active:from-orange-700;
+  }
+
+  #preview {
+    @apply transition-all bg-gradient-to-r from-sky-400 to-sky-600 shadow-sky-500/50 hover:from-sky-500 hover:to-sky-700 active:from-sky-600 disabled:text-gray-400 disabled:from-gray-50 disabled:via-gray-100 disabled:to-gray-200 disabled:shadow-gray-400/50;
+  }
+
+  .running {
+    @apply bg-gradient-to-r from-blue-500 to-indigo-600;
+  }
 </style>
