@@ -80,18 +80,28 @@ class Imager:
             )
             logger.info("Imager initialization completed.")
 
-    @property
-    async def state(self) -> State:
+    async def pos(self) -> dict[str, int]:
         names = {
             "x": self.x.pos,
             "y": self.y.pos,
             "z_tilt": self.z_tilt.pos,
             "z_obj": self.z_obj.pos,
-            "laser_g": self.lasers.g.power,
-            "laser_r": self.lasers.r.power,
         }
         res = await asyncio.gather(*names.values())
-        return State(**dict(zip(names.keys(), res)))
+        return dict(zip(names.keys(), res))
+
+    # @property
+    # async def state(self) -> State:
+    #     names = {
+    #         "x": self.x.pos,
+    #         "y": self.y.pos,
+    #         "z_tilt": self.z_tilt.pos,
+    #         "z_obj": self.z_obj.pos,
+    #         "laser_g": self.lasers.g.power,
+    #         "laser_r": self.lasers.r.power,
+    #     }
+    #     res = await asyncio.gather(*names.values())
+    #     return State(**dict(zip(names.keys(), res)))
 
     async def wait_ready(self) -> None:
         """Returns when no commands are pending return which indicates that all motors are idle.
@@ -154,8 +164,8 @@ class Imager:
             n_bundles += 1  # To flush CCD.
             await self.wait_ready()
 
-            state = await self.state
-            pos = state.y
+            # state = await self.state
+            pos = await self.y.pos
             n_px_y = n_bundles * self.cams.BUNDLE_HEIGHT
             # Need overshoot for TDI to function properly.
             end_y_pos = pos - self.calc_delta_pos(n_px_y) - 100000
@@ -178,7 +188,7 @@ class Imager:
             imgs = np.clip(np.flip(imgs, axis=1), 0, 4096)
             if cam == 1:
                 return imgs[[x - 2 for x in c], :-128, :]  # type: ignore
-            return imgs[:, :-128, :], state  # Remove oversaturated first bundle.
+            return imgs[:, :-128, :]  # Remove oversaturated first bundle.
 
     @staticmethod
     def calc_delta_pos(n_px_y: int) -> int:

@@ -289,7 +289,7 @@ class Cameras:
         n_bundles: int,
         height: int = 128,
         start_attach: Callable[[], Any] = lambda: None,
-        fut_capture: Coroutine[Any, Any, Any] | None = None,
+        fut_capture: Awaitable[Any] | None = None,
         mode: Literal["TDI", "FOCUS_SWEEP"] = "TDI",
         cam: Literal[0, 1, 2] = 2,
         event_queue: Optional[asyncio.Queue] = None,
@@ -298,14 +298,19 @@ class Cameras:
             fut_capture = nothing()
 
         async def in_ctx():
-            fut = asyncio.create_task(fut_capture)
+            curr = 0
+            fut = asyncio.create_task(cast(Coroutine, fut_capture))
             t0 = time.monotonic()
             while (n := self.n_frames_taken(cam)) < n_bundles:
                 await asyncio.sleep(0.05)
                 if n == 0 and time.monotonic() - t0 > 5:
                     raise Exception(f"Did not capture a single bundle before {5=}s.")
-                if event_queue is not None and n % 5 == 0:
+                # Send every other bundle.
+                if event_queue is not None and n > curr + 1:
                     event_queue.put_nowait(n)
+                    curr = n
+            if event_queue is not None:
+                event_queue.put_nowait(n_bundles)
             await fut
 
         self.set_mode(mode)
@@ -317,9 +322,6 @@ class Cameras:
             else:
                 with self[cam].capture():
                     await in_ctx()
-
-            if event_queue is not None:
-                event_queue.put_nowait(n_bundles)
             logger.info(f"Retrieved all {n_bundles} bundles.")
 
         if cam == 2:
