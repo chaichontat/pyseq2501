@@ -2,6 +2,7 @@ channels:
   - "conda-forge"
 dependencies:
   - python=3.10
+  - imagecodecs
   - numpy
   - pillow
   - pip
@@ -14,4 +15,4 @@ dependencies:
   - pyyaml
   - tifffile
   - pip:
-    - pyserial-asyncio
+      - pyserial-asyncio
