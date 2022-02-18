@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
 from logging import getLogger
 from pathlib import Path
-from typing import Literal, NamedTuple
+from typing import Awaitable, Literal, NamedTuple, Optional
 
 import numpy as np
 from tifffile import TiffWriter
@@ -24,8 +23,10 @@ class State(NamedTuple):
     y: int
     z_tilt: tuple[int, int, int]
     z_obj: int
-    laser_g: int
-    laser_r: int
+    laser_onoff: tuple[bool, bool]
+    lasers: tuple[int, int]
+    shutter: bool
+    od: tuple[float, float]
 
 
 # Due to the optical arrangement, the actual channel ordering
@@ -102,12 +103,32 @@ class Imager:
         await self.fpga.com.wait()
         logger.info("All motions completed.")
 
+    async def move(
+        self,
+        *,
+        x: Optional[int] = None,
+        y: Optional[int] = None,
+        z_obj: Optional[int] = None,
+        z_tilt: Optional[int | tuple[int, int, int]],
+    ) -> None:
+        cmds: list[Awaitable] = []
+        if x is not None:
+            cmds.append(self.x.move(x))
+        if y is not None:
+            cmds.append(self.y.move(y))
+        if z_obj is not None:
+            cmds.append(self.z_obj.move(z_obj))
+        if z_tilt is not None:
+            cmds.append(self.z_tilt.move(z_tilt))
+        await asyncio.gather(*cmds)
+
     async def take(
         self,
         n_bundles: int,
         dark: bool = False,
         channels: frozenset[Literal[0, 1, 2, 3]] = frozenset((0, 1, 2, 3)),
         move_back_to_start: bool = True,
+        event_queue: Optional[asyncio.Queue] = None,
     ) -> tuple[UInt16Array, State]:
         assert self.cams is not None
         if self.lock.locked():
@@ -141,7 +162,9 @@ class Imager:
             assert end_y_pos > -7e6
 
             await asyncio.gather(self.tdi.prepare_for_imaging(n_px_y, pos), self.y.set_mode("IMAGING"))
-            cap = self.cams.acapture(n_bundles, fut_capture=self.y.move(end_y_pos, slowly=True), cam=cam)
+            cap = self.cams.acapture(
+                n_bundles, fut_capture=self.y.move(end_y_pos, slowly=True), cam=cam, event_queue=event_queue
+            )
 
             if dark:
                 imgs = await cap
@@ -196,7 +219,7 @@ class Imager:
             return (target, intensity)
 
     @staticmethod
-    def save_image(path: str | Path, img: UInt16Array, state: State) -> None:
+    def save(path: str | Path, img: UInt16Array, state: Optional[State] = None) -> None:
         """
         Based on 2016-06
         http://www.openmicroscopy.org/Schemas/Documentation/Generated/OME-2016-06/ome.html
