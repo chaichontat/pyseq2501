@@ -14,6 +14,7 @@ from typing import (
     Any,
     Awaitable,
     Callable,
+    Coroutine,
     Generator,
     Generic,
     Hashable,
@@ -61,10 +62,8 @@ UInt16Array = npt.NDArray[np.uint16]
 FourImages = tuple[UInt16Array, UInt16Array, UInt16Array, UInt16Array]
 
 
-def nothing() -> Awaitable[None]:
-    fut = Future()
-    fut.set_result(None)
-    return fut
+async def nothing() -> None:
+    return None
 
 
 class Mode(Enum):
@@ -290,22 +289,27 @@ class Cameras:
         n_bundles: int,
         height: int = 128,
         start_attach: Callable[[], Any] = lambda: None,
-        fut_capture: Awaitable[Any] = nothing(),
+        fut_capture: Coroutine[Any, Any, Any] | None = None,
         mode: Literal["TDI", "FOCUS_SWEEP"] = "TDI",
         cam: Literal[0, 1, 2] = 2,
+        event_queue: Optional[asyncio.Queue] = None,
     ) -> UInt16Array:
+        if fut_capture is None:
+            fut_capture = nothing()
+
         async def in_ctx():
             fut = asyncio.create_task(fut_capture)
             t0 = time.monotonic()
-            while self.n_frames_taken(cam) < n_bundles:
+            while (n := self.n_frames_taken(cam)) < n_bundles:
                 await asyncio.sleep(0.05)
-                if taken == 0 and time.monotonic() - t0 > 5:
+                if n == 0 and time.monotonic() - t0 > 5:
                     raise Exception(f"Did not capture a single bundle before {5=}s.")
+                if event_queue is not None and n % 5 == 0:
+                    event_queue.put_nowait(n)
             await fut
 
         self.set_mode(mode)
         with self._attach(n_bundles=n_bundles, height=height, cam=cam) as bufs:
-            taken = 0
             start_attach()
             if cam == 2:
                 with self[0].capture(), self[1].capture():
@@ -313,6 +317,9 @@ class Cameras:
             else:
                 with self[cam].capture():
                     await in_ctx()
+
+            if event_queue is not None:
+                event_queue.put_nowait(n_bundles)
             logger.info(f"Retrieved all {n_bundles} bundles.")
 
         if cam == 2:
