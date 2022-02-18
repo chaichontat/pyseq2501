@@ -4,7 +4,7 @@
   import ProgressManual from "$src/components/main/manual/progress_manual.svelte";
   import XYInput from "$comps/main/xy_input.svelte";
   import { browser } from "$app/env";
-
+  import tooltip from "$src/tooltip";
   let height = 0;
 
   $: height = (128 * 0.375) / 1000;
@@ -146,19 +146,35 @@
   <section class="flex flex-col gap-2">
     <h2 class="">Focus</h2>
 
-    Z Tilt
-    <input type="number" class="w-28 pretty" bind:value={$us.image_params.z_tilt} />
+    <div class="grid grid-rows-2">
+      <p>
+        Z Tilt
+        <input type="number" class="w-28 pretty" bind:value={$us.image_params.z_tilt} />
+      </p>
 
-    Z Objective
-    <span class="flex gap-2">
-      <input type="number" class="w-28 pretty" bind:value={$us.image_params.z_obj} />
-      <button type="button" class="px-4 py-1 font-medium text-gray-900 rounded-lg h-11 w-36 white-button">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
-        </svg>
-        <span>Autofocus</span>
-      </button>
-    </span>
+      <div>
+        Z Objective
+        <span class="flex gap-2">
+          <input type="number" class="w-28 pretty" bind:value={$us.image_params.z_obj} />
+          <button type="button" class="px-4 py-1 font-medium text-gray-900 rounded-lg h-11 w-36 white-button">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+            </svg>
+            <span>Autofocus</span>
+          </button>
+        </span>
+      </div>
+
+      <div>Z-Stack</div>
+      <div class="flex font-medium">
+        <span class="flex items-center border-l rounded-l-lg color-group" class:span-disabled={$us.block}>Spacing</span>
+        <input type="number" min="1" max="60000" step="0.01" class="z-10 h-10 text-center rounded-none pretty w-28" disabled={$us.block} />
+        <span use:tooltip={"Multiple of Spacing"} class="flex items-center color-group" class:span-disabled={$us.block}>From</span>
+        <input type="number" min="-100" max="100" step="0.01" class="z-10 h-10 text-center rounded-none pretty w-28 " disabled={$us.block} />
+        <span use:tooltip={"Multiple of Spacing"} class="flex items-center color-group" class:span-disabled={$us.block}>To</span>
+        <input type="number" min="-100" max="100" step="0.01" class="z-10 w-20 h-10 text-center rounded-l-none rounded-r-lg pretty" disabled={$us.block} />
+      </div>
+    </div>
   </section>
 </div>
 
@@ -171,5 +187,9 @@
   }
   .channel {
     @apply text-base ml-8;
+  }
+
+  .zstack-disabled {
+    @apply text-gray-500 bg-gray-50 border-gray-200;
   }
 </style>

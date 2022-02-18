@@ -43,7 +43,7 @@ export type Recipe = {
   cmds: NCmd[],
 }
 
-export type ImageParams = {
+export type TakeImage = {
   name: string,
   path: string,
   xy0: [number, number],
@@ -53,16 +53,19 @@ export type ImageParams = {
   laser_onoff: [boolean, boolean]
   lasers: [number, number]
   z_obj: number,
+  z_spacing?: number,
+  z_n?: number
   flowcell: boolean,
-  od: [number, number]
+  od: [number, number],
+  overlap: number
 }
 
 export type UserSettings = {
-  block: boolean
+  block: Block
   max_uid: number,
   mode: "manual" | "automatic" | "editingA" | "editingB",
   recipes: [Recipe | null, Recipe | null],
-  image_params: ImageParams
+  image_params: TakeImage & { n: number }
 }
 
 export type NReagent = { uid: number; reagent: Reagent | ReagentGroup };
@@ -87,13 +90,15 @@ export const recipeDefault: Recipe = {
   cmds: [{ uid: 0, cmd: { ...defaults.image } }]
 }
 
+export type Block = "" | "moving" | "ejecting" | "capturing" | "previewing" | "all"
+
 const userDefault: UserSettings = {
-  block: false,
+  block: "",
   max_uid: 2,
   mode: "editingA",
   recipes: [{ ...recipeDefault }, { ...recipeDefault }],
   image_params: {
-    name: "Test", path: ".", xy0: [0, 0], xy1: [1, 1], channels: [true, true, true, true], z_tilt: 19850, z_obj: 32000, lasers: [0, 0], laser_onoff: [true, true], od: [0, 0], flowcell: false
+    name: "Test", path: ".", xy0: [0, 0], xy1: [1, 1], channels: [true, true, true, true], z_tilt: 19850, z_obj: 32000, lasers: [0, 0], laser_onoff: [true, true], od: [0, 0], flowcell: false, overlap: 0.1, n: 0
   }
 }
 

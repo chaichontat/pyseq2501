@@ -3,7 +3,9 @@
   import tooltip from "$src/tooltip";
   import { imgStore, userStore as us, cmdStore, Img } from "$src/store";
   import { onDestroy } from "svelte";
+  import { tweened } from "svelte/motion";
   import Spinning from "$src/components/spinning.svelte";
+  import { cubicOut } from "svelte/easing";
 
   let curr: null | number;
   let _curr = "  --";
@@ -21,6 +23,11 @@
           $imgStore = i;
         });
     }
+  });
+
+  const progress = tweened(0, {
+    duration: 400,
+    easing: cubicOut,
   });
 
   onDestroy(unsubscribe);
@@ -57,7 +64,10 @@
       class="text-lg text-white focus:ring-4 focus:ring-blue-300 shadow-lg font-medium rounded-lg px-5 py-2.5 text-center mr-2 mb-2"
       class:start={!$us.block}
       class:stop={$us.block}
-      on:click={() => ($us.block = !$us.block)}
+      on:click={() => {
+        $us.block = "capturing";
+        $cmdStore = "capture";
+      }}
     >
       <div class="flex items-center h-12 text-lg">
         {#if $us.block}
@@ -80,8 +90,11 @@
       type="button"
       id="preview"
       class="text-lg mt-2 text-white focus:ring-4 focus:ring-sky-300 font-medium rounded-lg shadow px-4 py-2.5 text-center inline-flex items-center mr-2"
-      disabled={$us.block}
-      on:click={() => ($cmdStore = "take")}
+      disabled={Boolean($us.block)}
+      on:click={() => {
+        $us.block = "previewing";
+        $cmdStore = "preview";
+      }}
     >
       <div class="flex items-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -99,7 +112,7 @@
 
   <!-- Big box -->
   <content class="flex-grow px-4 py-2 border rounded-lg border-base-300">
-    <div class="grid max-w-2xl grid-cols-3 mt-1">
+    <div class="grid max-w-4xl grid-cols-4 mt-1">
       <!-- N Bundles -->
       <section class="flex items-center">
         <span class="text-4xl font-bold">
@@ -116,21 +129,39 @@
 
       <section class="flex flex-col">
         <span>{n_cols} Columns of {n_bundles} Bundles</span>
-        <span class="font-medium">Total time: {(n_bundles * n_cols) / 10} s</span>
+        <span>Z-Stack depth of {$us.image_params.z_n ? $us.image_params.z_n : 1}</span>
+      </section>
+
+      <section class="flex items-center">
+        <span class="text-lg font-medium">Total time: {(n_bundles * n_cols) / 10} s</span>
       </section>
     </div>
 
     <!-- Lower bar -->
-    <div class="">
-      Bundles taken
-      <div class="w-full h-2 mt-4 transition-all bg-gray-200 rounded-full">
-        <div class="h-2 bg-gray-300 rounded-full" class:running={$us.block} style="width: 50%" />
-      </div>
+    Bundles taken
+    <div class="mt-1">
+      <progress class="relative w-full h-2 overflow-hidden rounded-lg shadow appearance-none" value={$progress} />
     </div>
   </content>
 </span>
 
 <style lang="postcss">
+  progress {
+    @apply bg-gray-50;
+  }
+
+  progress::-moz-progress-bar {
+    @apply bg-gray-200;
+  }
+
+  progress::-webkit-progress-bar {
+    @apply bg-gray-200;
+  }
+
+  progress::-webkit-progress-value {
+    @apply bg-gradient-to-r from-blue-500 to-indigo-600 rounded;
+  }
+
   .start {
     @apply transition-all bg-gradient-to-r from-blue-500 to-blue-700 shadow-blue-500/50 hover:from-blue-600 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 active:from-blue-700;
   }
@@ -141,9 +172,5 @@
 
   #preview {
     @apply transition-all bg-gradient-to-r from-sky-400 to-sky-600 shadow-sky-500/50 hover:from-sky-500 hover:to-sky-700 active:from-sky-600 disabled:text-gray-400 disabled:from-gray-50 disabled:via-gray-100 disabled:to-gray-200 disabled:shadow-gray-400/50;
-  }
-
-  .running {
-    @apply bg-gradient-to-r from-blue-500 to-indigo-600;
   }
 </style>

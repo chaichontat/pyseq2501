@@ -28,6 +28,10 @@
   .title {
     @apply pb-2 mt-8 mb-4 text-2xl font-bold text-gray-600 border-b;
   }
+
+  .color-group {
+    @apply px-3 text-gray-800 bg-gray-100 border-y border-gray-400 content-center h-10;
+  }
 }
 
 @layer utilities {

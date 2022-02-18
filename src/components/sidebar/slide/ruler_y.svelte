@@ -5,16 +5,13 @@
   const mm = len % 10;
 </script>
 
-<div
-  class="absolute text-sm box-border left-full"
-  style="transform: translateY(-1px); height: calc(100% + 1px);"
->
+<div class="absolute text-sm box-border left-0" style="transform: translateY(-0.5px); height: calc(100% + 1px);">
   {#each [...Array(cm).keys()] as c}
     <div class="cm" style="height: {1000 / len}%; top:{(1000 * c) / len}%;">
       <div class="text">{c}</div>
       <div>
         {#each [...Array(10).keys()] as m}
-          <div class="mm " style="height: 10%; top:{10 * m}%;" />
+          <div class="mm" style="height: 10%; top:{10 * m}%;" />
         {/each}
       </div>
     </div>
@@ -24,7 +21,7 @@
     <div class="text">{cm}</div>
     <div>
       {#each [...Array(mm + 1).keys()] as m}
-        <div class="mm " style="height: 10%; top:{10 * m}%;" />
+        <div class="mm" style="height: 10%; top:{10 * m}%;" />
       {/each}
     </div>
   </div>
@@ -46,12 +43,12 @@
   }
 
   .text {
-    transform: translateX(0.625rem) translateY(-0.4rem);
+    transform: translateX(-1rem) translateY(-0.45rem);
   }
 
   .mm:first-of-type {
     width: 1rem;
-    transform: translateX(-0.75rem);
+    transform: translateX(-0.25rem);
   }
 
   .mm:nth-of-type(6n) {

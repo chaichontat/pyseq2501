@@ -16,9 +16,9 @@
 <!-- XY Input -->
 <div class="flex gap-x-2">
   <div class="flex font-medium">
-    <span class="flex items-center border-l rounded-l-lg" class:span-disabled={$us.block}>X</span>
+    <span class="flex items-center border-l rounded-l-lg color-group" class:span-disabled={$us.block}>X</span>
     <input bind:value={xy[0]} type="number" min="-5" max="30" step="0.01" class="z-10 h-10 text-center rounded-none pretty w-28" disabled={$us.block} />
-    <span class="flex items-center" class:span-disabled={$us.block}>Y</span>
+    <span class="flex items-center color-group" class:span-disabled={$us.block}>Y</span>
     <input bind:value={xy[1]} type="number" min="-5" max="80" step="0.01" class="z-10 h-10 text-center rounded-l-none rounded-r-lg pretty w-28" disabled={$us.block} />
   </div>
 
@@ -56,10 +56,6 @@
 </div>
 
 <style lang="postcss">
-  span {
-    @apply px-3 text-gray-800 bg-gray-100 border-y border-gray-400 content-center h-10;
-  }
-
   .span-disabled {
     @apply text-gray-500 bg-gray-50 border-gray-200;
   }
