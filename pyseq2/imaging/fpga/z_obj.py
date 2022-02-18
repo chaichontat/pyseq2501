@@ -1,7 +1,7 @@
 import asyncio
 from contextlib import asynccontextmanager
 from logging import getLogger
-from typing import Any, AsyncGenerator, Awaitable
+from typing import Any, AsyncGenerator, Awaitable, Coroutine
 
 from pyseq2.base.instruments import FPGAControlled, Movable
 from pyseq2.com.async_com import CmdParse
@@ -48,7 +48,9 @@ class ZObj(FPGAControlled, Movable):
         return await self.com.send(ObjCmd.SET_POS(int(x)))
 
     @asynccontextmanager
-    async def af_arm(self, z_min: int = 2621, z_max: int = 60292) -> AsyncGenerator[Awaitable[Any], None]:
+    async def af_arm(
+        self, z_min: int = 2621, z_max: int = 60292
+    ) -> AsyncGenerator[Awaitable[None | bool], None]:
         try:
             await self.com.send(ObjCmd.SET_POS(z_max))  # Returns when done.
             await asyncio.gather(
