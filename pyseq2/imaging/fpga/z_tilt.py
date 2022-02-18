@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from logging import getLogger
-from typing import Any, Callable, Literal, TypeVar, cast
+from typing import Any, Callable, Iterable, Literal, TypeVar, cast
 
 from pyseq2.base.instruments import FPGAControlled, Movable
 from pyseq2.com.async_com import COM, CmdParse
@@ -56,8 +56,17 @@ class ZTilt(FPGAControlled, Movable):
             await self.all_z(TiltCmd.CLEAR_REGISTER)
             logger.info("Completed z-tilt initialization.")
 
-    async def move(self, pos: int) -> tuple[int, int, int]:
+    async def move(self, pos: int | tuple[int, int, int]) -> tuple[int, int, int]:
         async with self.lock:
+            if isinstance(pos, Iterable):
+                if len(pos) != 3:
+                    raise ValueError("Need to specify all 3 Z tilt motors.")
+                return cast(
+                    tuple[int, int, int],
+                    await asyncio.gather(
+                        *[self.com.send(TiltCmd.SET_POS(i, p)) for i, p in enumerate(pos, 1)]
+                    ),
+                )
             return await self.all_z(lambda i: TiltCmd.SET_POS(i, int(pos)))
 
     @property
