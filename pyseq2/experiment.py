@@ -135,9 +135,9 @@ class TakeImage(BaseModel):
     op: Literal["image"] = "image"
 
 
-async def take_image(imager: Imager, fc: Literal[0, 1], cmd: TakeImage):
-    logger.info("Taking images.")
+def calc_pos(cmd: TakeImage):
     n_bundles = math.ceil(max(cmd.xy0[1], cmd.xy1[1]) - (min(cmd.xy0[1], cmd.xy1[1])) / 0.048)
+    fc = cast(Literal[0, 1], int(cmd.flowcell))
     y_start = coords.mm_to_raw(fc, y=min(cmd.xy0[1], cmd.xy1[1]))
 
     x_step = cmd.overlap * 0.768
@@ -146,12 +146,20 @@ async def take_image(imager: Imager, fc: Literal[0, 1], cmd: TakeImage):
     xs = [coords.mm_to_raw(fc, x=x_start + n * x_step) for n in range(x_n)]
     zs = [cmd.z_obj + n * cmd.z_spacing for n in range(cmd.z_n)]
 
+    return n_bundles, y_start, xs, zs
+
+
+async def take_image(imager: Imager, cmd: TakeImage, save: bool = True):
+    logger.info("Taking images.")
+    n_bundles, y_start, xs, zs = calc_pos(cmd)
+
     channels = cast(frozenset[Literal[0, 1, 2, 3]], frozenset(i for i, c in enumerate(cmd.channels) if c))
 
-    # Test if we can write to the directory
     path = Path(cmd.path) / cmd.name
     paths = [path.parent / f"{path.stem}_{i}.tif" for i in range(len(xs))]
-    [p.touch() for p in paths]
+    if save:
+        # Test if we can write to the directory
+        [p.touch() for p in paths]
 
     big_img = np.empty((len(zs), len(channels), 128 * n_bundles), dtype=np.uint16)
     for p, x in zip(paths, xs):
@@ -159,7 +167,8 @@ async def take_image(imager: Imager, fc: Literal[0, 1], cmd: TakeImage):
             await imager.move(x=x, y=y_start, z_obj=z, z_tilt=cmd.z_tilt)
             img, state = await imager.take(n_bundles, channels=channels)
             big_img[idx] = img
-        imager.save(p, big_img)  # TODO state per each stack.
+        if save:
+            imager.save(p, big_img)  # TODO state per each stack.
 
     logger.info("Done taking images.")
 
