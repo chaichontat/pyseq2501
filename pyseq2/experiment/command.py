@@ -27,8 +27,8 @@ class AbstractCommand:
     async def run(self, fcs: FlowCells, i: Literal[0, 1], imager: Imager) -> None:
         ...
 
-    @abstractmethod
     @classmethod
+    @abstractmethod
     def default(cls: Type[T]) -> T:
         ...
 
@@ -90,7 +90,6 @@ class Temp(BaseModel, AbstractCommand):
 
 class Hold(BaseModel, AbstractCommand):
     time: Seconds
-    temp: None | float = None
     op: Literal["hold"] = "hold"
 
     async def run(self, fcs: FlowCells, i: Literal[0, 1], imager: Imager) -> None:
@@ -103,6 +102,9 @@ class Hold(BaseModel, AbstractCommand):
 
 class Autofocus(BaseModel, AbstractCommand):
     channel: Literal[0, 1, 2, 3]
+    laser_onoff: boolean
+    laser: int
+    od: float
     op: Literal["autofocus"] = "autofocus"
 
     async def run(self, fcs: FlowCells, i: Literal[0, 1], imager: Imager) -> None:
@@ -110,7 +112,7 @@ class Autofocus(BaseModel, AbstractCommand):
 
     @classmethod
     def default(cls) -> Autofocus:
-        return Autofocus(channel=0)
+        return Autofocus(channel=0, laser_onoff=True, laser=5, od=0.0)
 
 
 class TakeImage(BaseModel, AbstractCommand):
@@ -124,7 +126,6 @@ class TakeImage(BaseModel, AbstractCommand):
     z_obj: int
     laser_onoff: tuple[bool, bool]
     lasers: tuple[int, int]
-    flowcell: Literal[0, 1]
     od: tuple[float, float]
     save: bool
     z_spacing: int = 0
@@ -144,27 +145,25 @@ class TakeImage(BaseModel, AbstractCommand):
             z_obj=20000,
             laser_onoff=(True, True),
             lasers=(5, 5),
-            flowcell=0,
             od=(0.0, 0.0),
             save=False,
         )
 
-    def calc_pos(self) -> tuple[int, int, list[int], list[int]]:
+    def calc_pos(self, i: Literal[0, 1]) -> tuple[int, int, list[int], list[int]]:
         n_bundles = math.ceil(max(self.xy0[1], self.xy1[1]) - (min(self.xy0[1], self.xy1[1])) / 0.048)
-        fc = cast(Literal[0, 1], int(self.flowcell))
-        y_start = coords.mm_to_raw(fc, y=min(self.xy0[1], self.xy1[1]))
+        y_start = coords.mm_to_raw(i, y=min(self.xy0[1], self.xy1[1]))
 
         x_step = self.overlap * 0.768
         x_n = math.ceil((max(self.xy0[0], self.xy1[0]) - (x_start := min(self.xy0[0], self.xy1[0]))) / x_step)
 
-        xs = [coords.mm_to_raw(fc, x=x_start + n * x_step) for n in range(x_n)]
+        xs = [coords.mm_to_raw(i, x=x_start + n * x_step) for n in range(x_n)]
         zs = [self.z_obj + n * self.z_spacing for n in range(self.z_n)]
 
         return n_bundles, y_start, xs, zs
 
     async def run(self, fcs: FlowCells, i: Literal[0, 1], imager: Imager) -> None:
         logger.info("Taking images.")
-        n_bundles, y_start, xs, zs = self.calc_pos()
+        n_bundles, y_start, xs, zs = self.calc_pos(i)
 
         channels = cast(
             frozenset[Literal[0, 1, 2, 3]], frozenset(i for i, c in enumerate(self.channels) if c)

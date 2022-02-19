@@ -9,6 +9,7 @@ target-version = ['py310']
 
 [tool.pyright]
 include = ["pyseq2"]
+pythonVersion = "3.10"
 reportMissingTypeStubs = false
 reportPropertyTypeMismatch = false
 reportUnknownMemberType = false
