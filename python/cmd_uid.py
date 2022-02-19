@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 from fake_imager import FakeImager
 from pyseq2.experiment import Experiment
-from pyseq2.experiment.command import Cmd, Pump
+from pyseq2.experiment.command import *
 from pyseq2.experiment.reagent import Reagent, ReagentGroup
 
 
@@ -23,7 +23,7 @@ class NReagent(BaseModel):
 
 class NCmd(BaseModel):
     uid: str | int
-    cmd: Cmd
+    cmd: Annotated[Pump | Prime | Temp | Hold | Autofocus | TakeImage | Goto, Field(discriminator="op")]
 
     @classmethod
     def default(cls) -> NCmd:

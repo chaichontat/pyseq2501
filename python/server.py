@@ -17,11 +17,10 @@ from websockets.exceptions import ConnectionClosedOK
 
 from cmd_uid import NExperiment
 from fake_imager import FakeImager
+from imaging import update_img
 from pyseq2.experiment import *
 from pyseq2.imager import AbstractImager, Imager, State
 from pyseq2.utils.ports import get_ports
-
-from python.imaging import update_img
 
 logging.basicConfig(
     level="INFO",
@@ -40,7 +39,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 debug = False
 latest = np.random.randint(0, 256, (4, 1024, 1024), dtype=np.uint8)
