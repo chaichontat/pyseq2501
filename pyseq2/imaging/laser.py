@@ -57,13 +57,16 @@ class Laser(UsesSerial):
         return self
 
     def __init__(self) -> None:
+        # The second command will be eaten if sent before the first one returns.
+        self.lock = asyncio.Lock()
         self.com: COM
 
     async def initialize(self) -> None:
         await self.com.send(LaserCmd.VERSION)
 
     async def set_onoff(self, state: bool, attempts: int = 3) -> None:
-        await self.com.send({False: LaserCmd.OFF, True: LaserCmd.ON}[state])
+        async with self.lock:
+            await self.com.send({False: LaserCmd.OFF, True: LaserCmd.ON}[state])
         #     while (resp := self.status.result(5)) is None:
         #         ...
         #     if resp == state:
@@ -81,10 +84,11 @@ class Laser(UsesSerial):
             power (int): [description]
             tol (int): [description]. Defaults to 3.
         """
-        assert all((int(power) == power and power > 0, tol > 0))
-        if not self.on:
-            await self.set_onoff(True)
-        await self.com.send(LaserCmd.SET_POWER(int(power)))
+        async with self.lock:
+            assert all((int(power) == power and power > 0, tol > 0))
+            if not self.on:
+                await self.set_onoff(True)
+            await self.com.send(LaserCmd.SET_POWER(int(power)))
 
         # for _ in range(timeout):
         #     time.sleep(1)
@@ -95,7 +99,8 @@ class Laser(UsesSerial):
 
     @property
     async def status(self) -> bool:
-        return await self.com.send(LaserCmd.GET_STATUS)
+        async with self.lock:
+            return await self.com.send(LaserCmd.GET_STATUS)
 
     async def on(self) -> None:
         return await self.set_onoff(True)
@@ -105,11 +110,8 @@ class Laser(UsesSerial):
 
     @property
     async def power(self) -> int:
-        return await self.com.send(LaserCmd.GET_POWER)
-
-    @power.setter
-    async def power(self, x: int) -> None:
-        await self.set_power(x)
+        async with self.lock:
+            return await self.com.send(LaserCmd.GET_POWER)
 
 
 @dataclass
