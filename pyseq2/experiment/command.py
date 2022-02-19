@@ -130,7 +130,7 @@ class TakeImage(BaseModel, AbstractCommand):
     save: bool
     z_spacing: int = 0
     z_n: int = 1
-    op: Literal["image"] = "image"
+    op: Literal["takeimage"] = "takeimage"
 
     @classmethod
     def default(cls) -> TakeImage:
