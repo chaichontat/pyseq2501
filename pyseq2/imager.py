@@ -207,7 +207,7 @@ class Imager:
             imgs = np.clip(np.flip(imgs, axis=1), 0, 4096)
             if cam == 1:
                 return imgs[[x - 2 for x in c], :-128, :]  # type: ignore
-            return imgs[:, :-128, :]  # Remove oversaturated first bundle.
+            return imgs[:, :-128, :], state  # Remove oversaturated first bundle.
 
     @staticmethod
     def calc_delta_pos(n_px_y: int) -> int:
@@ -219,7 +219,7 @@ class Imager:
         """
         assert self.cams is not None
         if self.lock.locked():
-            logger.info("Waiting for the previous imaging operation to complete.")
+            logger.info("Waiting for previous imaging operation to complete.")
 
         async with self.lock:
             logger.info(f"Starting autofocus using data from {channel=}.")
