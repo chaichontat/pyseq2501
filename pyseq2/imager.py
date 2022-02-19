@@ -120,20 +120,7 @@ class Imager:
             "od": (raw["od0"], raw["od1"]),
         }
 
-        return State(**optic_state, **raw["pos"])
-
-    # @property
-    # async def state(self) -> State:
-    #     names = {
-    #         "x": self.x.pos,
-    #         "y": self.y.pos,
-    #         "z_tilt": self.z_tilt.pos,
-    #         "z_obj": self.z_obj.pos,
-    #         "laser_g": self.lasers.g.power,
-    #         "laser_r": self.lasers.r.power,
-    #     }
-    #     res = await asyncio.gather(*names.values())
-    #     return State(**dict(zip(names.keys(), res)))
+        return State(**optic_state, **raw["pos"].dict())
 
     async def wait_ready(self) -> None:
         """Returns when no commands are pending return which indicates that all motors are idle.
