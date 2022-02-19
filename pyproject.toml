@@ -10,3 +10,9 @@ line_length = 110
 profile = "black"
 py_version = 310
 src_paths = ["python"]
+
+[tool.pyright]
+reportMissingTypeStubs = false
+reportUnknownMemberType = false
+reportUntypedFunctionDecorator = false
+reportUnusedImport = false

@@ -3,5 +3,6 @@ channels:
 dependencies:
   - python=3.10
   - fastapi
+  - matplotlib
   - uvicorn
   - websockets

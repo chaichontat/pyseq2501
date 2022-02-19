@@ -64,7 +64,7 @@ export type UserSettings = {
   block: Block
   max_uid: number,
   mode: "manual" | "automatic" | "editingA" | "editingB",
-  recipes: [Recipe | null, Recipe | null],
+  experiments: [Recipe | null, Recipe | null],
   image_params: TakeImage & { n: number }
 }
 
@@ -96,7 +96,7 @@ const userDefault: UserSettings = {
   block: "",
   max_uid: 2,
   mode: "editingA",
-  recipes: [{ ...recipeDefault }, { ...recipeDefault }],
+  experiments: [{ ...recipeDefault }, { ...recipeDefault }],
   image_params: {
     name: "Test", path: ".", xy0: [0, 0], xy1: [1, 1], channels: [true, true, true, true], z_tilt: 19850, z_obj: 32000, lasers: [0, 0], laser_onoff: [true, true], od: [0, 0], flowcell: false, overlap: 0.1, n: 0
   }

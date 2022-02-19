@@ -1,28 +1,27 @@
 #%%
-import asyncio
-import base64
-import logging
-import os
-from asyncio import Queue
-from concurrent.futures import ThreadPoolExecutor
-from io import BytesIO
-from typing import Annotated, Literal, NoReturn, Optional
+from __future__ import annotations
 
-import matplotlib
-import matplotlib.pyplot as plt
+import asyncio
+import logging
+from concurrent.futures import ThreadPoolExecutor
+from typing import Annotated, Literal, NoReturn
+
 import numpy as np
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, PlainTextResponse, Response
+from fastapi.responses import Response
 from PIL import Image
 from pydantic import BaseModel, Field, root_validator, validator
 from rich.logging import RichHandler
 from websockets.exceptions import ConnectionClosedOK
 
+from cmd_uid import NExperiment
 from fake_imager import FakeImager
 from pyseq2.experiment import *
-from pyseq2.imager import Imager, State
+from pyseq2.imager import AbstractImager, Imager, State
 from pyseq2.utils.ports import get_ports
+
+from python.imaging import update_img
 
 logging.basicConfig(
     level="INFO",
@@ -43,242 +42,103 @@ app.add_middleware(
 )
 
 
-class Hist(BaseModel):
-    counts: list[int]
-    bin_edges: list[float]
-
-
-class Img(BaseModel):
-    n: int
-    img: list[str]
-    hist: list[Hist]
-    channels: tuple[bool, bool, bool, bool]
-
-
-DEBUG = False
-imager: Imager
+debug = False
+latest = np.random.randint(0, 256, (4, 1024, 1024), dtype=np.uint8)
+img = update_img(latest)
+imager: AbstractImager
 q: asyncio.Queue[bool] = asyncio.Queue()
-
-Cmds = Literal[
-    "take",
-    "stop",
-    "eject",
-    "laser_r",
-    "laser_g",
-    "x",
-    "y",
-    "z_obj",
-    "z_tilt",
-    "init",
-    "autofocus",
-]
 
 
 @app.on_event("startup")
 async def startup_event():
     global imager, q
-    imager = None  # await Imager.ainit(await get_ports(60))
+    imager = await Imager.ainit(await get_ports(60))
 
 
-def process_img(img: np.ndarray) -> str:
-    cmap = plt.cm.get_cmap()
-    norm = plt.Normalize(vmin=img.min(), vmax=img.max())
-    img = (cmap(norm(img)) * 256).astype(np.uint8)
-
-    buff = BytesIO()
-    pil_img = Image.fromarray(img).convert("RGB")
-    pil_img.save(buff, format="JPEG")
-    return "data:image/jpg;base64," + base64.b64encode(buff.getvalue()).decode("utf-8")
-
-
-def gen_hist(img: np.ndarray) -> Hist:
-    hist, bin_edges = np.histogram(img.flatten(), 40)
-    return Hist(counts=list(hist), bin_edges=list(bin_edges))
-
-
-LATEST = np.random.randint(0, 256, (4, 1024, 1024), dtype=np.uint8)
 dark = np.zeros((2, 2048, 2048), dtype=np.uint8)
-
-
-def update_img(arr: np.ndarray):
-    img = [process_img(i) for i in arr]
-    hist = [gen_hist(i) for i in arr]
-    return Img(n=8, img=img, hist=hist, channels=(True, True, True, True))
-
-
-IMG = update_img(LATEST)
 
 
 @app.websocket("/cmd")
 async def cmd_endpoint(websocket: WebSocket) -> NoReturn:
-    global LATEST, IMG
+    global latest, img
     while True:
         try:
             await websocket.accept()
             while True:
                 cmd = await websocket.receive_text()
                 print(cmd)
-                match cmd.split("_"):
+                match cmd:
                     # TODO Need to block UI when moving.
-                    case ["x", n]:
-                        logger.info(f"X Go: {n}")
-                        await imager.x.move(int(n))
-                    case ["y", n]:
-                        logger.info(f"Y Go: {n}")
-                        await imager.y.move(int(n))
-                    case ["take"]:
-                        LATEST = np.random.randint(0, 4096, (4, 1024, 1024))
-                        IMG = update_img(LATEST)
+                    case "move":
+                        logger.info(f"")
+                        await imager.move(x=0)
+                    case "take":
+                        latest = np.random.randint(0, 4096, (4, 1024, 1024))
+                        img = update_img(latest)
                         await websocket.send_text("ready")
-                    case ["autofocus"]:
+                    case "autofocus":
                         logger.info(f"Autofocus")
-                        # q.put_nowait(Img(n=16, img="", hist=hist(np.random.randint(0, 4096, 1000000))))
-                    # case Received("autofocus", _):
-                    #     logger.info(f"Autofocus")
-                    #     target, img = await imager.autofocus(channel=1)
-                    #     await imager.z_obj.move(target)
+                    case _ as x:
+                        logger.error(f"What is this command {x}?")
 
         except (WebSocketDisconnect):
             ...
 
 
-class ReagentGroup(BaseModel):
-    group: str
-
-
-class NReagent(BaseModel):
-    uid: str | int
-    reagent: Reagent | ReagentGroup
-
-
-class NCmd(BaseModel):
-    uid: str | int
-    cmd: Annotated[Pump | Prime | Temp | Hold | Autofocus | TakeImage | Move, Field(discriminator="op")]
-
-
-class Recipe(BaseModel):
-    name: str
-    flowcell: Literal[0, 1]
-    reagents: list[NReagent]
-    cmds: list[NCmd]
-
-    def to_experiment(self) -> Experiment:
-        print(self.dict())
-        return Experiment(
-            name=self.name,
-            flowcell=self.flowcell,
-            reagents={r.reagent.name: r.reagent for r in self.reagents},
-            cmds=[c.cmd for c in self.cmds],
-        )
-
-
-class ManualParams(BaseModel):
-    n: int
-    name: str
-    path: str
-    channels: tuple[bool, bool, bool, bool]
-
-
 class UserSettings(BaseModel):
     """None happens when the user left the input empty."""
 
-    x: float | None
-    y: float | None
-    z_tilt: int | None
-    z_obj: int | None
-    laser_r: int | None
-    laser_g: int | None
-    flowcell: bool
+    block: Literal["", "moving", "ejecting", "capturing", "previewing"]
     max_uid: int
     mode: Literal["automatic", "manual", "editingA", "editingB"]
-    recipes: tuple[Recipe | None, Recipe | None]
-    man_params: ManualParams
+    experiments: tuple[NExperiment, NExperiment]
+    image_params: TakeImage
+
+    @classmethod
+    def default(cls) -> UserSettings:
+        return UserSettings(
+            block="",
+            max_uid=2,
+            mode="automatic",
+            experiments=(NExperiment.default(0), NExperiment.default(1)),
+            image_params=TakeImage.default(),
+        )
 
 
-recipe_default = Recipe(
-    name="default",
-    flowcell=0,
-    reagents=[NReagent(uid=0, reagent=Reagent(name="water", port=1))],
-    cmds=[NCmd(uid=0, cmd=Pump(reagent="water"))],
-)
-
-
-USERSETTINGS = UserSettings(
-    x=0,
-    y=0,
-    z_tilt=19850,
-    z_obj=32000,
-    laser_r=5,
-    laser_g=5,
-    flowcell=False,
-    max_uid=2,
-    mode="automatic",
-    recipes=(recipe_default.copy(), recipe_default.copy()),
-    man_params=ManualParams(n=16, name="", path="", channels=(True, True, True, True)),
-)
+userSettings = UserSettings.default()
 
 
 @app.websocket("/user")
 async def user_endpoint(websocket: WebSocket) -> NoReturn:
-    global USERSETTINGS
+    global userSettings
     while True:
         await websocket.accept()
         while True:
             try:
-                await websocket.send_json(USERSETTINGS.json())
+                await websocket.send_json(userSettings.json())
                 while True:
                     ret = await websocket.receive_json()
-                    USERSETTINGS = UserSettings.parse_obj(ret)
-                    logger.info(USERSETTINGS)
+                    userSettings = UserSettings.parse_obj(ret)
+                    logger.info(userSettings)
             except (WebSocketDisconnect, ConnectionClosedOK):
                 ...
 
 
 @app.get("/img")
 async def get_img():
-    global LATEST, IMG
+    global latest, img
     # LATEST = np.random.randint(0, 4096, (4, 1024, 1024))
     # LATEST = np.random.randint(0, 4096) * np.ones((4, 1024, 1024))
     # IMG = update_img(LATEST)
-    return Response(IMG.json())
+    return Response(img.json())
 
 
 @app.get("/download")
 async def download():
-    assert (r := USERSETTINGS.recipes[0]) is not None
+    fc = userSettings.image_params.flowcell
     return Response(
-        yaml.dump(recipe_default.to_experiment().dict(), sort_keys=False), media_type="application/yaml"
-    )
-
-
-class Status(BaseModel):
-    x: int
-    y: int
-    z_tilt: tuple[int, int, int]
-    z_obj: int
-    laser_r: int
-    laser_g: int
-    shutter: bool
-    moving: bool
-    msg: str
-
-
-async def gen_status() -> Status:
-    if os.name == "nt":
-        pos, lasers = await asyncio.gather(imager.pos, imager.lasers.power)
-    else:
-        state = State(0, 0, (0, 0, 0), 0, 0, 0)
-
-    return Status(
-        x=state.x,
-        y=state.y,
-        z_tilt=state.z_tilt,
-        z_obj=state.z_obj,
-        laser_r=state.laser_r,
-        laser_g=state.laser_g,
-        shutter=False,
-        moving=False,
-        msg="Imaging",
+        yaml.dump(userSettings.experiments[fc].to_experiment().dict(), sort_keys=False),
+        media_type="application/yaml",
     )
 
 
@@ -299,13 +159,9 @@ async def poll(websocket: WebSocket) -> NoReturn:
                 except asyncio.TimeoutError:
                     ...
                 finally:
-                    await websocket.send_json((await gen_status()).json())
-                # logger.info(u)
+                    await websocket.send_json((await imager.state).json())
         except (WebSocketDisconnect, ConnectionClosedOK):
             ...
 
 
 # app.get("/logs")(status.logs)
-
-
-# %%

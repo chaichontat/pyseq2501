@@ -19,7 +19,7 @@ class Moves(BaseModel):
     in_position: bool
 
 
-class Status(BaseModel):
+class Status(State):
     x: int
     y: int
     z_tilt: tuple[int, int, int]
@@ -38,7 +38,9 @@ def gen_poll(imager: Imager):
                 await websocket.accept()
                 while True:
                     if os.name == "nt":
-                        pos, lasers = await asyncio.gather(imager.pos, imager.lasers.power)
+                        pos, lasers = await asyncio.gather(
+                            imager.pos, imager.lasers.power
+                        )
                     else:
                         pos, lasers = Position(0, 0, (0, 0, 0), 0), (0, 0)
 
