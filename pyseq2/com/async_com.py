@@ -231,8 +231,8 @@ class COM:
                 self._waiting.append((cmd.delayed_parser, fut))
 
             if cmd.parser is not None:
-                fut_ = asyncio.Future() if cmd.delayed_parser is not None else fut
-                self._waiting.append((cmd.parser, fut_))  # Dump future
+                fut_ = asyncio.Future() if cmd.delayed_parser is not None else fut  # type: ignore
+                self._waiting.append((cmd.parser, fut_))  # type: ignore  # Dump future
 
             await self._send(self.formatter(cmd.cmd).encode(**ENCODING_KW))
 

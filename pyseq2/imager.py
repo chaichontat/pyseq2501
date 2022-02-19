@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from logging import getLogger
 from pathlib import Path
-from typing import Awaitable, Literal, NamedTuple, Optional
+from typing import Any, Awaitable, Literal, NamedTuple, Optional, Protocol, cast
 
 import numpy as np
 from pydantic import BaseModel
@@ -97,7 +97,7 @@ class Imager:
             "z_obj": self.z_obj.pos,
         }
         res = await asyncio.gather(*names.values())
-        return Position(**dict(zip(names.keys(), res)))
+        return Position(**dict(zip(names.keys(), res)))  # type: ignore
 
     @property
     async def state(self) -> State:
@@ -119,8 +119,8 @@ class Imager:
             "shutter": raw["sh"],
             "od": (raw["od0"], raw["od1"]),
         }
-
-        return State(**optic_state, **raw["pos"].dict())
+        pos: Position = cast(Position, raw["pos"])
+        return State(**optic_state, **pos.dict())
 
     async def wait_ready(self) -> None:
         """Returns when no commands are pending return which indicates that all motors are idle.
@@ -138,9 +138,9 @@ class Imager:
         x: Optional[int] = None,
         y: Optional[int] = None,
         z_obj: Optional[int] = None,
-        z_tilt: Optional[int | tuple[int, int, int]],
+        z_tilt: Optional[int | tuple[int, int, int]] = None,
     ) -> None:
-        cmds: list[Awaitable] = []
+        cmds: list[Awaitable[Any]] = []
         if x is not None:
             cmds.append(self.x.move(x))
         if y is not None:
@@ -157,7 +157,7 @@ class Imager:
         dark: bool = False,
         channels: frozenset[Literal[0, 1, 2, 3]] = frozenset((0, 1, 2, 3)),
         move_back_to_start: bool = True,
-        event_queue: Optional[asyncio.Queue] = None,
+        event_queue: Optional[asyncio.Queue[int]] = None,
     ) -> tuple[UInt16Array, State]:
         assert self.cams is not None
         if self.lock.locked():
@@ -278,3 +278,54 @@ class Imager:
                 )
         except BaseException as e:
             logger.error(f"Exception {e}")
+
+
+class AbstractImager(Protocol):
+    @classmethod
+    async def ainit(cls, ports: dict[SerialPorts, str], init_cam: bool = True) -> Imager:
+        ...
+
+    async def initialize(self) -> None:
+        ...
+
+    @property
+    async def pos(self) -> Position:
+        ...
+
+    @property
+    async def state(self) -> State:
+        ...
+
+    async def wait_ready(self) -> None:
+        ...
+
+    async def move(
+        self,
+        *,
+        x: Optional[int] = None,
+        y: Optional[int] = None,
+        z_obj: Optional[int] = None,
+        z_tilt: Optional[int | tuple[int, int, int]] = None,
+    ) -> None:
+        ...
+
+    async def take(
+        self,
+        n_bundles: int,
+        dark: bool = False,
+        channels: frozenset[Literal[0, 1, 2, 3]] = frozenset((0, 1, 2, 3)),
+        move_back_to_start: bool = True,
+        event_queue: Optional[asyncio.Queue] = None,
+    ) -> tuple[UInt16Array, State]:
+        ...
+
+    @staticmethod
+    def calc_delta_pos(n_px_y: int) -> int:
+        return int(n_px_y * Imager.UM_PER_PX * YStage.STEPS_PER_UM)
+
+    async def autofocus(self, channel: Literal[0, 1, 2, 3] = 1) -> tuple[int, UInt16Array]:
+        ...
+
+    @staticmethod
+    def save(path: str | Path, img: UInt16Array, state: Optional[State] = None) -> None:
+        ...

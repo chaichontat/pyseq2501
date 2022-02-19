@@ -9,7 +9,11 @@ target-version = ['py310']
 
 [tool.pyright]
 include = ["pyseq2"]
-reportPropertyTypeMismatch = "none"
+reportMissingTypeStubs = false
+reportPropertyTypeMismatch = false
+reportUnknownMemberType = false
+reportUntypedFunctionDecorator = false
+reportUnusedImport = false
 
 [tool.isort]
 known_first_party = ["pyseq2"]

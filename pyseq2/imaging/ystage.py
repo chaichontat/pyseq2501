@@ -107,7 +107,7 @@ class YStage(UsesSerial, Movable):
         self.com: COM
         self._mode: Optional[ModeName] = None
 
-    async def initialize(self) -> bool:
+    async def initialize(self) -> None:
         async with self.com.big_lock:
             logger.info("Initializing y-stage.")
             await self.com.send(YCmd.RESET)
@@ -129,15 +129,14 @@ class YStage(UsesSerial, Movable):
                 )
             ]
             logger.info("Completed y-stage initialization.")
-            return True
 
-    async def move(self, pos: int, slowly: bool = False) -> bool:
+    async def move(self, pos: int, *, slowly: bool = False) -> None:
         async with self.com.big_lock:
             await self.set_mode("IMAGING") if slowly else await self.set_mode("MOVING")
             logger.info(f"Moving to {pos} for {self._mode}")
             await self.com.send(YCmd.SET_POS(int(pos)))
             await self.com.send(YCmd.GO)
-            return await self.com.send(YCmd.RETURN_WHEN_MOVE_DONE)
+            await self.com.send(YCmd.RETURN_WHEN_MOVE_DONE)
 
     @property
     async def pos(self) -> int:

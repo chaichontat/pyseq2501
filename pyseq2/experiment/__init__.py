@@ -104,7 +104,7 @@ if __name__ == "__main__":
         assert Experiment.parse_obj(yaml.safe_load(yaml.dump(experiment.dict()))) == experiment
 
     def test_compile():
-        mix = {}
+        mix: Reagents = {}
         mix["water"] = Reagent(name="water", port=5)
         mix["gr"] = ReagentGroup(name="gr")
         mix |= (

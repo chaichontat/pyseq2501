@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import Annotated, ClassVar
+from typing import Annotated, Any, ClassVar
 
 from pyseq2.com.async_com import COM
 
@@ -20,10 +20,10 @@ class Movable(metaclass=ABCMeta):
     HOME: ClassVar[int]
 
     @abstractmethod
-    async def move(self, p: int) -> None:
+    async def move(self, pos: int, **kwargs: Any) -> None:
         """
         Args:
-            p (int): Target position
+            pos (int): Target position
         """
 
     @property

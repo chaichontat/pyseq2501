@@ -32,9 +32,17 @@ class Reagent(BaseModel):
         assert port != 9
         return port
 
+    @classmethod
+    def default(cls) -> Reagent:
+        return Reagent(name="water", port=1)
+
 
 class ReagentGroup(BaseModel):
     name: str
+
+    @classmethod
+    def default(cls) -> ReagentGroup:
+        return ReagentGroup(name="")
 
 
 Reagents = dict[str, Reagent | ReagentGroup]
