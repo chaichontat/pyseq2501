@@ -3,7 +3,7 @@
   import { onDestroy, onMount } from "svelte";
   import { cubicInOut } from "svelte/easing";
   import { fade } from "svelte/transition";
-  import { Img, imgStore, userStore as us } from "$src/store";
+  import { imgStore, userStore as us } from "$src/stores/store";
   import Hist from "./hist.svelte";
   import { Tab, TabGroup, TabList } from "@rgossiaux/svelte-headlessui";
   import { browser } from "$app/env";

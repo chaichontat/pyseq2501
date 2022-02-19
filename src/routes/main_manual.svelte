@@ -1,6 +1,6 @@
 <script lang="ts">
   import Preview from "$comps/main/preview.svelte";
-  import { userStore as us } from "$src/store";
+  import { userStore as us } from "$src/stores/store";
   import ProgressManual from "$src/components/main/manual/progress_manual.svelte";
   import XYInput from "$comps/main/xy_input.svelte";
   import { browser } from "$app/env";

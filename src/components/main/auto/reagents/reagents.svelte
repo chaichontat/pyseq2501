@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { reagentDefault } from "$src/cmds";
-  import type { NReagent } from "$src/store";
-  import { userStore as us } from "$src/store";
+  import { reagentDefault } from "$src/stores/reagent";
+  import type { NReagent } from "$src/stores/experiment";
+  import { userStore as us } from "$src/stores/store";
   import { dndzone } from "svelte-dnd-action";
   import { flip } from "svelte/animate";
   import { cubicInOut } from "svelte/easing";
@@ -12,11 +12,11 @@
 
   const flipDurationMs = 200;
   function handleDndConsider(e: CustomEvent<DndEvent>) {
-    $us.recipes[fc].reagents = e.detail.items as NReagent[];
+    $us.exps[fc].reagents = e.detail.items as NReagent[];
   }
 
   function handleDndFinalize(e: CustomEvent<DndEvent>) {
-    $us.recipes[fc].reagents = e.detail.items as NReagent[];
+    $us.exps[fc].reagents = e.detail.items as NReagent[];
   }
 </script>
 
@@ -37,14 +37,14 @@
           </tr>
         </thead>
 
-        <tbody class="border-b" use:dndzone={{ items: $us.recipes[fc].reagents, dropTargetStyle: { outline: "none" }, flipDurationMs }} on:consider={handleDndConsider} on:finalize={handleDndFinalize}>
-          {#each $us.recipes[fc].reagents as { uid, reagent }, i (uid)}
+        <tbody class="border-b" use:dndzone={{ items: $us.exps[fc].reagents, dropTargetStyle: { outline: "none" }, flipDurationMs }} on:consider={handleDndConsider} on:finalize={handleDndFinalize}>
+          {#each $us.exps[fc].reagents as { uid, reagent }, i (uid)}
             <tr animate:flip={{ duration: flipDurationMs }} in:fade={{ duration: 150, easing: cubicInOut }} class="bg-white border-gray-300 border-y hover:bg-gray-50">
               <Reagentrow
                 bind:reagent
                 primed={false}
                 on:delete={() => {
-                  $us.recipes[fc].reagents = $us.recipes[fc].reagents.filter((v, j) => i != j);
+                  $us.exps[fc].reagents = $us.exps[fc].reagents.filter((v, j) => i != j);
                 }}
               />
             </tr>
@@ -56,7 +56,7 @@
                 <!-- Add group -->
                 <button
                   class="inline-flex items-center justify-center w-1/2 align-middle rounded-bl whitespace-nowrap white-clickable hover:font-semibold"
-                  on:click={() => ($us.recipes[fc].reagents = [...$us.recipes[fc].reagents, { uid: $us.max_uid++, reagent: { group: "" } }])}
+                  on:click={() => ($us.exps[fc].reagents = [...$us.exps[fc].reagents, { uid: $us.max_uid++, reagent: { name: "" } }])}
                 >
                   <svg stroke-width="1.75" class="-ml-2 mr-0.5 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -66,7 +66,7 @@
                 <!-- Add reagent -->
                 <button
                   class="inline-flex items-center justify-center w-1/2 rounded-br align-middlewhitespace-nowrap white-clickable hover:font-semibold"
-                  on:click={() => ($us.recipes[fc].reagents = [...$us.recipes[fc].reagents, { uid: $us.max_uid++, reagent: { ...reagentDefault, port: 1 } }])}
+                  on:click={() => ($us.exps[fc].reagents = [...$us.exps[fc].reagents, { uid: $us.max_uid++, reagent: { ...reagentDefault, port: 1 } }])}
                 >
                   <svg stroke-width="1.75" class="-ml-2 mr-0.5 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />

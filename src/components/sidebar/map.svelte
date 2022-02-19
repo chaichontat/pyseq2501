@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { XY } from "src/store";
+  import type { XY } from "$src/stores/store";
   import BigZ from "./slide/big_z.svelte";
   import Slide from "./slide/slide.svelte";
-  import { statusStore as store, userStore as us } from "$src/store";
+  import { statusStore as store, userStore as us } from "$src/stores/store";
   import { raw_to_local } from "../../coords";
   import Toggle from "./toggle.svelte";
 
@@ -12,7 +12,7 @@
 
   let xy: XY = { x: 0, y: 0 };
   $: {
-    xy = raw_to_local($us.image_params.flowcell, $store.x, $store.y);
+    xy = raw_to_local($us.image_params.fc, $store.x, $store.y);
   }
 
   // let moving = false;
@@ -37,7 +37,7 @@
   <!-- Toggle -->
   <span class="flex items-center justify-center mb-4 text-lg space-x-2 -translate-y-6 monomedium">
     <div>A</div>
-    <Toggle bind:checked={$us.image_params.flowcell} />
+    <Toggle bind:checked={$us.image_params.fc} />
     <!-- <input
       type="checkbox"
       bind:checked={$us.flowcell}
@@ -48,7 +48,7 @@
     <div>B</div>
   </span>
   <div class="-mt-4" />
-  <Slide name={$us.image_params.flowcell ? "B" : "A"} x={xy.x} y={xy.y} z_tilt={$store.z_tilt} />
+  <Slide name={$us.image_params.fc ? "B" : "A"} x={xy.x} y={xy.y} z_tilt={$store.z_tilt} />
 
   <!-- Z Objective -->
   <section class="flex self-center flex-grow mt-4 space-x-8">

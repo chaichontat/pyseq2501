@@ -1,7 +1,7 @@
 <script lang="ts">
   import Editor from "$src/components/main/auto/editor.svelte";
   import FlowcellCard from "$src/components/main/auto/flowcell_card.svelte";
-  import { userStore as us } from "$src/store";
+  import { userStore as us } from "$src/stores/store";
 </script>
 
 <!-- <ProgressAuto /> -->

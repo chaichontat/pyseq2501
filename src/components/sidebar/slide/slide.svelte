@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { XY } from "src/store";
-  import { userStore as us, statusStore } from "$src/store";
+  import type { XY } from "$src/stores/store";
+  import { userStore as us, statusStore } from "$src/stores/store";
   import Locator from "./locator.svelte";
   import RulerX from "./ruler_x.svelte";
   import RulerY from "./ruler_y.svelte";

@@ -1,8 +1,8 @@
 <script lang="ts">
   import Dropdown from "./dropdown.svelte";
-  import { userStore as us } from "$src/store";
-  import type { Cmds } from "$src/cmds";
-  import { defaults } from "$src/cmds";
+  import { userStore as us } from "$src/stores/store";
+  import type { Cmds } from "$src/stores/command";
+  import { cmdDefaults } from "$src/stores/command";
   import Setxy from "./setxy.svelte";
   import { createEventDispatcher } from "svelte";
   import { checkRange } from "$src/utils";
@@ -13,7 +13,7 @@
   // Can dispatch `delete`.
   const dispatch = createEventDispatcher();
 
-  // $: cmd = { ...defaults[cmd.op], ...cmd }; // Second overwrites first.
+  // $: cmd = { ...cmdDefaults[cmd.op], ...cmd }; // Second overwrites first.
 </script>
 
 <li class="relative flex py-4 pl-2 border-t border-gray-300 transition-all ease-in-out hover:bg-gray-50">
@@ -66,11 +66,11 @@
         <span>
           Reagent
           <select class="text-sm drop">
-            {#each $us.recipes[fc].reagents as { uid, reagent }}
-              {#if "group" in reagent}
-                <option>{`Group ${reagent.group}`}</option>
-              {:else}
+            {#each $us.exps[fc].reagents as { uid, reagent }}
+              {#if "port" in reagent}
                 <option>{`${reagent.port} - ${reagent.name}`}</option>
+              {:else}
+                <option>{`Group ${reagent.name}`}</option>
               {/if}
             {/each}
           </select>
@@ -85,11 +85,11 @@
         <span>
           Reagent
           <select class="text-sm drop">
-            {#each $us.recipes[fc].reagents as { uid, reagent }}
-              {#if "group" in reagent}
-                <option>{`Group ${reagent.group}`}</option>
-              {:else}
+            {#each $us.exps[fc].reagents as { uid, reagent }}
+              {#if "port" in reagent}
                 <option>{`${reagent.port} - ${reagent.name}`}</option>
+              {:else}
+                <option>{`Group ${reagent.name}`}</option>
               {/if}
             {/each}
           </select>
@@ -106,13 +106,8 @@
           °C
         </span>
 
-        <!-- Move -->
-      {:else if cmd.op === "move"}
-        <div class="mt-4 col-span-4">
-          <Setxy bind:xy={cmd.xy} />
-        </div>
         <!-- Image -->
-      {:else if cmd.op === "image"}
+      {:else if cmd.op === "takeimage"}
         <span>
           Z <input type="number" class="w-24 mx-2 pretty" placeholder="2000" bind:value={cmd.z_tilt} />
           <button type="button" class="px-4 py-1 text-sm font-medium text-gray-900 rounded-lg white-button">
@@ -122,12 +117,12 @@
 
         <div class="pl-4 mt-4 ml-2 col-span-4">
           <p class="mb-2 text-lg">Upper left</p>
-          <Setxy bind:xy={cmd.xy_end} />
+          <Setxy bind:xy={cmd.xy1} />
         </div>
 
         <div class="pl-4 mt-4 ml-2 col-span-4">
           <p class="mb-2 text-lg gap-x-8">Lower right</p>
-          <Setxy bind:xy={cmd.xy_start} />
+          <Setxy bind:xy={cmd.xy0} />
         </div>
 
         <!-- Channels -->

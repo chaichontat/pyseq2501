@@ -2,7 +2,7 @@
   import Logo from "$comps/logo.svelte";
   import Connected from "$comps/navbar/connected.svelte";
   import Status from "$comps/navbar/status.svelte";
-  import { userStore as us } from "$src/store";
+  import { userStore as us } from "$src/stores/store";
 </script>
 
 <div id="nav" class="sticky inset-x-0 top-0 z-50 w-full h-16 bg-white transition duration-200 ease-in-out shadow-sm opacity-95 text-base-content ring-1 ring-gray-900 ring-opacity-5">

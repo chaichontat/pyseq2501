@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import { userStore as us } from "$src/store";
+  import { userStore as us } from "$src/stores/store";
   let cl = "";
   export { cl as class };
 

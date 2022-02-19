@@ -21,6 +21,7 @@ from imaging import update_img
 from pyseq2.experiment import *
 from pyseq2.imager import AbstractImager, Imager, State
 from pyseq2.utils.ports import get_ports
+from status import poll_status
 
 logging.basicConfig(
     level="INFO",
@@ -70,7 +71,13 @@ async def cmd_endpoint(websocket: WebSocket) -> NoReturn:
                     case "move":
                         logger.info(f"")
                         await imager.move(x=0)
-                    case "take":
+                    case "capture":
+                        userSettings.image_params.save = True
+                        latest = np.random.randint(0, 4096, (4, 1024, 1024))
+                        img = update_img(latest)
+                        await websocket.send_text("ready")
+                    case "preview":
+                        userSettings.image_params.save = False
                         latest = np.random.randint(0, 4096, (4, 1024, 1024))
                         img = update_img(latest)
                         await websocket.send_text("ready")
@@ -89,7 +96,7 @@ class UserSettings(BaseModel):
     block: Literal["", "moving", "ejecting", "capturing", "previewing"]
     max_uid: int
     mode: Literal["automatic", "manual", "editingA", "editingB"]
-    experiments: tuple[NExperiment, NExperiment]
+    exps: tuple[NExperiment, NExperiment]
     image_params: TakeImage
 
     @classmethod
@@ -98,7 +105,7 @@ class UserSettings(BaseModel):
             block="",
             max_uid=2,
             mode="automatic",
-            experiments=(NExperiment.default(0), NExperiment.default(1)),
+            exps=(NExperiment.default(0), NExperiment.default(1)),
             image_params=TakeImage.default(),
         )
 
@@ -135,7 +142,7 @@ async def get_img():
 async def download():
     fc = userSettings.image_params.flowcell
     return Response(
-        yaml.dump(userSettings.experiments[fc].to_experiment().dict(), sort_keys=False),
+        yaml.dump(userSettings.exps[fc].to_experiment().dict(), sort_keys=False),
         media_type="application/yaml",
     )
 
@@ -149,17 +156,7 @@ async def poll(websocket: WebSocket) -> NoReturn:
 
     # task = asyncio.create_task(status_ping())
     while True:
-        try:
-            await websocket.accept()
-            while True:
-                try:
-                    await asyncio.wait_for(q.get(), 5)
-                except asyncio.TimeoutError:
-                    ...
-                finally:
-                    await websocket.send_json((await imager.state).json())
-        except (WebSocketDisconnect, ConnectionClosedOK):
-            ...
+        await poll_status(websocket, imager, q)
 
 
 # app.get("/logs")(status.logs)

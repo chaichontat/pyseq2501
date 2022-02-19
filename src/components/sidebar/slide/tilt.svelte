@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { statusStore as ss } from "$src/store";
+  import { statusStore as ss } from "$src/stores/store";
 
   let editing = [false, false, false];
 

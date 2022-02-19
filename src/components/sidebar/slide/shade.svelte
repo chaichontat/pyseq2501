@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { userStore as us } from "$src/store";
+  import { userStore as us } from "$src/stores/store";
 
   let real_x: [number, number];
   let real_y: [number, number];

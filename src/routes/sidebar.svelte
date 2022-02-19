@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { Status } from "$src/store";
-  import { statusStore } from "$src/store";
+  import type { Status } from "$src/stores/store";
+  import { statusStore } from "$src/stores/store";
   import Logo from "$comps/logo.svelte";
   import Division from "$src/components/sidebar/division.svelte";
   import Lasers from "$comps/sidebar/lasers.svelte";

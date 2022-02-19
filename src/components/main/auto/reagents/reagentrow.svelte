@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Reagent, ReagentGroup } from "$src/cmds";
+  import type { Reagent, ReagentGroup } from "$src/stores/reagent";
   import { createEventDispatcher } from "svelte";
   import { checkRange } from "$src/utils";
 
@@ -12,10 +12,10 @@
   const duplicates = (dict) => Object.keys(dict).filter((a) => dict[a] > 1);
 </script>
 
-{#if "group" in reagent}
+{#if !("port" in reagent)}
   <!-- Reagent group -->
   <td colspan="7" class="h-12 px-4 mx-4 text-xl font-medium transition-colors bg-orange-50 hover:bg-orange-100">
-    Group <input bind:value={reagent.group} type="text" class="w-32 m-2 text-xl pretty bg-orange-50" required class:invalid={!reagent.group} />
+    Group <input bind:value={reagent.name} type="text" class="w-32 m-2 text-xl pretty bg-orange-50" required class:invalid={!reagent.name} />
   </td>
 {:else}
   <!-- Reagent proper -->

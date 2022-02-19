@@ -1,6 +1,6 @@
 <script lang="ts">
   import * as Pancake from "@sveltejs/pancake";
-  import type { Hist } from "$src/store";
+  import type { Hist } from "$src/stores/imaging";
 
   export let hist: Hist;
   let max: number;

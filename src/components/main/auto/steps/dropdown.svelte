@@ -1,10 +1,10 @@
 <script lang="ts">
-  import type { Cmd, Ops } from "$src/cmds";
-  import { defaults } from "$src/cmds";
+  import type { Cmd, Ops } from "$src/stores/command";
+  import { cmdDefaults } from "$src/stores/command";
   import { Menu, MenuButton, MenuItem, MenuItems } from "@rgossiaux/svelte-headlessui";
   import { cubicInOut } from "svelte/easing";
   import { fade } from "svelte/transition";
-  export let cmd: Cmd = { ...defaults.pump };
+  export let cmd: Cmd = { ...cmdDefaults.pump };
   const namemap = {
     autofocus: "Autofocus",
     pump: "Pump",
@@ -18,7 +18,7 @@
 
   function handleClick(target: Ops) {
     return () => {
-      cmd = { ...defaults[target] };
+      cmd = { ...cmdDefaults[target] };
     };
   }
 </script>
@@ -46,8 +46,7 @@
       </section>
       <section>
         <MenuItem let:active><div on:click={handleClick("autofocus")} class:bg-gray-200={active} class="item">{namemap["autofocus"]}</div></MenuItem>
-        <MenuItem let:active><div on:click={handleClick("image")} class:bg-gray-200={active} class="item">{namemap["image"]}</div></MenuItem>
-        <MenuItem let:active><div on:click={handleClick("move")} class:bg-gray-200={active} class="item">{namemap["move"]}</div></MenuItem>
+        <MenuItem let:active><div on:click={handleClick("takeimage")} class:bg-gray-200={active} class="item">{namemap["image"]}</div></MenuItem>
       </section>
     </div>
   </MenuItems>

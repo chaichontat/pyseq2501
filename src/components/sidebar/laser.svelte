@@ -3,7 +3,7 @@
   export let color: string;
   export let userPower: number;
   export let power: number;
-  import { userStore as us } from "$src/store";
+  import { userStore as us } from "$src/stores/store";
 
   function update() {
     // Update only when focus lost.

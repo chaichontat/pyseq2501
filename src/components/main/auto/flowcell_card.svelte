@@ -1,11 +1,11 @@
 <script lang="ts">
   export let fc: 0 | 1;
-  import { userStore as us } from "$src/store";
+  import { userStore as us } from "$src/stores/store";
 
   function handleEditClick(): () => void {
     return () => {
       $us.mode = fc === 0 ? "editingA" : "editingB";
-      $us.flowcell = fc === 1;
+      $us.image_params.fc = fc;
     };
   }
 </script>

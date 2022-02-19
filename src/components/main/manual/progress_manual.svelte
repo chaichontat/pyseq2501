@@ -1,7 +1,7 @@
 <script lang="ts">
   import { browser } from "$app/env";
   import tooltip from "$src/tooltip";
-  import { imgStore, userStore as us, cmdStore, Img } from "$src/store";
+  import { imgStore, userStore as us, cmdStore, Img } from "$src/stores/store";
   import { onDestroy } from "svelte";
   import { tweened } from "svelte/motion";
   import Spinning from "$src/components/spinning.svelte";

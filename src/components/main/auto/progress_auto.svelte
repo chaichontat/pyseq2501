@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { imgStore, userStore as us, cmdStore } from "$src/store";
+  import { imgStore, userStore as us, cmdStore } from "$src/stores/store";
 
   let curr: null | number;
   let _curr = "  --";
@@ -60,7 +60,7 @@
         <span class="stat-value">
           <span class="font-mono">{_curr}</span>
           /
-          <span class="px-2 text-right stat-value w-36">{$us.recipes[fc].cmds.length}</span>
+          <span class="px-2 text-right stat-value w-36">{$us.exps[fc].cmds.length}</span>
         </span>
         <div class="flex flex-col ml-4 opacity-80">
           <span>Height {height.toFixed(3)} mm</span>
@@ -70,7 +70,7 @@
 
       <div class="stat-title">Steps done</div>
       <div class="stat-desc">
-        <progress value={0} max={$us.recipes[fc].cmds.length} class="transition-all progress progress-secondary" />
+        <progress value={0} max={$us.exps[fc].cmds.length} class="transition-all progress progress-secondary" />
       </div>
     </div>
   </div>

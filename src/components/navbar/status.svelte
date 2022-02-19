@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { statusStore } from "../../store";
+  import { statusStore } from "../../stores/store";
   import { flash } from "../../utils";
   import Spinning from "$comps/spinning.svelte";
 

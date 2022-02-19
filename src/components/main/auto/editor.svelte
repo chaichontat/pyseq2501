@@ -3,7 +3,7 @@
   import Reagents from "$comps/main/auto/reagents/reagents.svelte";
   import Steps from "$comps/main/auto/steps/steps.svelte";
   import Preview from "$comps/main/preview.svelte";
-  import { recipeDefault, userStore as us } from "$src/store";
+  import { recipeDefault, userStore as us } from "$src/stores/store";
   import { Menu, MenuButton, MenuItem, MenuItems } from "@rgossiaux/svelte-headlessui";
   import { cubicInOut } from "svelte/easing";
   import { fade } from "svelte/transition";
@@ -52,7 +52,7 @@
 
 <!-- <ProgressAuto fc={fc} /> -->
 
-<!-- {#if $us.recipes[fc]} -->
+<!-- {#if $us.exps[fc]} -->
 Total Time
 <p class="pb-3 mt-8 text-2xl font-bold text-gray-800 border-b">Details</p>
 <Details />
@@ -66,7 +66,7 @@ Total Time
 <!-- New or Upload -->
 <!-- <div class="flex items-center justify-center w-full h-[50vh]">
     <div class="inline-flex text-2xl rounded-md shadow-sm" role="group">
-      <button type="button" class="px-8 py-6 font-medium rounded-l-lg white-button" on:click={() => ($us.recipes[fc] = { ...recipeDefault })}>
+      <button type="button" class="px-8 py-6 font-medium rounded-l-lg white-button" on:click={() => ($us.exps[fc] = { ...recipeDefault })}>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>

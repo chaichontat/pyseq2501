@@ -1,12 +1,12 @@
 <script lang="ts">
   import Spinning from "$comps/spinning.svelte";
-  import { userStore as us, statusStore as status, cmdStore } from "$src/store";
+  import { userStore as us, statusStore as status, cmdStore } from "$src/stores/store";
   import { local_to_raw } from "$src/coords";
 
   export let xy: [number, number] = [-1, -1];
 
   function move() {
-    const raw_coord = local_to_raw($us.image_params.flowcell, xy[0], xy[1]);
+    const raw_coord = local_to_raw($us.image_params.fc, xy[0], xy[1]);
     $us.block = true;
     // $cmdStore = { cmd: "x", n: raw_coord.x };
     // $cmdStore = { cmd: "y", n: raw_coord.y };
@@ -27,9 +27,9 @@
     class="px-4 py-1 text-sm font-medium text-blue-800 border-blue-300 rounded-lg hover:bg-blue-100 active:bg-blue-200 bg-blue-50 white-button disabled:bg-gray-50 disabled:hover:bg-gray-50 disabled:active:bg-gray-50 disabled:text-gray-500"
     tabindex="0"
     on:click={move}
-    disabled={$us.block}
+    disabled={Boolean($us.block)}
   >
-    {#if $status.moving}
+    {#if !$us.block}
       <div class="ml-4">
         <Spinning color="white" />
       </div>
