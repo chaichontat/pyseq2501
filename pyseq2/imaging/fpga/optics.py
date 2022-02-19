@@ -9,28 +9,26 @@ from pyseq2.utils.utils import ok_if_match, λ_int
 
 logger = getLogger(__name__)
 
-ID = Literal[1, 2]
-
-# Unchecked
+# Open is 0. Closed is -1.
 OD_GREEN = {
-    "OPEN": 143,
+    "0.0": 143,
     "1.0": 107,
     "2.0": 71,
     "3.5": -107,
     "3.8": -71,
     "4.0": 36,
     "4.5": -36,
-    "CLOSED": 0,
+    "-1.0": 0,
 }
 OD_RED = {
-    "OPEN": 143,
+    "0.0": 143,
     "0.2": -107,
     "0.5": -71,
     "0.6": -36,
     "1.0": 107,
     "2.4": 71,
     "4.0": 36,
-    "CLOSED": 0,
+    "-1.0": 0,
 }
 
 
@@ -45,6 +43,37 @@ class OpticCmd:
 # fmt: on
 
 
+class Filter(FPGAControlled):
+    def __init__(self, fpga_com: COM, id_: Literal[0, 1], lock: asyncio.Lock) -> None:
+        super().__init__(fpga_com)
+        self.lock = lock
+        self.id_ = id_
+        self.vals = OD_GREEN if id_ == 0 else OD_RED
+        self._pos = 0.0
+
+    @property
+    async def pos(self) -> float:
+        return self._pos
+
+    async def initialize(self) -> None:
+        await self.com.send(OpticCmd.HOME_OD(self.id_ + 1))
+        await self.move(0)
+
+    async def open(self) -> None:
+        await self.move(0)
+
+    async def close(self) -> None:
+        await self.move(-1)
+
+    async def move(self, od: int | float) -> None:
+        async with self.lock:
+            try:
+                await self.com.send(OpticCmd.SET_OD(self.vals[f"{od:.1f}"], self.id_ + 1))
+                self._pos = float(od)
+            except KeyError:
+                raise KeyError(f"Invalid OD. Only {list(self.vals.keys())} allowed.")
+
+
 class Optics(FPGAControlled):
     """
     Set to no OD filters/closed and emission filter in.
@@ -56,29 +85,22 @@ class Optics(FPGAControlled):
     def __init__(self, fpga_com: COM) -> None:
         super().__init__(fpga_com)
         self.lock = asyncio.Lock()
+        self.filters = [Filter(fpga_com, 0, self.lock), Filter(fpga_com, 1, self.lock)]
+        self._shutter = False
+
+    @property
+    async def shutter(self) -> bool:
+        return self._shutter
+
+    def __getitem__(self, k: Literal[0, 1]) -> Filter:
+        return self.filters[k]
 
     async def initialize(self) -> None:
-        async with self.lock:
-            logger.info(f"Initializing optics.")
-            await self.com.send(OpticCmd.EM_FILTER_DEFAULT)
-            await asyncio.gather(self.com.send(OpticCmd.HOME_OD(1)), self.com.send(OpticCmd.HOME_OD(2)))
-            await asyncio.gather(
-                self.com.send(OpticCmd.SET_OD(OD_GREEN["OPEN"], 1)),
-                self.com.send(OpticCmd.SET_OD(OD_RED["OPEN"], 2)),
-            )
-            logger.info(f"Done initializing optics.")
-
-    async def green(self, open_: bool) -> None:
-        async with self.lock:
-            cmd = OpticCmd.SET_OD(OD_GREEN["OPEN"], 1) if open_ else OpticCmd.HOME_OD(1)
-            await self.com.send(cmd)
-            logger.info(f"Green excitation filter {'opened' if open_ else 'closed'}.")
-
-    async def red(self, open_: bool) -> None:
-        async with self.lock:
-            cmd = OpticCmd.SET_OD(OD_RED["OPEN"], 2) if open_ else OpticCmd.HOME_OD(2)
-            await self.com.send(cmd)
-            logger.info(f"Red excitation filter {'opened' if open_ else 'closed'}.")
+        logger.info(f"Initializing optics.")
+        await self.filters[0].initialize()
+        await self.filters[1].initialize()
+        await self._close()
+        logger.info(f"Done initializing optics.")
 
     @asynccontextmanager
     async def open_shutter(self) -> AsyncGenerator[None, None]:
@@ -90,8 +112,10 @@ class Optics(FPGAControlled):
 
     async def _open(self) -> None:
         await self.com.send(OpticCmd.OPEN_SHUTTER)
+        self._shutter = True
         logger.info("Shutter opened.")
 
     async def _close(self) -> None:
         await self.com.send(OpticCmd.CLOSE_SHUTTER)
+        self._shutter = False
         logger.info("Shutter closed.")

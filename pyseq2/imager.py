@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Awaitable, Literal, NamedTuple, Optional
 
 import numpy as np
+from pydantic import BaseModel
 from tifffile import TiffWriter
 
 from .base.instruments_types import SerialPorts
@@ -18,15 +19,22 @@ from .imaging.ystage import YStage
 logger = getLogger(__name__)
 
 
-class State(NamedTuple):
+class Position(BaseModel):
     x: int
     y: int
     z_tilt: tuple[int, int, int]
     z_obj: int
+
+
+class OpticState(BaseModel):
     laser_onoff: tuple[bool, bool]
     lasers: tuple[int, int]
     shutter: bool
     od: tuple[float, float]
+
+
+class State(Position, OpticState):
+    ...
 
 
 # Due to the optical arrangement, the actual channel ordering
@@ -80,7 +88,8 @@ class Imager:
             )
             logger.info("Imager initialization completed.")
 
-    async def pos(self) -> dict[str, int]:
+    @property
+    async def pos(self) -> Position:
         names = {
             "x": self.x.pos,
             "y": self.y.pos,
@@ -88,7 +97,30 @@ class Imager:
             "z_obj": self.z_obj.pos,
         }
         res = await asyncio.gather(*names.values())
-        return dict(zip(names.keys(), res))
+        return Position(**dict(zip(names.keys(), res)))
+
+    @property
+    async def state(self) -> State:
+        raw = {
+            "on0": self.lasers[0].status,
+            "on1": self.lasers[1].status,
+            "p0": self.lasers[0].power,
+            "p1": self.lasers[1].power,
+            "sh": self.optics.shutter,
+            "od0": self.optics[0].pos,
+            "od1": self.optics[1].pos,
+            "pos": self.pos,
+        }
+
+        raw = dict(zip(raw.keys(), await asyncio.gather(*raw.values())))
+        optic_state = {
+            "laser_onoff": (raw["on0"], raw["on1"]),
+            "lasers": (raw["p0"], raw["p1"]),
+            "shutter": raw["sh"],
+            "od": (raw["od0"], raw["od1"]),
+        }
+
+        return State(**optic_state, **raw["pos"])
 
     # @property
     # async def state(self) -> State:
@@ -164,8 +196,8 @@ class Imager:
             n_bundles += 1  # To flush CCD.
             await self.wait_ready()
 
-            # state = await self.state
-            pos = await self.y.pos
+            state = await self.state
+            pos = state.y
             n_px_y = n_bundles * self.cams.BUNDLE_HEIGHT
             # Need overshoot for TDI to function properly.
             end_y_pos = pos - self.calc_delta_pos(n_px_y) - 100000
