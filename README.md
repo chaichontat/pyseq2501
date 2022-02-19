@@ -31,17 +31,19 @@ The scientific logic are in `Experiment`, `FlowCell`, and `Imager`. `Experiment`
 ```mermaid
   graph TD;
       Experiment-->Imager;
-      Experiment-->FlowCell;
+      Experiment-->FlowCells;
       Imager-->DCAM;
       Imager-->FPGA;
       Imager-->XStage;
       Imager-->YStage;
       Imager-->Lasers;
       FPGA-->LED;
-      FPGA-->Optics;
+      FPGA-->Filter;
+      FPGA-->Shutter;
       FPGA-->TDI;
       FPGA-->ZObj;
       FPGA-->ZTilt;
+      FlowCells-->FlowCell
       FlowCell-->ARM9Chem;
       FlowCell-->Pump;
       FlowCell-->Valve;
