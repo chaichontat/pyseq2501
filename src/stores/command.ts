@@ -41,6 +41,7 @@ export type TakeImage = Cmd & {
     z_n?: number,
     od: [number, number],
     overlap: number,
+    save: boolean
     op: "takeimage"
 }
 
@@ -73,7 +74,7 @@ export const cmdDefaults: Readonly<CmdDefaults> = {
         path: ".",
         xy0: [0, 0],
         xy1: [1, 1],
-        channels: [true, true, true, true], z_tilt: 19850, z_obj: 32000,
+        channels: [true, true, true, true], z_tilt: 19850, z_obj: 32000, save: false,
         lasers: [0, 0], laser_onoff: [true, true], od: [0, 0], overlap: 0.1, op: "takeimage"
     },
     "autofocus": {

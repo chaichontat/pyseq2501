@@ -90,6 +90,16 @@ async def cmd_endpoint(websocket: WebSocket) -> NoReturn:
             ...
 
 
+class NTakeImage(TakeImage):
+    fc: bool
+    n: int
+
+    @classmethod
+    def default(cls) -> NTakeImage:
+        ori = super().default()
+        return NTakeImage(**ori.dict(), fc=False, n=1)
+
+
 class UserSettings(BaseModel):
     """None happens when the user left the input empty."""
 
@@ -97,7 +107,7 @@ class UserSettings(BaseModel):
     max_uid: int
     mode: Literal["automatic", "manual", "editingA", "editingB"]
     exps: tuple[NExperiment, NExperiment]
-    image_params: TakeImage
+    image_params: NTakeImage
 
     @classmethod
     def default(cls) -> UserSettings:
@@ -106,7 +116,7 @@ class UserSettings(BaseModel):
             max_uid=2,
             mode="automatic",
             exps=(NExperiment.default(0), NExperiment.default(1)),
-            image_params=TakeImage.default(),
+            image_params=NTakeImage.default(),
         )
 
 
@@ -140,7 +150,7 @@ async def get_img():
 
 @app.get("/download")
 async def download():
-    fc = userSettings.image_params.flowcell
+    fc = userSettings.image_params.fc
     return Response(
         yaml.dump(userSettings.exps[fc].to_experiment().dict(), sort_keys=False),
         media_type="application/yaml",

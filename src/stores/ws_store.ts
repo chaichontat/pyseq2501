@@ -55,7 +55,8 @@ export function websocketStore<T>(url: string, initialValue: T | undefined = und
         // we are still in the opening phase
         if (openPromise) return openPromise;
 
-        socket = new WebSocket(url);
+        if (socket === undefined)
+            socket = new WebSocket(url);
 
         socket.onmessage = (event: MessageEvent): void => {
             console.log(event.data)
@@ -93,9 +94,20 @@ export function websocketStore<T>(url: string, initialValue: T | undefined = und
                         ? () => socket.send(JSON.stringify(value))
                         // @ts-ignore
                         : () => socket.send(value)
-                if (socket.readyState !== WebSocket.OPEN) {
-                    open().then(send)
-                } else { send() }
+                switch (socket.readyState) {
+                    case WebSocket.CLOSED | WebSocket.CLOSING: {
+                        open().then(send)
+                        break;
+                    }
+                    case WebSocket.CONNECTING: {
+                        open().then(send)
+                        break;
+                    }
+                    case WebSocket.OPEN: {
+                        send()
+                        break;
+                    }
+                }
             }
 
             if (subscribeSet) {

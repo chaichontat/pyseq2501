@@ -20,7 +20,7 @@ export type UserSettings = {
   max_uid: number,
   mode: "manual" | "automatic" | "editingA" | "editingB",
   exps: [NExperiment, NExperiment],
-  image_params: TakeImage & { fc: 0 | 1, n: number }
+  image_params: TakeImage & { fc: boolean, n: number }
 }
 
 export type Block = "" | "moving" | "ejecting" | "capturing" | "previewing" | "all"
@@ -30,7 +30,7 @@ const userDefault: Readonly<UserSettings> = {
   max_uid: 2,
   mode: "editingA",
   exps: [{ ...experimentDefault }, { ...experimentDefault }],
-  image_params: { ...cmdDefaults["takeimage"], fc: 0, n: 1 }
+  image_params: { ...cmdDefaults["takeimage"], fc: false, n: 1 }
 }
 
 const t: TakeImage = cmdDefaults["takeimage"]
