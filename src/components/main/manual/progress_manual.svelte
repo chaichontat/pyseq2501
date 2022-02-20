@@ -25,35 +25,35 @@
       $us.block = "";
     }
   });
+  onDestroy(unsubscribe);
 
   const progress = tweened(0, {
     duration: 400,
     easing: cubicOut,
   });
 
-  onDestroy(unsubscribe);
-
   $: height = Math.max($us.image_params.xy1[1], $us.image_params.xy0[1]) - Math.min($us.image_params.xy1[1], $us.image_params.xy0[1]);
   $: width = Math.max($us.image_params.xy1[0], $us.image_params.xy0[0]) - Math.min($us.image_params.xy1[0], $us.image_params.xy0[0]);
   $: n_cols = Math.ceil(width / 0.768);
   $: n_bundles = Math.ceil(height / 0.048);
 
-  // $: {
-  //   if ($imgStore) {
-  //     if (!("cmd" in $imgStore)) {
-  //       curr = $imgStore ? $imgStore.n : -1;
-  //       _curr = curr == -1 ? "--" : curr;
-  //     }
-  //   }
-  // }
+  function handleCapture() {
+    if ($us.block === "capturing") {
+      $cmdStore = "stop";
+    } else {
+      $cmdStore = "capture";
+      $us.block = "capturing";
+    }
+  }
 
-  // $: {
-  //   if (corrected) {
-  //     $cmdStore = "corr";
-  //   } else {
-  //     $cmdStore = "uncorr";
-  //   }
-  // }
+  function handlePreview() {
+    if ($us.block === "previewing") {
+      $cmdStore = "stop";
+    } else {
+      $cmdStore = "preview";
+      $us.block = "previewing";
+    }
+  }
 </script>
 
 <span class="z-40 flex w-full space-x-2">
@@ -62,13 +62,12 @@
     <button
       use:tooltip={"Take image and save."}
       type="button"
-      class="text-lg text-white focus:ring-4 focus:ring-blue-300 shadow-lg font-medium rounded-lg px-5 py-2.5 text-center mr-2 mb-2"
+      class="text-lg text-white focus:ring-4  shadow-lg font-medium rounded-lg px-5 py-2.5 text-center mr-2 mb-2"
+      class:focus:ring-blue-300={!$us.block}
+      class:focus:ring-orange-300={$us.block}
       class:start={!$us.block}
       class:stop={$us.block}
-      on:click={() => {
-        $us.block = "capturing";
-        $cmdStore = "capture";
-      }}
+      on:click={handleCapture}
     >
       <div class="flex items-center h-12 text-lg">
         {#if $us.block}
@@ -92,10 +91,7 @@
       id="preview"
       class="text-lg mt-2 text-white focus:ring-4 focus:ring-sky-300 font-medium rounded-lg shadow px-4 py-2.5 text-center inline-flex items-center mr-2"
       disabled={Boolean($us.block)}
-      on:click={() => {
-        $us.block = "previewing";
-        $cmdStore = "preview";
-      }}
+      on:click={handlePreview}
     >
       <div class="flex items-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">

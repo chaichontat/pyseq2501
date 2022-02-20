@@ -9,8 +9,10 @@
   export let showPath: boolean = true;
   export let params: TakeImage;
   let height = 0;
-
-  $: height = (128 * 0.375) / 1000;
+  let width = 0;
+  let n_cols = 0;
+  let n_bundles = 0;
+  let z_stack = false;
 
   function blockControls(div: HTMLElement | null, changeTo: boolean): void {
     if (div) {
@@ -21,23 +23,28 @@
   }
 
   $: if (browser) blockControls(document.getElementById("control"), $us.block);
+
+  $: height = Math.max(params.xy1[1], params.xy0[1]) - Math.min(params.xy1[1], params.xy0[1]);
+  $: width = Math.max(params.xy1[0], params.xy0[0]) - Math.min(params.xy1[0], params.xy0[0]);
+  $: n_cols = Math.ceil(width / (0.768 * (1 - params.overlap)));
+  $: n_bundles = Math.ceil(height / 0.048);
 </script>
 
 <!-- <div class:hidden={$us.block} class="absolute z-50  -mx-10 w-full h-96 bg-black/[0.1]" /> -->
 <!-- Capture params. -->
 <div id="control" class="grid grid-cols-2 gap-y-6 gap-x-4">
   <section class="flex flex-col text-lg font-medium">
-    <p class="text-lg">Name</p>
-    <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={params.name} />
+    <p class="mt-1 text-lg">Name</p>
+    <input type="text" class="max-w-md mb-4 pretty" bind:value={params.name} />
     {#if showPath}
       <p class="text-lg">Image Path</p>
-      <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={params.path} />
+      <input type="text" class="max-w-md mb-4 pretty" bind:value={params.path} />
     {/if}
   </section>
 
   <!-- Optics -->
   <section class="font-medium leading-10 ">
-    <h2 class="">Laser and Channels</h2>
+    <h2>Laser and Channels</h2>
     <div class="grid grid-cols-2" class:opacity-70={$us.block}>
       <LaserChannels bind:params i={0} />
       <LaserChannels bind:params i={1} />
@@ -47,52 +54,64 @@
   <!-- XY Input -->
   <section class="flex flex-col gap-2">
     <h2>Positions</h2>
-    <div class="-mt-1 space-y-2">
+    <div class="-mt-1 space-y-4">
       <div>
-        <p class="mb-1">📌 Corner 1</p>
+        <p>📌 Corner 1</p>
         <XYInput bind:xy={params.xy0} />
       </div>
       <div>
-        <p class="mb-1">📍 Corner 2</p>
+        <p>📍 Corner 2</p>
         <XYInput bind:xy={params.xy1} />
       </div>
-      <div>
-        <p class="mb-1">X-Overlap</p>
-        <input type="number" class="w-20 pretty pr-2" bind:value={params.overlap} step="0.01" min="0" max="0.99" />
-        (0-1)
+      <div class="flex">
+        <div>
+          <p>X-Overlap</p>
+          <input type="number" class="w-20 pr-2 pretty" bind:value={params.overlap} step="0.01" min="0" max="0.99" />
+          (0-1)
+        </div>
+        <div class="flex flex-col justify-center mt-6 ml-8 font-normal">
+          <span class="tabular-nums">{width.toFixed(2)} × {height.toFixed(2)} mm</span>
+          <span class="tabular-nums">{n_cols} columns of {n_bundles} bundles.</span>
+        </div>
       </div>
     </div>
   </section>
 
+  <!-- TODO Unequal level -->
   <!-- Focus stuffs -->
   <section class="flex flex-col gap-2">
     <h2>Focus</h2>
-    <div class="-mt-1 space-y-2">
-      <div>
-        <p>Z Tilt</p>
-        <input type="number" class="w-28 pretty" bind:value={params.z_tilt} />
+    <div class="-mt-1 space-y-4">
+      <div class="flex space-x-8">
+        <div>
+          <p>Z Tilt</p>
+          <input type="number" class="w-28 pretty" bind:value={params.z_tilt} />
+        </div>
+
+        <div>
+          <p>Z Objective</p>
+          <span class="flex gap-2">
+            <input type="number" class="w-28 pretty" bind:value={params.z_obj} />
+            <button type="button" class="px-4 py-1 font-medium text-gray-900 rounded-lg w-36 white-button">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+              </svg>
+              <span>Autofocus</span>
+            </button>
+          </span>
+        </div>
       </div>
 
       <div>
-        Z Objective
-        <span class="flex gap-2">
-          <input type="number" class="w-28 pretty" bind:value={params.z_obj} />
-          <button type="button" class="px-4 py-1 font-medium text-gray-900 rounded-lg h-11 w-36 white-button">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
-            </svg>
-            <span>Autofocus</span>
-          </button>
-        </span>
-      </div>
-
-      <div>
-        Z-Stack
-        <div class="flex font-medium">
-          <span class="flex items-center border-l rounded-l-lg color-group" class:span-disabled={$us.block}>Spacing</span>
-          <input type="number" min="1" max="60000" step="0.01" class="z-10 h-10 text-center rounded-none pretty w-28" disabled={$us.block} />
+        <p>
+          <input type="checkbox" class="mr-1 rounded" bind:checked={z_stack} />
+          Z-Stack
+        </p>
+        <div class="flex font-medium" id="zBox" class:text-gray-400={!z_stack}>
+          <span class="flex items-center border-l rounded-l-lg color-group" class:span-disabled={$us.block} use:tooltip={"Nyquist is 232."}>Spacing</span>
+          <input type="number" min="1" max="60000" step="0.01" bind:value={params.z_spacing} class="z-10 h-10 text-center rounded-none pretty w-28" disabled={$us.block} />
           <span use:tooltip={"Multiple of Spacing"} class="flex items-center color-group" class:span-disabled={$us.block}>From</span>
-          <input type="number" min="-100" max="100" step="0.01" class="z-10 h-10 text-center rounded-none pretty w-28 " disabled={$us.block} />
+          <input type="number" min="-100" max="100" step="0.01" class="z-10 h-10 text-center rounded-none pretty w-28" disabled={$us.block} />
           <span use:tooltip={"Multiple of Spacing"} class="flex items-center color-group" class:span-disabled={$us.block}>To</span>
           <input type="number" min="-100" max="100" step="0.01" class="z-10 w-20 h-10 text-center rounded-l-none rounded-r-lg pretty" disabled={$us.block} />
         </div>
@@ -106,7 +125,11 @@
     @apply mb-1 text-xl font-semibold text-gray-800;
   }
 
-  .zstack-disabled {
+  p {
+    @apply mb-1 font-medium;
+  }
+
+  .span-disabled {
     @apply text-gray-500 bg-gray-50 border-gray-200;
   }
 </style>

@@ -9,7 +9,7 @@ from fastapi import Request, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from websockets.exceptions import ConnectionClosedOK
 
-from pyseq2.imager import AbstractImager, Position
+from pyseq2.imager import Imager, Position
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class Moves(BaseModel):
 #     msg: str
 
 
-async def poll_status(websocket: WebSocket, imager: AbstractImager, q: asyncio.Queue[bool]):
+async def poll_status(websocket: WebSocket, imager: Imager, q: asyncio.Queue[bool]):
     try:
         await websocket.accept()
         while True:

@@ -26,9 +26,9 @@
   <span class:text-gray-400={!params.laser_onoff[i]}>
     <label>
       <input type="checkbox" class={`mr-1 rounded ${i ? "text-red-600 rounded focus:ring-red-300" : "text-lime-500 focus:ring-lime-300"}`} bind:checked={params.laser_onoff[i]} />
-      <div class="inline" class:text-green-800={params.laser_onoff[i]}>{Boolean(i) ? 660 : 532} nm</div>
+      <div class="inline font-semibold" class:text-green-800={params.laser_onoff[i] && !i} class:text-red-800={params.laser_onoff[i] && i}>{Boolean(i) ? 660 : 532} nm</div>
     </label>
-    <input type="number" class="w-20 h-8 mr-1 pretty" class:pretty-disabled={!params.laser_onoff[0]} bind:value={params.lasers[i]} disabled={!params.laser_onoff[i]} />
+    <input type="number" class="w-20 h-8 mx-1 pretty" class:pretty-disabled={!params.laser_onoff[0]} bind:value={params.lasers[i]} disabled={!params.laser_onoff[i]} />
     mW
   </span>
 
@@ -65,7 +65,7 @@
         <option>Closed</option>
       {/if}
     </select>
-    <p class="text-sm font-medium ml-3">Effective: {(Number(params.od[i] != -1) * params.lasers[i] * Math.pow(10, -params.od[i])).toFixed(4)} mW</p>
+    <p class="ml-3 text-sm font-medium">Effective: {(Number(params.od[i] != -1) * params.lasers[i] * Math.pow(10, -params.od[i])).toFixed(4)} mW</p>
   </span>
 </p>
 

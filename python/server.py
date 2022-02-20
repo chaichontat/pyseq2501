@@ -20,7 +20,7 @@ from cmd_uid import NExperiment
 from imaging import update_img
 from pyseq2.experiment import *
 from pyseq2.fakes import FakeFlowCells, FakeImager
-from pyseq2.imager import AbstractImager, Imager, State
+from pyseq2.imager import Imager, State
 from pyseq2.utils.ports import FAKE_PORTS, get_ports
 from status import poll_status
 
@@ -42,7 +42,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-latest = np.random.randint(0, 256, (4, 1024, 1024), dtype=np.uint8)
+latest = np.random.randint(0, 256, (4, 128, 2048), dtype=np.uint8)
 img = update_img(latest)
 imager: Imager
 fcs: FlowCells
@@ -80,14 +80,20 @@ async def cmd_endpoint(websocket: WebSocket) -> NoReturn:
                         logger.info(f"")
                         await imager.move(x=0)
                     case "capture" | "preview" as c:
-                        p = userSettings.image_params
-                        p.save = True if c == "capture" else False
+                        p = userSettings.image_params.copy()
+                        if c == "capture":
+                            p.save = True
+                            p.z_n = 1
+                        else:
+                            p.save = False
                         latest = await userSettings.image_params.run(fcs, p.fc, imager)
                         img = update_img(latest)
                         await websocket.send_text("ok")
                     case "autofocus":
                         logger.info(f"Autofocus")
                         await imager.autofocus()
+                        await websocket.send_text("ok")
+                    case "stop":
                         await websocket.send_text("ok")
                     case _ as x:
                         logger.error(f"What is this command {x}?")

@@ -8,16 +8,17 @@
   import { Tab, TabGroup, TabList } from "@rgossiaux/svelte-headlessui";
   import { browser } from "$app/env";
 
+  let panSpace: HTMLDivElement;
   let canvas: HTMLCanvasElement;
   let imgFrame: HTMLImageElement;
   let pz: PanzoomObject;
-  let ctx: CanvasRenderingContext2D;
+  let ctx: CanvasRenderingContext2D | null;
   let showHistogram: boolean = true;
   let currChannel: 0 | 1 | 2 | 3 = 0;
 
   onMount(() => {
     ctx = canvas.getContext("2d");
-    pz = Panzoom(canvas, { maxZoom: 5 });
+    pz = Panzoom(canvas, { maxZoom: 5, startScale: 0.5, startX: -1024 + (panSpace.clientWidth - 1024), startY: (panSpace.clientHeight + canvas.height) / 2, animate: true });
   });
 
   if (browser) {
@@ -41,7 +42,7 @@
     if (browser) imgFrame.src = $imgStore?.img[currChannel];
   }
 
-  // $: if (canvas) ctx.canvas.height = 128 * $userStore.n;
+  $: if (ctx && $imgStore) ctx.canvas.height = 128 * $imgStore.n;
 
   function genTabClass(color: string, selected: boolean, enabled: boolean): string {
     let out = `tab-button ${selected ? `text-white` : `${enabled ? `text-gray-700 hover:text-black bg-white hover:bg-${color}-300` : "text-gray-400"}`}`;
@@ -51,13 +52,13 @@
 
 <!-- Somehow mx-auto is centering -->
 <!-- Image -->
-<div id="frame" class="relative z-10 w-11/12 mx-auto mt-4 border border-gray-300 rounded-md resize-y min-h-[40vh]">
-  <canvas id="canvas" bind:this={canvas} width={1024} height={128} on:wheel={pz.zoomWithWheel} />
+<div id="frame" bind:this={panSpace} class="relative z-10 w-11/12 mx-auto mt-4 border border-gray-300 rounded-md resize-y min-h-[40vh]">
+  <canvas id="canvas" bind:this={canvas} width={2048} height={128} on:wheel={pz.zoomWithWheel} />
 
   <!-- Tabs -->
   <div class="absolute z-40 w-2/5 h-10 top-4 left-4">
     <TabGroup on:change={(idx) => (currChannel = idx.detail)}>
-      <TabList class="p-1 bg-white shadow grid grid-cols-4 space-x-1 rounded-xl opacity-90 ">
+      <TabList class="grid grid-cols-4 p-1 space-x-1 bg-white shadow rounded-xl opacity-90 ">
         <Tab disabled={!$us.image_params.channels[0]} let:selected><button class:bg-green-600={selected} class={genTabClass("green", selected, $us.image_params.channels[0])}>Channel 0</button></Tab>
         <Tab disabled={!$us.image_params.channels[1]} let:selected><button class:bg-orange-500={selected} class={genTabClass("orange", selected, $us.image_params.channels[1])}>Channel 1</button></Tab>
         <Tab disabled={!$us.image_params.channels[2]} let:selected><button class:bg-rose-600={selected} class={genTabClass("rose", selected, $us.image_params.channels[2])}>Channel 2</button></Tab>
@@ -66,12 +67,19 @@
     </TabGroup>
   </div>
 
+  <button
+    class="absolute z-40 inline-flex items-center h-10 px-4 font-medium bg-white border rounded-lg shadow-lg top-4 right-56 opacity-90 white-button"
+    on:click={() => pz.pan(-1024 + (panSpace.clientWidth - 1024), (panSpace.clientHeight + canvas.height) / 2)}
+  >
+    Center
+  </button>
+
   <!-- Show Histogram -->
-  <div class="absolute z-40 inline-flex items-center h-12 bg-white border rounded-lg shadow-lg top-4 right-8 opacity-90">
-    <span class="mx-4 font-medium cursor-pointer" on:click={() => (showHistogram = !showHistogram)}>
-      <input type="checkbox" class="mr-1 text-blue-500 rounded focus:ring-blue-300" bind:checked={showHistogram} />
+  <div class="absolute z-40 inline-flex items-center h-10 bg-white border rounded-lg shadow-lg top-4 right-8 opacity-90">
+    <label class="mx-4 font-medium cursor-pointer">
+      <input type="checkbox" class="mr-1 text-blue-500 rounded focus:ring-blue-300" bind:checked={showHistogram} on:click={() => (showHistogram = !showHistogram)} />
       Show Histogram
-    </span>
+    </label>
   </div>
 
   <div class:hidden={!showHistogram} id="histogram" class="absolute z-30 p-6 pb-3 bg-white rounded-lg shadow-lg shadow-gray-500 bottom-8 right-8 opacity-90 w-[400px] h-[300px]">
@@ -81,7 +89,7 @@
 
 <style lang="postcss">
   .tab-button {
-    @apply transition-all duration-100 w-full py-2.5 text-sm leading-5 font-medium rounded-lg focus:outline-none focus:ring-2;
+    @apply transition-all duration-100 w-full py-2 text-sm font-medium rounded-lg focus:outline-none focus:ring-2;
   }
 
   #canvas {

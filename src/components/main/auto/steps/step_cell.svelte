@@ -2,10 +2,9 @@
   import Dropdown from "./dropdown.svelte";
   import { userStore as us } from "$src/stores/store";
   import type { Cmds } from "$src/stores/command";
-  import { cmdDefaults } from "$src/stores/command";
-  import Setxy from "./setxy.svelte";
   import { createEventDispatcher } from "svelte";
   import { checkRange } from "$src/utils";
+  import Takeimage from "$src/components/main/takeimage/takeimage.svelte";
   export let fc: 0 | 1;
   export let n: number;
   export let cmd: Cmds;
@@ -16,7 +15,7 @@
   // $: cmd = { ...cmdDefaults[cmd.op], ...cmd }; // Second overwrites first.
 </script>
 
-<li class="relative flex py-4 pl-2 border-t border-gray-300 transition-all ease-in-out hover:bg-gray-50">
+<li class="relative flex py-4 pl-2 transition-all ease-in-out border-t border-gray-300 hover:bg-gray-50">
   <!-- Close -->
   <svg xmlns="http://www.w3.org/2000/svg" class="absolute w-5 h-5 -mt-1 cursor-pointer right-2" viewBox="0 0 20 20" fill="currentColor" on:click={() => dispatch("delete")}>
     <path
@@ -38,13 +37,13 @@
   <div class="w-full mr-8">
     <span class="flex items-center space-x-16">
       <div><Dropdown bind:cmd /></div>
-      <span class="text-lg font-medium text-gray-700">
-        Total time: <div class="inline-block font-mono whitespace-nowrap">60</div>
+      <span class="text-lg font-medium text-gray-800">
+        Total time: <div class="inline-block font-mono text-xl text-gray-700 whitespace-nowrap">60</div>
         s
       </span>
     </span>
 
-    <div class="mt-2 font-medium grid grid-cols-4 divide-x clump gap-x-4">
+    <div class="grid grid-cols-4 mt-2 font-medium divide-x clump gap-x-4">
       <!-- Hold -->
       {#if cmd.op === "hold"}
         <span>
@@ -101,72 +100,14 @@
 
         <!-- Temp -->
       {:else if cmd.op === "temp"}
-        <span>
+        <span class="col-span-4">
           Temperature <input type="number" class="w-24 mx-2 pretty" placeholder="20" bind:value={cmd.temp} />
           °C
         </span>
 
         <!-- Image -->
       {:else if cmd.op === "takeimage"}
-        <span>
-          Z <input type="number" class="w-24 mx-2 pretty" placeholder="2000" bind:value={cmd.z_tilt} />
-          <button type="button" class="px-4 py-1 text-sm font-medium text-gray-900 rounded-lg white-button">
-            <span>Move Z</span>
-          </button>
-        </span>
-
-        <div class="pl-4 mt-4 ml-2 col-span-4">
-          <p class="mb-2 text-lg">Upper left</p>
-          <Setxy bind:xy={cmd.xy1} />
-        </div>
-
-        <div class="pl-4 mt-4 ml-2 col-span-4">
-          <p class="mb-2 text-lg gap-x-8">Lower right</p>
-          <Setxy bind:xy={cmd.xy0} />
-        </div>
-
-        <!-- Channels -->
-        <div class="pl-4 mt-4 ml-2 col-span-4">
-          <p class="mb-2 text-lg">Channel(s)</p>
-          <div class="grid grid-cols-3">
-            <div id="green">
-              <span class="mb-1">
-                <input type="checkbox" class="ml-2 mr-1 rounded text-lime-500 focus:ring-lime-300" bind:checked={cmd.laser_onoff[0]} />
-                532 nm laser
-                <input type="number" class="w-20 h-8 mr-1 pretty" placeholder="0" bind:value={cmd.lasers[0]} disabled={cmd.laser_onoff[0]} />
-                mW
-              </span>
-              <ol>
-                <li class="channel">
-                  <input type="checkbox" class="mr-1 text-green-500 rounded focus:ring-green-300" bind:checked={cmd.channels[0]} />
-                  Channel 0
-                </li>
-                <li class="channel">
-                  <input type="checkbox" class="mr-1 text-orange-600 rounded focus:ring-orange-300" bind:checked={cmd.channels[1]} />
-                  Channel 1
-                </li>
-              </ol>
-            </div>
-            <div id="red">
-              <span class="mb-1">
-                <input type="checkbox" class="ml-2 mr-1 text-red-600 rounded focus:ring-red-300" bind:checked={cmd.laser_onoff[1]} />
-                660 nm laser
-                <input type="number" class="w-20 h-8 mr-1 pretty" placeholder="0" bind:value={cmd.lasers[1]} disabled={cmd.laser_onoff[1]} />
-                mW
-              </span>
-              <ol>
-                <li class="channel">
-                  <input type="checkbox" class="mr-1 rounded text-rose-700 focus:ring-rose-500" bind:checked={cmd.channels[2]} />
-                  Channel 2
-                </li>
-                <li class="channel">
-                  <input type="checkbox" class="mr-1 rounded text-amber-900 focus:ring-amber-700" bind:checked={cmd.channels[3]} />
-                  Channel 3
-                </li>
-              </ol>
-            </div>
-          </div>
-        </div>
+        <span class="col-span-4 my-2"><Takeimage bind:params={cmd} showPath={false} /></span>
       {:else}
         NOT IMPLEMENTED
       {/if}

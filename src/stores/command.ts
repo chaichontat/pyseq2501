@@ -83,5 +83,3 @@ export const cmdDefaults: Readonly<CmdDefaults> = {
     },
     "goto": { step: 1, n: 4, op: "goto" }
 }
-
-const p = cmdDefaults

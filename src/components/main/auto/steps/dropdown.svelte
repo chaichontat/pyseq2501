@@ -5,14 +5,13 @@
   import { cubicInOut } from "svelte/easing";
   import { fade } from "svelte/transition";
   export let cmd: Cmd = { ...cmdDefaults.pump };
-  const namemap = {
+  const namemap: Record<Ops, string> = {
     autofocus: "Autofocus",
     pump: "Pump",
     prime: "Prime",
     temp: "Change Temperature",
     hold: "Hold",
-    move: "Move",
-    image: "Image",
+    takeimage: "Image",
     goto: "Go to",
   };
 
@@ -25,14 +24,14 @@
 
 <Menu class="relative inline-block text-left">
   <MenuButton
-    class="relative inline-flex w-64 py-2 pl-6 text-lg font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-blue-500"
+    class="relative inline-flex py-3 pl-6 text-xl font-semibold text-gray-800 bg-white border border-gray-300 rounded-md shadow-sm w-72 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-blue-500"
   >
     {namemap[cmd.op]}
     <svg xmlns="http://www.w3.org/2000/svg" class="absolute right-0 self-center w-5 h-5 ml-2 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
     </svg>
   </MenuButton>
-  <MenuItems class="absolute left-0 z-10 w-64 mt-2 bg-white border border-gray-200 shadow-xl rounded-md focus:outline-none">
+  <MenuItems class="absolute left-0 z-40 w-64 mt-2 bg-white border border-gray-200 rounded-md shadow-xl focus:outline-none">
     <div class="divide-y divide-gray-200 dropp" transition:fade={{ duration: 100, easing: cubicInOut }}>
       <section>
         <MenuItem let:active><div on:click={handleClick("hold")} class:bg-blue-200={active} class="item">{namemap["hold"]}</div></MenuItem>
@@ -46,7 +45,7 @@
       </section>
       <section>
         <MenuItem let:active><div on:click={handleClick("autofocus")} class:bg-gray-200={active} class="item">{namemap["autofocus"]}</div></MenuItem>
-        <MenuItem let:active><div on:click={handleClick("takeimage")} class:bg-gray-200={active} class="item">{namemap["image"]}</div></MenuItem>
+        <MenuItem let:active><div on:click={handleClick("takeimage")} class:bg-gray-200={active} class="item">{namemap["takeimage"]}</div></MenuItem>
       </section>
     </div>
   </MenuItems>

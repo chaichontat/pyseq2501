@@ -55,7 +55,7 @@
               <div class="flex h-full divide-x">
                 <!-- Add group -->
                 <button
-                  class="inline-flex items-center justify-center w-1/2 align-middle rounded-bl whitespace-nowrap white-clickable hover:font-semibold"
+                  class="inline-flex items-center justify-center w-1/2 font-medium align-middle rounded-bl whitespace-nowrap white-clickable hover:font-semibold"
                   on:click={() => ($us.exps[fc].reagents = [...$us.exps[fc].reagents, { uid: $us.max_uid++, reagent: { name: "" } }])}
                 >
                   <svg stroke-width="1.75" class="-ml-2 mr-0.5 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -65,7 +65,7 @@
                 </button>
                 <!-- Add reagent -->
                 <button
-                  class="inline-flex items-center justify-center w-1/2 rounded-br align-middlewhitespace-nowrap white-clickable hover:font-semibold"
+                  class="inline-flex items-center justify-center w-1/2 font-medium rounded-br align-middlewhitespace-nowrap white-clickable hover:font-semibold"
                   on:click={() => ($us.exps[fc].reagents = [...$us.exps[fc].reagents, { uid: $us.max_uid++, reagent: { ...reagentDefault, port: 1 } }])}
                 >
                   <svg stroke-width="1.75" class="-ml-2 mr-0.5 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { statusStore } from "../../stores/store";
+  import { statusStore } from "$src/stores/store";
   let connected: boolean = false;
-  $: connected = $statusStore.laser_r != -1;
+  $: connected = $statusStore.lasers[0] != -1;
 </script>
 
 {#if connected}

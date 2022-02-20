@@ -22,7 +22,7 @@ class Img(BaseModel):
 def update_img(arr: np.ndarray):
     img = [process_img(i) for i in arr]
     hist = [gen_hist(i) for i in arr]
-    return Img(n=8, img=img, hist=hist, channels=(True, True, True, True))
+    return Img(n=arr.shape[1] // 128, img=img, hist=hist, channels=(True, True, True, True))
 
 
 def process_img(img: np.ndarray) -> str:

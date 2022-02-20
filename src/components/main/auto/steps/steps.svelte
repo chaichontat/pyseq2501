@@ -32,7 +32,7 @@
   <!-- Add step -->
   <button
     id="add"
-    class="inline-flex items-center justify-center w-full h-16 text-lg font-medium border-gray-300 transition-all border-y hover:font-semibold white-clickable"
+    class="inline-flex items-center justify-center w-full h-16 text-lg font-medium transition-all border-gray-300 border-y hover:font-semibold white-clickable"
     on:click={() => ($us.exps[fc].cmds = [...$us.exps[fc].cmds, { uid: $us.max_uid++, cmd: { ...cmdDefaults.takeimage } }])}
   >
     <span class="inline-flex">
