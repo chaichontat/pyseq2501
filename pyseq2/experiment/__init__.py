@@ -20,6 +20,9 @@ class Experiment(BaseModel):
     reagents: Reagents | list[Reagent | ReagentGroup]  # Would be converted to Reagents.
     cmds: Sequence[Cmd]
 
+    """Only allow Reagent in Pump, Prime to be str here.
+    """
+
     def __init__(
         self,
         name: str,
@@ -96,7 +99,7 @@ if __name__ == "__main__":
     def test_basic():
         waters: list[Reagent | ReagentGroup] = [Reagent(name=f"water{port}", port=port) for port in (1, 2, 3)]
         ops: list[Cmd] = [Pump(reagent=water.name) for water in waters]
-        ops.append(Autofocus(channel=0))
+        ops.append(Autofocus(channel=0, laser_onoff=True, laser=5, od=0))
         ops.append(Temp(temp=25))
 
         experiment = Experiment("wash_ports_123", 0, cmds=ops, reagents=waters)

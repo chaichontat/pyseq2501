@@ -50,7 +50,7 @@ async def pump_prime(fcs: FlowCells, i: bool, cmd: Pump | Prime):
 
 
 class Pump(BaseModel, AbstractCommand):
-    reagent: str
+    reagent: str | Reagent
     volume: μL = 250
     op: Literal["pump"] = "pump"
 
@@ -63,7 +63,7 @@ class Pump(BaseModel, AbstractCommand):
 
 
 class Prime(BaseModel, AbstractCommand):
-    reagent: str
+    reagent: str | Reagent
     volume: μL = 250
     op: Literal["prime"] = "prime"
 
@@ -178,7 +178,7 @@ class TakeImage(BaseModel, AbstractCommand):
         if self.save:
             [p.touch() for p in paths]
 
-        big_img = np.empty((len(zs), len(channels), 128 * n_bundles), dtype=np.uint16)
+        big_img = np.empty((len(zs), len(channels), 128 * n_bundles, 2048), dtype=np.uint16)
         for p, x in zip(paths, xs):
             for idx, z in enumerate(zs):
                 await imager.move(x=x, y=y_start, z_obj=z, z_tilt=self.z_tilt)
@@ -188,7 +188,7 @@ class TakeImage(BaseModel, AbstractCommand):
                 imager.save(p, big_img)  # TODO state per each stack.
 
         logger.info("Done taking images.")
-        return big_img
+        return big_img[0]
 
 
 class Goto(BaseModel, AbstractCommand):

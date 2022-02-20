@@ -166,7 +166,7 @@ class FakeImager(Imager):
             for i in range(n_bundles):
                 event_queue.put_nowait(i)
         return (
-            np.random.randint(0, 4096, (len(channels), 2048, n_bundles * 128), dtype=np.uint16),
+            np.random.randint(0, 4096, (len(channels), n_bundles * 128, 2048), dtype=np.uint16),
             State.default(),
         )
 
