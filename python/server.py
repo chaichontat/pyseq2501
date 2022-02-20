@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from concurrent.futures import ThreadPoolExecutor
 from typing import Annotated, Literal, NoReturn
 
@@ -16,11 +17,11 @@ from rich.logging import RichHandler
 from websockets.exceptions import ConnectionClosedOK
 
 from cmd_uid import NExperiment
-from fake_imager import FakeImager
 from imaging import update_img
 from pyseq2.experiment import *
+from pyseq2.fakes import FakeFlowCells, FakeImager
 from pyseq2.imager import AbstractImager, Imager, State
-from pyseq2.utils.ports import get_ports
+from pyseq2.utils.ports import FAKE_PORTS, get_ports
 from status import poll_status
 
 logging.basicConfig(
@@ -41,17 +42,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-debug = False
 latest = np.random.randint(0, 256, (4, 1024, 1024), dtype=np.uint8)
 img = update_img(latest)
-imager: AbstractImager
+imager: Imager
+fcs: FlowCells
+
 q: asyncio.Queue[bool] = asyncio.Queue()
 
 
 @app.on_event("startup")
 async def startup_event():
-    global imager, q
-    imager = await Imager.ainit(await get_ports(60))
+    global imager, fcs, q
+    if os.environ.get("FAKE_HISEQ", "0") != "1":
+        imager = await Imager.ainit(ports := await get_ports(60))
+        fcs = await FlowCells.ainit(ports)
+
+    else:
+        imager = await FakeImager.ainit(FAKE_PORTS)
+        fcs = await FakeFlowCells.ainit(FAKE_PORTS)
 
 
 dark = np.zeros((2, 2048, 2048), dtype=np.uint8)
@@ -71,18 +79,16 @@ async def cmd_endpoint(websocket: WebSocket) -> NoReturn:
                     case "move":
                         logger.info(f"")
                         await imager.move(x=0)
-                    case "capture":
-                        userSettings.image_params.save = True
-                        latest = np.random.randint(0, 4096, (4, 1024, 1024))
+                    case "capture" | "preview" as c:
+                        p = userSettings.image_params
+                        p.save = True if c == "capture" else False
+                        latest = await userSettings.image_params.run(fcs, p.fc, imager)
                         img = update_img(latest)
-                        await websocket.send_text("ready")
-                    case "preview":
-                        userSettings.image_params.save = False
-                        latest = np.random.randint(0, 4096, (4, 1024, 1024))
-                        img = update_img(latest)
-                        await websocket.send_text("ready")
+                        await websocket.send_text("ok")
                     case "autofocus":
                         logger.info(f"Autofocus")
+                        await imager.autofocus()
+                        await websocket.send_text("ok")
                     case _ as x:
                         logger.error(f"What is this command {x}?")
 

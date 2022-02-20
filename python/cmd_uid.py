@@ -3,10 +3,8 @@ from __future__ import annotations
 
 from typing import Literal, Sequence
 
-import numpy as np
 from pydantic import BaseModel
 
-from fake_imager import FakeImager
 from pyseq2.experiment import Experiment
 from pyseq2.experiment.command import *
 from pyseq2.experiment.reagent import Reagent, ReagentGroup

@@ -1,11 +1,11 @@
 <script lang="ts">
   import { browser } from "$app/env";
+  import type { Img } from "$src/stores/imaging";
+  import { cmdStore, imgStore, userStore as us } from "$src/stores/store";
   import tooltip from "$src/tooltip";
-  import { imgStore, userStore as us, cmdStore, Img } from "$src/stores/store";
   import { onDestroy } from "svelte";
-  import { tweened } from "svelte/motion";
-  import Spinning from "$src/components/spinning.svelte";
   import { cubicOut } from "svelte/easing";
+  import { tweened } from "svelte/motion";
 
   let curr: null | number;
   let _curr = "  --";
@@ -22,6 +22,7 @@
           // ctx.clearRect(0, 0, canvas.width, canvas.height);
           $imgStore = i;
         });
+      $us.block = "";
     }
   });
 

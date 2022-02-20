@@ -17,4 +17,5 @@ reportMissingTypeStubs = false
 reportUnknownMemberType = false
 reportUntypedFunctionDecorator = false
 reportUnusedImport = false
+reportUnusedVariable = "warning"
 reportWildcardImportFromLibrary = false

@@ -12,7 +12,8 @@ import type { Subscriber, Unsubscriber, Updater, Readable, Writable } from "svel
 const reopenTimeouts = [2000, 5000, 10000, 30000, 60000];
 type ValidType = string; // | ArrayBufferLike | Blob | ArrayBufferView;
 
-export function websocketStore<T>(url: string, initialValue: T | undefined = undefined, f: (x: ValidType) => any = (x: ValidType) => x, subscribeSet: boolean = true): Writable<T> {
+// TODO Asymmetric store.
+export function websocketStore<T>(url: string, initialValue: T, f: (x: ValidType) => any = (x: ValidType) => x, subscribeSet: boolean = true): Writable<T> {
     let socket: WebSocket | undefined
     let openPromise: Promise<boolean> | undefined
     let reopenTimeoutHandler: ReturnType<typeof setTimeout> | undefined;
