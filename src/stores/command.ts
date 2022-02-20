@@ -37,8 +37,9 @@ export type TakeImage = Cmd & {
     laser_onoff: [boolean, boolean]
     lasers: [number, number]
     z_obj: number,
-    z_spacing?: number,
-    z_n?: number,
+    z_spacing: number,
+    z_from: number,
+    z_to: number,
     od: [number, number],
     overlap: number,
     save: boolean
@@ -75,7 +76,7 @@ export const cmdDefaults: Readonly<CmdDefaults> = {
         xy0: [0, 0],
         xy1: [1, 1],
         channels: [true, true, true, true], z_tilt: 19850, z_obj: 32000, save: false,
-        lasers: [0, 0], laser_onoff: [true, true], od: [0, 0], overlap: 0.1, op: "takeimage"
+        lasers: [0, 0], laser_onoff: [true, true], od: [0, 0], overlap: 0.1, op: "takeimage", z_from: 0, z_to: 0, z_spacing: 232
     },
     "autofocus": {
         channels: [true, true, true, true], laser_onoff: true,

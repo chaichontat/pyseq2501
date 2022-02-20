@@ -60,13 +60,13 @@
   <!-- Buttons -->
   <div class="grid grid-flow-row w-36">
     <button
-      use:tooltip={"Take image and save."}
       type="button"
-      class="text-lg text-white focus:ring-4  shadow-lg font-medium rounded-lg px-5 py-2.5 text-center mr-2 mb-2"
+      class="text-lg text-white focus:ring-4 shadow-lg font-medium rounded-lg px-5 py-2.5 text-center mr-2 mb-2"
       class:focus:ring-blue-300={!$us.block}
       class:focus:ring-orange-300={$us.block}
       class:start={!$us.block}
       class:stop={$us.block}
+      use:tooltip={"Take image and save."}
       on:click={handleCapture}
     >
       <div class="flex items-center h-12 text-lg">
@@ -91,6 +91,7 @@
       id="preview"
       class="text-lg mt-2 text-white focus:ring-4 focus:ring-sky-300 font-medium rounded-lg shadow px-4 py-2.5 text-center inline-flex items-center mr-2"
       disabled={Boolean($us.block)}
+      use:tooltip={"Take a 16-bundle image based on the current position without saving."}
       on:click={handlePreview}
     >
       <div class="flex items-center">

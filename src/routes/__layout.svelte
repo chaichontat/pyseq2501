@@ -25,3 +25,9 @@
     <Sidebar />
   </div>
 </div>
+
+<style lang="postcss">
+  :global(.tippy-box) {
+    @apply text-center py-0.5 px-1 rounded-lg opacity-90;
+  }
+</style>

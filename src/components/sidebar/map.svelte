@@ -6,7 +6,7 @@
   import { raw_to_local } from "../../coords";
   import Toggle from "./toggle.svelte";
 
-  const focus = (el) => {
+  const focus = (el: HTMLElement) => {
     el.focus;
   };
 
@@ -35,7 +35,7 @@
 
 <li>
   <!-- Toggle -->
-  <span class="flex items-center justify-center mb-4 text-lg space-x-2 -translate-y-6 monomedium">
+  <span class="flex items-center justify-center mb-4 space-x-2 text-lg -translate-y-6 monomedium">
     <div>A</div>
     <Toggle bind:checked={$us.image_params.fc} />
     <!-- <input
@@ -58,7 +58,7 @@
 
   <!-- Eject button -->
   <button
-    class="self-center w-16 h-8 mt-2 text-white bg-indigo-500 border shadow-md transition-colors shadow-indigo-300 pretty hover:bg-indigo-600 active:bg-indigo-700 disabled:bg-gray-200 disabled:shadow-gray-200"
+    class="self-center w-16 h-8 mt-2 text-white transition-colors bg-indigo-500 border shadow-md shadow-indigo-300 pretty hover:bg-indigo-600 active:bg-indigo-700 disabled:bg-gray-200 disabled:shadow-gray-200"
     disabled={$us.block}
   >
     <svg

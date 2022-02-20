@@ -27,7 +27,7 @@
   </th>
 
   <td class="h-10 font-bold text-center text-gray-600 align-middle" on:blur={update}>{pow}</td>
-  <td class="font-mono font-bold text-center">{power}</td>
+  <td class="font-mono text-lg font-bold text-center text-gray-800">{power}</td>
   <td class="text-right">mW</td>
 </tr>
 

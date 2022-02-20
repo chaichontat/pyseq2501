@@ -1,6 +1,5 @@
 <script lang="ts">
-  import type { XY } from "$src/stores/store";
-  import { userStore as us, statusStore } from "$src/stores/store";
+  import { userStore as us } from "$src/stores/store";
   import Locator from "./locator.svelte";
   import RulerX from "./ruler_x.svelte";
   import RulerY from "./ruler_y.svelte";
@@ -8,9 +7,8 @@
   import Tilt from "./tilt.svelte";
 
   export let name: string = "";
-  export let x;
-  export let y;
-  export let z_tilt: [number, number, number] = [19850, 19850, 19850];
+  export let x: number;
+  export let y: number;
 
   // function handleKey(e: KeyboardEvent) {
   //   switch (e.key) {
