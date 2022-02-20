@@ -6,14 +6,14 @@ import math
 from abc import abstractmethod
 from logging import getLogger
 from pathlib import Path
-from typing import Annotated, Literal, Type, TypeVar, cast
+from typing import Annotated, Any, Literal, Type, TypeVar, cast
 
 import numpy as np
 from pydantic import BaseModel, Field
 
 from .reagent import Reagent
 from pyseq2.flowcell import FlowCells, Seconds, μL
-from pyseq2.imager import Imager
+from pyseq2.imager import Imager, State, UInt16Array
 from pyseq2.utils import coords
 
 logger = getLogger(__name__)
@@ -24,7 +24,7 @@ T = TypeVar("T")
 class AbstractCommand:
     op: str
 
-    async def run(self, fcs: FlowCells, i: Literal[0, 1], imager: Imager) -> None:
+    async def run(self, fcs: FlowCells, i: bool, imager: Imager) -> Any:
         ...
 
     @classmethod
@@ -33,13 +33,13 @@ class AbstractCommand:
         ...
 
 
-async def pump_prime(fcs: FlowCells, i: Literal[0, 1], cmd: Pump | Prime):
+async def pump_prime(fcs: FlowCells, i: bool, cmd: Pump | Prime):
     if not isinstance(r := cmd.reagent, Reagent):
         raise ValueError(
             "Individual command needs an actual Reagent, not its name. To fix: cmd.reagent = reagents[name]."
         )
 
-    fc = fcs[i]
+    fc = fcs[cast(Literal[0, 1], i)]
     match cmd.op:
         case "prime":
             await fc.flow(r.port, cmd.volume, v_pull=r.v_prime, v_push=r.v_push, wait=r.wait)
@@ -54,7 +54,7 @@ class Pump(BaseModel, AbstractCommand):
     volume: μL = 250
     op: Literal["pump"] = "pump"
 
-    async def run(self, fcs: FlowCells, i: Literal[0, 1], imager: Imager) -> None:
+    async def run(self, fcs: FlowCells, i: bool, imager: Imager) -> None:
         await pump_prime(fcs, i, self)
 
     @classmethod
@@ -67,7 +67,7 @@ class Prime(BaseModel, AbstractCommand):
     volume: μL = 250
     op: Literal["prime"] = "prime"
 
-    async def run(self, fcs: FlowCells, i: Literal[0, 1], imager: Imager) -> None:
+    async def run(self, fcs: FlowCells, i: bool, imager: Imager) -> None:
         await pump_prime(fcs, i, self)
 
     @classmethod
@@ -80,8 +80,8 @@ class Temp(BaseModel, AbstractCommand):
     wait: bool = False
     op: Literal["temp"] = "temp"
 
-    async def run(self, fcs: FlowCells, i: Literal[0, 1], imager: Imager) -> None:
-        await fcs[i].set_temp(self.temp)
+    async def run(self, fcs: FlowCells, i: bool, imager: Imager) -> None:
+        await fcs[cast(Literal[0, 1], i)].set_temp(self.temp)
 
     @classmethod
     def default(cls) -> Temp:
@@ -92,7 +92,7 @@ class Hold(BaseModel, AbstractCommand):
     time: Seconds
     op: Literal["hold"] = "hold"
 
-    async def run(self, fcs: FlowCells, i: Literal[0, 1], imager: Imager) -> None:
+    async def run(self, fcs: FlowCells, i: bool, imager: Imager) -> None:
         await asyncio.sleep(self.time)
 
     @classmethod
@@ -102,12 +102,12 @@ class Hold(BaseModel, AbstractCommand):
 
 class Autofocus(BaseModel, AbstractCommand):
     channel: Literal[0, 1, 2, 3]
-    laser_onoff: boolean
+    laser_onoff: bool
     laser: int
     od: float
     op: Literal["autofocus"] = "autofocus"
 
-    async def run(self, fcs: FlowCells, i: Literal[0, 1], imager: Imager) -> None:
+    async def run(self, fcs: FlowCells, i: bool, imager: Imager) -> None:
         await imager.autofocus(self.channel)
 
     @classmethod
@@ -149,7 +149,7 @@ class TakeImage(BaseModel, AbstractCommand):
             save=False,
         )
 
-    def calc_pos(self, i: Literal[0, 1]) -> tuple[int, int, list[int], list[int]]:
+    def calc_pos(self, i: bool) -> tuple[int, int, list[int], list[int]]:
         n_bundles = math.ceil(max(self.xy0[1], self.xy1[1]) - (min(self.xy0[1], self.xy1[1])) / 0.048)
         y_start = coords.mm_to_raw(i, y=min(self.xy0[1], self.xy1[1]))
 
@@ -161,9 +161,12 @@ class TakeImage(BaseModel, AbstractCommand):
 
         return n_bundles, y_start, xs, zs
 
-    async def run(self, fcs: FlowCells, i: Literal[0, 1], imager: Imager) -> None:
+    async def run(self, fcs: FlowCells, i: bool, imager: Imager) -> UInt16Array:
         logger.info("Taking images.")
         n_bundles, y_start, xs, zs = self.calc_pos(i)
+
+        if not (n_bundles and len(xs) and len(zs)):
+            raise ValueError("Invalid number of bundles, x, or z.")
 
         channels = cast(
             frozenset[Literal[0, 1, 2, 3]], frozenset(i for i, c in enumerate(self.channels) if c)
@@ -185,6 +188,7 @@ class TakeImage(BaseModel, AbstractCommand):
                 imager.save(p, big_img)  # TODO state per each stack.
 
         logger.info("Done taking images.")
+        return big_img
 
 
 class Goto(BaseModel, AbstractCommand):

@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Awaitable, Literal, NamedTuple, Optional, Protocol, cast
+from typing import Any, Awaitable, Literal, Optional, cast
 
 import numpy as np
 from pydantic import BaseModel
@@ -25,6 +25,10 @@ class Position(BaseModel):
     z_tilt: tuple[int, int, int]
     z_obj: int
 
+    @classmethod
+    def default(cls) -> Position:
+        return Position(x=0, y=0, z_tilt=(0, 0, 0), z_obj=0)
+
 
 class OpticState(BaseModel):
     laser_onoff: tuple[bool, bool]
@@ -32,9 +36,15 @@ class OpticState(BaseModel):
     shutter: bool
     od: tuple[float, float]
 
+    @classmethod
+    def default(cls) -> OpticState:
+        return OpticState(laser_onoff=(True, True), lasers=(5, 5), shutter=False, od=(0.0, 0.0))
 
-class State(Position, OpticState):
-    ...
+
+class State(Position, OpticState):  # type: ignore
+    @classmethod
+    def default(cls) -> State:
+        return State(**Position.default().dict(), **OpticState.default().dict())
 
 
 # Due to the optical arrangement, the actual channel ordering
@@ -278,54 +288,3 @@ class Imager:
                 )
         except BaseException as e:
             logger.error(f"Exception {e}")
-
-
-class AbstractImager(Protocol):
-    @classmethod
-    async def ainit(cls, ports: dict[SerialPorts, str], init_cam: bool = True) -> Imager:
-        ...
-
-    async def initialize(self) -> None:
-        ...
-
-    @property
-    async def pos(self) -> Position:
-        ...
-
-    @property
-    async def state(self) -> State:
-        ...
-
-    async def wait_ready(self) -> None:
-        ...
-
-    async def move(
-        self,
-        *,
-        x: Optional[int] = None,
-        y: Optional[int] = None,
-        z_obj: Optional[int] = None,
-        z_tilt: Optional[int | tuple[int, int, int]] = None,
-    ) -> None:
-        ...
-
-    async def take(
-        self,
-        n_bundles: int,
-        dark: bool = False,
-        channels: frozenset[Literal[0, 1, 2, 3]] = frozenset((0, 1, 2, 3)),
-        move_back_to_start: bool = True,
-        event_queue: Optional[asyncio.Queue] = None,
-    ) -> tuple[UInt16Array, State]:
-        ...
-
-    @staticmethod
-    def calc_delta_pos(n_px_y: int) -> int:
-        return int(n_px_y * Imager.UM_PER_PX * YStage.STEPS_PER_UM)
-
-    async def autofocus(self, channel: Literal[0, 1, 2, 3] = 1) -> tuple[int, UInt16Array]:
-        ...
-
-    @staticmethod
-    def save(path: str | Path, img: UInt16Array, state: Optional[State] = None) -> None:
-        ...

@@ -1,4 +1,4 @@
-from typing import Literal, Optional, overload
+from typing import Optional, overload
 
 Y_UPPER = -180000
 A_LEFT = 7331
@@ -8,27 +8,27 @@ Y_STEP_MM = 1e5
 
 
 @overload
-def raw_to_mm(flowcell: Literal[0, 1], *, x: int, y: None = None) -> float:
+def raw_to_mm(flowcell: bool, *, x: int, y: None = None) -> float:
     ...
 
 
 @overload
-def raw_to_mm(flowcell: Literal[0, 1], *, y: int, x: None = None) -> float:
+def raw_to_mm(flowcell: bool, *, y: int, x: None = None) -> float:
     ...
 
 
 @overload
-def raw_to_mm(flowcell: Literal[0, 1], *, x: int, y: int) -> tuple[float, float]:
+def raw_to_mm(flowcell: bool, *, x: int, y: int) -> tuple[float, float]:
     ...
 
 
 @overload
-def raw_to_mm(flowcell: Literal[0, 1], *, x: None = None, y: None = None) -> None:
+def raw_to_mm(flowcell: bool, *, x: None = None, y: None = None) -> None:
     ...
 
 
 def raw_to_mm(
-    flowcell: Literal[0, 1], x: Optional[int] = None, y: Optional[int] = None
+    flowcell: bool, x: Optional[int] = None, y: Optional[int] = None
 ) -> None | tuple[float, float] | float:
     x_offset = B_LEFT if flowcell else A_LEFT
 
@@ -42,27 +42,27 @@ def raw_to_mm(
 
 
 @overload
-def mm_to_raw(flowcell: Literal[0, 1], *, x: float, y: None = None) -> int:
+def mm_to_raw(flowcell: bool, *, x: float, y: None = None) -> int:
     ...
 
 
 @overload
-def mm_to_raw(flowcell: Literal[0, 1], *, y: float, x: None = None) -> int:
+def mm_to_raw(flowcell: bool, *, y: float, x: None = None) -> int:
     ...
 
 
 @overload
-def mm_to_raw(flowcell: Literal[0, 1], *, x: float, y: float) -> tuple[int, int]:
+def mm_to_raw(flowcell: bool, *, x: float, y: float) -> tuple[int, int]:
     ...
 
 
 @overload
-def mm_to_raw(flowcell: Literal[0, 1], *, x: None = None, y: None = None) -> None:
+def mm_to_raw(flowcell: bool, *, x: None = None, y: None = None) -> None:
     ...
 
 
 def mm_to_raw(
-    flowcell: Literal[0, 1], *, x: Optional[float] = None, y: Optional[float] = None
+    flowcell: bool, *, x: Optional[float] = None, y: Optional[float] = None
 ) -> None | int | tuple[int, int]:
     x_offset = B_LEFT if flowcell else A_LEFT
 

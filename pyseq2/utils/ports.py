@@ -29,7 +29,10 @@ serial_names: dict[SerialPorts, str] = dict(
 )  # type: ignore # Dict is invariant.
 
 
-async def get_ports(timeout: int | float = 1, show_all=False) -> dict[SerialPorts, str]:
+FAKE_PORTS: dict[SerialPorts, str] = {name: "COMX" for name in serial_names}
+
+
+async def get_ports(timeout: int | float = 1, show_all: bool = False) -> dict[SerialPorts, str]:
     """
     See https://pyserial.readthedocs.io/en/latest/tools.html for more details.
 
@@ -38,15 +41,18 @@ async def get_ports(timeout: int | float = 1, show_all=False) -> dict[SerialPort
     """
     t0 = time.monotonic()
     while time.monotonic() - t0 < timeout:
-        ports = {
-            dev.serial_number: dev.name
-            for dev in await asyncio.get_running_loop().run_in_executor(
-                None, serial.tools.list_ports.comports
-            )
-            if dev.serial_number is not None
-        }
+        ports = cast(
+            dict[str, str],
+            {
+                dev.serial_number: dev.name
+                for dev in await asyncio.get_running_loop().run_in_executor(
+                    None, serial.tools.list_ports.comports  # type: ignore
+                )
+                if dev.serial_number is not None
+            },
+        )
         try:
-            res = cast(dict[str, str], {name: ports[id_] for name, id_ in serial_names.items()})
+            res = {name: ports[id_] for name, id_ in serial_names.items()}
             if show_all:
                 pprint(f"{ports}")
             return cast(dict[SerialPorts, str], res)

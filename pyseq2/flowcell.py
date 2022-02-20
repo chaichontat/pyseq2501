@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Annotated, Literal, Optional, cast
+from typing import Annotated, Literal, Optional, Type, TypeVar, cast
 
 from .base.instruments_types import SerialPorts
 from .fluidics.arm9chem import ARM9Chem
 from .fluidics.pump import Pump
 from .fluidics.valve import ReagentPorts, Valves
-from .utils.utils import until
 
 logger = logging.getLogger(__name__)
 
@@ -16,17 +15,19 @@ logger = logging.getLogger(__name__)
 μLpermin = Annotated[int | float, "μL/min"]
 Seconds = Annotated[int | float, "s"]
 
+T = TypeVar("T")
 
-class _FlowCell:
+
+class AFlowCell:
     @classmethod
     async def ainit(
-        cls,
+        cls: Type[T],
         name: Literal["A", "B"],
         ports: dict[SerialPorts, str],
         arm9chem: ARM9Chem,
         valves: Optional[Valves] = None,
         pump: Optional[Pump] = None,
-    ) -> _FlowCell:
+    ) -> T:
         if name not in ("A", "B"):
             raise ValueError("Invalid name.")
 
@@ -110,15 +111,15 @@ class FlowCells:
         self = cls()
         arm9chem = await ARM9Chem.ainit(ports["arm9chem"])
         self.fcs = (
-            await _FlowCell.ainit("A", ports, arm9chem),
-            await _FlowCell.ainit("B", ports, arm9chem),
+            await AFlowCell.ainit("A", ports, arm9chem),
+            await AFlowCell.ainit("B", ports, arm9chem),
         )
         return self
 
     def __init__(self) -> None:
-        self.fcs: tuple[_FlowCell, _FlowCell]
+        self.fcs: tuple[AFlowCell, AFlowCell]
 
-    def __getitem__(self, i: Literal[0, 1]) -> _FlowCell:
+    def __getitem__(self, i: Literal[0, 1]) -> AFlowCell:
         return self.fcs[i]
 
     async def initialize(self) -> None:
