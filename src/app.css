@@ -5,11 +5,7 @@
 
 @layer components {
   .pretty {
-    @apply text-gray-800 border-gray-400 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 disabled:border-gray-200 disabled:text-gray-500;
-  }
-
-  .pretty-disabled {
-    @apply text-gray-400 border-gray-200;
+    @apply text-gray-800 border-gray-400 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 disabled:border-gray-200 disabled:text-gray-500 disabled:shadow-none;
   }
 
   .drop {

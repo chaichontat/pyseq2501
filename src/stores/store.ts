@@ -33,7 +33,7 @@ const userDefault: Readonly<UserSettings> = {
   image_params: { ...cmdDefaults["takeimage"], fc: false, n: 1 }
 }
 
-export type CmdReturns = "ok"
+export type CmdReturns = { step?: [number, number, number], msg?: "ok" }
 
 export const imgStore: Writable<Img> = writable({ ...imgDefault })
 
@@ -43,12 +43,12 @@ export const statusStore: Writable<Status> = (try_connect && browser)
   : writable({ ...statusDefault })
 
 export const userStore: Writable<UserSettings> = (try_connect && browser)
-  ? websocketStore(`ws://${ window.location.hostname }:8000/user`, { ...userDefault }, (x): Status => JSON.parse(JSON.parse(x)))
+  ? websocketStore(`ws://${ window.location.hostname }:8000/user`, { ...userDefault }, (x) => JSON.parse(JSON.parse(x)))
   : writable({ ...userDefault })
 
 export const cmdStore: Writable<CmdReturns> = (try_connect && browser)
-  ? websocketStore(`ws://${ window.location.hostname }:8000/cmd`, "ok", (x) => x, false)
-  : writable("ok")
+  ? websocketStore(`ws://${ window.location.hostname }:8000/cmd`, { msg: "ok" }, (x) => JSON.parse(x), false)
+  : writable({ msg: "ok" })
 
 // export let status: Status = {
 //   x: 2,

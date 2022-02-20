@@ -8,15 +8,8 @@
 
   export let showPath: boolean = true;
   export let params: TakeImage;
-  let height = 0;
-  let width = 0;
-  let n_cols = 0;
-  let n_bundles = 0;
-
-  let z_stack = false;
-  let z_obj = params.z_obj;
-  let time = 0;
-  let z_n = 1;
+  export let stats = { height: 0, width: 0, n_cols: 0, n_bundles: 0, n_z: 1, time: 0 };
+  export let z_stack = false;
 
   function blockControls(div: HTMLElement | null, changeTo: boolean): void {
     if (div) {
@@ -41,12 +34,12 @@
 
   $: if (browser) blockControls(document.getElementById("control"), $us.block);
 
-  $: height = Math.max(params.xy1[1], params.xy0[1]) - Math.min(params.xy1[1], params.xy0[1]);
-  $: width = Math.max(params.xy1[0], params.xy0[0]) - Math.min(params.xy1[0], params.xy0[0]);
-  $: n_cols = Math.ceil(width / (0.768 * (1 - params.overlap)));
-  $: n_bundles = Math.ceil(height / 0.048);
-  $: time = (n_bundles * n_cols) / 20;
-  $: z_n = Math.abs(params.z_to - params.z_from) + 1;
+  $: stats.height = Math.max(params.xy1[1], params.xy0[1]) - Math.min(params.xy1[1], params.xy0[1]);
+  $: stats.width = Math.max(params.xy1[0], params.xy0[0]) - Math.min(params.xy1[0], params.xy0[0]);
+  $: stats.n_cols = Math.ceil(stats.width / (0.768 * (1 - params.overlap)));
+  $: stats.n_bundles = Math.ceil(stats.height / 0.048);
+  $: stats.time = (stats.n_bundles * stats.n_cols) / 20;
+  $: stats.n_z = Math.abs(params.z_to - params.z_from) + 1;
 </script>
 
 <!-- <div class:hidden={$us.block} class="absolute z-50  -mx-10 w-full h-96 bg-black/[0.1]" /> -->
@@ -89,10 +82,10 @@
           (0-1)
         </div>
         <div class="flex flex-col justify-center font-normal">
-          <span class="tabular-nums">{width.toFixed(2)} × {height.toFixed(2)} mm.</span>
-          <span class="tabular-nums">{n_cols} columns of {n_bundles} bundles.</span>
+          <span class="tabular-nums">{stats.width.toFixed(2)} × {stats.height.toFixed(2)} mm.</span>
+          <span class="tabular-nums">{stats.n_cols} columns of {stats.n_bundles} bundles.</span>
           <span class="tabular-nums" class:font-semibold={!z_stack}>
-            {genTime(time)}
+            {genTime(stats.time)}
             {#if z_stack}
               per z-stack.
             {/if}
@@ -116,7 +109,7 @@
         <div>
           <p>Z Objective</p>
           <span class="flex gap-2">
-            <input type="number" class="w-28 pretty" bind:value={z_obj} />
+            <input type="number" class="w-28 pretty" bind:value={params.z_obj} />
             <button type="button" class="px-4 py-1 font-medium text-gray-900 rounded-lg w-36 white-button">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
@@ -141,8 +134,8 @@
           <input type="number" min="-100" max="100" step="1" bind:value={params.z_to} class="z-10 w-16 h-10 text-center rounded-l-none rounded-r-lg pretty" disabled={$us.block || !z_stack} />
         </div>
         {#if z_stack}
-          <div>{z_n} Z steps from {params.z_obj + params.z_from * params.z_spacing} to {params.z_obj + params.z_to * params.z_spacing}</div>
-          <div class="font-semibold">Total time: {z_n ? genTime(z_n * time) : genTime(time)}.</div>
+          <div>{stats.n_z} Z steps from {params.z_obj + params.z_from * params.z_spacing} to {params.z_obj + params.z_to * params.z_spacing}</div>
+          <div class="font-semibold">Total time: {stats.n_z ? genTime(stats.n_z * stats.time) : genTime(stats.time)}.</div>
         {/if}
       </div>
     </div>
@@ -159,6 +152,6 @@
   }
 
   .span-disabled {
-    @apply text-gray-500 bg-gray-50 border-gray-200;
+    @apply text-gray-500 bg-gray-50 border-gray-200 shadow-none;
   }
 </style>

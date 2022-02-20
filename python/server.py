@@ -9,6 +9,7 @@ from typing import Annotated, Literal, NoReturn
 
 import numpy as np
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from PIL import Image
@@ -47,7 +48,7 @@ img = update_img(latest)
 imager: Imager
 fcs: FlowCells
 
-q: asyncio.Queue[bool] = asyncio.Queue()
+q: asyncio.Queue[tuple[int, int, int] | str] = asyncio.Queue()
 
 
 @app.on_event("startup")
@@ -65,9 +66,28 @@ async def startup_event():
 dark = np.zeros((2, 2048, 2048), dtype=np.uint8)
 
 
+class CommandResponse(BaseModel):
+    step: tuple[int, int, int] | None = None
+    msg: str | None = None
+
+
+async def send_from_q(websocket: WebSocket) -> NoReturn:
+    while True:
+        match (res := await q.get()):
+            case [_, _, _]:
+                to_send = CommandResponse(step=res)
+            case x if isinstance(x, str):
+                to_send = CommandResponse(msg=x)
+            case _:
+                logger.warning("Unknown response.")
+                continue
+        await websocket.send_json(jsonable_encoder(to_send))
+
+
 @app.websocket("/cmd")
 async def cmd_endpoint(websocket: WebSocket) -> NoReturn:
     global latest, img
+    asyncio.create_task(send_from_q(websocket))
     while True:
         try:
             await websocket.accept()
@@ -83,18 +103,19 @@ async def cmd_endpoint(websocket: WebSocket) -> NoReturn:
                         p = userSettings.image_params.copy()
                         if c == "capture":
                             p.save = True
-                            p.z_n = 1
+                            p.z_from, p.z_to = 0, 0
                         else:
                             p.save = False
-                        latest = await userSettings.image_params.run(fcs, p.fc, imager)
+                        latest = await userSettings.image_params.run(fcs, p.fc, imager, q)  # type: ignore
                         img = update_img(latest)
-                        await websocket.send_text("ok")
+                        await asyncio.sleep(0.01)
+                        q.put_nowait("ok")
                     case "autofocus":
                         logger.info(f"Autofocus")
                         await imager.autofocus()
-                        await websocket.send_text("ok")
+                        q.put_nowait("ok")
                     case "stop":
-                        await websocket.send_text("ok")
+                        q.put_nowait("ok")
                     case _ as x:
                         logger.error(f"What is this command {x}?")
 

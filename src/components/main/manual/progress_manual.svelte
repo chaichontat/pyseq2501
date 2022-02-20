@@ -3,18 +3,15 @@
   import type { Img } from "$src/stores/imaging";
   import { cmdStore, imgStore, userStore as us } from "$src/stores/store";
   import tooltip from "$src/tooltip";
-  import { onDestroy } from "svelte";
+
   import { cubicOut } from "svelte/easing";
   import { tweened } from "svelte/motion";
 
-  let curr: null | number;
-  let _curr = "  --";
-  let height: number = 0;
-  let width: number = 0;
-  let n_cols: number = 1;
-  let n_bundles: number = 1;
+  let step: [number, number, number] = [0, 0, 0];
 
-  const unsubscribe = cmdStore.subscribe((x: string) => {
+  export let stats: { height: number; width: number; n_cols: number; n_bundles: number; n_z: number; time: number };
+
+  function updateImg() {
     if (browser) {
       fetch(`http://${window.location.hostname}:8000/img`)
         .then((response: Response) => response.json())
@@ -24,18 +21,24 @@
         });
       $us.block = "";
     }
-  });
-  onDestroy(unsubscribe);
+  }
 
   const progress = tweened(0, {
     duration: 400,
     easing: cubicOut,
   });
 
-  $: height = Math.max($us.image_params.xy1[1], $us.image_params.xy0[1]) - Math.min($us.image_params.xy1[1], $us.image_params.xy0[1]);
-  $: width = Math.max($us.image_params.xy1[0], $us.image_params.xy0[0]) - Math.min($us.image_params.xy1[0], $us.image_params.xy0[0]);
-  $: n_cols = Math.ceil(width / 0.768);
-  $: n_bundles = Math.ceil(height / 0.048);
+  $: {
+    if ($cmdStore?.msg) {
+      updateImg();
+    } else if ($cmdStore?.step) {
+      step = $cmdStore.step;
+      progress.set((step[2] * (stats.n_z * stats.n_bundles) + step[1] * stats.n_bundles + step[0]) / (stats.n_bundles * stats.n_cols * stats.n_z));
+    }
+  }
+  // const unsubscribe = cmdStore.subscribe((x: string) => {
+  //  );
+  // onDestroy(unsubscribe);
 
   function handleCapture() {
     if ($us.block === "capturing") {
@@ -112,31 +115,47 @@
   <content class="flex-grow px-4 py-2 border rounded-lg border-base-300">
     <div class="grid max-w-4xl grid-cols-4 mt-1">
       <!-- N Bundles -->
-      <section class="flex items-center">
-        <span class="text-4xl font-bold">
-          <span class="font-mono">{_curr}</span>
-          /
-          <span class="w-32 px-2 font-mono text-4xl font-bold ">{n_bundles * n_cols}</span>
-        </span>
+      <section class="flex flex-col gap-y-1">
+        <div class="flex items-center">
+          <span class="text-4xl font-bold">
+            <span class="font-mono">{step[0]}</span>
+            /
+            <span class="w-32 px-2 font-mono text-4xl font-bold ">{stats.n_bundles}</span>
+          </span>
+        </div>
+        Bundles taken
       </section>
 
-      <section class="flex flex-col tabular-nums">
-        <span>Width {width.toFixed(3)} mm</span>
-        <span>Height {height.toFixed(3)} mm</span>
+      <section class="flex flex-col gap-y-1">
+        <div class="flex items-center">
+          <span class="text-4xl font-bold">
+            <span class="font-mono">{step[1]}</span>
+            /
+            <span class="w-32 px-2 font-mono text-4xl font-bold ">{stats.n_z}</span>
+          </span>
+        </div>
+        Z-steps taken
+      </section>
+
+      <section class="flex flex-col gap-y-1">
+        <div class="flex items-center">
+          <span class="text-4xl font-bold">
+            <span class="font-mono">{step[2]}</span>
+            /
+            <span class="w-32 px-2 font-mono text-4xl font-bold ">{stats.n_cols}</span>
+          </span>
+        </div>
+        Columns taken
       </section>
 
       <section class="flex flex-col">
-        <span>{n_cols} Columns of {n_bundles} Bundles</span>
-        <span>Z-Stack depth of {$us.image_params.z_n ? $us.image_params.z_n : 1}</span>
-      </section>
-
-      <section class="flex items-center">
-        <span class="text-lg font-medium">Total time: {(n_bundles * n_cols) / 10} s</span>
+        <span class="text-lg font-medium">Elapsed time: {(stats.n_bundles * stats.n_cols) / 10} s</span>
+        <span class="text-lg font-medium">Total time: {(stats.n_bundles * stats.n_cols) / 10} s</span>
       </section>
     </div>
 
     <!-- Lower bar -->
-    Bundles taken
+
     <div class="mt-1">
       <progress class="relative w-full h-2 overflow-hidden rounded-lg shadow appearance-none" value={$progress} />
     </div>
@@ -157,7 +176,7 @@
   }
 
   progress::-webkit-progress-value {
-    @apply bg-gradient-to-r from-blue-500 to-indigo-600 rounded;
+    @apply bg-gradient-to-r from-indigo-600 to-blue-500 rounded;
   }
 
   .start {
