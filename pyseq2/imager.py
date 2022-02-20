@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Awaitable, Literal, Optional, cast
+from typing import Any, Awaitable, Callable, Literal, Optional, TypeVar, cast
 
 import numpy as np
 from pydantic import BaseModel
@@ -50,6 +50,7 @@ class State(Position, OpticState):  # type: ignore
 # Due to the optical arrangement, the actual channel ordering
 # is not in order of increasing wavelength.
 CHANNEL = {0: 1, 1: 3, 2: 2, 3: 0}
+T = TypeVar("T")
 
 
 class Imager:
@@ -167,7 +168,7 @@ class Imager:
         dark: bool = False,
         channels: frozenset[Literal[0, 1, 2, 3]] = frozenset((0, 1, 2, 3)),
         move_back_to_start: bool = True,
-        event_queue: Optional[asyncio.Queue[int]] = None,
+        event_queue: tuple[asyncio.Queue[T], Callable[[int], T]] | None = None,
     ) -> tuple[UInt16Array, State]:
         assert self.cams is not None
         if self.lock.locked():

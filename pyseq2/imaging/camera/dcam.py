@@ -292,14 +292,14 @@ class Cameras:
         fut_capture: Awaitable[Any] | None = None,
         mode: Literal["TDI", "FOCUS_SWEEP"] = "TDI",
         cam: Literal[0, 1, 2] = 2,
-        event_queue: Optional[asyncio.Queue] = None,
+        event_queue: tuple[asyncio.Queue[T], Callable[[int], T]] | None = None,
     ) -> UInt16Array:
         if fut_capture is None:
             fut_capture = nothing()
 
         async def in_ctx():
             curr = 0
-            fut = asyncio.create_task(cast(Coroutine, fut_capture))
+            fut = asyncio.create_task(cast(Coroutine[Any, Any, Any], fut_capture))
             t0 = time.monotonic()
             while (n := self.n_frames_taken(cam)) < n_bundles:
                 await asyncio.sleep(0.05)
@@ -307,10 +307,11 @@ class Cameras:
                     raise Exception(f"Did not capture a single bundle before {5=}s.")
                 # Send every other bundle.
                 if event_queue is not None and n > curr + 1:
-                    event_queue.put_nowait(n)
+                    event_queue[0].put_nowait(event_queue[1](n + 1))
                     curr = n
             if event_queue is not None:
-                event_queue.put_nowait(n_bundles)
+                await asyncio.sleep(0.05)
+                event_queue[0].put_nowait(event_queue[1](n_bundles))
             await fut
 
         self.set_mode(mode)
@@ -326,7 +327,7 @@ class Cameras:
 
         if cam == 2:
             bufs = cast(tuple[UInt16Array, UInt16Array], bufs)
-            return cast(UInt16Array, np.hstack(bufs).reshape(-1, 4, 2048).transpose(1, 0, 2))
+            return np.hstack(bufs).reshape(-1, 4, 2048).transpose(1, 0, 2)
         bufs = cast(UInt16Array, bufs)
         return bufs.reshape(-1, 2, 2048).transpose(1, 0, 2)
 
@@ -378,6 +379,6 @@ class Cameras:
 
         if cam == 2:
             bufs = cast(tuple[UInt16Array, UInt16Array], bufs)
-            return cast(UInt16Array, np.hstack(bufs).reshape(-1, 4, 2048).transpose(1, 0, 2))
+            return np.hstack(bufs).reshape(-1, 4, 2048).transpose(1, 0, 2)
         bufs = cast(UInt16Array, bufs)
         return bufs.reshape(-1, 2, 2048).transpose(1, 0, 2)

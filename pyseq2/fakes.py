@@ -4,7 +4,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from logging import getLogger
 from pathlib import Path
-from typing import AsyncGenerator, Literal, Optional, Type, TypeVar
+from typing import AsyncGenerator, Callable, Literal, Optional, Type, TypeVar
 
 import numpy as np
 
@@ -159,12 +159,16 @@ class FakeImager(Imager):
         dark: bool = False,
         channels: frozenset[Literal[0, 1, 2, 3]] = frozenset((0, 1, 2, 3)),
         move_back_to_start: bool = True,
-        event_queue: Optional[asyncio.Queue[int]] = None,
+        event_queue: tuple[asyncio.Queue[T], Callable[[int], T]] | None = None,
     ) -> tuple[UInt16Array, State]:
 
         if event_queue:
-            for i in range(n_bundles):
-                event_queue.put_nowait(i)
+            for i in range(0, n_bundles, 2):
+                await asyncio.sleep(0.1)
+                event_queue[0].put_nowait(event_queue[1](i + 1))
+            await asyncio.sleep(0.01)
+            event_queue[0].put_nowait(event_queue[1](n_bundles))
+
         return (
             np.random.randint(0, 4096, (len(channels), n_bundles * 128, 2048), dtype=np.uint16),
             State.default(),

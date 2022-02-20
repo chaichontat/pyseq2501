@@ -11,13 +11,13 @@ from typing import Annotated, Any, Literal, Type, TypeVar, cast
 import numpy as np
 from pydantic import BaseModel, Field
 
-from .reagent import Reagent
+from pyseq2.experiment.reagent import Reagent
 from pyseq2.flowcell import FlowCells, Seconds, μL
 from pyseq2.imager import Imager, State, UInt16Array
 from pyseq2.utils import coords
 
 logger = getLogger(__name__)
-#%%
+
 T = TypeVar("T")
 
 
@@ -155,18 +155,23 @@ class TakeImage(BaseModel, AbstractCommand):
         )
 
     def calc_pos(self, i: bool) -> tuple[int, int, list[int], list[int]]:
-        n_bundles = math.ceil(max(self.xy0[1], self.xy1[1]) - (min(self.xy0[1], self.xy1[1])) / 0.048)
+        print(self)
+        n_bundles = math.ceil((max(self.xy0[1], self.xy1[1]) - (min(self.xy0[1], self.xy1[1]))) / 0.048)
+        print(n_bundles)
         y_start = coords.mm_to_raw(i, y=min(self.xy0[1], self.xy1[1]))
 
-        x_step = self.overlap * 0.768
+        x_step = 0.768 * (1 - self.overlap)
         x_n = math.ceil((max(self.xy0[0], self.xy1[0]) - (x_start := min(self.xy0[0], self.xy1[0]))) / x_step)
 
         xs = [coords.mm_to_raw(i, x=x_start + n * x_step) for n in range(x_n)]
         zs = [self.z_obj + n * self.z_spacing for n in range(self.z_from, self.z_to + 1)]
 
+        print(xs)
         return n_bundles, y_start, xs, zs
 
-    async def run(self, fcs: FlowCells, i: bool, imager: Imager) -> UInt16Array:
+    async def run(
+        self, fcs: FlowCells, i: bool, imager: Imager, q: asyncio.Queue[tuple[int, int, int]] | None = None
+    ) -> UInt16Array:
         logger.info("Taking images.")
         n_bundles, y_start, xs, zs = self.calc_pos(i)
 
@@ -184,13 +189,19 @@ class TakeImage(BaseModel, AbstractCommand):
             [p.touch() for p in paths]
 
         big_img = np.empty((len(zs), len(channels), 128 * n_bundles, 2048), dtype=np.uint16)
-        for p, x in zip(paths, xs):
-            for idx, z in enumerate(zs):
+        for ix, (p, x) in enumerate(zip(paths, xs)):
+            for iz, z in enumerate(zs):
                 await imager.move(x=x, y=y_start, z_obj=z, z_tilt=self.z_tilt)
-                img, state = await imager.take(n_bundles, channels=channels)
-                big_img[idx] = img
+                img, state = await imager.take(
+                    n_bundles,
+                    channels=channels,
+                    event_queue=None if q is None else (q, lambda i: (i, iz, ix)),
+                )
+                big_img[iz] = img
             if self.save:
                 imager.save(p, big_img)  # TODO state per each stack.
+        if q is not None:
+            q.put_nowait((n_bundles, len(zs), len(xs)))  # Make it look pleasing at the end.
 
         logger.info("Done taking images.")
         return big_img[0]
@@ -207,3 +218,10 @@ class Goto(BaseModel, AbstractCommand):
 
 
 Cmd = Annotated[Pump | Prime | Temp | Hold | Autofocus | TakeImage | Goto, Field(discriminator="op")]
+
+#%%
+if __name__ == "__main__":
+    t = TakeImage.default()
+    t.calc_pos(False)
+
+# %%
