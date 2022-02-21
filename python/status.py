@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import AsyncGenerator, Callable, Coroutine, NoReturn
 
 from fastapi import Request, WebSocket, WebSocketDisconnect
+from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from websockets.exceptions import ConnectionClosedOK
 
@@ -40,7 +41,7 @@ async def poll_status(websocket: WebSocket, imager: Imager, q: asyncio.Queue[boo
             except asyncio.TimeoutError:
                 ...
             finally:
-                await websocket.send_json((await imager.state).json())
+                await websocket.send_json(jsonable_encoder(await imager.state))
     except (WebSocketDisconnect, ConnectionClosedOK):
         ...
 

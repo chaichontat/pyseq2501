@@ -2,16 +2,18 @@
 from __future__ import annotations
 
 import asyncio
+import io
 import logging
 import os
+import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Annotated, Literal, NoReturn
 
 import numpy as np
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from PIL import Image
 from pydantic import BaseModel, Field, root_validator, validator
 from rich.logging import RichHandler
@@ -125,12 +127,11 @@ async def cmd_endpoint(websocket: WebSocket) -> NoReturn:
 
 class NTakeImage(TakeImage):
     fc: bool
-    n: int
 
     @classmethod
     def default(cls) -> NTakeImage:
         ori = super().default()
-        return NTakeImage(**ori.dict(), fc=False, n=1)
+        return NTakeImage(**ori.dict(), fc=False)
 
 
 class UserSettings(BaseModel):
@@ -139,7 +140,7 @@ class UserSettings(BaseModel):
     block: Literal["", "moving", "ejecting", "capturing", "previewing"]
     max_uid: int
     mode: Literal["automatic", "manual", "editingA", "editingB"]
-    exps: tuple[NExperiment, NExperiment]
+    exps: list[NExperiment]
     image_params: NTakeImage
 
     @classmethod
@@ -148,7 +149,7 @@ class UserSettings(BaseModel):
             block="",
             max_uid=2,
             mode="automatic",
-            exps=(NExperiment.default(0), NExperiment.default(1)),
+            exps=[NExperiment.default(0), NExperiment.default(1)],
             image_params=NTakeImage.default(),
         )
 
@@ -160,16 +161,19 @@ userSettings = UserSettings.default()
 async def user_endpoint(websocket: WebSocket) -> NoReturn:
     global userSettings
     while True:
+        t0 = time.time()
         await websocket.accept()
-        while True:
-            try:
-                await websocket.send_json(userSettings.json())
-                while True:
-                    ret = await websocket.receive_json()
-                    userSettings = UserSettings.parse_obj(ret)
-                    logger.info(userSettings)
-            except (WebSocketDisconnect, ConnectionClosedOK):
-                ...
+        try:
+            while time.time() - t0 < 0.5:
+                await websocket.receive_json()
+
+            await websocket.send_json(jsonable_encoder(userSettings))
+            while True:
+                ret = await websocket.receive_json()
+                userSettings = UserSettings.parse_obj(ret)
+                logger.info(userSettings)
+        except (WebSocketDisconnect, ConnectionClosedOK):
+            ...
 
 
 @app.get("/img")
@@ -178,16 +182,26 @@ async def get_img():
     # LATEST = np.random.randint(0, 4096, (4, 1024, 1024))
     # LATEST = np.random.randint(0, 4096) * np.ones((4, 1024, 1024))
     # IMG = update_img(LATEST)
-    return Response(img.json())
+    return JSONResponse(jsonable_encoder(img))
 
 
-@app.get("/download")
-async def download():
-    fc = userSettings.image_params.fc
-    return Response(
-        yaml.dump(userSettings.exps[fc].to_experiment().dict(), sort_keys=False),
+@app.get("/experiment/{fc}")
+async def download(fc: int):
+    resp = StreamingResponse(
+        io.StringIO(yaml.dump(userSettings.exps[fc].to_experiment().dict(), sort_keys=False)),
         media_type="application/yaml",
     )
+    print(userSettings.exps[fc].to_experiment())
+    resp.headers["Content-Disposition"] = f"attachment; filename={userSettings.exps[fc].name}.yaml"
+    return resp
+
+
+@app.post("/experiment/{fc}")
+async def create_file(fc: int, file: UploadFile):
+    print("RECEIVED")
+    print(UserSettings.parse_obj(yaml.safe_load(file.file.read())))
+    userSettings.exps[fc] = UserSettings.parse_obj(yaml.safe_load(file.file.read()))
+    return "ok"
 
 
 @app.websocket("/status")

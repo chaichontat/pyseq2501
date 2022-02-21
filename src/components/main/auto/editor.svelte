@@ -1,12 +1,21 @@
 <script lang="ts">
-  import Details from "$comps/main/auto/details.svelte";
   import Reagents from "$comps/main/auto/reagents/reagents.svelte";
   import Steps from "$comps/main/auto/steps/steps.svelte";
-  import Preview from "$comps/main/preview.svelte";
+
+  import { experimentDefault } from "$src/stores/experiment";
   import { userStore as us } from "$src/stores/store";
   import { Menu, MenuButton, MenuItem, MenuItems } from "@rgossiaux/svelte-headlessui";
   import { cubicInOut } from "svelte/easing";
   import { fade } from "svelte/transition";
+  let form: HTMLFormElement;
+  let files;
+
+  $: {
+    console.log(files);
+    if (files) {
+      form.submit();
+    }
+  }
 
   export let fc: 0 | 1;
 </script>
@@ -23,12 +32,13 @@
   </span>
 
   <!-- Download -->
-  <button type="button" class="px-4 py-1 ml-8 text-base font-medium rounded-lg h-11 white-button">
+  <!-- REMOVE BEFORE FLIGHT -->
+  <a href={`http://localhost:8000/experiment/${fc}`} class="px-4 py-1 ml-8 text-base font-medium rounded-lg h-11 white-button">
     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
     </svg>
-    Download Recipe
-  </button>
+    Download Experiment
+  </a>
 
   <Menu class="relative inline-block ">
     <MenuButton class="inline-flex justify-center w-full py-1 mx-2 font-medium rounded-lg h-11 white-button">
@@ -43,8 +53,18 @@
     </MenuButton>
     <MenuItems class="absolute right-0 z-10 mt-2 space-y-1 overflow-hidden origin-top-right bg-white border divide-gray-100 rounded-md shadow w-36 focus:outline-none">
       <div transition:fade={{ duration: 100, easing: cubicInOut }}>
-        <MenuItem let:active><div class:bg-blue-700={active} class:text-white={active} class="z-0 w-full px-2 py-2 pl-4">New</div></MenuItem>
-        <MenuItem let:active><div class:bg-blue-700={active} class:text-white={active} class="z-0 w-full px-2 py-2 pl-4">Upload</div></MenuItem>
+        <!-- New -->
+        <MenuItem let:active><div class:bg-blue-700={active} class:text-white={active} class="z-0 w-full px-2 py-2 pl-4" on:click={() => ($us.exps[fc] = { ...experimentDefault })}>New</div></MenuItem>
+        <!-- Upload -->
+        <MenuItem let:active>
+          <form enctype="multipart/form-data" method="post" action={`http://localhost:8000/experiment/${fc}`} bind:this={form}>
+            <label>
+              <input type="file" accept=".yaml, .yml" bind:files />
+              <div class:bg-blue-700={active} class:text-white={active} class="z-0 w-full px-2 py-2 pl-4">Upload</div>
+            </label>
+            <input type="submit" />
+          </form>
+        </MenuItem>
       </div>
     </MenuItems>
   </Menu>
@@ -55,7 +75,14 @@
 <!-- {#if $us.exps[fc]} -->
 Total Time
 <p class="pb-3 mt-8 text-2xl font-bold text-gray-800 border-b">Details</p>
-<Details />
+<div class="flex flex-col text-lg font-medium">
+  <p class="text-lg">Name</p>
+  <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={$us.exps[fc].name} class:invalid={!$us.exps[fc].name} />
+
+  <p class="text-lg">Image Path</p>
+  <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={$us.exps[fc].path} class:invalid={!$us.exps[fc].path} />
+</div>
+
 <Reagents {fc} />
 <Steps {fc} />
 <p class="mt-6 mb-1 text-2xl font-bold text-gray-800">Preview</p>

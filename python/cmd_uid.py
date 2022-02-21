@@ -30,6 +30,7 @@ class NCmd(BaseModel):
 
 class NExperiment(BaseModel):
     name: str
+    path: str
     flowcell: Literal[0, 1]
     reagents: list[NReagent]
     cmds: Sequence[NCmd]
@@ -38,10 +39,11 @@ class NExperiment(BaseModel):
         return Experiment(
             self.name,
             self.flowcell,
+            path=self.path,
             reagents=[r.reagent for r in self.reagents],
             cmds=[c.cmd for c in self.cmds],
         )
 
     @classmethod
     def default(cls, fc: Literal[0, 1] = 0) -> NExperiment:
-        return cls(name="", flowcell=fc, reagents=[NReagent.default()], cmds=[NCmd.default()])
+        return cls(name="", path=".", flowcell=fc, reagents=[NReagent.default()], cmds=[NCmd.default()])
