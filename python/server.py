@@ -64,7 +64,7 @@ class CommandResponse(BaseModel):
     error: str | None = None
 
 
-q_cmd: asyncio.Queue[CommandResponse] = asyncio.Queue()
+q_cmd: asyncio.Queue[CommandResponse | tuple[int, int, int]] = asyncio.Queue()
 q_user: asyncio.Queue[None] = asyncio.Queue()
 
 
@@ -97,12 +97,13 @@ async def cmd_endpoint(websocket: WebSocket) -> None:
     async def ret_cmd() -> NoReturn:
         while True:
             res = await q_cmd.get()
-            match (res):
-                case [_, _, _]:
-                    to_send = CommandResponse(step=res)
-                case _:
-                    to_send = res
-            # print(f"sending {to_send}")
+            print(res)
+            if isinstance(res, CommandResponse):
+                to_send = res
+            else:
+                to_send = CommandResponse(step=res)
+
+            print(f"sending {to_send}")
             await websocket.send_json(jsonable_encoder(to_send))
 
     global latest, img
@@ -131,7 +132,7 @@ async def cmd_endpoint(websocket: WebSocket) -> None:
                             img = update_img(latest)
                             logger.info("Image updated")
                             await asyncio.sleep(0.1)
-                            q_cmd.put_nowait(CommandResponse(msg="ok"))
+
                             logger.info("ok_put")
                         case "autofocus":
                             logger.info(f"Autofocus")
@@ -141,7 +142,12 @@ async def cmd_endpoint(websocket: WebSocket) -> None:
                             q_cmd.put_nowait(CommandResponse(msg="ok"))
                         case _ as x:
                             logger.error(f"What is this command {x}?")
+
+                    q_cmd.put_nowait(CommandResponse(msg="ok"))  # Doesn't seem to send with 1.
+                    q_cmd.put_nowait(CommandResponse(msg="ok"))
+
                 except BaseException as e:
+                    q_cmd.put_nowait(CommandResponse(error=f"Error: {type(e).__name__}: {e}"))
                     q_cmd.put_nowait(CommandResponse(error=f"Error: {type(e).__name__}: {e}"))
 
         except (WebSocketDisconnect, RuntimeError, ConnectionClosedOK):
