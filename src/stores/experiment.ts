@@ -8,7 +8,7 @@ export type NCmd = { uid: number; cmd: Cmds };
 export type NExperiment = {
     name: string,
     path: string,
-    flowcell: 0 | 1,
+    fc: boolean,
     reagents: NReagent[],
     cmds: NCmd[],
 }
@@ -16,7 +16,7 @@ export type NExperiment = {
 export const experimentDefault: NExperiment = {
     name: "",
     path: ".",
-    flowcell: 0,
+    fc: false,
     reagents: [{ uid: 0, reagent: { ...reagentDefault } }],
     cmds: [{ uid: 0, cmd: { ...cmdDefaults.pump } }]
 }

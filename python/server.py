@@ -176,7 +176,7 @@ userSettings = UserSettings.default()
 async def user_endpoint(websocket: WebSocket) -> None:
     async def ret_user() -> NoReturn:
         while True:
-            await q_cmd.get()
+            await q_user.get()
             await websocket.send_json(jsonable_encoder(userSettings))
 
     global userSettings
@@ -223,7 +223,7 @@ async def get_img():
 @app.get("/experiment/{fc}")
 async def download(fc: int):
     resp = StreamingResponse(
-        io.StringIO(yaml.dump(userSettings.exps[fc].to_experiment().dict(), sort_keys=False)),
+        io.StringIO(yaml.safe_dump(userSettings.exps[fc].to_experiment().dict(), sort_keys=False)),
         media_type="application/yaml",
     )
     print(userSettings.exps[fc].to_experiment())
@@ -232,13 +232,16 @@ async def download(fc: int):
 
 
 @app.post("/experiment/{fc}")
-async def create_file(fc: int, file: UploadFile):
+async def create_file(fc: bool, file: UploadFile):
     f: IO[bytes] = file.file  # type: ignore
     try:
         y = yaml.safe_load(f)
+        print(y)
         ne = NExperiment.from_experiment(Experiment.parse_obj(y), userSettings.max_uid)
+        ne.fc = fc
         userSettings.max_uid += len(ne.reagents) + len(ne.cmds)
         userSettings.exps[fc] = ne
+
         q_user.put_nowait(None)
     except BaseException as e:
         raise HTTPException(400, detail=f"{type(e).__name__}: {e}")

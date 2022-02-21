@@ -31,14 +31,14 @@ class NCmd(BaseModel):
 class NExperiment(BaseModel):
     name: str
     path: str
-    flowcell: Literal[0, 1]
+    fc: bool
     reagents: Sequence[NReagent]
     cmds: Sequence[NCmd]
 
     def to_experiment(self) -> Experiment:
         return Experiment(
             self.name,
-            self.flowcell,
+            self.fc,
             path=self.path,
             reagents=[r.reagent for r in self.reagents],
             cmds=[c.cmd for c in self.cmds],
@@ -50,8 +50,8 @@ class NExperiment(BaseModel):
         uid += len(e.reagents)
         cmds = [NCmd(uid=uid + i, cmd=c) for i, c in enumerate(e.cmds, 1)]
 
-        return NExperiment(name=e.name, path=e.path, flowcell=e.flowcell, reagents=reagents, cmds=cmds)
+        return NExperiment(name=e.name, path=e.path, fc=e.fc, reagents=reagents, cmds=cmds)
 
     @classmethod
-    def default(cls, fc: Literal[0, 1] = 0) -> NExperiment:
-        return cls(name="", path=".", flowcell=fc, reagents=[NReagent.default()], cmds=[NCmd.default()])
+    def default(cls, fc: bool = False) -> NExperiment:
+        return cls(name="", path=".", fc=fc, reagents=[NReagent.default()], cmds=[NCmd.default()])
