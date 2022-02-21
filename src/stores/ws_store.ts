@@ -19,6 +19,7 @@ export function websocketStore<T>(url: string, value: T, f: (x: ValidType) => an
     let openPromise: Promise<boolean>
     let reopenTimeoutHandler: ReturnType<typeof setTimeout> | undefined;
     let reopenCount: number = 0;
+    let t0 = Date.now()
 
     const subscribers: Set<Subscriber<T>> = new Set();
 
@@ -75,6 +76,7 @@ export function websocketStore<T>(url: string, value: T, f: (x: ValidType) => an
             };
             socket.onopen = (_: Event): void => {
                 reopenCount = 0;
+                t0 = Date.now()
                 resolve(true);
             };
         });
@@ -85,27 +87,30 @@ export function websocketStore<T>(url: string, value: T, f: (x: ValidType) => an
 
     return {
         set(value: T): void {
-            console.log(value)
-            const send =
-                (typeof value == "object")
-                    ? () => socket.send(JSON.stringify(value))
-                    // @ts-ignore
-                    : () => socket.send(value)
+            if (Date.now() - t0 > 500) {
+                console.log(value)
+                const send =
+                    (typeof value == "object")
+                        ? () => socket.send(JSON.stringify(value))
+                        // @ts-ignore
+                        : () => socket.send(value)
 
-            switch (socket.readyState) {
-                case WebSocket.CLOSED || WebSocket.CLOSING: {
-                    open().then(send)
-                    break;
+                if (socket) {
+                    switch (socket.readyState) {
+                        case WebSocket.CLOSED || WebSocket.CLOSING: {
+                            open().then(send)
+                            break;
+                        }
+                        case WebSocket.CONNECTING: {
+                            openPromise.then(send)
+                            break;
+                        }
+                        case WebSocket.OPEN: {
+                            send()
+                            break;
+                        }
+                    }
                 }
-                case WebSocket.CONNECTING: {
-                    openPromise.then(send)
-                    break;
-                }
-                case WebSocket.OPEN: {
-                    send()
-                    break;
-                }
-
             }
 
             if (broadcastSet) {
