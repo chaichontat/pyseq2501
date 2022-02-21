@@ -13,9 +13,10 @@ const reopenTimeouts = [2000, 5000, 10000, 30000, 60000];
 type ValidType = string; // | ArrayBufferLike | Blob | ArrayBufferView;
 
 // TODO Asymmetric store.
-export function websocketStore<T>(url: string, initialValue: T, f: (x: ValidType) => any = (x: ValidType) => x, subscribeSet: boolean = true): Writable<T> {
-    let socket: WebSocket | undefined
-    let openPromise: Promise<boolean> | undefined
+export function websocketStore<T>(url: string, value: T, f: (x: ValidType) => any = (x: ValidType) => x, broadcastSet: boolean = true): Writable<T> {
+    console.log(`%cInitializing ${ url }.`, "color:green")
+    let socket: WebSocket
+    let openPromise: Promise<boolean>
     let reopenTimeoutHandler: ReturnType<typeof setTimeout> | undefined;
     let reopenCount: number = 0;
 
@@ -34,9 +35,8 @@ export function websocketStore<T>(url: string, initialValue: T, f: (x: ValidType
             clearTimeout(reopenTimeoutHandler);
         }
 
-        if (socket) {
+        if (socket.readyState !== WebSocket.CLOSED) {
             socket.close();
-            socket = undefined;
         }
     }
 
@@ -47,89 +47,78 @@ export function websocketStore<T>(url: string, initialValue: T, f: (x: ValidType
         }
     }
 
-    async function open(): Promise<any> {
+    async function open(): Promise<boolean> {
         if (reopenTimeoutHandler) {
             clearTimeout(reopenTimeoutHandler);
             reopenTimeoutHandler = undefined;
         }
 
         // we are still in the opening phase
-        if (openPromise) return openPromise;
+        // if (socket.readyState === WebSocket.CONNECTING || socket.readyState === WebSocket) return openPromise;
 
-        if (socket === undefined)
-            socket = new WebSocket(url);
-
+        socket = new WebSocket(url);
         socket.onmessage = (event: MessageEvent): void => {
             console.log(event.data)
             subscribers.forEach((subscriber) => {
                 // @ts-ignore
-                subscriber(f(event.data))
+                value = f(event.data)
+                subscriber(value)
             });
         };
 
         socket.onclose = (_: CloseEvent): void => (reopen())
 
         openPromise = new Promise((resolve, reject) => {
-            if (socket) {
-                socket.onerror = (error: Event): void => {
-                    console.error("Websocket error")
-                    reject(error);
-                    openPromise = undefined;
-                };
-                socket.onopen = (_: Event): void => {
-                    reopenCount = 0;
-                    resolve(true);
-                    openPromise = undefined;
-                };
-            }
+            socket.onerror = (error: Event): void => {
+                console.error("Websocket error")
+                reject(error);
+            };
+            socket.onopen = (_: Event): void => {
+                reopenCount = 0;
+                resolve(true);
+            };
         });
         return openPromise;
     }
 
+    open();
+
     return {
         set(value: T): void {
             console.log(value)
-            if (socket) {
-                const send =
-                    (typeof value == "object")
-                        ? () => socket.send(JSON.stringify(value))
-                        // @ts-ignore
-                        : () => socket.send(value)
-                switch (socket.readyState) {
-                    case WebSocket.CLOSED | WebSocket.CLOSING: {
-                        open().then(send)
-                        break;
-                    }
-                    case WebSocket.CONNECTING: {
-                        open().then(send)
-                        break;
-                    }
-                    case WebSocket.OPEN: {
-                        send()
-                        break;
-                    }
+            const send =
+                (typeof value == "object")
+                    ? () => socket.send(JSON.stringify(value))
+                    // @ts-ignore
+                    : () => socket.send(value)
+
+            switch (socket.readyState) {
+                case WebSocket.CLOSED || WebSocket.CLOSING: {
+                    open().then(send)
+                    break;
                 }
+                case WebSocket.CONNECTING: {
+                    openPromise.then(send)
+                    break;
+                }
+                case WebSocket.OPEN: {
+                    send()
+                    break;
+                }
+
             }
 
-            if (subscribeSet) {
-                subscribers.forEach((subscriber) => {
-                    subscriber(value)
-                });
+            if (broadcastSet) {
+                subscribers.forEach((subscriber) => (subscriber(value)));
             }
         },
 
         update(_: Updater<any>): void { },
 
         subscribe(subscriber: Subscriber<T>): Unsubscriber {
-            open();
-            subscriber(initialValue);
+            subscriber(value);
             subscribers.add(subscriber);
-            return () => {
-                subscribers.delete(subscriber);
-                if (subscribers.size === 0) {
-                    close();
-                }
-            };
+            return () => (subscribers.delete(subscriber))
         }
     };
 }
