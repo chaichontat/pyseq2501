@@ -18,7 +18,8 @@
 
   onMount(() => {
     ctx = canvas.getContext("2d");
-    pz = Panzoom(canvas, { maxZoom: 5, startScale: 0.5, startX: -1024 + (panSpace.clientWidth - 1024), startY: (panSpace.clientHeight + canvas.height) / 2, animate: true });
+    pz = Panzoom(canvas, { animate: true, maxZoom: 5, startScale: 0.4, origin: "0 0" });
+    // startX: -1024 + (panSpace.clientWidth - 1024), startY: (panSpace.clientHeight + canvas.height) / 2, animate: true
   });
 
   if (browser) {
@@ -69,7 +70,10 @@
 
   <button
     class="absolute z-40 inline-flex items-center h-10 px-4 font-medium bg-white border rounded-lg shadow-lg top-4 right-56 opacity-90 white-button"
-    on:click={() => pz.pan(-1024 + (panSpace.clientWidth - 1024), (panSpace.clientHeight + canvas.height) / 2)}
+    on:click={() => {
+      // pz.pan(-1024 + (panSpace.clientWidth - 1024), -(panSpace.clientHeight + canvas.height) / 2);
+      pz.pan(0, 0); // TODO Deal with with origin = 50 50
+    }}
   >
     Center
   </button>
