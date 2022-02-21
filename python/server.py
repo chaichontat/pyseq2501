@@ -57,7 +57,14 @@ img = update_img(latest)
 imager: Imager
 fcs: FlowCells
 
-q_cmd: asyncio.Queue[tuple[int, int, int] | str] = asyncio.Queue()
+
+class CommandResponse(BaseModel):
+    step: tuple[int, int, int] | None = None
+    msg: str | None = None
+    error: str | None = None
+
+
+q_cmd: asyncio.Queue[CommandResponse] = asyncio.Queue()
 q_user: asyncio.Queue[None] = asyncio.Queue()
 
 
@@ -85,27 +92,26 @@ def q_listener(f: Coroutine[None, None, None]) -> Generator[None, None, None]:
         task.cancel()
 
 
-class CommandResponse(BaseModel):
-    step: tuple[int, int, int] | None = None
-    msg: str | None = None
-    error: str | None = None
-
-
 @app.websocket("/cmd")
 async def cmd_endpoint(websocket: WebSocket) -> None:
     async def ret_cmd() -> NoReturn:
         while True:
+            res = await q_cmd.get()
+            # await websocket.send_json(jsonable_encoder(res))
             match (res := await q_cmd.get()):
                 case [_, _, _]:
                     to_send = CommandResponse(step=res)
-                case x if isinstance(x, str):
-                    if x.startswith("Error"):
-                        to_send = CommandResponse(error=x)
-                    else:
-                        to_send = CommandResponse(msg=x)
                 case _:
-                    logger.warning("Unknown response.")
-                    continue
+                    to_send = res
+
+                # case x if isinstance(x, str):
+                #     if x.startswith("Error"):
+                #         to_send = CommandResponse(error=x)
+                #     else:
+                #         to_send = CommandResponse(msg=x)
+                # case _:
+                #     logger.warning("Unknown response.")
+                #     continue
             await websocket.send_json(jsonable_encoder(to_send))
 
     global latest, img
@@ -122,6 +128,7 @@ async def cmd_endpoint(websocket: WebSocket) -> None:
                             logger.info(f"")
                             await imager.move(x=0)
                         case "capture" | "preview" as c:
+                            logger.info(c)
                             p = userSettings.image_params.copy()
                             if c == "capture":
                                 p.save = True
@@ -129,19 +136,22 @@ async def cmd_endpoint(websocket: WebSocket) -> None:
                             else:
                                 p.save = False
                             latest = await userSettings.image_params.run(fcs, p.fc, imager, q_cmd)  # type: ignore
+                            logger.info("Capture completed")
                             img = update_img(latest)
-                            await asyncio.sleep(0.01)
-                            q_cmd.put_nowait("ok")
+                            logger.info("Image updated")
+                            await asyncio.sleep(0.1)
+                            q_cmd.put_nowait(CommandResponse(msg="ok"))
+                            logger.info("ok_put")
                         case "autofocus":
                             logger.info(f"Autofocus")
                             await imager.autofocus()
-                            q_cmd.put_nowait("ok")
+                            q_cmd.put_nowait(CommandResponse(msg="ok"))
                         case "stop":
-                            q_cmd.put_nowait("ok")
+                            q_cmd.put_nowait(CommandResponse(msg="ok"))
                         case _ as x:
                             logger.error(f"What is this command {x}?")
                 except BaseException as e:
-                    q_cmd.put_nowait(f"Error: {type(e).__name__}: {e}")
+                    q_cmd.put_nowait(CommandResponse(error=f"Error: {type(e).__name__}: {e}"))
 
         except (WebSocketDisconnect, RuntimeError, ConnectionClosedOK):
             ...
