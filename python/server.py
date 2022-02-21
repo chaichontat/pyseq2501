@@ -97,21 +97,12 @@ async def cmd_endpoint(websocket: WebSocket) -> None:
     async def ret_cmd() -> NoReturn:
         while True:
             res = await q_cmd.get()
-            # await websocket.send_json(jsonable_encoder(res))
-            match (res := await q_cmd.get()):
+            match (res):
                 case [_, _, _]:
                     to_send = CommandResponse(step=res)
                 case _:
                     to_send = res
-
-                # case x if isinstance(x, str):
-                #     if x.startswith("Error"):
-                #         to_send = CommandResponse(error=x)
-                #     else:
-                #         to_send = CommandResponse(msg=x)
-                # case _:
-                #     logger.warning("Unknown response.")
-                #     continue
+            # print(f"sending {to_send}")
             await websocket.send_json(jsonable_encoder(to_send))
 
     global latest, img
