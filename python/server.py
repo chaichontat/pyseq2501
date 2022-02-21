@@ -88,6 +88,7 @@ def q_listener(f: Coroutine[None, None, None]) -> Generator[None, None, None]:
 class CommandResponse(BaseModel):
     step: tuple[int, int, int] | None = None
     msg: str | None = None
+    error: str | None = None
 
 
 @app.websocket("/cmd")
@@ -98,7 +99,10 @@ async def cmd_endpoint(websocket: WebSocket) -> None:
                 case [_, _, _]:
                     to_send = CommandResponse(step=res)
                 case x if isinstance(x, str):
-                    to_send = CommandResponse(msg=x)
+                    if x.startswith("Error"):
+                        to_send = CommandResponse(error=x)
+                    else:
+                        to_send = CommandResponse(msg=x)
                 case _:
                     logger.warning("Unknown response.")
                     continue
@@ -111,30 +115,33 @@ async def cmd_endpoint(websocket: WebSocket) -> None:
             while True:
                 cmd = await websocket.receive_text()
                 print(cmd)
-                match cmd:
-                    # TODO Need to block UI when moving.
-                    case "move":
-                        logger.info(f"")
-                        await imager.move(x=0)
-                    case "capture" | "preview" as c:
-                        p = userSettings.image_params.copy()
-                        if c == "capture":
-                            p.save = True
-                            p.z_from, p.z_to = 0, 0
-                        else:
-                            p.save = False
-                        latest = await userSettings.image_params.run(fcs, p.fc, imager, q_cmd)  # type: ignore
-                        img = update_img(latest)
-                        await asyncio.sleep(0.01)
-                        q_cmd.put_nowait("ok")
-                    case "autofocus":
-                        logger.info(f"Autofocus")
-                        await imager.autofocus()
-                        q_cmd.put_nowait("ok")
-                    case "stop":
-                        q_cmd.put_nowait("ok")
-                    case _ as x:
-                        logger.error(f"What is this command {x}?")
+                try:
+                    match cmd:
+                        # TODO Need to block UI when moving.
+                        case "move":
+                            logger.info(f"")
+                            await imager.move(x=0)
+                        case "capture" | "preview" as c:
+                            p = userSettings.image_params.copy()
+                            if c == "capture":
+                                p.save = True
+                                p.z_from, p.z_to = 0, 0
+                            else:
+                                p.save = False
+                            latest = await userSettings.image_params.run(fcs, p.fc, imager, q_cmd)  # type: ignore
+                            img = update_img(latest)
+                            await asyncio.sleep(0.01)
+                            q_cmd.put_nowait("ok")
+                        case "autofocus":
+                            logger.info(f"Autofocus")
+                            await imager.autofocus()
+                            q_cmd.put_nowait("ok")
+                        case "stop":
+                            q_cmd.put_nowait("ok")
+                        case _ as x:
+                            logger.error(f"What is this command {x}?")
+                except BaseException as e:
+                    q_cmd.put_nowait(f"Error: {type(e).__name__}: {e}")
 
         except (WebSocketDisconnect, RuntimeError, ConnectionClosedOK):
             ...
@@ -164,7 +171,7 @@ class UserSettings(BaseModel):
             block="",
             max_uid=2,
             mode="automatic",
-            exps=[NExperiment.default(0), NExperiment.default(1)],
+            exps=[NExperiment.default(False), NExperiment.default(True)],
             image_params=NTakeImage.default(),
         )
 
@@ -180,12 +187,9 @@ async def user_endpoint(websocket: WebSocket) -> None:
             await websocket.send_json(jsonable_encoder(userSettings))
 
     global userSettings
-    t0 = time.time()
     await websocket.accept()
     with q_listener(ret_user()):
         try:
-            while time.time() - t0 < 0.5:
-                await websocket.receive_json()
             await websocket.send_json(jsonable_encoder(userSettings))
             while True:
                 ret = await websocket.receive_json()

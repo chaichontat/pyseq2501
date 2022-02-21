@@ -33,7 +33,7 @@ const userDefault: Readonly<UserSettings> = {
   image_params: { ...cmdDefaults["takeimage"], fc: false },
 };
 
-export type CmdReturns = { step?: [number, number, number]; msg?: "ok" };
+export type CmdReturns = { step?: [number, number, number]; msg?: string, error?: string };
 
 export const imgStore: Writable<Img> = writable({ ...imgDefault });
 
