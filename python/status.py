@@ -33,17 +33,13 @@ class Moves(BaseModel):
 
 
 async def poll_status(websocket: WebSocket, imager: Imager, q: asyncio.Queue[bool]):
-    try:
-        await websocket.accept()
-        while True:
-            try:
-                await asyncio.wait_for(q.get(), 5)
-            except asyncio.TimeoutError:
-                ...
-            finally:
-                await websocket.send_json(jsonable_encoder(await imager.state))
-    except (WebSocketDisconnect, ConnectionClosedOK):
-        ...
+    while True:
+        try:
+            await asyncio.wait_for(q.get(), 5)
+        except asyncio.TimeoutError:
+            ...
+        finally:
+            await websocket.send_json(jsonable_encoder(await imager.state))
 
 
 # Just use Terminal®.

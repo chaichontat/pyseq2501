@@ -7,15 +7,16 @@ import logging
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import Annotated, Literal, NoReturn
+from contextlib import contextmanager
+from typing import IO, Coroutine, Generator, Literal, NoReturn
 
 import numpy as np
-from fastapi import FastAPI, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response, StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from PIL import Image
-from pydantic import BaseModel, Field, root_validator, validator
+from pydantic import BaseModel
 from rich.logging import RichHandler
 from websockets.exceptions import ConnectionClosedOK
 
@@ -23,7 +24,7 @@ from cmd_uid import NExperiment
 from imaging import update_img
 from pyseq2.experiment import *
 from pyseq2.fakes import FakeFlowCells, FakeImager
-from pyseq2.imager import Imager, State
+from pyseq2.imager import Imager
 from pyseq2.utils.ports import FAKE_PORTS, get_ports
 from status import poll_status
 
@@ -33,6 +34,12 @@ logging.basicConfig(
     datefmt="[%X]",
     handlers=[RichHandler(markup=True)],
 )
+
+# Disable uvicorn loggers.
+logging.getLogger("uvicorn.access").handlers = []
+for _log in ["uvicorn", "uvicorn.error", "fastapi"]:
+    _logger = logging.getLogger(_log)
+    _logger.handlers = []
 
 logger = logging.getLogger(__name__)
 app = FastAPI()
@@ -50,12 +57,13 @@ img = update_img(latest)
 imager: Imager
 fcs: FlowCells
 
-q: asyncio.Queue[tuple[int, int, int] | str] = asyncio.Queue()
+q_cmd: asyncio.Queue[tuple[int, int, int] | str] = asyncio.Queue()
+q_user: asyncio.Queue[None] = asyncio.Queue()
 
 
 @app.on_event("startup")
 async def startup_event():
-    global imager, fcs, q
+    global imager, fcs, q_cmd
     if os.environ.get("FAKE_HISEQ", "0") != "1":
         imager = await Imager.ainit(ports := await get_ports(60))
         fcs = await FlowCells.ainit(ports)
@@ -68,31 +76,38 @@ async def startup_event():
 dark = np.zeros((2, 2048, 2048), dtype=np.uint8)
 
 
+@contextmanager
+def q_listener(f: Coroutine[None, None, None]) -> Generator[None, None, None]:
+    task = asyncio.create_task(f)
+    try:
+        yield
+    finally:
+        task.cancel()
+
+
 class CommandResponse(BaseModel):
     step: tuple[int, int, int] | None = None
     msg: str | None = None
 
 
-async def send_from_q(websocket: WebSocket) -> NoReturn:
-    while True:
-        match (res := await q.get()):
-            case [_, _, _]:
-                to_send = CommandResponse(step=res)
-            case x if isinstance(x, str):
-                to_send = CommandResponse(msg=x)
-            case _:
-                logger.warning("Unknown response.")
-                continue
-        await websocket.send_json(jsonable_encoder(to_send))
-
-
 @app.websocket("/cmd")
-async def cmd_endpoint(websocket: WebSocket) -> NoReturn:
+async def cmd_endpoint(websocket: WebSocket) -> None:
+    async def ret_cmd() -> NoReturn:
+        while True:
+            match (res := await q_cmd.get()):
+                case [_, _, _]:
+                    to_send = CommandResponse(step=res)
+                case x if isinstance(x, str):
+                    to_send = CommandResponse(msg=x)
+                case _:
+                    logger.warning("Unknown response.")
+                    continue
+            await websocket.send_json(jsonable_encoder(to_send))
+
     global latest, img
-    asyncio.create_task(send_from_q(websocket))
-    while True:
+    await websocket.accept()
+    with q_listener(ret_cmd()):
         try:
-            await websocket.accept()
             while True:
                 cmd = await websocket.receive_text()
                 print(cmd)
@@ -108,20 +123,20 @@ async def cmd_endpoint(websocket: WebSocket) -> NoReturn:
                             p.z_from, p.z_to = 0, 0
                         else:
                             p.save = False
-                        latest = await userSettings.image_params.run(fcs, p.fc, imager, q)  # type: ignore
+                        latest = await userSettings.image_params.run(fcs, p.fc, imager, q_cmd)  # type: ignore
                         img = update_img(latest)
                         await asyncio.sleep(0.01)
-                        q.put_nowait("ok")
+                        q_cmd.put_nowait("ok")
                     case "autofocus":
                         logger.info(f"Autofocus")
                         await imager.autofocus()
-                        q.put_nowait("ok")
+                        q_cmd.put_nowait("ok")
                     case "stop":
-                        q.put_nowait("ok")
+                        q_cmd.put_nowait("ok")
                     case _ as x:
                         logger.error(f"What is this command {x}?")
 
-        except (WebSocketDisconnect):
+        except (WebSocketDisconnect, RuntimeError, ConnectionClosedOK):
             ...
 
 
@@ -158,22 +173,42 @@ userSettings = UserSettings.default()
 
 
 @app.websocket("/user")
-async def user_endpoint(websocket: WebSocket) -> NoReturn:
+async def user_endpoint(websocket: WebSocket) -> None:
+    async def ret_user() -> NoReturn:
+        while True:
+            await q_cmd.get()
+            await websocket.send_json(jsonable_encoder(userSettings))
+
     global userSettings
-    while True:
-        t0 = time.time()
-        await websocket.accept()
+    t0 = time.time()
+    await websocket.accept()
+    with q_listener(ret_user()):
         try:
             while time.time() - t0 < 0.5:
                 await websocket.receive_json()
-
             await websocket.send_json(jsonable_encoder(userSettings))
             while True:
                 ret = await websocket.receive_json()
                 userSettings = UserSettings.parse_obj(ret)
                 logger.info(userSettings)
-        except (WebSocketDisconnect, ConnectionClosedOK):
+        except (WebSocketDisconnect, RuntimeError, ConnectionClosedOK):
             ...
+
+
+@app.websocket("/status")
+async def poll(websocket: WebSocket) -> None:
+    # async def status_ping():
+    #     while True:
+    #         await websocket.send_json((await gen_status()).json())
+    #         await asyncio.sleep(5)
+
+    # task = asyncio.create_task(status_ping())
+    await websocket.accept()
+    try:
+        while True:
+            await poll_status(websocket, imager, q_cmd)
+    except (WebSocketDisconnect, RuntimeError, ConnectionClosedOK):
+        ...
 
 
 @app.get("/img")
@@ -198,22 +233,13 @@ async def download(fc: int):
 
 @app.post("/experiment/{fc}")
 async def create_file(fc: int, file: UploadFile):
-    print("RECEIVED")
-    print(UserSettings.parse_obj(yaml.safe_load(file.file.read())))
-    userSettings.exps[fc] = UserSettings.parse_obj(yaml.safe_load(file.file.read()))
+    f: IO[bytes] = file.file  # type: ignore
+    try:
+        y = yaml.safe_load(f)
+        ne = NExperiment.from_experiment(Experiment.parse_obj(y), userSettings.max_uid)
+        userSettings.max_uid += len(ne.reagents) + len(ne.cmds)
+        userSettings.exps[fc] = ne
+        q_user.put_nowait(None)
+    except BaseException as e:
+        raise HTTPException(400, detail=f"{type(e).__name__}: {e}")
     return "ok"
-
-
-@app.websocket("/status")
-async def poll(websocket: WebSocket) -> NoReturn:
-    # async def status_ping():
-    #     while True:
-    #         await websocket.send_json((await gen_status()).json())
-    #         await asyncio.sleep(5)
-
-    # task = asyncio.create_task(status_ping())
-    while True:
-        await poll_status(websocket, imager, q)
-
-
-# app.get("/logs")(status.logs)
