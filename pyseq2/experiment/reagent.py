@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from typing import Sequence
 
 from pydantic import BaseModel, validator
 
@@ -45,7 +46,7 @@ class ReagentGroup(BaseModel):
         return ReagentGroup(name="")
 
 
-Reagents = dict[str, Reagent | ReagentGroup]
+Reagents = Sequence[Reagent | ReagentGroup]
 CompiledReagents = dict[str, list[Reagent]]  # Key is group name.
 
 
@@ -53,7 +54,7 @@ def compile_reagents(reagents: Reagents) -> CompiledReagents:
     reagent_groups: defaultdict[str, list[Reagent]] = defaultdict(list)
     curr_group = ""
     i = 0
-    for v in reagents.values():
+    for v in reagents:
         if not isinstance(v, ReagentGroup):
             reagent_groups[curr_group].append(v)
             if not curr_group:

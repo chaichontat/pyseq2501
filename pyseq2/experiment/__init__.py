@@ -16,8 +16,9 @@ logger = getLogger(__name__)
 
 class Experiment(BaseModel):
     name: str
+    path: str
     flowcell: Literal[0, 1]
-    reagents: Reagents | list[Reagent | ReagentGroup]  # Would be converted to Reagents.
+    reagents: Reagents
     cmds: Sequence[Cmd]
 
     """Only allow Reagent in Pump, Prime to be str here.
@@ -28,17 +29,18 @@ class Experiment(BaseModel):
         name: str,
         flowcell: Literal[0, 1],
         *,
-        reagents: Reagents | list[Reagent | ReagentGroup],
+        path: str,
+        reagents: Reagents,
         cmds: Sequence[Cmd],
     ) -> None:
         # This is here to allow the first two arguments to be positional.
-        super().__init__(name=name, flowcell=flowcell, reagents=reagents, cmds=cmds)
+        super().__init__(name=name, flowcell=flowcell, path=path, reagents=reagents, cmds=cmds)
 
     @root_validator
-    def check_reagents(cls, values: dict[str, Any]) -> Reagents:
+    def check_reagents(cls, values: dict[str, Any]) -> dict[str, Any]:
         cmds: Sequence[Cmd] = values["cmds"]
         reagents: Reagents = values["reagents"]
-        reagents_name = list(reagents.keys())
+        reagents_name = [r.name for r in reagents]
 
         if len(reagents_name) != len(set(reagents_name)):
             raise ValueError("Reagent name not unique.")
@@ -52,7 +54,6 @@ class Experiment(BaseModel):
 
         # if len(reagents_name) > len(seen):
         #     warnings.warn("Unused reagents found.")
-
         return values
 
     @validator("flowcell")
@@ -61,9 +62,9 @@ class Experiment(BaseModel):
         return fc
 
     @validator("reagents")
-    def val_reagents(cls, v: list[Reagent | ReagentGroup] | Reagents) -> Reagents:
-        if not isinstance(v, dict):
-            return {x.name: x for x in v}
+    def val_reagents(cls, v: Reagents) -> Reagents:
+        # if not isinstance(v, dict):
+        #     return {x.name: x for x in v}
         return v
 
     def _compile_cmds(self, compiled_reagents: CompiledReagents) -> list[Cmd]:
@@ -90,34 +91,30 @@ class Experiment(BaseModel):
         return out
 
     def compile(self) -> list[Cmd]:
-        return self._compile_cmds(compile_reagents(cast(Reagents, self.reagents)))
+        return self._compile_cmds(compile_reagents(self.reagents))
 
 
 #%%
 if __name__ == "__main__":
     # Flush ports 1, 2, 3 with 250 μL per barrel simultaneously.
     def test_basic():
-        waters: list[Reagent | ReagentGroup] = [Reagent(name=f"water{port}", port=port) for port in (1, 2, 3)]
+        waters: Reagents = [Reagent(name=f"water{port}", port=port) for port in (1, 2, 3)]
         ops: list[Cmd] = [Pump(reagent=water.name) for water in waters]
         ops.append(Autofocus(channel=0, laser_onoff=True, laser=5, od=0))
         ops.append(Temp(temp=25))
 
-        experiment = Experiment("wash_ports_123", 0, cmds=ops, reagents=waters)
+        experiment = Experiment("wash_ports_123", 0, path=".", cmds=ops, reagents=waters)
         assert Experiment.parse_raw(experiment.json()) == experiment
         assert Experiment.parse_obj(yaml.safe_load(yaml.dump(experiment.dict()))) == experiment
 
     def test_compile():
-        mix: Reagents = {}
-        mix["water"] = Reagent(name="water", port=5)
-        mix["gr"] = ReagentGroup(name="gr")
-        mix |= (
-            antibodies := {
-                f"antibody{port}": Reagent(name=f"antibody{port}", port=port) for port in (1, 2, 3)
-            }
-        )
+        mix: Reagents = []
+        mix.append(Reagent(name="water", port=5))
+        mix.append(ReagentGroup(name="gr"))
+        mix += (antibodies := [Reagent(name=f"antibody{port}", port=port) for port in (1, 2, 3)])
 
         ops: list[Cmd] = [Pump(reagent="water"), Pump(reagent="gr"), Goto(step=0, n=2)]
-        experiment_auto = Experiment("experiment", 0, cmds=ops, reagents=mix)
+        experiment_auto = Experiment("experiment", 0, path=".", cmds=ops, reagents=mix)
 
         ops = []
         for i in range(1, 4):
@@ -125,7 +122,11 @@ if __name__ == "__main__":
             ops.append(Pump(reagent=f"antibody{i}"))
 
         experiment_man = Experiment(
-            "experiment", 0, cmds=ops, reagents={"water": Reagent(name="water", port=5)} | antibodies
+            "experiment",
+            0,
+            path=".",
+            cmds=ops,
+            reagents=tuple([Reagent(name="water", port=5)] + antibodies),
         )
 
         assert experiment_auto.compile() == experiment_man.compile()
