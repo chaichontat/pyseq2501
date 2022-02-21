@@ -8,7 +8,8 @@ import websocketStore from "./ws_store";
 import { Img, imgDefault } from "./imaging";
 import { Status, statusDefault } from "./status";
 
-let try_connect: boolean = true;
+
+let try_connect: boolean = process.env.CI !== 'true';  // Check if in GitHub Actions.
 
 export type XY = {
   x: number;
