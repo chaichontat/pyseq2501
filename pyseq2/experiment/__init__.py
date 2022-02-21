@@ -17,7 +17,7 @@ logger = getLogger(__name__)
 class Experiment(BaseModel):
     name: str
     path: str
-    flowcell: Literal[0, 1]
+    fc: bool
     reagents: Reagents
     cmds: Sequence[Cmd]
 
@@ -27,14 +27,14 @@ class Experiment(BaseModel):
     def __init__(
         self,
         name: str,
-        flowcell: Literal[0, 1],
+        fc: bool,
         *,
         path: str,
         reagents: Reagents,
         cmds: Sequence[Cmd],
     ) -> None:
         # This is here to allow the first two arguments to be positional.
-        super().__init__(name=name, flowcell=flowcell, path=path, reagents=reagents, cmds=cmds)
+        super().__init__(name=name, fc=fc, path=path, reagents=reagents, cmds=cmds)
 
     @root_validator
     def check_reagents(cls, values: dict[str, Any]) -> dict[str, Any]:
@@ -56,7 +56,7 @@ class Experiment(BaseModel):
         #     warnings.warn("Unused reagents found.")
         return values
 
-    @validator("flowcell")
+    @validator("fc")
     def fc_check(cls, fc: int):
         assert 0 <= fc <= 1
         return fc
@@ -103,7 +103,7 @@ if __name__ == "__main__":
         ops.append(Autofocus(channel=0, laser_onoff=True, laser=5, od=0))
         ops.append(Temp(temp=25))
 
-        experiment = Experiment("wash_ports_123", 0, path=".", cmds=ops, reagents=waters)
+        experiment = Experiment("wash_ports_123", False, path=".", cmds=ops, reagents=waters)
         assert Experiment.parse_raw(experiment.json()) == experiment
         assert Experiment.parse_obj(yaml.safe_load(yaml.dump(experiment.dict()))) == experiment
 
@@ -114,7 +114,7 @@ if __name__ == "__main__":
         mix += (antibodies := [Reagent(name=f"antibody{port}", port=port) for port in (1, 2, 3)])
 
         ops: list[Cmd] = [Pump(reagent="water"), Pump(reagent="gr"), Goto(step=0, n=2)]
-        experiment_auto = Experiment("experiment", 0, path=".", cmds=ops, reagents=mix)
+        experiment_auto = Experiment("experiment", False, path=".", cmds=ops, reagents=mix)
 
         ops = []
         for i in range(1, 4):
@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
         experiment_man = Experiment(
             "experiment",
-            0,
+            False,
             path=".",
             cmds=ops,
             reagents=tuple([Reagent(name="water", port=5)] + antibodies),
