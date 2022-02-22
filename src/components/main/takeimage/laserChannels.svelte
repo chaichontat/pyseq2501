@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { TakeImage } from "$src/stores/command";
+  import Go from "../go.svelte";
 
-  import { userStore as us } from "$src/stores/store";
   export let params: TakeImage;
   export let i: 0 | 1;
 
@@ -23,13 +23,15 @@
 
 <p class="flex flex-col">
   <!-- Green -->
-  <span class:text-gray-400={!params.laser_onoff[i]}>
+  <span class:text-gray-400={!params.laser_onoff[i]} class="flex items-center gap-x-2">
     <label>
-      <input type="checkbox" class={`mr-1 rounded ${i ? "text-red-600 rounded focus:ring-red-300" : "text-lime-500 focus:ring-lime-300"}`} bind:checked={params.laser_onoff[i]} />
+      <input type="checkbox" class={`rounded mr-1 ${i ? "text-red-600 rounded focus:ring-red-300" : "text-lime-500 focus:ring-lime-300"}`} bind:checked={params.laser_onoff[i]} />
       <div class="inline font-semibold" class:text-green-800={params.laser_onoff[i] && !i} class:text-red-800={params.laser_onoff[i] && i}>{Boolean(i) ? 660 : 532} nm</div>
     </label>
-    <input type="number" class="w-20 h-8 mx-1 pretty" class:pretty-disabled={!params.laser_onoff[0]} bind:value={params.lasers[i]} disabled={!params.laser_onoff[i]} />
+
+    <input type="number" class="w-20 h-8 pretty" class:pretty-disabled={!params.laser_onoff[0]} bind:value={params.lasers[i]} disabled={!params.laser_onoff[i]} />
     mW
+    <Go>Set</Go>
   </span>
 
   <label class="rounded-lg channel ring-red-500" class:text-gray-400={!params.channels[2 * i]}>
@@ -44,7 +46,7 @@
 
   <span class="ml-8 font-normal opacity-85">
     Filter OD
-    <select class="py-1 text-sm border-gray-400 rounded disabled:border-gray-300" on:change={transformOD}>
+    <select class="py-1 text-sm border-gray-400 rounded-lg disabled:border-gray-300" on:change={transformOD}>
       {#if i == 0}
         <option>Open</option>
         <option>1.0</option>
