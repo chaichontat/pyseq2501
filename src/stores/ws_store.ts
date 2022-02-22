@@ -12,8 +12,16 @@ import { Subscriber, Unsubscriber, Updater, Readable, Writable, writable } from 
 const reopenTimeouts = [2000, 5000, 10000, 30000, 60000];
 type ValidType = string; // | ArrayBufferLike | Blob | ArrayBufferView;
 
+export type wsConfig = {
+    f?: (x: ValidType) => any
+    broadcastOnSet?: boolean,
+    beforeOpen?: () => Promise<void>,
+    onClose?: () => void
+}
+
 // TODO Asymmetric store.
-export function websocketStore<T>(url: string, value: T, f: (x: ValidType) => any = (x: ValidType) => x, broadcastSet: boolean = true): Writable<T> {
+export function websocketStore<T>(url: string, value: T,
+    { f = JSON.parse, broadcastOnSet, beforeOpen, onClose }: wsConfig = {}): Writable<T> {
     // console.log(`%cInitializing ${ url }.`, "color:green")
     let socket: WebSocket
     let openPromise: Promise<boolean>
@@ -43,6 +51,7 @@ export function websocketStore<T>(url: string, value: T, f: (x: ValidType) => an
 
     function reopen(): void {
         close();
+        if (onClose) onClose();
         if (subscribers.size > 0) {
             reopenTimeoutHandler = setTimeout(() => open(), reopenTimeout());
         }
@@ -53,6 +62,8 @@ export function websocketStore<T>(url: string, value: T, f: (x: ValidType) => an
             clearTimeout(reopenTimeoutHandler);
             reopenTimeoutHandler = undefined;
         }
+
+        if (beforeOpen) await beforeOpen()
 
         // we are still in the opening phase
         // if (socket.readyState === WebSocket.CONNECTING || socket.readyState === WebSocket) return openPromise;
@@ -111,7 +122,7 @@ export function websocketStore<T>(url: string, value: T, f: (x: ValidType) => an
                 }
             }
 
-            if (broadcastSet) {
+            if (broadcastOnSet) {
                 subscribers.forEach((subscriber: Subscriber<T>) => (subscriber(value)));
             }
         },

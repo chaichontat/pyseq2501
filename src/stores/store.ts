@@ -35,30 +35,38 @@ const userDefault: Readonly<UserSettings> = {
 
 export type CommandResponse = { step?: [number, number, number]; msg?: string, error?: string };
 
-
+export type LocalInfo = { "mode": "auto" | "editingA" | "editingB" | "manual", "connected": boolean }
+export const localStore: Writable<LocalInfo> = writable({ mode: "auto", connected: false })
 
 // TODO: Make this read-only.
 export const statusStore: Writable<Status> =
-  try_connect && browser ? websocketStore(`ws://${ window.location.hostname }:8000/status`, { ...statusDefault }, (x): Status => JSON.parse(x)) : writable({ ...statusDefault });
+  try_connect && browser ? websocketStore(`ws://${ window.location.hostname }:8000/status`, { ...statusDefault })
+    : writable({ ...statusDefault });
 
 export const userStore: Writable<UserSettings> = writable({ ...userDefault })
 
-export const user_ws = try_connect && browser ? websocketStore(`ws://${ window.location.hostname }:8000/user`, { ...userDefault }, (x) => JSON.parse(x)) : writable({ ...userDefault });
+export const user_ws = try_connect && browser ? websocketStore(`ws://${ window.location.hostname }:8000/user`, { ...userDefault },
+  { beforeOpen: initial_get })
+  : writable({ ...userDefault });
 
 export const cmdStore: Writable<CommandResponse> =
-  try_connect && browser ? websocketStore(`ws://${ window.location.hostname }:8000/cmd`, { msg: "ok" }, (x) => JSON.parse(x), false) : writable({ msg: "ok" });
+  try_connect && browser ? websocketStore(`ws://${ window.location.hostname }:8000/cmd`, { msg: "ok" }, { broadcastOnSet: false })
+    : writable({ msg: "ok" });
 
 
 
 export async function initial_get() {
   if (browser) {
-    try {
-      const raw = await fetch(`http://${ window.location.hostname }:8000/usersettings`)
-      const us = await raw.json() as UserSettings
-      userStore.set(us)
-    } catch (e) {
-      setTimeout(initial_get, 1000);
-      console.error("Cannot get initial user settings.")
+    while (true) {
+      try {
+        const raw = await fetch(`http://${ window.location.hostname }:8000/usersettings`)
+        const us = await raw.json() as UserSettings
+        userStore.set(us)
+        return;
+      } catch (e) {
+        console.error("Cannot get initial user settings.")
+        await new Promise(r => setTimeout(r, 1000));  // Sleep for 1 second.
+      }
     }
   }
 }
