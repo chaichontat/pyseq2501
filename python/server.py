@@ -131,7 +131,9 @@ async def cmd_endpoint(websocket: WebSocket) -> None:
                             logger.info("Capture completed")
                             img = update_img(latest)
                             logger.info("Image updated")
-                            await asyncio.sleep(0.1)
+                            # await asyncio.sleep(0.1)
+                            q_cmd.put_nowait(CommandResponse(msg="imgReady"))  # Doesn't seem to send with 1.
+                            q_cmd.put_nowait(CommandResponse(msg="imgReady"))
 
                             logger.info("ok_put")
                         case "autofocus":
@@ -142,9 +144,6 @@ async def cmd_endpoint(websocket: WebSocket) -> None:
                             q_cmd.put_nowait(CommandResponse(msg="ok"))
                         case _ as x:
                             logger.error(f"What is this command {x}?")
-
-                    q_cmd.put_nowait(CommandResponse(msg="ok"))  # Doesn't seem to send with 1.
-                    q_cmd.put_nowait(CommandResponse(msg="ok"))
 
                 except BaseException as e:
                     q_cmd.put_nowait(CommandResponse(error=f"Error: {type(e).__name__}: {e}"))
