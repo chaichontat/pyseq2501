@@ -8,5 +8,5 @@
   <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={name} class:invalid={!name} />
 
   <p class="text-lg">Image Path</p>
-  <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={path} class:invalid={!path} on:click={pickFile} />
+  <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={path} class:invalid={!path} />
 </div>

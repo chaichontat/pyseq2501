@@ -1,7 +1,5 @@
 <script lang="ts">
-  import { browser } from "$app/env";
-  import type { Img } from "$src/stores/imaging";
-  import { cmdStore, imgStore, userStore as us } from "$src/stores/store";
+  import { cmdStore, userStore as us } from "$src/stores/store";
   import tooltip from "$src/tooltip";
 
   import { cubicOut } from "svelte/easing";
@@ -11,27 +9,13 @@
 
   export let stats: { height: number; width: number; n_cols: number; n_bundles: number; n_z: number; time: number };
 
-  function updateImg() {
-    if (browser) {
-      fetch(`http://${window.location.hostname}:8000/img`)
-        .then((response: Response) => response.json())
-        .then((i: Img) => {
-          // ctx.clearRect(0, 0, canvas.width, canvas.height);
-          $imgStore = i;
-        });
-      $us.block = "";
-    }
-  }
-
   const progress = tweened(0, {
     duration: 400,
     easing: cubicOut,
   });
 
   $: {
-    if ($cmdStore?.msg) {
-      updateImg();
-    } else if ($cmdStore?.step) {
+    if ($cmdStore?.step) {
       step = $cmdStore.step;
       progress.set((step[2] * (stats.n_z * stats.n_bundles) + step[1] * stats.n_bundles + step[0]) / (stats.n_bundles * stats.n_cols * stats.n_z));
     }

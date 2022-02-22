@@ -3,9 +3,13 @@
   import "$src/app.css";
   import "tippy.js/dist/tippy.css";
   import Sidebar from "./sidebar.svelte";
+  import { initial_get, userStore, user_ws } from "$src/stores/store";
 
   import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
+  import { onMount } from "svelte";
   overrideItemIdKeyNameBeforeInitialisingDndZones("uid");
+
+  onMount(initial_get);
 </script>
 
 <svelte:head>

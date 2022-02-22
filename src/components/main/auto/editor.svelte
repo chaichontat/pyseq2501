@@ -11,13 +11,14 @@
   import { cubicInOut } from "svelte/easing";
   import { fade } from "svelte/transition";
   import type { Event } from "ws";
+  import ProgressManual from "../manual/progress_manual.svelte";
 
   // let files: FileList;
   export let fc: 0 | 1;
 
   const ajv = new Ajv();
   const validate = ajv.compile(rawExperimentSchema);
-
+  let stats = { height: 0, width: 0, n_cols: 0, n_bundles: 0, n_z: 1, time: 0 };
   // async function uploadFile() {
   //   const file = files.item(0);
   //   if (browser && file) {
@@ -84,28 +85,27 @@
     <!-- <form action={`http://localhost:8000/experiment/${fc}/`} enctype="multipart/form-data" method="post" bind:this={form}> -->
     <label>
       <input class="hidden" name="file" type="file" accept=".yaml, .yml" on:change={fromYAML} />
-      <div class="px-4 py-1 text-base font-medium rounded-lg h-11 white-button cursor-pointer">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div class="px-4 py-1 text-base font-medium rounded-lg cursor-pointer h-11 white-button">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
         </svg>
         Upload
       </div>
     </label>
     <!-- </form> -->
-
     <!-- <form action={`http://localhost:8000/uploadfiles/`} enctype="multipart/form-data" method="post" bind:this={form}>
-        <input class="" type="file" accept=".yaml, .yml" />
-        <div class="px-4 py-1 text-base font-medium rounded-lg h-11 white-button cursor-pointer">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-          </svg>
-          Upload
-        </div>
-        <input type="submit" />
+      <input class="" type="file" accept=".yaml, .yml" />
+      <div class="px-4 py-1 text-base font-medium rounded-lg cursor-pointer h-11 white-button">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+        </svg>
+        Upload
+      </div>
+      <input type="submit" />
     </form> -->
 
     <Menu class="relative inline-block ">
-      <MenuButton class="inline-flex justify-center w-full py-1 px-2 font-medium rounded-lg h-11 white-button">
+      <MenuButton class="inline-flex justify-center w-full px-2 py-1 font-medium rounded-lg h-11 white-button">
         <!-- Plus -->
         <svg aria-hidden="true" class="w-5 h-5 ml-1 text-gray-600 " viewBox="0 0 16 16" fill="currentColor" style="display: inline-block; vertical-align: text-bottom; overflow: visible">
           <path fill-rule="evenodd" d="M7.75 2a.75.75 0 01.75.75V7h4.25a.75.75 0 110 1.5H8.5v4.25a.75.75 0 11-1.5 0V8.5H2.75a.75.75 0 010-1.5H7V2.75A.75.75 0 017.75 2z" />
@@ -128,6 +128,7 @@
   </div>
 </div>
 
+<ProgressManual bind:stats />
 <!-- <ProgressAuto fc={fc} /> -->
 
 <!-- {#if $us.exps[fc]} -->

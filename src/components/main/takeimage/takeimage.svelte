@@ -7,7 +7,7 @@
   import LaserChannels from "./laserChannels.svelte";
   import Go from "../go.svelte";
 
-  export let showPath: boolean = true;
+  export let inAuto: boolean = true;
   export let params: TakeImage;
   export let stats = { height: 0, width: 0, n_cols: 0, n_bundles: 0, n_z: 1, time: 0 };
   export let z_stack = false;
@@ -46,8 +46,12 @@
 <div id="control" class="grid grid-cols-2 gap-y-6 gap-x-4">
   <section class="flex flex-col text-lg font-medium">
     <p class="mt-1 text-lg">Name</p>
-    <input type="text" class="max-w-md mb-4 pretty" bind:value={params.name} />
-    {#if showPath}
+    <div class="flex w-full max-w-md gap-x-2">
+      <input type="text" class="flex-grow mb-4 pretty" bind:value={params.name} />
+      <Go color="indigo">Preview</Go>
+    </div>
+
+    {#if inAuto}
       <p class="text-lg">Image Path</p>
       <input type="text" class="max-w-md mb-4 pretty" bind:value={params.path} />
     {/if}
@@ -63,7 +67,7 @@
   </section>
 
   <!-- XY Input -->
-  <section class="flex flex-col gap-2" class:-mt-20={!showPath}>
+  <section class="flex flex-col gap-2" class:-mt-20={!inAuto}>
     <h2>Positions</h2>
     <div class="-mt-1 space-y-4">
       <div>

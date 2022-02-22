@@ -1,12 +1,11 @@
 <script lang="ts">
   import Panzoom, { PanzoomObject } from "@panzoom/panzoom";
-  import { onDestroy, onMount } from "svelte";
-  import { cubicInOut } from "svelte/easing";
-  import { fade } from "svelte/transition";
-  import { imgStore, userStore as us } from "$src/stores/store";
+  import { onMount } from "svelte";
+  import { cmdStore, CommandResponse, userStore as us } from "$src/stores/store";
   import Hist from "./hist.svelte";
   import { Tab, TabGroup, TabList } from "@rgossiaux/svelte-headlessui";
   import { browser } from "$app/env";
+  import { Img, imgDefault } from "$src/stores/imaging";
 
   let panSpace: HTMLDivElement;
   let canvas: HTMLCanvasElement;
@@ -15,6 +14,7 @@
   let ctx: CanvasRenderingContext2D | null;
   let showHistogram: boolean = true;
   let currChannel: 0 | 1 | 2 | 3 = 0;
+  let img: Img = { ...imgDefault };
 
   onMount(() => {
     ctx = canvas.getContext("2d");
@@ -26,6 +26,17 @@
     imgFrame = new Image();
     imgFrame.onload = () => ctx?.drawImage(imgFrame, 0, 0);
   }
+
+  function updateImg(c: CommandResponse) {
+    if (browser && c.msg === "imgReady")
+      fetch(`http://${window.location.hostname}:8000/img`)
+        .then((response: Response) => response.json())
+        .then((i: Img) => (img = i))
+        .catch((e) => alert(e));
+    $us.block = "";
+  }
+
+  $: updateImg($cmdStore);
 
   // function receivedImage() {
   //   fetch(`http://${window.location.hostname}:8000/img`)
@@ -39,11 +50,8 @@
   // const unsubscribe = imgStore.subscribe((value) => receivedImage());
   // onDestroy(unsubscribe);
 
-  $: {
-    if (browser) imgFrame.src = $imgStore?.img[currChannel];
-  }
-
-  $: if (ctx && $imgStore) ctx.canvas.height = 128 * $imgStore.n;
+  $: if (browser) imgFrame.src = img.img[currChannel];
+  $: if (ctx && img) ctx.canvas.height = 128 * img.n;
 
   function genTabClass(color: string, selected: boolean, enabled: boolean): string {
     let out = `tab-button ${selected ? `text-white` : `${enabled ? `text-gray-700 hover:text-black bg-white hover:bg-${color}-300` : "text-gray-400"}`}`;
@@ -87,7 +95,7 @@
   </div>
 
   <div class:hidden={!showHistogram} id="histogram" class="absolute z-30 p-6 pb-3 bg-white rounded-lg shadow-lg shadow-gray-500 bottom-8 right-8 opacity-90 w-[400px] h-[300px]">
-    <Hist hist={$imgStore?.hist[currChannel]} />
+    <Hist hist={img.hist[currChannel]} />
   </div>
 </div>
 

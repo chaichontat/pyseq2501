@@ -1,6 +1,6 @@
 // From https://github.com/arlac77/svelte-websocket-store
 
-import type { Subscriber, Unsubscriber, Updater, Readable, Writable } from "svelte/store"
+import { Subscriber, Unsubscriber, Updater, Readable, Writable, writable } from "svelte/store"
 /**
  * Create a writable store based on a web-socket.
  * Data is transferred as JSON.
@@ -127,3 +127,16 @@ export function websocketStore<T>(url: string, value: T, f: (x: ValidType) => an
 }
 
 export default websocketStore;
+
+
+class WebSocketStore<T> {
+    protected ws: WebSocket
+    #subscribers: Set<Subscriber<T>>
+
+
+    constructor (url: string) {
+        const { subscribe, set, update } = writable(0);
+        this.ws = new WebSocket(url);
+        this.#subscribers = new Set();
+    }
+}

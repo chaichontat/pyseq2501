@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { imgStore, userStore as us, cmdStore } from "$src/stores/store";
+  import { userStore as us, cmdStore } from "$src/stores/store";
 
   let curr: null | number;
   let _curr = "  --";
@@ -36,7 +36,7 @@
 </script>
 
 <span class="flex flex-row w-full gap-x-3">
-  <content class="w-32 grid grid-row-2 gap-y-2">
+  <content class="grid w-32 grid-row-2 gap-y-2">
     <button
       class="text-lg transition-colors shadow-md shadow-blue-500/50 text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-semibold rounded-lg px-4 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
       on:click={start}

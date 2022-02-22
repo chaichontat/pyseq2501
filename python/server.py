@@ -231,6 +231,12 @@ async def get_img():
     return JSONResponse(jsonable_encoder(img))
 
 
+@app.get("/usersettings")
+async def get_user():
+    logger.info("Get usersettings.")
+    return JSONResponse(jsonable_encoder(userSettings))
+
+
 # @app.get("/experiment/{fc}")
 # async def download(fc: int):
 #     resp = StreamingResponse(

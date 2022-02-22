@@ -117,7 +117,7 @@
 
         <!-- Image -->
       {:else if cmd.op === "takeimage"}
-        <span class="col-span-4 my-2"><Takeimage bind:params={cmd} showPath={false} /></span>
+        <span class="col-span-4 my-2"><Takeimage bind:params={cmd} inAuto={false} /></span>
       {:else}
         NOT IMPLEMENTED
       {/if}
