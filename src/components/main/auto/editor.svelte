@@ -128,7 +128,7 @@
   </div>
 </div>
 
-<ProgressManual bind:stats />
+<!-- <ProgressManual bind:stats /> -->
 <!-- <ProgressAuto fc={fc} /> -->
 
 <!-- {#if $us.exps[fc]} -->
