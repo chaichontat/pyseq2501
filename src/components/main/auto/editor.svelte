@@ -33,7 +33,7 @@
   // }
 
   function toYAML(ne: NExperiment) {
-    const blob = new Blob([yaml.dump(toExperiment(ne))], { type: "application/yaml" });
+    const blob = new Blob([yaml.dump(toExperiment(ne), { noRefs: true })], { type: "application/yaml" });
     const elem = window.document.createElement("a");
     elem.href = window.URL.createObjectURL(blob);
     elem.download = `${ne.name}.yaml`;

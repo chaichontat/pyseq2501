@@ -45,34 +45,28 @@
   </div>
 
   <div class="w-full mr-8">
-    <span class="flex items-center space-x-16">
+    <span class="flex items-center gap-x-16">
       <div><Dropdown bind:cmd /></div>
-      <span class="text-lg font-medium text-gray-800">
-        Total time: <div class="inline-block font-mono text-xl text-gray-700 whitespace-nowrap">60</div>
-        s
-      </span>
-    </span>
 
-    <div class="grid grid-cols-4 mt-2 font-medium divide-x clump gap-x-4">
       <!-- Hold -->
       {#if cmd.op === "hold"}
-        <span>
-          Time <input type="number" class="w-32 mx-2 pretty" bind:value={cmd.time} use:checkRange={0} min="0" />
+        <p>
+          Time <input type="number" class="w-32 py-1 mx-2 pretty" bind:value={cmd.time} use:checkRange={0} min="0" />
           s
-        </span>
+        </p>
 
         <!--  Goto considered harmful -->
       {:else if cmd.op === "goto"}
-        <span class="col-span-4">
-          Go to <input type="number" class="w-24 mx-2 pretty" bind:value={cmd.step} placeholder="1" />
+        <p>
+          Go to <input type="number" class="w-24 py-1 mx-2 pretty" bind:value={cmd.step} placeholder="1" />
           for
-          <input type="number" class="w-24 mx-2 pretty" bind:value={cmd.n} placeholder="4" />
+          <input type="number" class="w-24 py-1 mx-2 pretty" bind:value={cmd.n} placeholder="4" />
           times.
-        </span>
+        </p>
 
         <!-- Wash -->
       {:else if cmd.op === "pump"}
-        <span>
+        <p>
           Reagent
           <select class="text-sm drop">
             {#each $us.exps[fc].reagents as { uid, reagent }}
@@ -83,15 +77,16 @@
               {/if}
             {/each}
           </select>
-        </span>
-        <span>
-          Volume <input type="number" class="w-24 mx-2 pretty" placeholder="2000" bind:value={cmd.volume} />
-          μl
-        </span>
+
+          <span>
+            Volume <input type="number" class="w-24 py-1 mx-2 pretty" placeholder="2000" bind:value={cmd.volume} />
+            μl
+          </span>
+        </p>
 
         <!-- Prime -->
       {:else if cmd.op === "prime"}
-        <span>
+        <p>
           Reagent
           <select class="text-sm drop">
             {#each $us.exps[fc].reagents as { uid, reagent }}
@@ -102,26 +97,35 @@
               {/if}
             {/each}
           </select>
-        </span>
-        <span>
-          Volume <input type="number" class="w-24 mx-2 pretty" placeholder="2000" bind:value={cmd.volume} />
-          μl
-        </span>
 
+          <span>
+            Volume <input type="number" class="w-24 py-1 mx-2 pretty" placeholder="2000" bind:value={cmd.volume} />
+            μl
+          </span>
+        </p>
         <!-- Temp -->
       {:else if cmd.op === "temp"}
-        <span class="col-span-4">
-          Temperature <input type="number" class="w-24 mx-2 pretty" placeholder="20" bind:value={cmd.temp} />
+        <p>
+          Temperature <input type="number" class="w-24 py-1 mx-2 pretty" placeholder="20" bind:value={cmd.temp} />
           °C
-        </span>
-
-        <!-- Image -->
-      {:else if cmd.op === "takeimage"}
-        <span class="col-span-4 my-2"><Takeimage bind:params={cmd} inAuto={false} /></span>
-      {:else}
-        NOT IMPLEMENTED
+        </p>
       {/if}
-    </div>
+      <!-- Image -->
+      <!-- {:else if cmd.op === "takeimage"} -->
+    </span>
+
+    <!-- <span class="ml-6 text-lg font-medium text-gray-600 ">
+      Time: <div class="inline-block font-mono text-xl text-gray-700 whitespace-nowrap">60</div>
+      s
+    </span> -->
+
+    <!-- Those that require more space. -->
+    {#if cmd.op === "takeimage"}
+      <div class="grid grid-cols-4 mt-2 font-medium divide-x clump gap-x-4">
+        <span class="col-span-4 my-2"><Takeimage bind:params={cmd} inAuto={true} /></span>
+      </div>
+      <!-- content here -->
+    {/if}
   </div>
 </li>
 
@@ -136,5 +140,13 @@
 
   .channel {
     @apply mb-2 ml-8 font-normal;
+  }
+
+  p {
+    @apply font-medium text-lg;
+  }
+
+  .minor-box {
+    @apply w-24 py-1 mx-2;
   }
 </style>

@@ -51,7 +51,7 @@
       <Go color="indigo">Preview</Go>
     </div>
 
-    {#if inAuto}
+    {#if !inAuto}
       <p class="text-lg">Image Path</p>
       <input type="text" class="max-w-md mb-4 pretty" bind:value={params.path} />
     {/if}
@@ -67,7 +67,7 @@
   </section>
 
   <!-- XY Input -->
-  <section class="flex flex-col gap-2" class:-mt-20={!inAuto}>
+  <section class="flex flex-col gap-2" class:-mt-20={inAuto}>
     <h2>Positions</h2>
     <div class="-mt-1 space-y-4">
       <div>
