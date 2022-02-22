@@ -14,7 +14,7 @@ type ValidType = string; // | ArrayBufferLike | Blob | ArrayBufferView;
 
 // TODO Asymmetric store.
 export function websocketStore<T>(url: string, value: T, f: (x: ValidType) => any = (x: ValidType) => x, broadcastSet: boolean = true): Writable<T> {
-    console.log(`%cInitializing ${ url }.`, "color:green")
+    // console.log(`%cInitializing ${ url }.`, "color:green")
     let socket: WebSocket
     let openPromise: Promise<boolean>
     let reopenTimeoutHandler: ReturnType<typeof setTimeout> | undefined;
@@ -87,38 +87,36 @@ export function websocketStore<T>(url: string, value: T, f: (x: ValidType) => an
 
     return {
         set(value: T): void {
-            if (Date.now() - t0 > 500) {
-                console.log(value)
-                const send =
-                    (typeof value == "object")
-                        ? () => socket.send(JSON.stringify(value))
-                        // @ts-ignore
-                        : () => socket.send(value)
+            console.log(value)
+            const send =
+                (typeof value == "object")
+                    ? () => socket.send(JSON.stringify(value))
+                    // @ts-ignore
+                    : () => socket.send(value)
 
-                if (socket) {
-                    switch (socket.readyState) {
-                        case WebSocket.CLOSED || WebSocket.CLOSING: {
-                            open().then(send)
-                            break;
-                        }
-                        case WebSocket.CONNECTING: {
-                            openPromise.then(send)
-                            break;
-                        }
-                        case WebSocket.OPEN: {
-                            send()
-                            break;
-                        }
+            if (socket) {
+                switch (socket.readyState) {
+                    case WebSocket.CLOSED || WebSocket.CLOSING: {
+                        open().then(send)
+                        break;
+                    }
+                    case WebSocket.CONNECTING: {
+                        openPromise.then(send)
+                        break;
+                    }
+                    case WebSocket.OPEN: {
+                        send()
+                        break;
                     }
                 }
             }
 
             if (broadcastSet) {
-                subscribers.forEach((subscriber) => (subscriber(value)));
+                subscribers.forEach((subscriber: Subscriber<T>) => (subscriber(value)));
             }
         },
 
-        update(_: Updater<any>): void { },
+        update(updater: Updater<T>) { subscribers.forEach((subscriber) => subscriber(updater(value))) },
 
         subscribe(subscriber: Subscriber<T>): Unsubscriber {
             subscriber(value);

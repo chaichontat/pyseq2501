@@ -30,8 +30,6 @@
     return t > 3600 ? `${d.substring(11, 19)} hrs` : `${d.substring(14, 19)} mins`;
   }
 
-  function transformZ() {}
-
   $: if (browser) blockControls(document.getElementById("control"), $us.block);
 
   $: stats.height = Math.max(params.xy1[1], params.xy0[1]) - Math.min(params.xy1[1], params.xy0[1]);
@@ -64,7 +62,7 @@
   </section>
 
   <!-- XY Input -->
-  <section class="flex flex-col gap-2">
+  <section class="flex flex-col gap-2" class:-mt-20={!showPath}>
     <h2>Positions</h2>
     <div class="-mt-1 space-y-4">
       <div>

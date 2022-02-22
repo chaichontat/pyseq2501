@@ -24,7 +24,7 @@
 
 <Menu class="relative inline-block text-left">
   <MenuButton
-    class="relative inline-flex py-3 pl-6 text-xl font-semibold text-gray-800 bg-white border border-gray-300 rounded-md shadow-sm w-72 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-blue-500"
+    class="relative inline-flex py-3 pl-6 text-xl font-semibold text-gray-800 bg-white border  border-gray-400 rounded-md shadow-sm shadow-blue-200 w-72 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-blue-500"
   >
     {namemap[cmd.op]}
     <svg xmlns="http://www.w3.org/2000/svg" class="absolute right-0 self-center w-5 h-5 ml-2 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

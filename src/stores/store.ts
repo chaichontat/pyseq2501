@@ -9,7 +9,7 @@ import { Img, imgDefault } from "./imaging";
 import { Status, statusDefault } from "./status";
 
 
-let try_connect: boolean = process.env.CI !== 'true';  // Check if in GitHub Actions.
+let try_connect: boolean = true;  // Check if in GitHub Actions.
 
 export type XY = {
   x: number;

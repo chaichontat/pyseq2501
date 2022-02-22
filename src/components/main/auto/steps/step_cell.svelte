@@ -1,7 +1,7 @@
 <script lang="ts">
   import Dropdown from "./dropdown.svelte";
   import { userStore as us } from "$src/stores/store";
-  import type { Cmds } from "$src/stores/command";
+  import type { Cmds, Ops } from "$src/stores/command";
   import { createEventDispatcher } from "svelte";
   import { checkRange } from "$src/utils";
   import Takeimage from "$src/components/main/takeimage/takeimage.svelte";
@@ -12,10 +12,20 @@
   // Can dispatch `delete`.
   const dispatch = createEventDispatcher();
 
+  const borderColor: { [key in Ops]: string } = {
+    pump: "blue",
+    prime: "sky",
+    takeimage: "red",
+    hold: "green",
+    temp: "teal",
+    autofocus: "orange",
+    goto: "red",
+  };
+
   // $: cmd = { ...cmdDefaults[cmd.op], ...cmd }; // Second overwrites first.
 </script>
 
-<li class="relative flex py-4 pl-2 transition-all ease-in-out border-t border-gray-300 hover:bg-gray-50">
+<li class={`relative flex py-4 pb-6 pl-2 transition-all ease-in-out border-t-2 hover:bg-gray-50 border-${borderColor[cmd.op]}-300`}>
   <!-- Close -->
   <svg xmlns="http://www.w3.org/2000/svg" class="absolute w-5 h-5 -mt-1 cursor-pointer right-2" viewBox="0 0 20 20" fill="currentColor" on:click={() => dispatch("delete")}>
     <path

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Status } from "$src/stores/store";
+  import type { Status } from "$src/stores/status";
   import { statusStore } from "$src/stores/store";
   import Logo from "$comps/logo.svelte";
   import Division from "$src/components/sidebar/division.svelte";

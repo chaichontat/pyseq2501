@@ -9,7 +9,7 @@
   import { Menu, MenuButton, MenuItem, MenuItems } from "@rgossiaux/svelte-headlessui";
   import { cubicInOut } from "svelte/easing";
   import { fade } from "svelte/transition";
-  let form: HTMLFormElement;
+
   let files: FileList;
   export let fc: 0 | 1;
 
@@ -56,17 +56,16 @@
     </a>
 
     <!-- <form action={`http://localhost:8000/experiment/`} enctype="multipart/form-data" method="post" bind:this={form}> -->
-    <form action={`http://localhost:8000/experiment/${fc}/`} enctype="multipart/form-data" method="post" bind:this={form}>
-      <label>
-        <input class="hidden" name="file" type="file" accept=".yaml, .yml" bind:files on:change={uploadFile} />
-        <div class="px-4 py-1 text-base font-medium rounded-lg h-11 white-button cursor-pointer">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-          </svg>
-          Upload
-        </div>
-      </label>
-    </form>
+
+    <label>
+      <input class="hidden" name="file" type="file" accept=".yaml, .yml" bind:files on:change={uploadFile} />
+      <div class="px-4 py-1 text-base font-medium rounded-lg h-11 white-button cursor-pointer">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+        </svg>
+        Upload
+      </div>
+    </label>
 
     <!-- <form action={`http://localhost:8000/uploadfiles/`} enctype="multipart/form-data" method="post" bind:this={form}>
         <input class="" type="file" accept=".yaml, .yml" />
