@@ -1,33 +1,33 @@
-export interface Cmd {
+export interface AbstractCmd {
     op: string
 }
 
 
 
-export type Pump = Cmd & {
+export type Pump = AbstractCmd & {
     reagent: string,
     volume: number,
     op: "pump"
 }
 
-export type Prime = Cmd & {
+export type Prime = AbstractCmd & {
     reagent: string,
     volume: number,
     op: "prime"
 }
 
-export type Temp = Cmd & {
+export type Temp = AbstractCmd & {
     temp: number
     wait: boolean
     op: "temp"
 }
 
-export type Hold = Cmd & {
+export type Hold = AbstractCmd & {
     time: number,
     op: "hold"
 }
 
-export type TakeImage = Cmd & {
+export type TakeImage = AbstractCmd & {
     name: string,
     path: string,
     xy0: [number, number],
@@ -46,7 +46,7 @@ export type TakeImage = Cmd & {
     op: "takeimage"
 }
 
-export type Autofocus = Cmd & {
+export type Autofocus = AbstractCmd & {
     channels: [boolean, boolean, boolean, boolean]
     laser_onoff: boolean,
     laser: number,
@@ -54,14 +54,14 @@ export type Autofocus = Cmd & {
     op: "autofocus"
 }
 
-export type Goto = Cmd & {
+export type Goto = AbstractCmd & {
     step: number,
     n: number,
     op: "goto"
 }
 
-export type Cmds = Pump | Prime | Temp | Hold | TakeImage | Autofocus | Goto
-export type Ops = Cmds["op"]
+export type Cmd = Pump | Prime | Temp | Hold | TakeImage | Autofocus | Goto
+export type Ops = Cmd["op"]
 
 export type CmdDefaults = { "pump": Pump, "prime": Prime, "temp": Temp, "hold": Hold, "takeimage": TakeImage, "autofocus": Autofocus, "goto": Goto }
 

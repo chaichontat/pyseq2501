@@ -1,35 +1,61 @@
 <script lang="ts">
   import { browser } from "$app/env";
-
   import Reagents from "$comps/main/auto/reagents/reagents.svelte";
   import Steps from "$comps/main/auto/steps/steps.svelte";
-
-  import { experimentDefault } from "$src/stores/experiment";
+  import { Experiment, experimentDefault, fromExperiment, NExperiment, toExperiment } from "$src/stores/experiment";
+  import rawExperimentSchema from "$src/stores/experiment_schema.json";
   import { userStore as us } from "$src/stores/store";
   import { Menu, MenuButton, MenuItem, MenuItems } from "@rgossiaux/svelte-headlessui";
+  import Ajv from "ajv";
+  import yaml from "js-yaml";
   import { cubicInOut } from "svelte/easing";
   import { fade } from "svelte/transition";
+  import type { Event } from "ws";
 
-  let files: FileList;
+  // let files: FileList;
   export let fc: 0 | 1;
 
-  // $: {
-  //   console.log(files[0]);
-  //   if (files[0]) {
-  //     form.submit();
+  const ajv = new Ajv();
+  const validate = ajv.compile(rawExperimentSchema);
+
+  // async function uploadFile() {
+  //   const file = files.item(0);
+  //   if (browser && file) {
+  //     const formData = new FormData();
+  //     formData.append("file", file, file.name);
+  //     console.log(formData);
+  //     const resp = await fetch(`http://${window.location.hostname}:8000/experiment/${fc}`, { method: "POST", body: formData });
+  //     if (!resp.ok) {
+  //       console.error((await resp.json()).detail);
+  //     }
   //   }
   // }
 
-  async function uploadFile() {
-    const file = files.item(0);
-    if (browser && file) {
-      const formData = new FormData();
-      formData.append("file", file, file.name);
-      console.log(formData);
-      const resp = await fetch(`http://${window.location.hostname}:8000/experiment/${fc}`, { method: "POST", body: formData });
-      if (!resp.ok) {
-        console.error((await resp.json()).detail);
+  function toYAML(ne: NExperiment) {
+    const blob = new Blob([yaml.dump(toExperiment(ne))], { type: "application/yaml" });
+    const elem = window.document.createElement("a");
+    elem.href = window.URL.createObjectURL(blob);
+    elem.download = `${ne.name}.yaml`;
+    document.body.appendChild(elem);
+    elem.click();
+    document.body.removeChild(elem);
+  }
+
+  async function fromYAML(e: { currentTarget: EventTarget & HTMLInputElement }) {
+    if (!e.currentTarget.files) return;
+    const raw = await e.currentTarget.files[0].text();
+    try {
+      const parsed = yaml.load(raw) as Experiment;
+      if (!validate(parsed)) {
+        alert("Invalid file!");
+        return;
       }
+
+      const ne = fromExperiment(parsed, $us.max_uid);
+      $us.max_uid += ne.reagents.length + ne.cmds.length;
+      $us.exps[fc] = ne;
+    } catch (e) {
+      alert(e);
     }
   }
 </script>
@@ -48,17 +74,16 @@
   <!-- Download -->
   <!-- REMOVE BEFORE FLIGHT -->
   <div class="flex gap-x-2">
-    <a href={`http://localhost:8000/experiment/${fc}`} class="px-4 py-1 ml-8 text-base font-medium rounded-lg h-11 white-button">
+    <button class="px-4 py-1 ml-8 text-base font-medium rounded-lg h-11 white-button" on:click={() => toYAML($us.exps[fc])}>
       <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
       </svg>
       Download
-    </a>
+    </button>
 
-    <!-- <form action={`http://localhost:8000/experiment/`} enctype="multipart/form-data" method="post" bind:this={form}> -->
-
+    <!-- <form action={`http://localhost:8000/experiment/${fc}/`} enctype="multipart/form-data" method="post" bind:this={form}> -->
     <label>
-      <input class="hidden" name="file" type="file" accept=".yaml, .yml" bind:files on:change={uploadFile} />
+      <input class="hidden" name="file" type="file" accept=".yaml, .yml" on:change={fromYAML} />
       <div class="px-4 py-1 text-base font-medium rounded-lg h-11 white-button cursor-pointer">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -66,6 +91,7 @@
         Upload
       </div>
     </label>
+    <!-- </form> -->
 
     <!-- <form action={`http://localhost:8000/uploadfiles/`} enctype="multipart/form-data" method="post" bind:this={form}>
         <input class="" type="file" accept=".yaml, .yml" />
@@ -105,12 +131,14 @@
 <!-- <ProgressAuto fc={fc} /> -->
 
 <!-- {#if $us.exps[fc]} -->
-Total Time
+
+<!-- Name, Image Path -->
+<!-- <ProgressManual /> -->
 <p class="pb-3 mt-8 text-2xl font-bold text-gray-800 border-b">Details</p>
 <div class="flex flex-col text-lg font-medium">
   <p class="text-lg">Name</p>
   <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={$us.exps[fc].name} class:invalid={!$us.exps[fc].name} />
-
+  <!-- FileSystemAccessAPI cannot give path upstream of what user chooses. -->
   <p class="text-lg">Image Path</p>
   <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={$us.exps[fc].path} class:invalid={!$us.exps[fc].path} />
 </div>

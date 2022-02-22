@@ -1,9 +1,16 @@
-import { Cmds, cmdDefaults } from "./command";
+import { AbstractCmd, cmdDefaults, Cmd } from "./command";
 import { Reagent, reagentDefault, ReagentGroup } from "./reagent";
 
 export type NReagent = { uid: number; reagent: Reagent | ReagentGroup };
-export type NCmd = { uid: number; cmd: Cmds };
+export type NCmd = { uid: number; cmd: Cmd };
 
+export type Experiment = {
+    name: string,
+    path: string,
+    fc: boolean,
+    reagents: (Reagent | ReagentGroup)[],
+    cmds: Cmd[],
+}
 
 export type NExperiment = {
     name: string,
@@ -19,4 +26,24 @@ export const experimentDefault: NExperiment = {
     fc: false,
     reagents: [{ uid: 0, reagent: { ...reagentDefault } }],
     cmds: [{ uid: 0, cmd: { ...cmdDefaults.pump } }]
+}
+
+export function fromExperiment(e: Experiment, max_uid: number): NExperiment {
+    return {
+        name: e.name,
+        fc: e.fc,
+        path: e.path,
+        reagents: e.reagents.map((reagent) => ({ uid: ++max_uid, reagent })),
+        cmds: e.cmds.map((cmd) => ({ uid: ++max_uid, cmd })),
+    };
+}
+
+export function toExperiment(ne: NExperiment): Experiment {
+    return {
+        name: ne.name,
+        fc: ne.fc,
+        path: ne.path,
+        reagents: ne.reagents.map((nr: NReagent) => nr.reagent),
+        cmds: ne.cmds.map((nc: NCmd) => nc.cmd),
+    };
 }

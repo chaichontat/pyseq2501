@@ -2,11 +2,11 @@
 import { browser } from "$app/env";
 import type { Writable } from "svelte/store";
 import { writable } from "svelte/store";
+import { cmdDefaults, TakeImage } from "./command";
 import { experimentDefault, NExperiment } from "./experiment";
-import { Cmds, cmdDefaults, TakeImage } from "./command";
-import websocketStore from "./ws_store";
 import { Img, imgDefault } from "./imaging";
 import { Status, statusDefault } from "./status";
+import websocketStore from "./ws_store";
 
 
 let try_connect: boolean = true;  // Check if in GitHub Actions.
@@ -47,16 +47,6 @@ export const userStore: Writable<UserSettings> =
 
 export const cmdStore: Writable<CmdReturns> =
   try_connect && browser ? websocketStore(`ws://${ window.location.hostname }:8000/cmd`, { msg: "ok" }, (x) => JSON.parse(x), false) : writable({ msg: "ok" });
-
-  // export let status: Status = {
-  //   x: 2,
-  //   y: 5,
-  //   z_tilt: [0, 1, 2],
-  //   z_obj: 4,
-  //   laser_r: 3,
-  //   laser_g: 5,
-  //   shutter: false,
-  // };
 
   // function genSSE(): EventSource {
   //   const sse = new EventSource(`http://${ window.location.hostname }:8000/status`);

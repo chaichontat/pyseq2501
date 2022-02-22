@@ -1,0 +1,366 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$ref": "#/definitions/Experiment",
+    "definitions": {
+        "Experiment": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "fc": {
+                    "type": "boolean"
+                },
+                "reagents": {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/definitions/Reagent"
+                            },
+                            {
+                                "$ref": "#/definitions/ReagentGroup"
+                            }
+                        ]
+                    }
+                },
+                "cmds": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Cmd"
+                    }
+                }
+            },
+            "required": [
+                "name",
+                "path",
+                "fc",
+                "reagents",
+                "cmds"
+            ],
+            "additionalProperties": false
+        },
+        "Reagent": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "port": {
+                    "type": "number"
+                },
+                "v_pull": {
+                    "type": "number"
+                },
+                "v_prime": {
+                    "type": "number"
+                },
+                "v_push": {
+                    "type": "number"
+                },
+                "wait": {
+                    "type": "number"
+                }
+            },
+            "required": [
+                "name",
+                "port",
+                "v_pull",
+                "v_prime",
+                "v_push",
+                "wait"
+            ],
+            "additionalProperties": false
+        },
+        "ReagentGroup": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name"
+            ],
+            "additionalProperties": false
+        },
+        "Cmd": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/Pump"
+                },
+                {
+                    "$ref": "#/definitions/Prime"
+                },
+                {
+                    "$ref": "#/definitions/Temp"
+                },
+                {
+                    "$ref": "#/definitions/Hold"
+                },
+                {
+                    "$ref": "#/definitions/TakeImage"
+                },
+                {
+                    "$ref": "#/definitions/Autofocus"
+                },
+                {
+                    "$ref": "#/definitions/Goto"
+                }
+            ]
+        },
+        "Pump": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "reagent": {
+                    "type": "string"
+                },
+                "volume": {
+                    "type": "number"
+                },
+                "op": {
+                    "type": "string",
+                    "const": "pump"
+                }
+            },
+            "required": [
+                "op",
+                "reagent",
+                "volume"
+            ]
+        },
+        "Prime": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "reagent": {
+                    "type": "string"
+                },
+                "volume": {
+                    "type": "number"
+                },
+                "op": {
+                    "type": "string",
+                    "const": "prime"
+                }
+            },
+            "required": [
+                "op",
+                "reagent",
+                "volume"
+            ]
+        },
+        "Temp": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "temp": {
+                    "type": "number"
+                },
+                "wait": {
+                    "type": "boolean"
+                },
+                "op": {
+                    "type": "string",
+                    "const": "temp"
+                }
+            },
+            "required": [
+                "op",
+                "temp",
+                "wait"
+            ]
+        },
+        "Hold": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "time": {
+                    "type": "number"
+                },
+                "op": {
+                    "type": "string",
+                    "const": "hold"
+                }
+            },
+            "required": [
+                "op",
+                "time"
+            ]
+        },
+        "TakeImage": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "xy0": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                "xy1": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                "channels": {
+                    "type": "array",
+                    "items": {
+                        "type": "boolean"
+                    },
+                    "minItems": 4,
+                    "maxItems": 4
+                },
+                "z_tilt": {
+                    "anyOf": [
+                        {
+                            "type": "number"
+                        },
+                        {
+                            "type": "array",
+                            "items": {
+                                "type": "number"
+                            },
+                            "minItems": 3,
+                            "maxItems": 3
+                        }
+                    ]
+                },
+                "laser_onoff": {
+                    "type": "array",
+                    "items": {
+                        "type": "boolean"
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                "lasers": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                "z_obj": {
+                    "type": "number"
+                },
+                "z_spacing": {
+                    "type": "number"
+                },
+                "z_from": {
+                    "type": "number"
+                },
+                "z_to": {
+                    "type": "number"
+                },
+                "od": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                "overlap": {
+                    "type": "number"
+                },
+                "save": {
+                    "type": "boolean"
+                },
+                "op": {
+                    "type": "string",
+                    "const": "takeimage"
+                }
+            },
+            "required": [
+                "channels",
+                "laser_onoff",
+                "lasers",
+                "name",
+                "od",
+                "op",
+                "overlap",
+                "path",
+                "save",
+                "xy0",
+                "xy1",
+                "z_from",
+                "z_obj",
+                "z_spacing",
+                "z_tilt",
+                "z_to"
+            ]
+        },
+        "Autofocus": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "channels": {
+                    "type": "array",
+                    "items": {
+                        "type": "boolean"
+                    },
+                    "minItems": 4,
+                    "maxItems": 4
+                },
+                "laser_onoff": {
+                    "type": "boolean"
+                },
+                "laser": {
+                    "type": "number"
+                },
+                "od": {
+                    "type": "number"
+                },
+                "op": {
+                    "type": "string",
+                    "const": "autofocus"
+                }
+            },
+            "required": [
+                "channels",
+                "laser",
+                "laser_onoff",
+                "od",
+                "op"
+            ]
+        },
+        "Goto": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "step": {
+                    "type": "number"
+                },
+                "n": {
+                    "type": "number"
+                },
+                "op": {
+                    "type": "string",
+                    "const": "goto"
+                }
+            },
+            "required": [
+                "n",
+                "op",
+                "step"
+            ]
+        }
+    }
+}

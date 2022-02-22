@@ -1,6 +1,7 @@
 <script lang="ts">
   import Editor from "$src/components/main/auto/editor.svelte";
   import FlowcellCard from "$src/components/main/auto/flowcell_card.svelte";
+  import Modal from "$src/components/modal.svelte";
   import { userStore as us } from "$src/stores/store";
 </script>
 
@@ -13,6 +14,7 @@
   </div>
 {:else if $us.mode === "editingA"}
   <Editor fc={0} />
+  <!-- <Modal /> -->
 {:else if $us.mode === "editingB"}
   <Editor fc={1} />
 {:else}

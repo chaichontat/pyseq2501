@@ -231,29 +231,29 @@ async def get_img():
     return JSONResponse(jsonable_encoder(img))
 
 
-@app.get("/experiment/{fc}")
-async def download(fc: int):
-    resp = StreamingResponse(
-        io.StringIO(yaml.safe_dump(userSettings.exps[fc].to_experiment().dict(), sort_keys=False)),
-        media_type="application/yaml",
-    )
-    print(userSettings.exps[fc].to_experiment())
-    resp.headers["Content-Disposition"] = f"attachment; filename={userSettings.exps[fc].name}.yaml"
-    return resp
+# @app.get("/experiment/{fc}")
+# async def download(fc: int):
+#     resp = StreamingResponse(
+#         io.StringIO(yaml.safe_dump(userSettings.exps[fc].to_experiment().dict(), sort_keys=False)),
+#         media_type="application/yaml",
+#     )
+#     print(userSettings.exps[fc].to_experiment())
+#     resp.headers["Content-Disposition"] = f"attachment; filename={userSettings.exps[fc].name}.yaml"
+#     return resp
 
 
-@app.post("/experiment/{fc}")
-async def create_file(fc: bool, file: UploadFile):
-    f: IO[bytes] = file.file  # type: ignore
-    try:
-        y = yaml.safe_load(f)
-        print(y)
-        ne = NExperiment.from_experiment(Experiment.parse_obj(y), userSettings.max_uid)
-        ne.fc = fc
-        userSettings.max_uid += len(ne.reagents) + len(ne.cmds)
-        userSettings.exps[fc] = ne
+# @app.post("/experiment/{fc}")
+# async def create_file(fc: bool, file: UploadFile):
+#     f: IO[bytes] = file.file  # type: ignore
+#     try:
+#         y = yaml.safe_load(f)
+#         print(y)
+#         ne = NExperiment.from_experiment(Experiment.parse_obj(y), userSettings.max_uid)
+#         ne.fc = fc
+#         userSettings.max_uid += len(ne.reagents) + len(ne.cmds)
+#         userSettings.exps[fc] = ne
 
-        q_user.put_nowait(None)
-    except BaseException as e:
-        raise HTTPException(400, detail=f"{type(e).__name__}: {e}")
-    return "ok"
+#         q_user.put_nowait(None)
+#     except BaseException as e:
+#         raise HTTPException(400, detail=f"{type(e).__name__}: {e}")
+#     return "ok"
