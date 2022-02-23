@@ -1,12 +1,10 @@
 export function flash(element: HTMLElement) {
     requestAnimationFrame(() => {
         element.style.transition = "none";
-        element.style.color = "rgba(255,62,0,1)";
-        element.style.backgroundColor = "rgba(255,62,0,0.2)";
+        element.style.backgroundColor = "rgba(255,62,0,0.3)";
 
         setTimeout(() => {
-            element.style.transition = "color 1s, background 1s";
-            element.style.color = "";
+            element.style.transition = "background 1s";
             element.style.backgroundColor = "";
         });
     });

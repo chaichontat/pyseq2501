@@ -1,62 +1,35 @@
 import asyncio
 import logging
-import os
-from concurrent.futures import Future
-from dataclasses import dataclass
-from typing import AsyncGenerator, Callable, Coroutine, NoReturn
+from typing import Literal, NoReturn
 
-from fastapi import Request, WebSocket, WebSocketDisconnect
+from fastapi import WebSocket
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
-from websockets.exceptions import ConnectionClosedOK
 
-from pyseq2.imager import Imager, Position
+from pyseq2.imager import Imager, State
 
 logger = logging.getLogger(__name__)
 
 
-class Moves(BaseModel):
-    pos: float
-    in_position: bool
+class FCState(BaseModel):
+    state: Literal["idle", "running"]
+    step: int
 
 
-# class Status(State):
-#     x: int
-#     y: int
-#     z_tilt: tuple[int, int, int]
-#     z_obj: int
-#     laser_r: int
-#     laser_g: int
-#     shutter: bool
-#     moving: bool
-#     msg: str
+class WebState(State):
+    msg: str
 
 
-async def poll_status(websocket: WebSocket, imager: Imager, q: asyncio.Queue[bool]):
+message = "Idle"
+
+
+async def poll_status(websocket: WebSocket, imager: Imager, q_log: asyncio.Queue[str]):
+    global message
     while True:
         try:
-            await asyncio.wait_for(q.get(), 5)
+            message = await asyncio.wait_for(q_log.get(), 5)
         except asyncio.TimeoutError:
             ...
         finally:
-            await websocket.send_json(jsonable_encoder(await imager.state))
-
-
-# Just use Terminal®.
-# async def logGenerator(request: Request):
-#     i = 0
-#     while True:
-#         yield i
-#         await asyncio.sleep(1)
-#         i += 1
-#     # for line in tail("-f", LOGFILE, _iter=True):
-#     #     if await request.is_disconnected():
-#     #         print("client disconnected!!!")
-#     #         break
-#     #     yield line
-#     #     time.sleep(0.5)
-
-
-# async def logs(request: Request):
-#     event_generator = logGenerator(request)
-#     return EventSourceResponse(event_generator)
+            state = WebState(**(await imager.state).dict(), msg=message)
+            await websocket.send_json(jsonable_encoder(state))

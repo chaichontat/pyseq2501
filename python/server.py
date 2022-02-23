@@ -2,44 +2,36 @@
 from __future__ import annotations
 
 import asyncio
-import io
 import logging
 import os
-import time
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from typing import IO, Coroutine, Generator, Literal, NoReturn
+from typing import Coroutine, Generator, Literal, NoReturn
 
 import numpy as np
-from fastapi import FastAPI, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse
 from PIL import Image
 from pydantic import BaseModel
-from rich.logging import RichHandler
+
 from websockets.exceptions import ConnectionClosedOK
 
 from cmd_uid import NExperiment
 from imaging import update_img
+from log import setup_web_logger
 from pyseq2.experiment import *
 from pyseq2.fakes import FakeFlowCells, FakeImager
 from pyseq2.imager import Imager
-from pyseq2.utils.ports import FAKE_PORTS, get_ports
+from pyseq2.utils.ports import get_ports
 from status import poll_status
 
-logging.basicConfig(
-    level="INFO",
-    format="[yellow]%(name)-10s[/] %(message)s",
-    datefmt="[%X]",
-    handlers=[RichHandler(markup=True)],
-)
+q_cmd: asyncio.Queue[CommandResponse | tuple[int, int, int]] = asyncio.Queue()
+q_user: asyncio.Queue[None] = asyncio.Queue()
+q_log: asyncio.Queue[str] = asyncio.Queue()
 
-# Disable uvicorn loggers.
-logging.getLogger("uvicorn.access").handlers = []
-for _log in ["uvicorn", "uvicorn.error", "fastapi"]:
-    _logger = logging.getLogger(_log)
-    _logger.handlers = []
+setup_web_logger(q_log)
 
 logger = logging.getLogger(__name__)
 app = FastAPI()
@@ -64,20 +56,17 @@ class CommandResponse(BaseModel):
     error: str | None = None
 
 
-q_cmd: asyncio.Queue[CommandResponse | tuple[int, int, int]] = asyncio.Queue()
-q_user: asyncio.Queue[None] = asyncio.Queue()
-
-
 @app.on_event("startup")
 async def startup_event():
     global imager, fcs, q_cmd
+    ports = await get_ports(60)
     if os.environ.get("FAKE_HISEQ", "0") != "1":
-        imager = await Imager.ainit(ports := await get_ports(60))
+        imager = await Imager.ainit(ports)
         fcs = await FlowCells.ainit(ports)
 
     else:
-        imager = await FakeImager.ainit(FAKE_PORTS)
-        fcs = await FakeFlowCells.ainit(FAKE_PORTS)
+        imager = await FakeImager.ainit(ports)
+        fcs = await FakeFlowCells.ainit(ports)
 
 
 dark = np.zeros((2, 2048, 2048), dtype=np.uint8)
@@ -216,7 +205,7 @@ async def poll(websocket: WebSocket) -> None:
     await websocket.accept()
     try:
         while True:
-            await poll_status(websocket, imager, q_cmd)
+            await poll_status(websocket, imager, q_log)
     except (WebSocketDisconnect, RuntimeError, ConnectionClosedOK):
         ...
 

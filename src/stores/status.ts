@@ -20,5 +20,5 @@ export const statusDefault: Readonly<Status> = {
     laser_onoff: [true, true],
     lasers: [-1, -1],
     shutter: false,
-    msg: "",
+    msg: "Idle",
 };
