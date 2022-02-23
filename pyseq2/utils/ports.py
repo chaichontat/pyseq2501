@@ -1,5 +1,7 @@
 #%%
 import asyncio
+import logging
+import os
 import time
 from pprint import pprint
 from typing import TypeVar, cast
@@ -9,7 +11,7 @@ import serial.tools.list_ports
 from pyseq2.base.instruments_types import SerialPorts
 
 T = TypeVar("T")
-
+logger = logging.getLogger(__name__)
 
 serial_names: dict[SerialPorts, str] = dict(
     x="IL000001A",
@@ -39,6 +41,10 @@ async def get_ports(timeout: int | float = 1, show_all: bool = False) -> dict[Se
     Returns:
         Ports: Dataclass of relevant components and their COM ports.
     """
+    if os.environ.get("FAKE_HISEQ", "0") == "1":
+        logger.warning("Using fake ports.")
+        return FAKE_PORTS
+
     t0 = time.monotonic()
     while time.monotonic() - t0 < timeout:
         ports = cast(
