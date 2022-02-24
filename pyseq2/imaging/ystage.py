@@ -7,7 +7,7 @@ from typing import Any, Callable, Literal, Optional
 
 from pyseq2.base.instruments import Movable, UsesSerial
 from pyseq2.com.async_com import COM, CmdParse
-from pyseq2.utils.utils import chkrng, ok_if_match, ok_re, λ_float, λ_int
+from pyseq2.utils.utils import chkrng, ok_if_match, ok_re, λ_float, λ_int, λ_str
 
 logger = logging.getLogger(__name__)
 
@@ -70,11 +70,11 @@ class YCmd:
 
     # fmt: off
     SET_POS    = CmdParse(λ_int(chkrng(lambda x: f"D{x}", *RANGE)), ok_re(r"1D\-?\d+"))
-    GET_POS    = CmdParse("R(PA)",                    gen_reader(r"R\(PA\)"), n_lines=2)  # Report(Position Actual)
-    IS_MOVING  = CmdParse("R(MV)", lambda x: bool(gen_reader(r"R\(MV\)")(x)), n_lines=2)
-    RETURN_WHEN_MOVE_DONE  = CmdParse("GOTO(CHKMV)", ok_if_match("1GOTO(CHKMV)"), n_lines=1, delayed_parser=ok_if_match("Move Done"))  # Returns when move is completed.
-    TARGET_POS = CmdParse("R(PT)",                    gen_reader(r"R\(PT\)")    , n_lines=2)
-    GAINS      = CmdParse(lambda x: f"GAINS({x})", ok_re(r"GAINS\(([\d\.,]+)\)"))
+    GET_POS    = CmdParse("R(PA)"                         , gen_reader(r"R\(PA\)"), n_lines=2)  # Report(Position Actual)
+    IS_MOVING  = CmdParse("R(MV)"                         , lambda x: bool(gen_reader(r"R\(MV\)")(x)), n_lines=2)
+    RETURN_WHEN_MOVE_DONE  = CmdParse("GOTO(CHKMV)"       , ok_if_match("1GOTO(CHKMV)"), n_lines=1, delayed_parser=ok_if_match("Move Done"), timeout=60)  # Returns when move is completed.
+    TARGET_POS = CmdParse("R(PT)",                          gen_reader(r"R\(PT\)")    , n_lines=2)
+    GAINS      = CmdParse(λ_str  (lambda x: f"GAINS({x})"), ok_re(r"GAINS\(([\d\.,]+)\)"))
     VELO       = CmdParse(λ_float(lambda x: f"V{x}")      , ok_re(r"V([\d\.]+)"))
 
     GO            = echo("G")
@@ -86,7 +86,10 @@ class YCmd:
     # fmt: on
 
     RESET = CmdParse(
-        "Z", ok_re(r"1Z\n\*ViX250IH\-Servo Drive\n\*REV 2\..+\n\*Copyright 2003 Parker\-Hannifin"), n_lines=4
+        "Z",
+        ok_re(r"1Z\n\*ViX250IH\-Servo Drive\n\*REV 2\..+\n\*Copyright 2003 Parker\-Hannifin"),
+        n_lines=4,
+        timeout=10,
     )  # p.96, 180
 
 
