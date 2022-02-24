@@ -49,6 +49,7 @@ async def poll_status(websocket: WebSocket, imager: Imager, q_log: asyncio.Queue
         while True:
             try:
                 message = await asyncio.wait_for(q_log.get(), 5)
+                state.msg = message
             except asyncio.TimeoutError:
                 ...
             finally:
