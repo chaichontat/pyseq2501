@@ -159,13 +159,13 @@ class COM:
                 .decode(**ENCODING_KW)
             )
 
-            logger.debug(f"{self.name}[cyan]Raw: {str(raw)[2:-1]}")
+            log_line = f"{self.name}[cyan]Raw: {str(raw)[2:-1]:20s}"
 
             if not resp:
                 continue
 
             if self.no_check:
-                logger.debug(resp)
+                logger.debug(log_line)
                 continue
 
             if buffer:
@@ -184,9 +184,7 @@ class COM:
                 except InvalidResponse:
                     ...
                 else:
-                    logger.debug(
-                        f"{self.name}[yellow]Rx:  {str(rbuffer)[2:-1]:20s} [green]Parsed: '{parsed}'"
-                    )
+                    logger.debug(f"{log_line}[green]Parsed: '{parsed}'")
                     fut.set_result(parsed)
                     del self._waiting[i]
                     buffer, rbuffer = "", b""
