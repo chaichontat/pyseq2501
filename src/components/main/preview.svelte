@@ -28,12 +28,13 @@
   }
 
   function updateImg(c: CommandResponse) {
-    if (browser && c.msg === "imgReady")
+    if (browser && c.msg === "imgReady") {
       fetch(`http://${window.location.hostname}:8000/img`)
         .then((response: Response) => response.json())
         .then((i: Img) => (img = i))
         .catch((e) => alert(e));
-    $us.block = "";
+      $us.block = "";
+    }
   }
 
   $: updateImg($cmdStore);
