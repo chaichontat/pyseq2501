@@ -27,7 +27,6 @@ def setup_web_logger(
         # if set_root:
         logging.getLogger("pyseq2").handlers.append(web_handler)
 
-    if set_root:
-        for _log in ["uvicorn", "uvicorn.error", "fastapi"]:
-            logging.getLogger(_log).handlers = []
-            logging.getLogger(_log).setLevel(level)
+    for _log in ["uvicorn", "uvicorn.error", "fastapi"]:
+        logging.getLogger(_log).handlers = []
+        logging.getLogger(_log).setLevel(level)
