@@ -23,6 +23,7 @@ def setup_web_logger(
 
     if q:
         web_handler = logging.StreamHandler(AsyncQueueStream(q))
+        web_handler.setLevel("INFO")
         web_handler.setFormatter(logging.Formatter("%(message)s"))
         # if set_root:
         logging.getLogger("pyseq2").handlers.append(web_handler)
