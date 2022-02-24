@@ -1,153 +1,98 @@
-// From https://github.com/arlac77/svelte-websocket-store
+import { Readable, Writable, writable } from "svelte/store";
 
-import { Subscriber, Unsubscriber, Updater, Readable, Writable, writable } from "svelte/store"
-/**
- * Create a writable store based on a web-socket.
- * Data is transferred as JSON.
- * Keeps socket open (reopens if closed) as long as there are subscriptions.
- * @param {string} url the WebSocket url
- * @param {string[]} socketOptions transparently passed to the WebSocket constructor
- * @return {Store}
- */
-const reopenTimeouts = [2000, 5000, 10000, 30000, 60000];
 type ValidType = string; // | ArrayBufferLike | Blob | ArrayBufferView;
 
 export type wsConfig = {
     f?: (x: ValidType) => any
     broadcastOnSet?: boolean,
-    beforeOpen?: () => Promise<void>,
-    onClose?: () => void
+    beforeOpen?: () => Promise<void>
 }
 
-// TODO Asymmetric store.
-export function websocketStore<T>(url: string, value: T,
-    { f = JSON.parse, broadcastOnSet, beforeOpen, onClose }: wsConfig = {}): Writable<T> {
+export function writableWebSocket<T extends object | string>(url: string, initialValue: T,
+    { f = JSON.parse, broadcastOnSet, beforeOpen }: wsConfig = {}): Writable<T> {
     // console.log(`%cInitializing ${ url }.`, "color:green")
     let socket: WebSocket
-    let openPromise: Promise<boolean>
-    let reopenTimeoutHandler: ReturnType<typeof setTimeout> | undefined;
-    let reopenCount: number = 0;
-    let t0 = Date.now()
+    let timeout: ReturnType<typeof setTimeout> | null
+    const { set, subscribe, update } = writable(initialValue)
 
-    const subscribers: Set<Subscriber<T>> = new Set();
-
-    function reopenTimeout(): number {
-        const n = reopenCount;
-        reopenCount++;
-        return reopenTimeouts[
-            n >= reopenTimeouts.length - 1 ? reopenTimeouts.length - 1 : n
-        ];
-    }
-
-    function close(): void {
-        if (reopenTimeoutHandler) {
-            clearTimeout(reopenTimeoutHandler);
-        }
-
-        if (socket.readyState !== WebSocket.CLOSED) {
-            socket.close();
-        }
-    }
-
-    function reopen(): void {
-        close();
-        if (onClose) onClose();
-        if (subscribers.size > 0) {
-            reopenTimeoutHandler = setTimeout(() => open(), reopenTimeout());
-        }
-    }
-
-    async function open(): Promise<boolean> {
-        if (reopenTimeoutHandler) {
-            clearTimeout(reopenTimeoutHandler);
-            reopenTimeoutHandler = undefined;
-        }
-
+    async function _open() {
         if (beforeOpen) await beforeOpen()
-
-        // we are still in the opening phase
-        // if (socket.readyState === WebSocket.CONNECTING || socket.readyState === WebSocket) return openPromise;
 
         socket = new WebSocket(url);
         socket.onmessage = (event: MessageEvent): void => {
             console.log(event.data)
-            subscribers.forEach((subscriber) => {
-                // @ts-ignore
-                value = f(event.data)
-                subscriber(value)
-            });
+            set(f(event.data))
         };
 
-        socket.onclose = (_: CloseEvent): void => (reopen())
+        socket.onopen = () => {
+            if (timeout) {
+                clearTimeout(timeout)
+                timeout = null
+            }
+        }
 
-        openPromise = new Promise((resolve, reject) => {
-            socket.onerror = (error: Event): void => {
-                console.error("Websocket error")
-                reject(error);
-            };
-            socket.onopen = (_: Event): void => {
-                reopenCount = 0;
-                t0 = Date.now()
-                resolve(true);
-            };
-        });
-        return openPromise;
+        socket.onclose = () => {
+            if (timeout) timeout = setTimeout(_open, 1000)
+        }
     }
 
-    open();
+    set(initialValue)
+    _open();
 
     return {
-        set(value: T): void {
-            console.log(value)
-            const send =
-                (typeof value == "object")
-                    ? () => socket.send(JSON.stringify(value))
-                    // @ts-ignore
-                    : () => socket.send(value)
-
-            if (socket) {
-                switch (socket.readyState) {
-                    case WebSocket.CLOSED || WebSocket.CLOSING: {
-                        open().then(send)
-                        break;
-                    }
-                    case WebSocket.CONNECTING: {
-                        openPromise.then(send)
-                        break;
-                    }
-                    case WebSocket.OPEN: {
-                        send()
-                        break;
-                    }
-                }
+        set(v: T) {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(typeof v === "object" ? JSON.stringify(v) : v)
             }
 
-            if (broadcastOnSet) {
-                subscribers.forEach((subscriber: Subscriber<T>) => (subscriber(value)));
-            }
+            if (broadcastOnSet) set(v);
         },
-
-        update(updater: Updater<T>) { subscribers.forEach((subscriber) => subscriber(updater(value))) },
-
-        subscribe(subscriber: Subscriber<T>): Unsubscriber {
-            subscriber(value);
-            subscribers.add(subscriber);
-            return () => (subscribers.delete(subscriber))
-        }
+        update,
+        subscribe,
     };
 }
 
-export default websocketStore;
+export function readableWebSocket<T extends object | string>(url: string, initialValue: T,
+    { f = JSON.parse, broadcastOnSet, beforeOpen }: wsConfig = {}): Readable<T> {
+    return {
+        subscribe: writableWebSocket(url, initialValue, { f, broadcastOnSet, beforeOpen }).subscribe
+    }
+}
+
+export default writableWebSocket;
 
 
 class WebSocketStore<T> {
-    protected ws: WebSocket
-    #subscribers: Set<Subscriber<T>>
+    protected ws: WebSocket | null
+    protected url: string
+    protected f: (arg0: string) => T
+    #timeout: ReturnType<typeof setTimeout> | null
+    protected wr: Writable<T>
 
-
-    constructor (url: string) {
-        const { subscribe, set, update } = writable(0);
-        this.ws = new WebSocket(url);
-        this.#subscribers = new Set();
+    constructor (url: string, value: T, f = JSON.parse) {
+        this.wr = writable(value);
+        this.url = url
+        this.f = f
+        this.#timeout = null
+        this.ws = null
+        this._open()
     }
+
+    _open() {
+        this.ws = new WebSocket(this.url);
+        this.ws.onopen = () => {
+            if (this.#timeout)
+                clearTimeout(this.#timeout)
+
+        }
+        this.ws.onmessage = (event: MessageEvent) => (this.wr.set(this.f(event.data)));
+
+        this.ws.onclose = () => {
+            if (!this.#timeout)
+                this.#timeout = setTimeout(this._open, 5000)
+        }
+    }
+
 }
+
+

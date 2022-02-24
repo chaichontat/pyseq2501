@@ -1,11 +1,11 @@
 
 import { browser } from "$app/env";
-import type { Writable } from "svelte/store";
+import type { Readable, Writable } from "svelte/store";
 import { writable } from "svelte/store";
 import { cmdDefaults, TakeImage } from "./command";
 import { experimentDefault, NExperiment } from "./experiment";
 import { Status, statusDefault } from "./status";
-import websocketStore from "./ws_store";
+import writableWebSocket, { readableWebSocket } from "./ws_store";
 
 
 let try_connect: boolean = true;  // Check if in GitHub Actions.
@@ -39,18 +39,18 @@ export type LocalInfo = { "mode": "auto" | "editingA" | "editingB" | "manual", "
 export const localStore: Writable<LocalInfo> = writable({ mode: "auto", connected: false })
 
 // TODO: Make this read-only.
-export const statusStore: Writable<Status> =
-  try_connect && browser ? websocketStore(`ws://${ window.location.hostname }:8000/status`, { ...statusDefault })
+export const statusStore: Readable<Status> =
+  try_connect && browser ? readableWebSocket(`ws://${ window.location.hostname }:8000/status`, { ...statusDefault })
     : writable({ ...statusDefault });
 
 export const userStore: Writable<UserSettings> = writable({ ...userDefault })
 
-export const user_ws = try_connect && browser ? websocketStore(`ws://${ window.location.hostname }:8000/user`, { ...userDefault },
+export const user_ws = try_connect && browser ? writableWebSocket(`ws://${ window.location.hostname }:8000/user`, { ...userDefault },
   { beforeOpen: initial_get })
   : writable({ ...userDefault });
 
 export const cmdStore: Writable<CommandResponse> =
-  try_connect && browser ? websocketStore(`ws://${ window.location.hostname }:8000/cmd`, { msg: "ok" }, { broadcastOnSet: false })
+  try_connect && browser ? writableWebSocket(`ws://${ window.location.hostname }:8000/cmd`, { msg: "ok" }, { broadcastOnSet: false })
     : writable({ msg: "ok" });
 
 
@@ -65,7 +65,7 @@ export async function initial_get() {
         return;
       } catch (e) {
         console.error("Cannot get initial user settings.")
-        await new Promise(r => setTimeout(r, 1000));  // Sleep for 1 second.
+        // await new Promise(r => setTimeout(r, 1000));  // Sleep for 1 second.
       }
     }
   }
