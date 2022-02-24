@@ -105,7 +105,7 @@ class COM:
         min_spacing: Annotated[int | float, "s"] = 0.01,
         separator: bytes = b"\n",
         no_check: bool = False,
-        test_params: Optional[dict] = None,
+        test_params: Optional[dict[Any, Any]] = None,
     ):
         baudrate = 115200 if name in ("fpga", "arm9chem", "arm9pe") else 9600
         kwargs = {"name": name, "test_params": test_params} if test_params is not None else {}
@@ -129,7 +129,7 @@ class COM:
     def __init__(
         self,
         name: SerialInstruments,
-        test_params: Optional[dict],
+        test_params: Optional[dict[Any, Any]],
         min_spacing: Annotated[int | float, "s"] = 0.01,
         separator: bytes = b"\n",
         no_check: bool = False,

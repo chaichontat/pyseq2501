@@ -25,7 +25,7 @@ class TiltCmd:
 # fmt:on
 
 
-class ZTilt(FPGAControlled, Movable):
+class ZTilt(FPGAControlled):
     STEPS_PER_UM = 0.656
     RANGE = (0, 25000)
     HOME = 21500
@@ -72,7 +72,7 @@ class ZTilt(FPGAControlled, Movable):
     @property
     async def pos(self) -> tuple[int, int, int]:
         async with self.lock:
-            resp = cast(tuple[int, int, int], await self.all_z(TiltCmd.READ_POS))
+            resp = await self.all_z(TiltCmd.READ_POS)
             if not all(map(lambda x: x >= 0, resp)):
                 raise Exception("Invalid Z position. Initialize first.")
             return resp

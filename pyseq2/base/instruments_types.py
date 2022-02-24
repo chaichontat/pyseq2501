@@ -5,6 +5,8 @@ At least we have auto-complete for dict keys.
 
 from typing import Callable, Literal, cast
 
+from pyseq2.utils.utils import λ_str
+
 ImagingInstruments = Literal["x", "y", "laser_g", "laser_r"]
 FPGAInstruments = Literal["optics", "z_obj", "z_tilt"]
 
@@ -41,19 +43,19 @@ COLOR = cast(
 FORMATTER = cast(
     dict[SerialInstruments, Callable[[str], str]],
     dict(
-           x=lambda x:   f"{x}\r",
-           y=lambda x:  f"1{x}\r\n",  # Axis 1
-     laser_g=lambda x:   f"{x}\r",
-     laser_r=lambda x:   f"{x}\r",
-    arm9chem=lambda x:   f"{x}\r",
-      arm9pe=lambda x:   f"{x}\r",
-       pumpa=lambda x: f"/1{x}\r",
-       pumpb=lambda x: f"/1{x}\r",
-    valve_a1=lambda x:   f"{x}\r",
-    valve_a2=lambda x:   f"{x}\r",
-    valve_b1=lambda x:   f"{x}\r",
-    valve_b2=lambda x:   f"{x}\r",
-        fpga=lambda x:   f"{x}\n",
+           x=λ_str(lambda x:   f"{x}\r"),
+           y=λ_str(lambda x:  f"1{x}\r\n"),  # Axis 1
+     laser_g=λ_str(lambda x:   f"{x}\r"),
+     laser_r=λ_str(lambda x:   f"{x}\r"),
+    arm9chem=λ_str(lambda x:   f"{x}\r"),
+      arm9pe=λ_str(lambda x:   f"{x}\r"),
+       pumpa=λ_str(lambda x: f"/1{x}\r"),
+       pumpb=λ_str(lambda x: f"/1{x}\r"),
+    valve_a1=λ_str(lambda x:   f"{x}\r"),
+    valve_a2=λ_str(lambda x:   f"{x}\r"),
+    valve_b1=λ_str(lambda x:   f"{x}\r"),
+    valve_b2=λ_str(lambda x:   f"{x}\r"),
+        fpga=λ_str(lambda x:   f"{x}\n"),
     ),
 )
 # fmt: on

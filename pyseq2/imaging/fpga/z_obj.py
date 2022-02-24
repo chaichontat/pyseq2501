@@ -41,11 +41,11 @@ class ZObj(FPGAControlled, Movable):
         return await self.com.send(ObjCmd.SET_VELO(5))
 
     @property
-    async def pos(self) -> int | None:
+    async def pos(self) -> int:
         return await self.com.send(ObjCmd.GET_POS)
 
-    async def move(self, x: int) -> bool:
-        return await self.com.send(ObjCmd.SET_POS(int(x)))
+    async def move(self, pos: int) -> None:
+        await self.com.send(ObjCmd.SET_POS(int(pos)))
 
     @asynccontextmanager
     async def af_arm(
