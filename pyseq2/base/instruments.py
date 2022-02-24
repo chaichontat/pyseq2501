@@ -20,7 +20,7 @@ class Movable(metaclass=ABCMeta):
     HOME: ClassVar[int]
 
     @abstractmethod
-    async def move(self, pos: int, **kwargs: Any) -> None:
+    async def move(self, pos: int) -> None:
         """
         Args:
             pos (int): Target position
