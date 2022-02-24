@@ -20,8 +20,9 @@ def setup_logger(*, set_root: bool = False, save: bool = False, level: str = "IN
         handlers.append(FileHandler(path))
 
     if set_root:
-        logging.basicConfig(level="CRITICAL", datefmt="[%X]", handlers=handlers)
+        logging.basicConfig(level="CRITICAL", handlers=handlers)
 
     logger = logging.getLogger("pyseq2")
     logger.setLevel(level)
     logger.handlers = handlers
+    logger.propagate = False
