@@ -111,7 +111,8 @@ class Imager:
         return Position(**dict(zip(names.keys(), res)))  # type: ignore
 
     @property
-    async def state(self) -> State:
+    async def state(self) -> State | None:
+        logger.debug("Begin state run.")
         raw = {
             "on0": self.lasers[0].status,
             "on1": self.lasers[1].status,
@@ -123,7 +124,12 @@ class Imager:
             "pos": self.pos,
         }
 
-        raw = dict(zip(raw.keys(), await asyncio.gather(*raw.values())))
+        try:
+            raw = dict(zip(raw.keys(), await asyncio.gather(*raw.values())))
+        except asyncio.TimeoutError:
+            logger.critical("Timeout on state retrieval.")
+            return None
+
         optic_state = {
             "laser_onoff": (raw["on0"], raw["on1"]),
             "lasers": (raw["p0"], raw["p1"]),
@@ -131,6 +137,7 @@ class Imager:
             "od": (raw["od0"], raw["od1"]),
         }
         pos: Position = cast(Position, raw["pos"])
+        logger.debug("End state run.")
         return State(**optic_state, **pos.dict())
 
     async def wait_ready(self) -> None:
