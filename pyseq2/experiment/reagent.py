@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Sequence
+from copy import deepcopy
 
 from pydantic import BaseModel, validator
 
@@ -46,28 +46,34 @@ class ReagentGroup(BaseModel):
         return ReagentGroup(name="")
 
 
-Reagents = Sequence[Reagent | ReagentGroup]
-CompiledReagents = dict[str, list[Reagent]]  # Key is group name.
+class CompiledReagents(BaseModel):
+    lone: dict[str, Reagent]
+    groups: dict[str, list[Reagent]]
+
+
+Reagents = list[Reagent | ReagentGroup]
 
 
 def compile_reagents(reagents: Reagents) -> CompiledReagents:
-    reagent_groups: defaultdict[str, list[Reagent]] = defaultdict(list)
+    reagents = deepcopy(reagents)
+    lone: dict[str, Reagent] = {}
+    groups: defaultdict[str, list[Reagent]] = defaultdict(list)
     curr_group = ""
-    i = 0
-    for v in reagents:
-        if not isinstance(v, ReagentGroup):
-            reagent_groups[curr_group].append(v)
-            if not curr_group:
-                reagent_groups[""].append(v)
+    i = 1
+    for r in reagents:
+        if isinstance(r, ReagentGroup):
+            if i == 0:
+                raise ValueError(f"Group {curr_group} has no member.")
+            curr_group = r.name
+            i = 0
+        else:
+            if curr_group:
+                groups[curr_group].append(r)
+            else:
+                lone[r.name] = r
             i += 1
-            continue
 
-        if i == 0:
-            raise ValueError(f"Group {curr_group} has no member.")
-        curr_group = v.name
-        i = 0
-
-    if i == 0:
+    if i == 0:  # Prevent group from being the last one.
         raise ValueError(f"Group {curr_group} has no member.")
 
-    return dict(reagent_groups)
+    return CompiledReagents(lone=lone, groups=dict(groups))
