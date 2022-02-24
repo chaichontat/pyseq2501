@@ -2,27 +2,20 @@ from __future__ import annotations
 
 import asyncio
 import re
-from math import ceil
 from typing import (
     Any,
     Awaitable,
     Callable,
+    Container,
     Dict,
     Literal,
-    Optional,
     ParamSpec,
     Sequence,
     Tuple,
-    TypedDict,
     TypeVar,
     cast,
     overload,
 )
-
-TILE_WIDTH = 0.769  # mm
-RESOLUTION = 0.375  # µm / px
-BUNDLE_HEIGHT = 128  # Height of sensor
-NYQUIST_OBJ = 235  # Nyquist dist in objective steps
 
 FlowCell = Literal["A", "B"]
 FLOWCELL_ORIGIN: Dict[FlowCell, Tuple[int, int]] = {
@@ -45,7 +38,7 @@ class ParamChangeTimeout(Exception):
     ...
 
 
-def ok_if_match(expected: Sequence[str] | str, exception_on_fail: bool = True) -> Callable[[str], bool]:
+def ok_if_match(expected: Container[str] | str, exception_on_fail: bool = True) -> Callable[[str], bool]:
     def wrapped(resp: str) -> bool:
         if resp == expected:
             return True
