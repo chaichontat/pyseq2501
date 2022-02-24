@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 import time
 from asyncio import Future, StreamReader, StreamWriter
 from dataclasses import dataclass
@@ -57,6 +56,7 @@ class CmdParse(Generic[P, T]):
     parser: Callable[[str], T] | None
     delayed_parser: Callable[[str], T] | None = None
     n_lines: int = 1
+    timeout: float | None = 5.0
     # If you're adding some new variables don't forget to add them to __call__.
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> CmdParse[P, T]:
@@ -67,6 +67,7 @@ class CmdParse(Generic[P, T]):
             self.parser,
             delayed_parser=self.delayed_parser,
             n_lines=self.n_lines,
+            timeout=self.timeout,
         )
 
     def __str__(self) -> str:
@@ -236,7 +237,7 @@ class COM:
 
             await self._send(self.formatter(cmd.cmd).encode(**ENCODING_KW))
 
-        return await fut
+        return await (asyncio.wait_for(fut, cmd.timeout) if cmd.timeout else fut)
 
     async def _send(self, msg: bytes) -> None:
         """This needs to be synchronous to maintain order of execution.
