@@ -31,9 +31,8 @@ q_cmd: asyncio.Queue[CommandResponse | tuple[int, int, int]] = asyncio.Queue()
 q_user: asyncio.Queue[None] = asyncio.Queue()
 q_log: asyncio.Queue[str] = asyncio.Queue()
 
-setup_web_logger(q_log)
+logger = setup_web_logger(q_log)
 
-logger = logging.getLogger(__name__)
 app = FastAPI()
 thr = ThreadPoolExecutor(max_workers=1)
 app.add_middleware(
