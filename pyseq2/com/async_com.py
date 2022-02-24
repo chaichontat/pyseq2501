@@ -235,7 +235,14 @@ class COM:
 
             await self._send(self.formatter(cmd.cmd).encode(**ENCODING_KW))
 
-        return await (asyncio.wait_for(fut, cmd.timeout) if cmd.timeout else fut)
+        return await (asyncio.wait_for(self.catchable_future(fut, cmd), cmd.timeout) if cmd.timeout else fut)
+
+    async def catchable_future(self, fut: asyncio.Future[T], cmd: CmdParse[Any, T]) -> T:
+        try:
+            return await fut
+        except asyncio.CancelledError as e:
+            logger.error(f"{self.name} timeout after {cmd.timeout} from {cmd.cmd}.")
+            raise e
 
     async def _send(self, msg: bytes) -> None:
         """This needs to be synchronous to maintain order of execution.
