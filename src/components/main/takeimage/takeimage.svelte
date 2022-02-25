@@ -128,9 +128,17 @@
       </div>
 
       <div class="space-y-2">
-        <label>
+        <label class="flex items-center gap-x-1">
           <input type="checkbox" class="mr-1 rounded" bind:checked={z_stack} />
-          Z-Stack
+          <div class="flex divide-x-2">
+            <div class="pr-2">Z-Stack</div>
+            {#if z_stack}
+              <div class="px-2 font-base">
+                {stats.n_z} Z step{#if stats.n_z > 1}s{/if} from {params.z_obj + params.z_from * params.z_spacing} to {params.z_obj + params.z_to * params.z_spacing}
+              </div>
+              <div class="px-2 font-semibold">Total time: {stats.n_z ? genTime(stats.n_z * stats.time) : genTime(stats.time)}.</div>
+            {/if}
+          </div>
         </label>
         <div class="flex font-medium" id="zBox">
           <span class="flex items-center border-l rounded-l-lg color-group" class:span-disabled={$us.block || !z_stack} use:tooltip={"Nyquist is 232."}>Spacing</span>
@@ -140,10 +148,6 @@
           <span use:tooltip={"Multiple of Spacing"} class="flex items-center color-group" class:span-disabled={$us.block || !z_stack}>To</span>
           <input type="number" min="-100" max="100" step="1" bind:value={params.z_to} class="z-10 w-16 h-10 text-center rounded-l-none rounded-r-lg pretty" disabled={$us.block || !z_stack} />
         </div>
-        {#if z_stack}
-          <div>{stats.n_z} Z steps from {params.z_obj + params.z_from * params.z_spacing} to {params.z_obj + params.z_to * params.z_spacing}</div>
-          <div class="font-semibold">Total time: {stats.n_z ? genTime(stats.n_z * stats.time) : genTime(stats.time)}.</div>
-        {/if}
       </div>
     </div>
   </section>
