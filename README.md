@@ -18,3 +18,34 @@ npm i
 npm run build
 npm run preview
 ```
+
+## Sequence
+
+```mermaid
+sequenceDiagram
+    participant FastAPI
+    participant Experiment
+        loop Every 5 seconds or when log is available
+            Imager-->FastAPI: State
+            FastAPI-->Camera: Log
+        end
+
+    FastAPI->>Experiment: run
+    Note right of FastAPI: with userSettings as TakeImage
+
+    Experiment->>Imager: run
+    Note right of Experiment: Divide x and z into <br> multiple take commands
+    Imager->>Camera: Start acquisition
+    activate Camera
+
+    loop every 2 bundles
+        Camera->>FastAPI: "N bundles captured"
+    end
+
+    Camera->>Imager: All bundles captured
+    deactivate Camera
+    Imager->>FastAPI: Image
+    Note right of FastAPI: "imgReady" via cmdStore<br> with image through GET
+
+    
+```
