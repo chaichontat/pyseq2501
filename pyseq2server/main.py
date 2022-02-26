@@ -16,12 +16,13 @@ from pyseq2.utils.ports import get_ports
 
 from .api_types import UserSettings
 from .imaging import update_img
-from .routers import command, status, user
+from .routers import mancommand, status, user
 from .utils.log import setup_web_logger
 
 q_log: asyncio.Queue[str] = asyncio.Queue()
+setup_web_logger(q_log)
 
-logger = setup_web_logger(q_log)
+logger = getLogger(__name__)
 
 
 app = FastAPI()
@@ -54,7 +55,7 @@ async def setup_backend():
 app.on_event("startup")(setup_backend)
 app.include_router(status.router)
 app.include_router(user.router)
-app.include_router(command.router)
+app.include_router(mancommand.router)
 
 
 # latest = np.random.randint(0, 256, (4, 128, 2048), dtype=np.uint8)

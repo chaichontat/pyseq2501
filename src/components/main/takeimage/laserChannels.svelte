@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { TakeImage } from "$src/stores/command";
-  import Go from "../go.svelte";
+  import { cmdStore, userStore as us } from "$src/stores/store";
   import { checkRange } from "$src/utils";
+  import Go from "../go.svelte";
   export let params: TakeImage;
   export let i: 0 | 1;
 
@@ -18,6 +19,9 @@
         res = Number(e.currentTarget.value);
     }
     params.od[i] = res;
+
+    $us.image_params.od[i] = params.od[i];
+    $cmdStore = { move: { od: i === 0 ? [params.od[i], undefined] : [undefined, params.od[i]] } };
   }
 </script>
 
@@ -40,7 +44,18 @@
       disabled={!params.laser_onoff[i]}
     />
     mW
-    <Go>Set</Go>
+    <Go
+      on:click={() => {
+        $us.image_params.laser_onoff[i] = params.laser_onoff[i];
+        $us.image_params.lasers[i] = params.lasers[i];
+        $cmdStore = {
+          move: {
+            lasers: i === 0 ? [params.lasers[i], undefined] : [undefined, params.lasers[i]],
+            laser_onoff: i === 0 ? [params.laser_onoff[i], undefined] : [undefined, params.laser_onoff[i]],
+          },
+        };
+      }}>Set</Go
+    >
   </span>
 
   <label class="rounded-lg channel ring-red-500" class:text-gray-400={!params.channels[2 * i]}>

@@ -4,6 +4,7 @@
   import Spinning from "$comps/spinning.svelte";
   import { browser } from "$app/env";
   let message = "Idle";
+  import tooltip from "$src/tooltip";
   const re = /(ing)/;
 
   let div: HTMLElement;
@@ -15,7 +16,7 @@
   }
 </script>
 
-<div class="relative py-2 font-mono text-base font-semibold text-gray-800 ">
+<div class="relative py-2 font-mono text-base font-semibold text-gray-800" use:tooltip={message}>
   <div class="absolute w-full h-full ml-4 rounded-lg" />
   <div class="ml-2">
     {#if message.search(re) == -1}
@@ -26,5 +27,6 @@
       <div class="w-5 h-5 translate-x-0.5 translate-y-0.5"><Spinning /></div>
     {/if}
   </div>
-  <span class="mx-1 px-2 py-2 rounded-lg" bind:this={div}>{message}</span>
+  <!-- Text -->
+  <span class="mx-1 px-2 py-2 rounded-lg max-w-[80vh] overflow-ellipsis overflow-hidden whitespace-nowrap" bind:this={div}>{message}</span>
 </div>

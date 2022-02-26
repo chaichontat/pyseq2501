@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { XY } from "$src/stores/store";
+  import { cmdStore, XY } from "$src/stores/store";
   import BigZ from "./slide/big_z.svelte";
   import Slide from "./slide/slide.svelte";
   import { statusStore as store, userStore as us } from "$src/stores/store";
@@ -42,8 +42,8 @@
       type="checkbox"
       bind:checked={$us.flowcell}
       class="self-center mx-1 toggle toggle-md toggl-dark"
-      class:opacity-40={$us.mode.startsWith("editing")}
-      disabled={$us.mode.startsWith("editing")}
+      class:opacity-40={$ls.mode.startsWith("editing")}
+      disabled={$ls.mode.startsWith("editing")}
     /> -->
     <div>B</div>
   </span>
@@ -60,6 +60,10 @@
   <button
     class="self-center w-16 h-8 mt-2 text-white transition-colors bg-indigo-500 border shadow-md shadow-indigo-300 pretty hover:bg-indigo-600 active:bg-indigo-700 disabled:bg-gray-200 disabled:shadow-gray-200"
     disabled={$us.block}
+    on:click={() => {
+      $us.block = "moving";
+      $cmdStore = { move: { xy0: [0, -7.5] } };
+    }}
   >
     <svg
       class="w-4 h-4 mx-auto -translate-x-0.5 fill-white"

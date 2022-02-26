@@ -48,10 +48,20 @@ const user_ws: Writable<UserSettings> = try_connect && browser ? writableWebSock
   { beforeOpen: initial_get })
   : writable({ ...userDefault });
 
+export type MoveManual = {
+  xy0: [number?, number?],
+  xy1: [number?, number?],
+  z_tilt: number | [number?, number?, number?],
+  laser_onoff: [boolean?, boolean?]
+  lasers: [number?, number?]
+  z_obj: number,
+  z_spacing: number,
+  od: [number?, number?],
+}
 
 export type CommandResponse = { step?: [number, number, number]; msg?: string, error?: string };
-export type CommandWeb = { cmd: "preview" | "capture" | "stop" }
-export const cmdStore: AsymWritable<CommandResponse, CommandWeb> =
+export type CommandWeb = { move?: Partial<MoveManual>, cmd?: "preview" | "capture" | "stop" }
+export const cmdStore: AsymWritable<Partial<CommandResponse>, Partial<CommandWeb>> =
   asymWritableWebSocket(`ws://${ browser ? window.location.hostname : "" }:8000/cmd`, { msg: "ok" }, { cmd: "stop" })
 
 
@@ -95,12 +105,16 @@ function updateUserSettings() {
 updateUserSettings();
 
 function updateImg(c: CommandResponse) {
-  if (browser && c.msg === "imgReady") {
-    fetch(`http://${ window.location.hostname }:8000/img`)
-      .then((response: Response) => response.json())
-      .then((img: Img) => (localStore.update((l) => ({ ...l, img }))))
-      .catch((e) => alert(e));
-    userStore.update((u) => ({ ...u, block: "" }))
+  if (browser) {
+    if (c.msg === "imgReady") {
+      fetch(`http://${ window.location.hostname }:8000/img`)
+        .then((response: Response) => response.json())
+        .then((img: Img) => (localStore.update((l) => ({ ...l, img }))))
+        .catch((e) => alert(e));
+      userStore.update((u) => ({ ...u, block: "" }))
+    } else if (c.msg === "moveDone") {
+      userStore.update((u) => ({ ...u, block: "" }))
+    }
   }
 }
 

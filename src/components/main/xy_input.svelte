@@ -1,18 +1,21 @@
 <script lang="ts">
   import { raw_to_local } from "$src/coords";
-  import { statusStore as status, userStore as us } from "$src/stores/store";
+  import { cmdStore, statusStore as status, userStore as us } from "$src/stores/store";
   import { checkRange } from "$src/utils";
   import { createEventDispatcher } from "svelte";
   import Go from "./go.svelte";
 
-  export let xy: [number, number] = [-1, -1];
   const dispatch = createEventDispatcher();
+  export let i: 0 | 1;
+  export let xy: [number, number] = [-1, -1];
 
   function copyCurrent() {
     const { x, y } = raw_to_local($us.image_params.fc, $status.x, $status.y);
     xy[0] = Math.round((x + Number.EPSILON) * 100) / 100; // How is it possible that there are no better ways to round??
     xy[1] = Math.round((y + Number.EPSILON) * 100) / 100;
   }
+  let disabled = false;
+  $: disabled = Boolean($us.block);
 </script>
 
 <!-- XY Input -->
@@ -28,7 +31,7 @@
       step="0.01"
       use:checkRange={[-5, 30]}
       class="z-10 h-10 text-center rounded-none pretty w-28"
-      disabled={$us.block}
+      {disabled}
     />
     <span class="flex items-center color-group" class:span-disabled={$us.block}>Y</span>
     <input
@@ -40,16 +43,22 @@
       use:checkRange={[-5, 80]}
       step="0.01"
       class="z-10 h-10 text-center rounded-l-none rounded-r-lg pretty w-28"
-      disabled={$us.block}
+      {disabled}
     />
   </div>
 
-  <Go disabled={$us.block} on:click={() => dispatch("go")} />
+  <Go
+    {disabled}
+    on:click={() => {
+      $us.block = "moving";
+      $cmdStore = { move: i === 0 ? { xy0: xy } : { xy1: xy } };
+    }}
+  />
 
   <button
     type="button"
     class="px-4 py-1 text-sm font-medium text-gray-900 rounded-lg white-button disabled:bg-gray-50 disabled:hover:bg-gray-50 disabled:active:bg-gray-50 disabled:text-gray-500"
-    disabled={$us.block}
+    {disabled}
     on:click={copyCurrent}
   >
     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">

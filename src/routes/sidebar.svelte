@@ -5,6 +5,8 @@
   import Division from "$src/components/sidebar/division.svelte";
   import Lasers from "$comps/sidebar/lasers.svelte";
   import Map from "$src/components/sidebar/map.svelte";
+  import Modal from "$src/components/modal.svelte";
+  import Preview from "$src/components/main/preview.svelte";
 
   let connected: boolean = false;
   // onMount(() => {
@@ -57,6 +59,17 @@
               </p>
             </span>
           </li>
+
+          <Modal>
+            <button slot="button" type="button" class="mt-2 h-10 px-4 py-2 font-medium text-gray-800 rounded-lg  white-button">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+
+              <span>Show Preview</span>
+            </button>
+            <Preview />
+          </Modal>
         </Division>
       </ol>
     </section>

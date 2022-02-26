@@ -81,6 +81,7 @@ export function asymWritableWebSocket<FromBack extends object | string, ToBack e
         if (beforeOpen) await beforeOpen()
 
         if (browser) {
+            if (socket) socket.close()
             socket = new WebSocket(url);
             socket.onmessage = (event: MessageEvent): void => (setFromBack(f(event.data)))
 
@@ -105,6 +106,8 @@ export function asymWritableWebSocket<FromBack extends object | string, ToBack e
     return {
         set(v: ToBack) {
             if (socket && socket.readyState === WebSocket.OPEN) {
+                console.log();
+
                 socket.send(typeof v === "object" ? JSON.stringify(v) : v)
             }
         },

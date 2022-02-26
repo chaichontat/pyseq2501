@@ -18,7 +18,6 @@ async def user_endpoint(ws: WebSocket) -> None:
     try:
         while True:
             ws.app.state.user_settings = await ws.receive_json()
-            logger.info(ws.app.state.user_settings)
     except (WebSocketDisconnect, RuntimeError, ConnectionClosedOK):
         ...
 

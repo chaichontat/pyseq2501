@@ -14,10 +14,10 @@ class AsyncQueueStream:
 
 def setup_web_logger(
     q: asyncio.Queue[str] | None = None, *, set_root: bool = True, save: bool = False, level: str = "INFO"
-) -> logging.Logger:
+) -> None:
 
     setup_logger(set_root=set_root, save=save, level=level)
-    server_logger = logging.getLogger("server")
+    ps2 = logging.getLogger("pyseq2server")
 
     if q:
         web_handler = logging.StreamHandler(AsyncQueueStream(q))
@@ -25,10 +25,18 @@ def setup_web_logger(
         web_handler.setFormatter(logging.Formatter("%(message)s"))
         # if set_root:
         logging.getLogger("pyseq2").handlers.append(web_handler)
-        server_logger.handlers.append(web_handler)
+        ps2.handlers.append(web_handler)
 
-    for _log in ["uvicorn", "uvicorn.error", "fastapi"]:
-        logging.getLogger(_log).handlers = []
+    ps2.setLevel(level)
+
+    for _log in ["uvicorn", "uvicorn.access", "fastapi"]:
+        logging.getLogger(_log).handlers = logging.getLogger("pyseq2").handlers if _log == "fastapi" else []
         logging.getLogger(_log).setLevel(level)
 
-    return server_logger
+    # print(
+    #     [
+    #         (name, logging.getLogger(name).handlers)
+    #         for name in logging.root.manager.loggerDict
+    #         if logging.getLogger(name).handlers
+    #     ]
+    # )

@@ -85,11 +85,11 @@
     <div class="-mt-1 space-y-4">
       <div>
         <p>📌 Corner 1</p>
-        <XYInput bind:xy={params.xy0} on:change={updateImageParams} on:go={() => ($cmdStore = "move0")} />
+        <XYInput bind:xy={params.xy0} on:change={updateImageParams} i={0} />
       </div>
       <div>
         <p>📍 Corner 2</p>
-        <XYInput bind:xy={params.xy1} on:change={updateImageParams} on:go={() => ($cmdStore = "move1")} />
+        <XYInput bind:xy={params.xy1} on:change={updateImageParams} i={1} />
       </div>
       <div class="flex gap-8">
         <div>
@@ -120,14 +120,14 @@
           <p>Z Tilt</p>
           <div class="flex gap-2">
             <input type="number" class="w-28 pretty" bind:value={params.z_tilt} min="0" max="25000" use:checkRange={[0, 25000]} />
-            <Go />
+            <Go on:click={() => ($cmdStore = { move: { z_tilt: params.z_tilt } })} />
           </div>
         </div>
         <div>
           <p>Z Objective</p>
           <span class="flex gap-2">
             <input type="number" class="w-28 pretty" bind:value={params.z_obj} min="0" max="60000" use:checkRange={[0, 60000]} />
-            <Go />
+            <Go on:click={() => ($cmdStore = { move: { z_obj: params.z_obj } })} />
             <button type="button" class="px-4 py-1 font-medium text-gray-900 rounded-lg w-36 white-button">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />

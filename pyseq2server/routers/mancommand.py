@@ -1,16 +1,17 @@
 from __future__ import annotations
 
+import asyncio
 from asyncio import CancelledError, Task
 from contextlib import contextmanager
-from typing import NoReturn
+from logging import getLogger
+from typing import Literal, NoReturn
 
-import numpy as np
 from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
 from fastapi.encoders import jsonable_encoder
+from pydantic import BaseModel
 from websockets.exceptions import ConnectionClosedOK
 
-from pyseq2.experiment import *
-from pyseq2.imager import Imager
+from pyseq2 import FlowCells, Imager
 from pyseq2server.imaging import Img, update_img
 
 from ..api_types import CommandResponse, MoveManual, UserSettings
@@ -20,6 +21,7 @@ router = APIRouter()
 QCmd = asyncio.Queue[CommandResponse | tuple[int, int, int]]
 
 q_cmd: QCmd = asyncio.Queue()
+logger = getLogger(__name__)
 
 
 async def ret_cmd(ws: WebSocket) -> NoReturn:
@@ -64,7 +66,6 @@ async def cmd_endpoint(ws: WebSocket) -> None:
         with cancel_wrapper(q_cmd):
             us = UserSettings.parse_obj(ws.app.state.user_settings)
             c = cmd.cmd
-            logger.info(c)
             p = us.image_params.copy()
             if c == "capture":
                 p.save = True
@@ -72,9 +73,7 @@ async def cmd_endpoint(ws: WebSocket) -> None:
             else:
                 p.save = False
             new_image = await us.image_params.run(fcs, p.fc, imager, q_cmd)  # type: ignore
-            logger.info("Capture completed")
             ws.app.state.img = update_img(new_image)
-            logger.info("Image updated")
             q_cmd.put_nowait(CommandResponse(msg="imgReady"))  # Doesn't seem to send with 1.
 
     async def cmd_move(m: MoveManual):
@@ -90,10 +89,11 @@ async def cmd_endpoint(ws: WebSocket) -> None:
                 cmd = CommandWeb.parse_obj(await ws.receive_json())
                 if cmd.cmd == "stop":
                     task.cancel()
-
-                if not task.done():
-                    q_cmd.put_nowait(CommandResponse(error=f"Old command still running: {task}."))
                     continue
+
+                # if not task.done():
+                #     q_cmd.put_nowait(CommandResponse(error=f"Old command still running: {task}."))
+                #     continue
 
                 if (cmd.cmd) is not None:
                     task = asyncio.create_task(cmd_image(cmd))

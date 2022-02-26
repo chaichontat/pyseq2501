@@ -6,7 +6,6 @@
   import { tweened } from "svelte/motion";
 
   let step: [number, number, number] = [0, 0, 0];
-
   export let stats: { height: number; width: number; n_cols: number; n_bundles: number; n_z: number; time: number };
 
   const progress = tweened(0, {
@@ -20,10 +19,12 @@
       progress.set((step[2] * (stats.n_z * stats.n_bundles) + step[1] * stats.n_bundles + step[0]) / (stats.n_bundles * stats.n_cols * stats.n_z));
     }
   }
-  // const unsubscribe = cmdStore.subscribe((x: string) => {
-  //  );
-  // onDestroy(unsubscribe);
 
+  let captureState: "ok" | "gray" | "stop" = "ok";
+  let previewState: "ok" | "gray" | "stop" = "ok";
+
+  $: captureState = $us.block === "capturing" ? "stop" : "ok";
+  $: previewState = $us.block === "previewing" ? "stop" : "ok";
   function handleCapture() {
     if ($us.block === "capturing") {
       $cmdStore = { cmd: "stop" };
@@ -49,15 +50,16 @@
     <button
       type="button"
       class="text-lg text-white focus:ring-4 shadow-lg font-medium rounded-lg px-5 py-2.5 text-center mr-2 mb-2"
-      class:focus:ring-blue-300={!$us.block}
-      class:focus:ring-orange-300={$us.block}
-      class:start={!$us.block}
-      class:stop={$us.block}
+      class:focus:ring-blue-300={captureState === "ok"}
+      class:focus:ring-orange-300={captureState === "stop"}
+      class:start={captureState === "ok"}
+      class:stop={captureState === "stop"}
       use:tooltip={"Take image and save."}
       on:click={handleCapture}
+      disabled={captureState !== "ok"}
     >
       <div class="flex items-center h-12 text-lg">
-        {#if $us.block}
+        {#if $us.block === "capturing" || $us.block === "previewing"}
           <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
@@ -168,7 +170,7 @@
   }
 
   .stop {
-    @apply transition-all bg-gradient-to-r from-orange-500 to-orange-700 shadow-orange-500/50 hover:from-orange-600 hover:to-orange-800 active:from-orange-700;
+    @apply transition-all bg-gradient-to-r from-orange-500 to-orange-700 shadow-orange-500/50 hover:from-orange-600 hover:to-orange-800 active:from-orange-700 focus:ring-orange-300;
   }
 
   #preview {
