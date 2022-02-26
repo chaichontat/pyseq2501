@@ -4,12 +4,11 @@ line-length = 110
 target-version = ['py310']
 
 [tool.isort]
-known_first_party = ["pyseq2"]
-known_local_folder = ["python"]
+known_first_party = ["pyseq2", "pyseq2server"]
 line_length = 110
 profile = "black"
 py_version = 310
-src_paths = ["python"]
+src_paths = ["pyseq2server"]
 
 [tool.pyright]
 pythonVersion = "3.10"

@@ -1,4 +1,3 @@
-#%%
 from __future__ import annotations
 
 from typing import Literal, Sequence
@@ -8,6 +7,12 @@ from pydantic import BaseModel
 from pyseq2.experiment import Experiment
 from pyseq2.experiment.command import *
 from pyseq2.experiment.reagent import Reagent, ReagentGroup
+
+
+class CommandResponse(BaseModel):
+    step: tuple[int, int, int] | None = None
+    msg: str | None = None
+    error: str | None = None
 
 
 class NReagent(BaseModel):
@@ -55,3 +60,32 @@ class NExperiment(BaseModel):
     @classmethod
     def default(cls, fc: bool = False) -> NExperiment:
         return cls(name="", path=".", fc=fc, reagents=[NReagent.default()], cmds=[NCmd.default()])
+
+
+class NTakeImage(TakeImage):
+    fc: bool
+
+    @classmethod
+    def default(cls) -> NTakeImage:
+        ori = super().default()
+        return NTakeImage(**ori.dict(), fc=False)
+
+
+class UserSettings(BaseModel):
+    """None happens when the user left the input empty."""
+
+    block: Literal["", "moving", "ejecting", "capturing", "previewing"]
+    max_uid: int
+    mode: Literal["automatic", "manual", "editingA", "editingB"]
+    exps: list[NExperiment]
+    image_params: NTakeImage
+
+    @classmethod
+    def default(cls) -> UserSettings:
+        return UserSettings(
+            block="",
+            max_uid=2,
+            mode="automatic",
+            exps=[NExperiment.default(False), NExperiment.default(True)],
+            image_params=NTakeImage.default(),
+        )

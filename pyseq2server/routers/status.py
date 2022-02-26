@@ -2,13 +2,16 @@ import asyncio
 import logging
 from typing import Literal, NoReturn
 
-from fastapi import WebSocket
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
+from websockets.exceptions import ConnectionClosedOK
 
 from pyseq2.imager import Imager, State
 
 logger = logging.getLogger(__name__)
+
+router = APIRouter()
 
 
 class FCState(BaseModel):
@@ -34,7 +37,8 @@ async def poll(imager: Imager) -> NoReturn:
             state.msg = "Error: timeout on state retrieval."
 
 
-async def poll_status(websocket: WebSocket, imager: Imager, q_log: asyncio.Queue[str]):
+@router.websocket("/status")
+async def poll_status(ws: WebSocket):
     """
     Get status every 5 seconds
 
@@ -44,7 +48,12 @@ async def poll_status(websocket: WebSocket, imager: Imager, q_log: asyncio.Queue
       q_log (asyncio.Queue[str]): asyncio.Queue[str]
     """
     global message
+    imager: Imager = ws.app.state.imager
+    q_log: asyncio.Queue[str] = ws.app.state.q_log
+
     task = asyncio.create_task(poll(imager))
+    await ws.accept()
+
     try:
         while True:
             try:
@@ -53,6 +62,8 @@ async def poll_status(websocket: WebSocket, imager: Imager, q_log: asyncio.Queue
             except asyncio.TimeoutError:
                 ...
             finally:
-                await websocket.send_json(jsonable_encoder(state))
+                await ws.send_json(jsonable_encoder(state))
+    except (WebSocketDisconnect, RuntimeError, ConnectionClosedOK):
+        ...
     finally:
         task.cancel()
