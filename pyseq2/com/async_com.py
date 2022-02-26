@@ -241,7 +241,11 @@ class COM:
         try:
             return await fut
         except asyncio.CancelledError as e:
-            logger.error(f"{self.name} timeout after {cmd.timeout} from {cmd.cmd}.")
+            for w in self._waiting:
+                if w[1] is fut:
+                    self._waiting.remove(w)
+                    break
+            logger.error(f"{self.name} timeout after {cmd.timeout} s from {cmd.cmd}.")
             raise e
 
     async def _send(self, msg: bytes) -> None:
