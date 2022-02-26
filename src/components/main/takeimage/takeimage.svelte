@@ -12,7 +12,7 @@
   export let params: TakeImage;
   export let stats = { height: 0, width: 0, n_cols: 0, n_bundles: 0, n_z: 1, time: 0 };
   export let z_stack = false;
-  export let fc_: 0 | 1;
+  export let fc_: 0 | 1 = 0;
 
   function blockControls(div: HTMLElement | null, changeTo: boolean): void {
     if (div) {
@@ -30,7 +30,7 @@
 
   function isInvalid(s: string) {
     if (!s) return true;
-    if (!inAuto) return false;
+    if (!inAuto) return false; // Don't check if not in auto mode.
 
     const names = $us.exps[fc_].cmds.filter((c) => c.cmd.op === "takeimage").map((c) => (c.cmd as TakeImage).name);
     if (count(names)[s] > 1) return true;
@@ -162,6 +162,7 @@
             bind:value={params.z_spacing}
             use:checkRange={[1, 60000]}
             class="z-10 h-10 text-center rounded-none pretty w-28"
+            class:disabled={$us.block || !z_stack}
             disabled={$us.block || !z_stack}
           />
           <span use:tooltip={"Multiple of Spacing"} class="flex items-center color-group" class:span-disabled={$us.block || !z_stack}>From</span>
@@ -173,6 +174,7 @@
             bind:value={params.z_from}
             use:checkRange={[-100, 100]}
             class="z-10 w-16 h-10 text-center rounded-none pretty"
+            class:disabled={$us.block || !z_stack}
             disabled={$us.block || !z_stack}
           />
           <span use:tooltip={"Multiple of Spacing"} class="flex items-center color-group" class:span-disabled={$us.block || !z_stack}>To</span>
@@ -184,6 +186,7 @@
             bind:value={params.z_to}
             use:checkRange={[-100, 100]}
             class="z-10 w-16 h-10 text-center rounded-l-none rounded-r-lg pretty"
+            class:disabled={$us.block || !z_stack}
             disabled={$us.block || !z_stack}
           />
         </div>

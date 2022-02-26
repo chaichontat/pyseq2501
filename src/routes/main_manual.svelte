@@ -25,7 +25,7 @@
 </div>
 
 <p class="mt-6 title">Capture Parameters</p>
-<Takeimage bind:params={$us.image_params} bind:stats />
+<Takeimage inAuto={false} bind:params={$us.image_params} bind:stats />
 
 <p class="title">Preview</p>
 <Preview />
