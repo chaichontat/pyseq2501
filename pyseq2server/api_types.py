@@ -27,18 +27,18 @@ class MoveManual(BaseModel):
             raise ValueError("MoveManual: xy0 and xy1 cannot be set at the same time")
         return values
 
-    def to_state(self) -> dict[str, Any]:
+    def to_state(self, fc: bool) -> dict[str, Any]:
         out = self.copy(exclude={"xy0", "xy1"}).dict()
         if self.xy0:
             assert self.xy1 is None
-            out["x"], out["y"] = mm_to_raw(False, x=self.xy0[0], y=self.xy0[1])
+            out["x"], out["y"] = mm_to_raw(fc, x=self.xy0[0], y=self.xy0[1])
         if self.xy1:
             assert self.xy0 is None
-            out["x"], out["y"] = mm_to_raw(True, x=self.xy1[0], y=self.xy1[1])
+            out["x"], out["y"] = mm_to_raw(fc, x=self.xy1[0], y=self.xy1[1])
         return out
 
-    async def run(self, i: Imager) -> None:
-        await i.move(**self.to_state())
+    async def run(self, i: Imager, fc: bool) -> None:
+        await i.move(**self.to_state(fc))
 
 
 class CommandResponse(BaseModel):

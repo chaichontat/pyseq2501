@@ -78,7 +78,8 @@ async def cmd_endpoint(ws: WebSocket) -> None:
 
     async def cmd_move(m: MoveManual):
         with cancel_wrapper(q_cmd):
-            await m.run(imager)
+            fc: bool = UserSettings.construct(**ws.app.state.user_settings).image_params["fc"]  # type: ignore
+            await m.run(imager, fc)
             q_cmd.put_nowait(CommandResponse(msg="moveDone"))
 
     task: Task[None] = asyncio.create_task(meh())
