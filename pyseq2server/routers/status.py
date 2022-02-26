@@ -53,6 +53,7 @@ async def poll_status(ws: WebSocket):
 
     task = asyncio.create_task(poll(imager))
     await ws.accept()
+    await ws.send_json(jsonable_encoder(state))
 
     try:
         while True:

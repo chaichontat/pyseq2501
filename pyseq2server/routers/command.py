@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from asyncio import CancelledError, Task
+from contextlib import contextmanager
 from typing import NoReturn
 
 import numpy as np
@@ -11,11 +13,13 @@ from pyseq2.experiment import *
 from pyseq2.imager import Imager
 from pyseq2server.imaging import Img, update_img
 
-from ..api_types import CommandResponse, UserSettings
+from ..api_types import CommandResponse, MoveManual, UserSettings
 from ..utils.utils import q_listener
 
 router = APIRouter()
-q_cmd: asyncio.Queue[CommandResponse | tuple[int, int, int]] = asyncio.Queue()
+QCmd = asyncio.Queue[CommandResponse | tuple[int, int, int]]
+
+q_cmd: QCmd = asyncio.Queue()
 
 
 async def ret_cmd(ws: WebSocket) -> NoReturn:
@@ -31,55 +35,71 @@ async def ret_cmd(ws: WebSocket) -> NoReturn:
         await ws.send_json(jsonable_encoder(to_send))
 
 
+class CommandWeb(BaseModel):
+    move: MoveManual | None = None
+    cmd: Literal["preview", "capture"] | None = None
+
+
+@contextmanager
+def cancel_wrapper(q_cmd: QCmd):
+    try:
+        yield
+    except CancelledError:
+        q_cmd.put_nowait(CommandResponse(error="Cancelled"))
+    except BaseException as e:
+        q_cmd.put_nowait(CommandResponse(error=f"Error: {type(e).__name__}: {e}"))
+
+
+async def meh():
+    return
+
+
 @router.websocket("/cmd")
 async def cmd_endpoint(ws: WebSocket) -> None:
-
-    global latest, img
     await ws.accept()
     imager: Imager = ws.app.state.imager
     fcs: FlowCells = ws.app.state.fcs
 
-    us = UserSettings.parse_obj(ws.app.state.user_settings)
+    async def cmd_image(cmd: CommandWeb):
+        with cancel_wrapper(q_cmd):
+            us = UserSettings.parse_obj(ws.app.state.user_settings)
+            c = cmd.cmd
+            logger.info(c)
+            p = us.image_params.copy()
+            if c == "capture":
+                p.save = True
+                p.z_from, p.z_to = 0, 0
+            else:
+                p.save = False
+            new_image = await us.image_params.run(fcs, p.fc, imager, q_cmd)  # type: ignore
+            logger.info("Capture completed")
+            ws.app.state.img = update_img(new_image)
+            logger.info("Image updated")
+            q_cmd.put_nowait(CommandResponse(msg="imgReady"))  # Doesn't seem to send with 1.
+
+    async def cmd_move(m: MoveManual):
+        with cancel_wrapper(q_cmd):
+            await m.run(imager)
+            q_cmd.put_nowait(CommandResponse(msg="moveDone"))
+
+    task: Task[None] = asyncio.create_task(meh())
+
     with q_listener(ret_cmd(ws)):
         try:
             while True:
-                cmd = await ws.receive_text()
-                print(cmd)
-                try:
-                    match cmd:
-                        # TODO Need to block UI when moving.
-                        case "move":
-                            logger.info(f"")
-                            await imager.move(x=0)
-                        case "capture" | "preview" as c:
-                            logger.info(c)
-                            p = us.image_params.copy()
-                            if c == "capture":
-                                p.save = True
-                                p.z_from, p.z_to = 0, 0
-                            else:
-                                p.save = False
-                            new_image = await us.image_params.run(fcs, p.fc, imager, q_cmd)  # type: ignore
-                            logger.info("Capture completed")
-                            ws.app.state.img = update_img(new_image)
-                            logger.info("Image updated")
-                            # await asyncio.sleep(0.1)
-                            q_cmd.put_nowait(CommandResponse(msg="imgReady"))  # Doesn't seem to send with 1.
-                            q_cmd.put_nowait(CommandResponse(msg="imgReady"))
+                cmd = CommandWeb.parse_obj(await ws.receive_json())
+                if cmd.cmd == "stop":
+                    task.cancel()
 
-                            logger.info("ok_put")
-                        case "autofocus":
-                            logger.info(f"Autofocus")
-                            await imager.autofocus()
-                            q_cmd.put_nowait(CommandResponse(msg="ok"))
-                        case "stop":
-                            q_cmd.put_nowait(CommandResponse(msg="ok"))
-                        case _ as x:
-                            logger.error(f"What is this command {x}?")
+                if not task.done():
+                    q_cmd.put_nowait(CommandResponse(error=f"Old command still running: {task}."))
+                    continue
 
-                except BaseException as e:
-                    q_cmd.put_nowait(CommandResponse(error=f"Error: {type(e).__name__}: {e}"))
-                    q_cmd.put_nowait(CommandResponse(error=f"Error: {type(e).__name__}: {e}"))
+                if (cmd.cmd) is not None:
+                    task = asyncio.create_task(cmd_image(cmd))
+
+                if (m := cmd.move) is not None:
+                    task = asyncio.create_task(cmd_move(m))
 
         except (WebSocketDisconnect, RuntimeError, ConnectionClosedOK):
             ...

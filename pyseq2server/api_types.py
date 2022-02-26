@@ -2,11 +2,43 @@ from __future__ import annotations
 
 from typing import Literal, Sequence
 
-from pydantic import BaseModel
+from pydantic import BaseModel, root_validator
 
 from pyseq2.experiment import Experiment
 from pyseq2.experiment.command import *
 from pyseq2.experiment.reagent import Reagent, ReagentGroup
+from pyseq2.imager import State
+from pyseq2.utils.coords import mm_to_raw
+
+
+class MoveManual(BaseModel):
+    xy0: tuple[float, float] | None = None
+    xy1: tuple[float, float] | None = None
+    z_tilt: int | tuple[int, int, int] | None = None
+    z_obj: int | None = None
+    laser_onoff: tuple[bool, bool] | None = None
+    lasers: tuple[int, int] | None = None
+    shutter: bool | None = None
+    od: tuple[float, float] | None = None
+
+    @root_validator
+    def validate_xy(cls, values: dict[str, Any]) -> dict[str, Any]:
+        if not bool(values["xy0"]) ^ bool(values["xy1"]):
+            raise ValueError("Either and either xy0 or xy1 must be specified.")
+        return values
+
+    def to_state(self) -> State:
+        out = self.copy(exclude={"xy0", "xy1"})
+        if self.xy0:
+            assert self.xy1 is None
+            out.x, out.y = mm_to_raw(False, x=self.xy0[0], y=self.xy0[1])
+        if self.xy1:
+            assert self.xy0 is None
+            out.x, out.y = mm_to_raw(True, x=self.xy1[0], y=self.xy1[1])
+        return cast(State, out)
+
+    async def run(self, i: Imager) -> None:
+        await i.move(**self.to_state().dict())
 
 
 class CommandResponse(BaseModel):
@@ -76,7 +108,6 @@ class UserSettings(BaseModel):
 
     block: Literal["", "moving", "ejecting", "capturing", "previewing"]
     max_uid: int
-    mode: Literal["automatic", "manual", "editingA", "editingB"]
     exps: list[NExperiment]
     image_params: NTakeImage
 
@@ -85,7 +116,6 @@ class UserSettings(BaseModel):
         return UserSettings(
             block="",
             max_uid=2,
-            mode="automatic",
             exps=[NExperiment.default(False), NExperiment.default(True)],
             image_params=NTakeImage.default(),
         )
