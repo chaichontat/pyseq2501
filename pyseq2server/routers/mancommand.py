@@ -24,17 +24,22 @@ q_cmd: QCmd = asyncio.Queue()
 logger = getLogger(__name__)
 
 
-async def ret_cmd(ws: WebSocket) -> NoReturn:
+async def ret_cmd(ws: WebSocket) -> None:
     while True:
-        res = await q_cmd.get()
-        print(res)
-        if isinstance(res, CommandResponse):
-            to_send = res
-        else:
-            to_send = CommandResponse(step=res)
+        try:
+            res = await q_cmd.get()
+            print(res)
+            if isinstance(res, CommandResponse):
+                to_send = res
+            else:
+                to_send = CommandResponse(step=res)
 
-        print(f"sending {to_send}")
-        await ws.send_json(jsonable_encoder(to_send))
+            print(f"sending {to_send}")
+            await ws.send_json(jsonable_encoder(to_send))
+        except CancelledError:
+            break
+        except BaseException as e:
+            ws.app.state.q_log.put_nowait(f"Error: {type(e).__name__}: {e}")
 
 
 class CommandWeb(BaseModel):
@@ -43,13 +48,13 @@ class CommandWeb(BaseModel):
 
 
 @contextmanager
-def cancel_wrapper(q_cmd: QCmd):
+def cancel_wrapper(q_cmd: QCmd, q_log: asyncio.Queue[str]):
     try:
         yield
     except CancelledError:
         q_cmd.put_nowait(CommandResponse(error="Cancelled"))
     except BaseException as e:
-        q_cmd.put_nowait(CommandResponse(error=f"Error: {type(e).__name__}: {e}"))
+        q_log.put_nowait(f"Error: {type(e).__name__}: {e}")
 
 
 async def meh():
@@ -62,9 +67,10 @@ async def cmd_endpoint(ws: WebSocket) -> None:
     imager: Imager = ws.app.state.imager
     fcs: FlowCells = ws.app.state.fcs
     q_status: asyncio.Queue[bool] = ws.app.state.q_status
+    q_log: asyncio.Queue[str] = ws.app.state.q_log
 
     async def cmd_image(cmd: CommandWeb):
-        with cancel_wrapper(q_cmd):
+        with cancel_wrapper(q_cmd, q_log):
             us = UserSettings.parse_obj(ws.app.state.user_settings)
             c = cmd.cmd
             p = us.image_params.copy()
@@ -79,7 +85,7 @@ async def cmd_endpoint(ws: WebSocket) -> None:
             q_status.put_nowait(True)
 
     async def cmd_move(m: MoveManual):
-        with cancel_wrapper(q_cmd):
+        with cancel_wrapper(q_cmd, q_log):
             fc: bool = UserSettings.construct(**ws.app.state.user_settings).image_params["fc"]  # type: ignore
             await m.run(imager, fc)
             q_cmd.put_nowait(CommandResponse(msg="moveDone"))
