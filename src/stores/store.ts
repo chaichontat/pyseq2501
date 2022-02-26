@@ -40,19 +40,18 @@ export const localStore: Writable<LocalInfo> = writable({ mode: "auto", connecte
 
 // TODO: Make this read-only.
 export const statusStore: Readable<Status> =
-  try_connect && browser ? readableWebSocket(`ws://${ window.location.hostname }:8000/status`, { ...statusDefault })
+  try_connect && browser ? readableWebSocket(`ws://${ window.location.hostname }:8000/status`, { ...statusDefault }, { localStore })
     : writable({ ...statusDefault });
 
 export const userStore: Writable<UserSettings> = writable({ ...userDefault })
 
-const user_ws = try_connect && browser ? writableWebSocket(`ws://${ window.location.hostname }:8000/user`, { ...userDefault },
+const user_ws: Writable<UserSettings> = try_connect && browser ? writableWebSocket(`ws://${ window.location.hostname }:8000/user`, { ...userDefault },
   { beforeOpen: initial_get })
   : writable({ ...userDefault });
 
 export const cmdStore: Writable<CommandResponse> =
   try_connect && browser ? writableWebSocket(`ws://${ window.location.hostname }:8000/cmd`, { msg: "ok" }, { broadcastOnSet: false })
     : writable({ msg: "ok" });
-
 
 
 export async function initial_get() {

@@ -1,10 +1,8 @@
 <script lang="ts">
-  import { statusStore } from "$src/stores/store";
-  let connected: boolean = false;
-  $: connected = $statusStore.lasers[0] != -1;
+  import { localStore } from "$src/stores/store";
 </script>
 
-{#if connected}
+{#if $localStore.connected}
   <span class="text-sm font-semibold" style="color:rgb(26, 127, 55);">
     Connected
     <svg aria-label="connected" role="img" height="16" viewBox="0 0 16 16" fill="rgb(26, 127, 55)" class="pl-1">

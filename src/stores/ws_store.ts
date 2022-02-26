@@ -1,15 +1,17 @@
 import { Readable, Writable, writable } from "svelte/store";
+import type { LocalInfo } from "./store";
 
 type ValidType = string; // | ArrayBufferLike | Blob | ArrayBufferView;
 
 export type wsConfig = {
     f?: (x: ValidType) => any
     broadcastOnSet?: boolean,
-    beforeOpen?: () => Promise<void>
+    beforeOpen?: () => Promise<void>,
+    localStore?: Writable<LocalInfo>
 }
 
 export function writableWebSocket<T extends object | string>(url: string, initialValue: T,
-    { f = JSON.parse, broadcastOnSet, beforeOpen }: wsConfig = {}): Writable<T> {
+    { f = JSON.parse, broadcastOnSet, beforeOpen, localStore }: wsConfig = {}): Writable<T> {
     // console.log(`%cInitializing ${ url }.`, "color:green")
     let socket: WebSocket
     let timeout: ReturnType<typeof setTimeout> | null
@@ -25,6 +27,7 @@ export function writableWebSocket<T extends object | string>(url: string, initia
         };
 
         socket.onopen = () => {
+            if (localStore) localStore.update((curr) => ({ ...curr, connected: true }))
             if (timeout) {
                 clearTimeout(timeout)
                 timeout = null
@@ -32,6 +35,7 @@ export function writableWebSocket<T extends object | string>(url: string, initia
         }
 
         socket.onclose = () => {
+            if (localStore) localStore.update((curr) => ({ ...curr, connected: false }))
             if (timeout) timeout = setTimeout(_open, 1000)
         }
     }
@@ -52,10 +56,9 @@ export function writableWebSocket<T extends object | string>(url: string, initia
     };
 }
 
-export function readableWebSocket<T extends object | string>(url: string, initialValue: T,
-    { f = JSON.parse, broadcastOnSet, beforeOpen }: wsConfig = {}): Readable<T> {
+export function readableWebSocket<T extends object | string>(url: string, initialValue: T, wsc: wsConfig = {}): Readable<T> {
     return {
-        subscribe: writableWebSocket(url, initialValue, { f, broadcastOnSet, beforeOpen }).subscribe
+        subscribe: writableWebSocket(url, initialValue, wsc).subscribe
     }
 }
 
