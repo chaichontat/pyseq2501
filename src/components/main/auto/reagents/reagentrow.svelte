@@ -2,38 +2,53 @@
   import type { Reagent, ReagentGroup } from "$src/stores/reagent";
   import { createEventDispatcher } from "svelte";
   import { checkRange } from "$src/utils";
-
+  import { userStore as us } from "$src/stores/store";
   const dispatch = createEventDispatcher();
 
   export let primed: boolean = false;
   export let reagent: Reagent | ReagentGroup;
+  export let fc_: 0 | 1;
 
-  const count = (names) => names.reduce((a, b) => ({ ...a, [b]: (a[b] || 0) + 1 }), {}); // don't forget to initialize the accumulator
-  const duplicates = (dict) => Object.keys(dict).filter((a) => dict[a] > 1);
+  const count = (names: Array<any>) => names.reduce((a, b) => ({ ...a, [b]: (a[b] || 0) + 1 }), {}); // don't forget to initialize the accumulator
+  function nameInvalid(s: string) {
+    if (!s) return true;
+    const names = $us.exps[fc_].reagents.map((r) => r.reagent.name);
+    if (count(names)[s] > 1) return true;
+    return false;
+  }
+
+  function portInvalid(p: number) {
+    if (p < 1 || p > 19 || p === 9) return true;
+    const ports = $us.exps[fc_].reagents.filter((r) => "port" in r.reagent).map((r) => (r.reagent as Reagent).port);
+    if (count(ports)[p] > 1) return true;
+    return false;
+  }
 </script>
 
 {#if !("port" in reagent)}
   <!-- Reagent group -->
   <td colspan="7" class="h-12 px-4 mx-4 text-xl font-medium transition-colors bg-orange-50 hover:bg-orange-100">
-    Group <input bind:value={reagent.name} type="text" class="w-32 m-2 text-xl pretty bg-orange-50" required class:invalid={!reagent.name} />
+    Group <input bind:value={reagent.name} class:invalid={nameInvalid(reagent.name)} type="text" class="w-32 m-2 text-xl pretty bg-orange-50" required />
   </td>
 {:else}
   <!-- Reagent proper -->
-  <td class="px-6 py-2 font-bold text-gray-900 whitespace-nowrap ">
-    <input bind:value={reagent.port} type="number" class="w-16 pretty" min="1" max="19" required />
-  </td>
-  <td class="px-4 text-gray-900 whitespace-nowrap"><input bind:value={reagent.name} class:invalid={!reagent.name} type="text" class="w-full pretty" min="1" max="2000" required /></td>
-  <td class="px-4 text-gray-900 whitespace-nowrap">
-    <input bind:value={reagent.v_prime} class:invalid={!(1 <= reagent.v_prime && reagent.v_prime <= 2000)} type="number" class="w-full pretty" min="1" max="2000" required />
+  <td class="px-6 py-2 text-gray-900 whitespace-nowrap ">
+    <input bind:value={reagent.port} type="number" class:invalid={portInvalid(reagent.port)} class="w-16 pretty font-semibold" min="1" max="19" required />
   </td>
   <td class="px-4 text-gray-900 whitespace-nowrap">
-    <input bind:value={reagent.v_pull} type="number" class="w-full pretty" class:invalid={!(1 <= reagent.v_pull && reagent.v_pull <= 2000)} min="1" max="2000" required />
+    <input bind:value={reagent.name} class:invalid={nameInvalid(reagent.name)} type="text" class="w-full pretty font-medium" required />
   </td>
   <td class="px-4 text-gray-900 whitespace-nowrap">
-    <input bind:value={reagent.v_push} type="number" class="w-full pretty" class:invalid={!(1 <= reagent.v_push && reagent.v_push <= 2000)} min="1" max="2000" required />
+    <input bind:value={reagent.v_prime} type="number" class="w-full pretty" use:checkRange={[1, 2500]} min="1" max="2500" required />
   </td>
   <td class="px-4 text-gray-900 whitespace-nowrap">
-    <input bind:value={reagent.wait} type="number" class="w-full pretty" class:invalid={!(0 < reagent.wait)} use:checkRange={0} min="0" required />
+    <input bind:value={reagent.v_pull} type="number" class="w-full pretty" use:checkRange={[1, 2500]} min="1" max="2500" required />
+  </td>
+  <td class="px-4 text-gray-900 whitespace-nowrap">
+    <input bind:value={reagent.v_push} type="number" class="w-full pretty" use:checkRange={[1, 2500]} min="1" max="2500" required />
+  </td>
+  <td class="px-4 text-gray-900 whitespace-nowrap">
+    <input bind:value={reagent.wait} type="number" class="w-full pretty" use:checkRange={[0, Infinity]} min="0" required />
   </td>
   <td>
     <button
