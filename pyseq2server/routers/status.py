@@ -27,14 +27,27 @@ message = "Idle"
 state = WebState(**State.default().dict(), msg=message)
 
 
-async def poll(imager: Imager) -> NoReturn:
+async def poll(ws: WebSocket) -> NoReturn:
+    imager: Imager = ws.app.state.imager
+    q_status: asyncio.Queue[bool] = ws.app.state.q_status
+
     global state
+    send_now = False
     while True:
-        await asyncio.sleep(5)
-        if raw := await imager.state:
-            state = WebState(**raw.dict(), msg=message)
+        try:
+            await asyncio.wait_for(q_status.get(), 5)
+        except asyncio.TimeoutError:
+            send_now = False
         else:
-            state.msg = "Error: timeout on state retrieval."
+            send_now = True
+        finally:
+            if raw := await imager.state:
+                state = WebState(**raw.dict(), msg=message)
+            else:
+                state.msg = "Error: timeout on state retrieval."
+            if send_now:
+                await ws.send_json(jsonable_encoder(state))
+                send_now = False
 
 
 @router.websocket("/status")
@@ -48,10 +61,9 @@ async def poll_status(ws: WebSocket):
       q_log (asyncio.Queue[str]): asyncio.Queue[str]
     """
     global message
-    imager: Imager = ws.app.state.imager
     q_log: asyncio.Queue[str] = ws.app.state.q_log
 
-    task = asyncio.create_task(poll(imager))
+    task = asyncio.create_task(poll(ws))
     await ws.accept()
     await ws.send_json(jsonable_encoder(state))
 

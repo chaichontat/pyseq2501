@@ -61,6 +61,7 @@ async def cmd_endpoint(ws: WebSocket) -> None:
     await ws.accept()
     imager: Imager = ws.app.state.imager
     fcs: FlowCells = ws.app.state.fcs
+    q_status: asyncio.Queue[bool] = ws.app.state.q_status
 
     async def cmd_image(cmd: CommandWeb):
         with cancel_wrapper(q_cmd):
@@ -75,12 +76,14 @@ async def cmd_endpoint(ws: WebSocket) -> None:
             new_image = await us.image_params.run(fcs, p.fc, imager, q_cmd)  # type: ignore
             ws.app.state.img = update_img(new_image)
             q_cmd.put_nowait(CommandResponse(msg="imgReady"))  # Doesn't seem to send with 1.
+            q_status.put_nowait(True)
 
     async def cmd_move(m: MoveManual):
         with cancel_wrapper(q_cmd):
             fc: bool = UserSettings.construct(**ws.app.state.user_settings).image_params["fc"]  # type: ignore
             await m.run(imager, fc)
             q_cmd.put_nowait(CommandResponse(msg="moveDone"))
+            q_status.put_nowait(True)
 
     task: Task[None] = asyncio.create_task(meh())
 
@@ -90,6 +93,7 @@ async def cmd_endpoint(ws: WebSocket) -> None:
                 cmd = CommandWeb.parse_obj(await ws.receive_json())
                 if cmd.cmd == "stop":
                     task.cancel()
+                    q_status.put_nowait(True)
                     continue
 
                 # if not task.done():

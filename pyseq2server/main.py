@@ -48,6 +48,7 @@ async def setup_backend():
     app.state.imager = imager
     app.state.fcs = fcs
     app.state.q_log = q_log
+    app.state.q_status = asyncio.Queue()
     app.state.user_settings = jsonable_encoder(UserSettings.default())
     app.state.img = update_img(np.random.randint(0, 256, (4, 128, 2048), dtype=np.uint8))
 
