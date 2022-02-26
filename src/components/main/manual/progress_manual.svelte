@@ -26,18 +26,18 @@
 
   function handleCapture() {
     if ($us.block === "capturing") {
-      $cmdStore = "stop";
+      $cmdStore = { cmd: "stop" };
     } else {
-      $cmdStore = "capture";
+      $cmdStore = { cmd: "capture" };
       $us.block = "capturing";
     }
   }
 
   function handlePreview() {
     if ($us.block === "previewing") {
-      $cmdStore = "stop";
+      $cmdStore = { cmd: "stop" };
     } else {
-      $cmdStore = "preview";
+      $cmdStore = { cmd: "preview" };
       $us.block = "previewing";
     }
   }

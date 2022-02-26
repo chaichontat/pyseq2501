@@ -1,10 +1,10 @@
 <script lang="ts">
   export let fc: boolean;
-  import { userStore as us } from "$src/stores/store";
+  import { userStore as us, localStore as ls } from "$src/stores/store";
 
   function handleEditClick(): () => void {
     return () => {
-      $us.mode = fc ? "editingB" : "editingA";
+      $ls.mode = fc ? "editingB" : "editingA";
       $us.image_params.fc = fc;
     };
   }

@@ -2,7 +2,7 @@
   import Logo from "$comps/logo.svelte";
   import Connected from "$comps/navbar/connected.svelte";
   import Status from "$comps/navbar/status.svelte";
-  import { userStore as us } from "$src/stores/store";
+  import { localStore as ls } from "$src/stores/store";
 </script>
 
 <div id="nav" class="sticky inset-x-0 top-0 z-50 w-full h-16 transition duration-200 ease-in-out bg-white shadow-sm opacity-95 text-base-content ring-1 ring-gray-900 ring-opacity-5">
@@ -28,17 +28,17 @@
     <div class="tabs">
       <button
         class="font-medium transition-colors h-14 tab tab-lg tab-bordered"
-        on:click={() => ($us.mode = "manual")}
-        class:tab-active={$us.mode === "manual"}
-        class:text-gray-800={$us.mode === "manual"}
+        on:click={() => ($ls.mode = "manual")}
+        class:tab-active={$ls.mode === "manual"}
+        class:text-gray-800={$ls.mode === "manual"}
       >
         Manual
       </button>
       <button
         class="font-medium transition-colors h-14 tab tab-lg tab-bordered"
-        on:click={() => ($us.mode = "automatic")}
-        class:tab-active={$us.mode !== "manual"}
-        class:text-gray-800={$us.mode !== "manual"}
+        on:click={() => ($ls.mode = "automatic")}
+        class:tab-active={$ls.mode !== "manual"}
+        class:text-gray-800={$ls.mode !== "manual"}
       >
         Automatic
       </button>

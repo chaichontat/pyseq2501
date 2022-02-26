@@ -1,6 +1,6 @@
 <script lang="ts">
   import Preview from "$comps/main/preview.svelte";
-  import { userStore as us } from "$src/stores/store";
+  import { localStore as ls } from "$src/stores/store";
   import ProgressManual from "$src/components/main/manual/progress_manual.svelte";
   import { fade } from "svelte/transition";
   import MainAuto from "./main_auto.svelte";
@@ -10,7 +10,7 @@
   const duration: number = 150;
 </script>
 
-{#if $us.mode !== "manual"}
+{#if $ls.mode !== "manual"}
   <div out:fade={{ duration }} in:fade={{ duration, delay: duration }}>
     <MainAuto />
   </div>

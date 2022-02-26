@@ -4,7 +4,7 @@
   import Steps from "$comps/main/auto/steps/steps.svelte";
   import { Experiment, experimentDefault, fromExperiment, NExperiment, toExperiment } from "$src/stores/experiment";
   import rawExperimentSchema from "$src/stores/experiment_schema.json";
-  import { userStore as us } from "$src/stores/store";
+  import { userStore as us, localStore as ls } from "$src/stores/store";
   import { Menu, MenuButton, MenuItem, MenuItems } from "@rgossiaux/svelte-headlessui";
   import Ajv from "ajv";
   import yaml from "js-yaml";
@@ -64,7 +64,7 @@
 <div class="flex items-center">
   <span>
     <!-- Back -->
-    <button on:click={() => ($us.mode = "automatic")}>
+    <button on:click={() => ($ls.mode = "automatic")}>
       <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 mr-1 translate-y-0.5 stroke-gray-700 hover:stroke-gray-800 active:stroke-black" fill="none" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
       </svg>
