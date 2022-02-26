@@ -111,7 +111,7 @@ class Imager:
         return Position(**dict(zip(names.keys(), res)))  # type: ignore
 
     @property
-    async def state(self) -> State | None:
+    async def state(self) -> State:
         logger.debug("Begin state run.")
         raw = {
             "on0": self.lasers[0].status,
@@ -124,11 +124,7 @@ class Imager:
             "pos": self.pos,
         }
 
-        try:
-            raw = dict(zip(raw.keys(), await asyncio.gather(*raw.values())))
-        except asyncio.TimeoutError:
-            logger.critical("Timeout on state retrieval.")
-            return None
+        raw = dict(zip(raw.keys(), await asyncio.gather(*raw.values())))
 
         optic_state = {
             "laser_onoff": (raw["on0"], raw["on1"]),
@@ -157,7 +153,12 @@ class Imager:
         y: Optional[int] = None,
         z_obj: Optional[int] = None,
         z_tilt: Optional[int | tuple[int, int, int]] = None,
+        lasers: Optional[tuple[int | None, int | None]] = None,
+        laser_onoff: Optional[tuple[bool | None, bool | None]] = None,
+        shutter: Optional[bool] = None,
+        od: Optional[tuple[float | None, float | None]] = None,
     ) -> None:
+
         cmds: list[Awaitable[Any]] = []
         if x is not None:
             cmds.append(self.x.move(x))
@@ -167,6 +168,14 @@ class Imager:
             cmds.append(self.z_obj.move(z_obj))
         if z_tilt is not None:
             cmds.append(self.z_tilt.move(z_tilt))
+        if lasers is not None:
+            cmds += [la.set_power(p) for la, p in zip(self.lasers, lasers) if p is not None]
+        if laser_onoff is not None:
+            cmds += [la.set_onoff(lo) for la, lo in zip(self.lasers, laser_onoff) if lo is not None]
+        if shutter is not None:
+            cmds.append(self.optics._open() if shutter else self.optics._close())
+        if od is not None:
+            cmds += [f.move(o) for f, o in zip(self.optics.filters, od) if o is not None]
         await asyncio.gather(*cmds)
 
     async def take(

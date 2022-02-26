@@ -124,7 +124,6 @@ class TakeImage(BaseModel, AbstractCommand):
     channels: tuple[bool, bool, bool, bool]
     z_tilt: int | tuple[int, int, int]
     z_obj: int
-    z_obj: int
     laser_onoff: tuple[bool, bool]
     lasers: tuple[int, int]
     od: tuple[float, float]
@@ -140,7 +139,7 @@ class TakeImage(BaseModel, AbstractCommand):
             name="",
             path=".",
             xy0=(0.0, 0.0),
-            xy1=(1.0, 1.0),
+            xy1=(1.0, 0.3),
             overlap=0.1,
             channels=(True, True, True, True),
             z_tilt=19850,
@@ -155,9 +154,7 @@ class TakeImage(BaseModel, AbstractCommand):
         )
 
     def calc_pos(self, i: bool) -> tuple[int, int, list[int], list[int]]:
-        print(self)
         n_bundles = math.ceil((max(self.xy0[1], self.xy1[1]) - (min(self.xy0[1], self.xy1[1]))) / 0.048)
-        print(n_bundles)
         y_start = coords.mm_to_raw(i, y=min(self.xy0[1], self.xy1[1]))
 
         x_step = 0.768 * (1 - self.overlap)
@@ -166,7 +163,6 @@ class TakeImage(BaseModel, AbstractCommand):
         xs = [coords.mm_to_raw(i, x=x_start + n * x_step) for n in range(x_n)]
         zs = [self.z_obj + n * self.z_spacing for n in range(self.z_from, self.z_to + 1)]
 
-        print(xs)
         return n_bundles, y_start, xs, zs
 
     async def run(

@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 from logging import getLogger
-from typing import Annotated, Literal, cast
+from typing import Annotated, Iterator, Literal, cast
 
 from pyseq2.base.instruments import UsesSerial
 from pyseq2.base.instruments_types import SerialInstruments
@@ -122,6 +122,10 @@ class Lasers:
     @property
     async def power(self) -> tuple[int, int]:
         return await asyncio.gather(self.g.power, self.r.power)
+
+    def __iter__(self) -> Iterator[Laser]:
+        yield self.g
+        yield self.r
 
     def __getitem__(self, id_: Literal[0, 1]) -> Laser:
         match id_:

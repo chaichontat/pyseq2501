@@ -150,6 +150,10 @@ class FakeImager(Imager):
         y: Optional[int] = None,
         z_obj: Optional[int] = None,
         z_tilt: Optional[int | tuple[int, int, int]] = None,
+        lasers: Optional[tuple[int | None, int | None]] = None,
+        laser_onoff: Optional[tuple[bool | None, bool | None]] = None,
+        shutter: Optional[bool] = None,
+        od: Optional[tuple[float | None, float | None]] = None,
     ) -> None:
         ...
 
