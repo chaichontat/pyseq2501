@@ -41,10 +41,11 @@ async def poll(ws: WebSocket) -> NoReturn:
         else:
             send_now = True
         finally:
-            if raw := await imager.state:
-                state = WebState(**raw.dict(), msg=message)
-            else:
-                state.msg = "Error: timeout on state retrieval."
+            try:
+                state = WebState(**(await imager.state).dict(), msg=message)
+            except BaseException as e:
+                state.msg = f"Error: {type(e).__name__}: {e}"
+
             if send_now:
                 await ws.send_json(jsonable_encoder(state))
                 send_now = False
