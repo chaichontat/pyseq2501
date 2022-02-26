@@ -32,14 +32,20 @@ async def poll(ws: WebSocket) -> NoReturn:
     q_status: asyncio.Queue[bool] = ws.app.state.q_status
 
     global state
+    wait_time = 5
     send_now = False
     while True:
         try:
-            await asyncio.wait_for(q_status.get(), 5)
+            running = await asyncio.wait_for(q_status.get(), wait_time)
         except asyncio.TimeoutError:
-            send_now = False
+            ...
         else:
-            send_now = True
+            if running:
+                send_now = True
+                wait_time = 0.5
+            else:
+                send_now = False
+                wait_time = 5
         finally:
             try:
                 state = WebState(**(await imager.state).dict(), msg=message)
@@ -48,7 +54,6 @@ async def poll(ws: WebSocket) -> NoReturn:
 
             if send_now:
                 await ws.send_json(jsonable_encoder(state))
-                send_now = False
 
 
 @router.websocket("/status")
