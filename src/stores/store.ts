@@ -6,7 +6,7 @@ import { cmdDefaults, TakeImage } from "./command";
 import { experimentDefault, NExperiment } from "./experiment";
 import { Img, imgDefault } from "./imaging";
 import { Status, statusDefault } from "./status";
-import writableWebSocket, { readableWebSocket } from "./ws_store";
+import writableWebSocket, { AsymWritable, asymWritableWebSocket, readableWebSocket } from "./ws_store";
 
 
 let try_connect: boolean = true;  // Check if in GitHub Actions.
@@ -19,7 +19,6 @@ export type XY = {
 export type UserSettings = {
   block: Block;
   max_uid: number;
-  mode: "manual" | "automatic" | "editingA" | "editingB";
   exps: [NExperiment, NExperiment];
   image_params: TakeImage & { fc: boolean };
 };
@@ -29,15 +28,14 @@ export type Block = "" | "moving" | "ejecting" | "capturing" | "previewing" | "a
 const userDefault: Readonly<UserSettings> = {
   block: "",
   max_uid: 2,
-  mode: "editingA",
   exps: [{ ...experimentDefault }, { ...experimentDefault }],
   image_params: { ...cmdDefaults["takeimage"], fc: false },
 };
 
-export type CommandResponse = { step?: [number, number, number]; msg?: string, error?: string };
 
-export type LocalInfo = { "mode": "auto" | "editingA" | "editingB" | "manual", "connected": boolean, img: Img }
-export const localStore: Writable<LocalInfo> = writable({ mode: "auto", connected: false, img: { ...imgDefault } })
+
+export type LocalInfo = { "mode": "automatic" | "editingA" | "editingB" | "manual", "connected": boolean, img: Img }
+export const localStore: Writable<LocalInfo> = writable({ mode: "automatic", connected: false, img: { ...imgDefault } })
 
 
 export const statusStore: Readable<Status> =
@@ -50,9 +48,12 @@ const user_ws: Writable<UserSettings> = try_connect && browser ? writableWebSock
   { beforeOpen: initial_get })
   : writable({ ...userDefault });
 
-export const cmdStore: Writable<CommandResponse> =
-  try_connect && browser ? writableWebSocket(`ws://${ window.location.hostname }:8000/cmd`, { msg: "ok" }, { broadcastOnSet: false })
-    : writable({ msg: "ok" });
+
+export type CommandResponse = { step?: [number, number, number]; msg?: string, error?: string };
+export type CommandWeb = { cmd: "preview" | "capture" | "stop" }
+export const cmdStore: AsymWritable<CommandResponse, CommandWeb> =
+  asymWritableWebSocket(`ws://${ browser ? window.location.hostname : "" }:8000/cmd`, { msg: "ok" }, { cmd: "stop" })
+
 
 
 export async function initial_get() {
