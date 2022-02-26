@@ -14,7 +14,7 @@
   import ProgressManual from "../manual/progress_manual.svelte";
 
   // let files: FileList;
-  export let fc: 0 | 1;
+  export let fc_: 0 | 1;
 
   const ajv = new Ajv();
   const validate = ajv.compile(rawExperimentSchema);
@@ -54,7 +54,7 @@
 
       const ne = fromExperiment(parsed, $us.max_uid);
       $us.max_uid += ne.reagents.length + ne.cmds.length;
-      $us.exps[fc] = ne;
+      $us.exps[fc_] = ne;
     } catch (e) {
       alert(e);
     }
@@ -69,13 +69,13 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
       </svg>
     </button>
-    <p class="inline-block my-8 ml-2 text-4xl font-extrabold tracking-tight text-gray-700 dark:text-white">Flowcell {fc ? "B" : "A"}</p>
+    <p class="inline-block my-8 ml-2 text-4xl font-extrabold tracking-tight text-gray-700">Flowcell {{ 0: "A", 1: "B" }[fc_]}</p>
   </span>
 
   <!-- Download -->
   <!-- REMOVE BEFORE FLIGHT -->
   <div class="flex gap-x-2">
-    <button class="px-4 py-1 ml-8 text-base font-medium rounded-lg h-11 white-button" on:click={() => toYAML($us.exps[fc])}>
+    <button class="px-4 py-1 ml-8 text-base font-medium rounded-lg h-11 white-button" on:click={() => toYAML($us.exps[fc_])}>
       <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
       </svg>
@@ -120,7 +120,7 @@
         <div transition:fade={{ duration: 100, easing: cubicInOut }}>
           <!-- New -->
           <MenuItem let:active
-            ><div class:bg-blue-700={active} class:text-white={active} class="z-0 w-full px-2 py-2 pl-4" on:click={() => ($us.exps[fc] = { ...experimentDefault })}>New</div></MenuItem
+            ><div class:bg-blue-700={active} class:text-white={active} class="z-0 w-full px-2 py-2 pl-4" on:click={() => ($us.exps[fc_] = { ...experimentDefault })}>New</div></MenuItem
           >
         </div>
       </MenuItems>
@@ -138,14 +138,14 @@
 <p class="pb-3 mt-8 text-2xl font-bold text-gray-800 border-b">Details</p>
 <div class="flex flex-col text-lg font-medium">
   <p class="text-lg">Name</p>
-  <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={$us.exps[fc].name} class:invalid={!$us.exps[fc].name} />
+  <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={$us.exps[fc_].name} class:invalid={!$us.exps[fc_].name} />
   <!-- FileSystemAccessAPI cannot give path upstream of what user chooses. -->
   <p class="text-lg">Image Path</p>
-  <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={$us.exps[fc].path} class:invalid={!$us.exps[fc].path} />
+  <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={$us.exps[fc_].path} class:invalid={!$us.exps[fc_].path} />
 </div>
 
-<Reagents {fc} />
-<Steps {fc} />
+<Reagents {fc_} />
+<Steps {fc_} />
 <p class="mt-6 mb-1 text-2xl font-bold text-gray-800">Preview</p>
 <!-- <Preview /> -->
 

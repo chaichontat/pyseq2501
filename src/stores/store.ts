@@ -45,7 +45,7 @@ export const statusStore: Readable<Status> =
 
 export const userStore: Writable<UserSettings> = writable({ ...userDefault })
 
-export const user_ws = try_connect && browser ? writableWebSocket(`ws://${ window.location.hostname }:8000/user`, { ...userDefault },
+const user_ws = try_connect && browser ? writableWebSocket(`ws://${ window.location.hostname }:8000/user`, { ...userDefault },
   { beforeOpen: initial_get })
   : writable({ ...userDefault });
 

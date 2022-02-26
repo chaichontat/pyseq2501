@@ -5,15 +5,15 @@
 
 @layer components {
   .pretty {
-    @apply text-gray-800 border-gray-400 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 disabled:border-gray-200 disabled:text-gray-500 disabled:shadow-none;
+    @apply text-black border-gray-400 h-10 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 disabled:border-gray-200 disabled:text-gray-500 disabled:shadow-none;
   }
 
   .drop {
-    @apply mx-2 border-gray-300 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50;
+    @apply mx-2 font-medium border-gray-400 h-10 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50;
   }
 
   .white-clickable {
-    @apply transition-all duration-100 border-gray-300 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 hover:text-blue-800 disabled:text-gray-500 disabled:border-gray-200 disabled:hover:bg-gray-50 disabled:active:bg-gray-50;
+    @apply transition-all duration-100 border-gray-300 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 disabled:text-gray-500 disabled:border-gray-200 disabled:hover:bg-gray-50 disabled:active:bg-gray-50;
     /* dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 */
   }
 

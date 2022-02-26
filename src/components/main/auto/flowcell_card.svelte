@@ -1,16 +1,16 @@
 <script lang="ts">
-  export let fc: 0 | 1;
+  export let fc: boolean;
   import { userStore as us } from "$src/stores/store";
 
   function handleEditClick(): () => void {
     return () => {
-      $us.mode = fc === 0 ? "editingA" : "editingB";
+      $us.mode = fc ? "editingB" : "editingA";
       $us.image_params.fc = fc;
     };
   }
 </script>
 
-<div class="w-4/12 max-w-md p-6 text-lg bg-white border rounded-lg shadow space-y-3 shadow-blue-300 dark:bg-gray-800 dark:border-gray-700" class:shadow-indigo-300={fc}>
+<div class="w-4/12 max-w-md p-6 text-lg bg-white border rounded-lg shadow space-y-3 shadow-blue-300" class:shadow-indigo-300={fc}>
   <div class="flex">
     <p class="mb-4 text-6xl font-bold text-gray-700">{fc ? "B" : "A"}</p>
     <!-- Spacer -->

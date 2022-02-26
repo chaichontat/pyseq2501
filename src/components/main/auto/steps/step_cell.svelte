@@ -1,13 +1,14 @@
 <script lang="ts">
   import Dropdown from "./dropdown.svelte";
   import { userStore as us } from "$src/stores/store";
-  import type { Cmds, Ops } from "$src/stores/command";
+  import type { Cmd, Ops } from "$src/stores/command";
   import { createEventDispatcher } from "svelte";
   import { checkRange } from "$src/utils";
   import Takeimage from "$src/components/main/takeimage/takeimage.svelte";
-  export let fc: 0 | 1;
   export let n: number;
-  export let cmd: Cmds;
+  export let cmd: Cmd;
+
+  export let fc_: 0 | 1;
 
   // Can dispatch `delete`.
   const dispatch = createEventDispatcher();
@@ -21,7 +22,6 @@
     autofocus: "orange",
     goto: "red",
   };
-
   // $: cmd = { ...cmdDefaults[cmd.op], ...cmd }; // Second overwrites first.
 </script>
 
@@ -45,41 +45,47 @@
   </div>
 
   <div class="w-full mr-8">
-    <span class="flex items-center gap-x-16">
+    <span class="flex gap-x-16 items-center">
       <div><Dropdown bind:cmd /></div>
 
       <!-- Hold -->
       {#if cmd.op === "hold"}
         <p>
-          Time <input type="number" class="w-32 py-1 mx-2 pretty" bind:value={cmd.time} use:checkRange={0} min="0" />
+          Time <input type="number" class="w-16 py-1 ml-3 mr-1 pretty font-medium" bind:value={cmd.time} use:checkRange={[0, 99]} min="0" max="99" />
+          h
+          <input type="number" class="w-16 py-1 ml-3 mr-1 pretty font-medium" bind:value={cmd.time} use:checkRange={[0, 59]} min="0" max="59" />
+          m
+          <input type="number" class="w-16 py-1 ml-3 mr-1 pretty font-medium" bind:value={cmd.time} use:checkRange={[0, 59]} min="0" max="59" />
           s
         </p>
 
         <!--  Goto considered harmful -->
       {:else if cmd.op === "goto"}
         <p>
-          Go to <input type="number" class="w-24 py-1 mx-2 pretty" bind:value={cmd.step} placeholder="1" />
+          Go to <input type="number" class="w-16 py-1 mx-2 pretty font-medium" bind:value={cmd.step} use:checkRange={[1, n]} min="1" max={n} />
           for
-          <input type="number" class="w-24 py-1 mx-2 pretty" bind:value={cmd.n} placeholder="4" />
+          <input type="number" class="w-16 py-1 mx-2 pretty font-medium" bind:value={cmd.n} use:checkRange={[1, Infinity]} min="1" />
           times.
         </p>
 
         <!-- Wash -->
       {:else if cmd.op === "pump"}
         <p>
-          Reagent
-          <select class="text-sm drop">
-            {#each $us.exps[fc].reagents as { uid, reagent }}
-              {#if "port" in reagent}
-                <option>{`${reagent.port} - ${reagent.name}`}</option>
-              {:else}
-                <option>{`Group ${reagent.name}`}</option>
-              {/if}
-            {/each}
-          </select>
-
           <span>
-            Volume <input type="number" class="w-24 py-1 mx-2 pretty" placeholder="2000" bind:value={cmd.volume} />
+            Reagent
+            <select class="pretty mx-2">
+              {#each $us.exps[fc_].reagents as { uid, reagent }}
+                {#if "port" in reagent}
+                  <option>{`${reagent.port} - ${reagent.name}`}</option>
+                {:else}
+                  <option>{`Group ${reagent.name}`}</option>
+                {/if}
+              {/each}
+            </select>
+          </span>
+
+          <span class="ml-4">
+            Volume <input type="number" class="w-24 py-1 mx-2 pretty font-medium" use:checkRange={[1, 2000]} min="1" max="2000" bind:value={cmd.volume} />
             μl
           </span>
         </p>
@@ -89,7 +95,7 @@
         <p>
           Reagent
           <select class="text-sm drop">
-            {#each $us.exps[fc].reagents as { uid, reagent }}
+            {#each $us.exps[fc_].reagents as { uid, reagent }}
               {#if "port" in reagent}
                 <option>{`${reagent.port} - ${reagent.name}`}</option>
               {:else}
@@ -99,14 +105,14 @@
           </select>
 
           <span>
-            Volume <input type="number" class="w-24 py-1 mx-2 pretty" placeholder="2000" bind:value={cmd.volume} />
+            Volume <input type="number" class="w-24 py-1 mx-2 pretty font-medium" use:checkRange={[1, 2000]} min="1" max="2000" bind:value={cmd.volume} />
             μl
           </span>
         </p>
         <!-- Temp -->
       {:else if cmd.op === "temp"}
         <p>
-          Temperature <input type="number" class="w-24 py-1 mx-2 pretty" placeholder="20" bind:value={cmd.temp} />
+          Temperature <input type="number" class="w-24 py-1 mx-2 pretty font-medium" use:checkRange={[10, 60]} min="10" max="60" bind:value={cmd.temp} />
           °C
         </p>
       {/if}
@@ -122,7 +128,7 @@
     <!-- Those that require more space. -->
     {#if cmd.op === "takeimage"}
       <div class="grid grid-cols-4 mt-2 font-medium divide-x clump gap-x-4">
-        <span class="col-span-4 my-2"><Takeimage bind:params={cmd} inAuto={true} /></span>
+        <span class="col-span-4 my-2"><Takeimage bind:params={cmd} inAuto={true} {fc_} /></span>
       </div>
       <!-- content here -->
     {/if}

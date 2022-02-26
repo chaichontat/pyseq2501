@@ -6,11 +6,13 @@
   import type { TakeImage } from "$src/stores/command";
   import LaserChannels from "./laserChannels.svelte";
   import Go from "../go.svelte";
+  import { count, checkRange } from "$src/utils";
 
   export let inAuto: boolean = true;
   export let params: TakeImage;
   export let stats = { height: 0, width: 0, n_cols: 0, n_bundles: 0, n_z: 1, time: 0 };
   export let z_stack = false;
+  export let fc_: 0 | 1;
 
   function blockControls(div: HTMLElement | null, changeTo: boolean): void {
     if (div) {
@@ -24,6 +26,15 @@
     // Necessary to update map.
     $us.image_params.xy0 = params.xy0;
     $us.image_params.xy1 = params.xy1;
+  }
+
+  function isInvalid(s: string) {
+    if (!s) return true;
+    if (!inAuto) return false;
+
+    const names = $us.exps[fc_].cmds.filter((c) => c.cmd.op === "takeimage").map((c) => (c.cmd as TakeImage).name);
+    if (count(names)[s] > 1) return true;
+    return false;
   }
 
   function genTime(t: number): string {
@@ -47,13 +58,15 @@
   <section class="flex flex-col text-lg font-medium">
     <p class="mt-1 text-lg">Name</p>
     <div class="flex w-full max-w-md gap-x-2">
-      <input type="text" class="flex-grow mb-4 pretty" bind:value={params.name} />
-      <Go color="indigo">Preview</Go>
+      <input type="text" class="flex-grow mb-4 pretty text-lg h-12" bind:value={params.name} class:invalid={isInvalid(params.name)} />
+      {#if inAuto}
+        <Go color="sky" cl="text-lg font-semibold shadow-md shadow-sky-700/10 h-12">Preview</Go>
+      {/if}
     </div>
 
     {#if !inAuto}
       <p class="text-lg">Image Path</p>
-      <input type="text" class="max-w-md mb-4 pretty" bind:value={params.path} />
+      <input type="text" class="max-w-md mb-4 pretty" bind:value={params.path} class:invalid={!params.path} />
     {/if}
   </section>
 
@@ -81,7 +94,7 @@
       <div class="flex gap-8">
         <div>
           <p>X-Overlap</p>
-          <input type="number" class="w-20 pr-2 pretty" bind:value={params.overlap} step="0.01" min="0" max="0.99" />
+          <input type="number" class="w-20 pr-2 pretty" bind:value={params.overlap} step="0.01" min="0" max="0.99" use:checkRange={[0.01, 0.99]} />
           (0-1)
         </div>
         <div class="flex flex-col justify-center font-normal">
@@ -98,7 +111,6 @@
     </div>
   </section>
 
-  <!-- TODO Unequal level -->
   <!-- Focus stuffs -->
   <section class="flex flex-col gap-2">
     <h2>Focus</h2>
@@ -107,14 +119,14 @@
         <div>
           <p>Z Tilt</p>
           <div class="flex gap-2">
-            <input type="number" class="w-28 pretty" bind:value={params.z_tilt} />
+            <input type="number" class="w-28 pretty" bind:value={params.z_tilt} min="0" max="25000" use:checkRange={[0, 25000]} />
             <Go />
           </div>
         </div>
         <div>
           <p>Z Objective</p>
           <span class="flex gap-2">
-            <input type="number" class="w-28 pretty" bind:value={params.z_obj} />
+            <input type="number" class="w-28 pretty" bind:value={params.z_obj} min="0" max="60000" use:checkRange={[0, 60000]} />
             <Go />
             <button type="button" class="px-4 py-1 font-medium text-gray-900 rounded-lg w-36 white-button">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -142,11 +154,38 @@
         </label>
         <div class="flex font-medium" id="zBox">
           <span class="flex items-center border-l rounded-l-lg color-group" class:span-disabled={$us.block || !z_stack} use:tooltip={"Nyquist is 232."}>Spacing</span>
-          <input type="number" min="1" max="60000" step="1" bind:value={params.z_spacing} class="z-10 h-10 text-center rounded-none pretty w-28" disabled={$us.block || !z_stack} />
+          <input
+            type="number"
+            min="1"
+            max="60000"
+            step="1"
+            bind:value={params.z_spacing}
+            use:checkRange={[1, 60000]}
+            class="z-10 h-10 text-center rounded-none pretty w-28"
+            disabled={$us.block || !z_stack}
+          />
           <span use:tooltip={"Multiple of Spacing"} class="flex items-center color-group" class:span-disabled={$us.block || !z_stack}>From</span>
-          <input type="number" min="-100" max="100" step="1" bind:value={params.z_from} class="z-10 w-16 h-10 text-center rounded-none pretty" disabled={$us.block || !z_stack} />
+          <input
+            type="number"
+            min="-100"
+            max="100"
+            step="1"
+            bind:value={params.z_from}
+            use:checkRange={[-100, 100]}
+            class="z-10 w-16 h-10 text-center rounded-none pretty"
+            disabled={$us.block || !z_stack}
+          />
           <span use:tooltip={"Multiple of Spacing"} class="flex items-center color-group" class:span-disabled={$us.block || !z_stack}>To</span>
-          <input type="number" min="-100" max="100" step="1" bind:value={params.z_to} class="z-10 w-16 h-10 text-center rounded-l-none rounded-r-lg pretty" disabled={$us.block || !z_stack} />
+          <input
+            type="number"
+            min="-100"
+            max="100"
+            step="1"
+            bind:value={params.z_to}
+            use:checkRange={[-100, 100]}
+            class="z-10 w-16 h-10 text-center rounded-l-none rounded-r-lg pretty"
+            disabled={$us.block || !z_stack}
+          />
         </div>
       </div>
     </div>

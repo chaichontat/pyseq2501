@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Reagent, ReagentGroup } from "$src/stores/reagent";
   import { createEventDispatcher } from "svelte";
-  import { checkRange } from "$src/utils";
+  import { checkRange, count } from "$src/utils";
   import { userStore as us } from "$src/stores/store";
   const dispatch = createEventDispatcher();
 
@@ -9,7 +9,6 @@
   export let reagent: Reagent | ReagentGroup;
   export let fc_: 0 | 1;
 
-  const count = (names: Array<any>) => names.reduce((a, b) => ({ ...a, [b]: (a[b] || 0) + 1 }), {}); // don't forget to initialize the accumulator
   function nameInvalid(s: string) {
     if (!s) return true;
     const names = $us.exps[fc_].reagents.map((r) => r.reagent.name);
