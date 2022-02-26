@@ -4,6 +4,7 @@ import type { Readable, Writable } from "svelte/store";
 import { writable } from "svelte/store";
 import { cmdDefaults, TakeImage } from "./command";
 import { experimentDefault, NExperiment } from "./experiment";
+import { Img, imgDefault } from "./imaging";
 import { Status, statusDefault } from "./status";
 import writableWebSocket, { readableWebSocket } from "./ws_store";
 
@@ -35,8 +36,8 @@ const userDefault: Readonly<UserSettings> = {
 
 export type CommandResponse = { step?: [number, number, number]; msg?: string, error?: string };
 
-export type LocalInfo = { "mode": "auto" | "editingA" | "editingB" | "manual", "connected": boolean }
-export const localStore: Writable<LocalInfo> = writable({ mode: "auto", connected: false })
+export type LocalInfo = { "mode": "auto" | "editingA" | "editingB" | "manual", "connected": boolean, img: Img }
+export const localStore: Writable<LocalInfo> = writable({ mode: "auto", connected: false, img: { ...imgDefault } })
 
 
 export const statusStore: Readable<Status> =
@@ -91,6 +92,19 @@ function updateUserSettings() {
 }
 
 updateUserSettings();
+
+function updateImg(c: CommandResponse) {
+  if (browser && c.msg === "imgReady") {
+    fetch(`http://${ window.location.hostname }:8000/img`)
+      .then((response: Response) => response.json())
+      .then((img: Img) => (localStore.update((l) => ({ ...l, img }))))
+      .catch((e) => alert(e));
+    userStore.update((u) => ({ ...u, block: "" }))
+  }
+}
+
+cmdStore.subscribe(updateImg)
+
 
 
   // function genSSE(): EventSource {
