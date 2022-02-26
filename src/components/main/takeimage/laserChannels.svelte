@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { TakeImage } from "$src/stores/command";
   import Go from "../go.svelte";
-
+  import { checkRange } from "$src/utils";
   export let params: TakeImage;
   export let i: 0 | 1;
 
@@ -29,7 +29,16 @@
       <div class="inline font-semibold" class:text-green-800={params.laser_onoff[i] && !i} class:text-red-800={params.laser_onoff[i] && i}>{Boolean(i) ? 660 : 532} nm</div>
     </label>
 
-    <input type="number" class="w-20 h-8 pretty" class:pretty-disabled={!params.laser_onoff[0]} bind:value={params.lasers[i]} disabled={!params.laser_onoff[i]} />
+    <input
+      type="number"
+      class="w-20 h-8 pretty"
+      class:pretty-disabled={!params.laser_onoff[0]}
+      bind:value={params.lasers[i]}
+      min="0"
+      max="500"
+      use:checkRange={[0, 500]}
+      disabled={!params.laser_onoff[i]}
+    />
     mW
     <Go>Set</Go>
   </span>

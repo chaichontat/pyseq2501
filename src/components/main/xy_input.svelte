@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Spinning from "$comps/spinning.svelte";
-  import { userStore as us, statusStore as status } from "$src/stores/store";
   import { raw_to_local } from "$src/coords";
+  import { statusStore as status, userStore as us } from "$src/stores/store";
+  import { checkRange } from "$src/utils";
   import { createEventDispatcher } from "svelte";
   import Go from "./go.svelte";
 
@@ -19,7 +19,17 @@
 <div class="flex gap-x-2">
   <div class="flex font-medium">
     <span class="flex items-center border-l rounded-l-lg color-group" class:span-disabled={$us.block}>X</span>
-    <input bind:value={xy[0]} on:change={() => dispatch("change")} type="number" min="-5" max="30" step="0.01" class="z-10 h-10 text-center rounded-none pretty w-28" disabled={$us.block} />
+    <input
+      bind:value={xy[0]}
+      on:change={() => dispatch("change")}
+      type="number"
+      min="-5"
+      max="30"
+      step="0.01"
+      use:checkRange={[-5, 30]}
+      class="z-10 h-10 text-center rounded-none pretty w-28"
+      disabled={$us.block}
+    />
     <span class="flex items-center color-group" class:span-disabled={$us.block}>Y</span>
     <input
       bind:value={xy[1]}
@@ -27,6 +37,7 @@
       type="number"
       min="-5"
       max="80"
+      use:checkRange={[-5, 80]}
       step="0.01"
       class="z-10 h-10 text-center rounded-l-none rounded-r-lg pretty w-28"
       disabled={$us.block}

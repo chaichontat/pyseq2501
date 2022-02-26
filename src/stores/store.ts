@@ -38,7 +38,7 @@ export type CommandResponse = { step?: [number, number, number]; msg?: string, e
 export type LocalInfo = { "mode": "auto" | "editingA" | "editingB" | "manual", "connected": boolean }
 export const localStore: Writable<LocalInfo> = writable({ mode: "auto", connected: false })
 
-// TODO: Make this read-only.
+
 export const statusStore: Readable<Status> =
   try_connect && browser ? readableWebSocket(`ws://${ window.location.hostname }:8000/status`, { ...statusDefault }, { localStore })
     : writable({ ...statusDefault });
