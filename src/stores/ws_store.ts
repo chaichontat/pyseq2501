@@ -12,19 +12,17 @@ export type wsConfig = {
 
 export function writableWebSocket<T extends object | string>(url: string, initialValue: T,
     { f = JSON.parse, broadcastOnSet, beforeOpen, localStore }: wsConfig = {}): Writable<T> {
-    // console.log(`%cInitializing ${ url }.`, "color:green")
     let socket: WebSocket
     let timeout: ReturnType<typeof setTimeout> | null
     const { set, subscribe, update } = writable(initialValue)
 
     async function _open() {
+        console.log("Connecting")
+        timeout = null
         if (beforeOpen) await beforeOpen()
 
         socket = new WebSocket(url);
-        socket.onmessage = (event: MessageEvent): void => {
-            console.log(event.data)
-            set(f(event.data))
-        };
+        socket.onmessage = (event: MessageEvent): void => (set(f(event.data)))
 
         socket.onopen = () => {
             if (localStore) localStore.update((curr) => ({ ...curr, connected: true }))
@@ -36,7 +34,8 @@ export function writableWebSocket<T extends object | string>(url: string, initia
 
         socket.onclose = () => {
             if (localStore) localStore.update((curr) => ({ ...curr, connected: false }))
-            if (timeout) timeout = setTimeout(_open, 1000)
+            if (!timeout) timeout = setTimeout(_open, 2000)
+            console.error("Connection closed.")
         }
     }
 
