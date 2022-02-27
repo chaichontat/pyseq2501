@@ -24,6 +24,8 @@ async def take():
     print("Done!")
 
 
-asyncio.run(take())
+def test_take():
+    asyncio.run(take())
+
 
 # %%
