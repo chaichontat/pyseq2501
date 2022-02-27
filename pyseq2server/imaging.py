@@ -17,12 +17,15 @@ class Img(BaseModel):
     img: list[str]
     hist: list[Hist]
     channels: tuple[bool, bool, bool, bool]
+    dim: tuple[int, int]
 
 
 def update_img(arr: np.ndarray):
     img = [process_img(i) for i in arr]
     hist = [gen_hist(i) for i in arr]
-    return Img(n=arr.shape[1] // 128, img=img, hist=hist, channels=(True, True, True, True))
+    return Img(
+        n=arr.shape[1] // 128, img=img, hist=hist, channels=(True, True, True, True), dim=arr.shape[1:]
+    )
 
 
 def process_img(img: np.ndarray) -> str:

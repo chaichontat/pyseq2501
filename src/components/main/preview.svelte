@@ -39,7 +39,10 @@
   // onDestroy(unsubscribe);
 
   $: if (browser) imgFrame.src = $ls.img.img[currChannel];
-  $: if (ctx && $ls.img) ctx.canvas.height = 128 * $ls.img.n;
+  $: if (ctx && $ls.img) {
+    ctx.canvas.height = $ls.img.dim[0];
+    ctx.canvas.width = $ls.img.dim[1];
+  }
 
   function genTabClass(color: string, selected: boolean, enabled: boolean): string {
     let out = `tab-button ${selected ? `text-white` : `${enabled ? `text-gray-700 hover:text-black bg-white hover:bg-${color}-300` : "text-gray-400"}`}`;
