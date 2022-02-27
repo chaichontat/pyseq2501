@@ -1,6 +1,0 @@
-{
-  "python.formatting.provider": "black",
-  "workbench.colorCustomizations": {
-    "statusBar.background" : "#333350",
-  }
-}
