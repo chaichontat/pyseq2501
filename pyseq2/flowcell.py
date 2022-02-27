@@ -7,7 +7,7 @@ from typing import Annotated, Literal, Optional, Type, TypeVar, cast
 from .base.instruments_types import SerialPorts
 from .fluidics.arm9chem import ARM9Chem
 from .fluidics.pump import Pump
-from .fluidics.valve import ReagentPorts, Valves
+from .fluidics.valve import Valves
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +70,7 @@ class AFlowCell:
         if not (1 <= port <= 19) and port != 9:
             raise ValueError("Invalid port number.")
 
-        async with self.arm9chem.shutoff_valve(), self.v.move(cast(ReagentPorts, port)):
+        async with self.arm9chem.shutoff_valve(), self.v.move(port):
             await self.p.pump(
                 vol=self.steps_from_vol(vol_barrel),
                 v_pull=self.sps_from_μLpermin(v_pull),

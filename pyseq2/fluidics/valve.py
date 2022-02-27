@@ -13,7 +13,6 @@ from pyseq2.utils.utils import ok_re, λ_int
 
 logger = logging.getLogger(__name__)
 ValvePorts = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-ReagentPorts = Literal[1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
 
 
 # fmt: off
@@ -97,7 +96,7 @@ class Valves(Movable):
             return p2 + 9
         return p1
 
-    async def _move(self, p: ReagentPorts) -> None:
+    async def _move(self, p: int) -> None:
         # if self.lock.locked():
         #     raise Exception("Do not send multiple move commands at once.")
 
@@ -111,9 +110,9 @@ class Valves(Movable):
             assert await self.pos == p
 
     @asynccontextmanager
-    async def move(self, pos: ReagentPorts):
+    async def move(self, pos: int):
         try:
             await self._move(pos)
             yield
         finally:
-            await self._move(cast(ReagentPorts, 9))  # "Safe" position.
+            await self._move(cast(int, 9))  # "Safe" position.
