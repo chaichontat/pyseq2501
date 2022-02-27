@@ -29,7 +29,7 @@ class _Valve(Movable, UsesSerial):
     @classmethod
     async def ainit(cls, name: ValveName, port_tx: str) -> _Valve:
         self = cls(name)
-        self.com = await COM.ainit(name, port_tx, separator=b"\r")  # VICI hates \n 🙄.
+        self.com = await COM.ainit(name, port_tx)  # VICI hates \n 🙄.
         return self
 
     def __init__(self, name: ValveName) -> None:

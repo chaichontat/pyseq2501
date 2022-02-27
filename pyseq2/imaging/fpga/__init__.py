@@ -26,7 +26,7 @@ class FPGA(UsesSerial):
     @classmethod
     async def ainit(cls, port_tx: str, port_rx: str) -> FPGA:
         self = cls()
-        self.com = await COM.ainit("fpga", port_tx, port_rx, separator=b"\r\n")
+        self.com = await COM.ainit("fpga", port_tx, port_rx)
 
         self.tdi = TDI(self.com)
         self.led = LED(self.com)

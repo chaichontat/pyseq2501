@@ -8,6 +8,7 @@ from typing import TypeVar, cast
 
 import serial.tools.list_ports
 
+from pyseq2.utils.utils import IS_FAKE
 from pyseq2.base.instruments_types import SerialPorts
 
 T = TypeVar("T")
@@ -34,14 +35,14 @@ serial_names: dict[SerialPorts, str] = dict(
 FAKE_PORTS: dict[SerialPorts, str] = {name: "COMX" for name in serial_names}
 
 
-async def get_ports(timeout: int | float = 1, show_all: bool = False) -> dict[SerialPorts, str]:
+async def get_ports(timeout: float = 1, show_all: bool = False) -> dict[SerialPorts, str]:
     """
     See https://pyserial.readthedocs.io/en/latest/tools.html for more details.
 
     Returns:
         Ports: Dataclass of relevant components and their COM ports.
     """
-    if os.environ.get("FAKE_HISEQ", "0") == "1":
+    if IS_FAKE:
         logger.warning("Using fake ports.")
         return FAKE_PORTS
 

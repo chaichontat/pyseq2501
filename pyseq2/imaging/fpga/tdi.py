@@ -13,13 +13,33 @@ Y_OFFSET = int(7e6)
 class TDICmd:
     # fmt: off
     GET_ENCODER_Y = CmdParse(                    "TDIYERD"                               , ok_re(r"TDIYERD (\d+)", lambda x: int(x) - Y_OFFSET))
-    SET_ENCODER_Y = CmdParse(λ_int(lambda x:    f"TDIYEWR {x + Y_OFFSET}")               , ok_if_match("TDIYEWR"))
-
-    SET_TRIGGER   = CmdParse(λ_int(lambda x:    f"TDIYPOS {x + Y_OFFSET - 80000}")       , ok_if_match("TDIYPOS"))
-    WHATISTHIS    = CmdParse(λ_int(lambda n:    f"TDIYARM2 {n} 1")                       , ok_if_match("TDIYARM2"))
-    ARM_TRIGGER   = CmdParse(λ_int(lambda n, y: f"TDIYARM3 {n} {y + Y_OFFSET - 10000} 1"), ok_if_match("TDIYARM3"))
     N_PULSES      = CmdParse(                    "TDIPULSES"                             , ok_re(r"TDIPULSES (\d+)", lambda x: int(x) - 1))
+    
+    SET_ENCODER_Y = CmdParse(λ_int(lambda x:    f"TDIYEWR {x + Y_OFFSET}")               , ok_if_match("TDIYEWR"))
+    SET_TRIGGER   = CmdParse(λ_int(lambda x:    f"TDIYPOS {x + Y_OFFSET - 80000}")       , ok_if_match("TDIYPOS"))
+    # WHATISTHIS    = CmdParse(λ_int(lambda n:    f"TDIYARM2 {n} 1")                       , ok_if_match("TDIYARM2"))
+    ARM_TRIGGER   = CmdParse(λ_int(lambda n, y: f"TDIYARM3 {n} {y + Y_OFFSET - 10000} 1"), ok_if_match("TDIYARM3"))
     # fmt: on
+
+    @staticmethod
+    def handle_fake(s: str) -> str:
+        match s:
+            case "TDIYERD" as e:
+                return f"{e} 1"
+            case "TDIPULSES" as e:
+                return f"{e} 1"
+            case _:
+                ...
+
+        match s.split():
+            case ["TDIYEWR", _] as e:
+                return "TDIYEWR"
+            case ["TDIYPOS", _] as e:
+                return "TDIYPOS"
+            case ["TDIYARM3", _, _, _] as e:
+                return "TDIYARM3"
+            case _:
+                return "what?"
 
 
 # TDIYPOS == Set when to send first trigger aka starting position

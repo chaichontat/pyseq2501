@@ -15,7 +15,7 @@ class UsesSerial(metaclass=ABCMeta):
 
 
 class Movable(metaclass=ABCMeta):
-    STEPS_PER_UM: ClassVar[int | float]
+    STEPS_PER_UM: ClassVar[float]
     RANGE: ClassVar[tuple[int, int]]
     HOME: ClassVar[int]
 

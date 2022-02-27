@@ -40,10 +40,10 @@ class FakeARM9Chem(ARM9Chem):
     async def chiller_temp(self, i: Literal[0, 1, 2]) -> tuple[float, float, float]:
         return (25.0, 25.0, 25.0)
 
-    async def set_fc_temp(self, i: Literal[0, 1], t: int | float) -> None:
+    async def set_fc_temp(self, i: Literal[0, 1], t: float) -> None:
         ...
 
-    async def set_chiller_temp(self, i: Literal[0, 1, 2], t: int | float) -> None:
+    async def set_chiller_temp(self, i: Literal[0, 1, 2], t: float) -> None:
         ...
 
     async def set_vacuum(self, onoff: bool) -> None:
@@ -90,10 +90,10 @@ class FakeFlowCell(AFlowCell):
     async def temp(self) -> float:
         return 25.0
 
-    async def set_temp(self, t: int | float) -> None:
+    async def set_temp(self, t: float) -> None:
         ...
 
-    async def temp_ok(self, t: int | float, tol: int | float = 1) -> bool:
+    async def temp_ok(self, t: float, tol: float = 1) -> bool:
         return True
 
 
@@ -186,5 +186,5 @@ class FakeImager(Imager):
         return 30000, np.ones((232, 5), dtype=np.uint16)
 
     @staticmethod
-    def save(path: str | Path, img: UInt16Array, state: Optional[State] = None) -> None:
+    async def save(path: str | Path, img: UInt16Array, state: Optional[State] = None) -> None:
         ...

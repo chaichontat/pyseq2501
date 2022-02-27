@@ -20,8 +20,9 @@ from typing import (
 
 from serial_asyncio import open_serial_connection
 
-from pyseq2.base.instruments_types import COLOR, FORMATTER, SerialInstruments
-from pyseq2.utils.utils import InvalidResponse
+from pyseq2.base.instruments_types import COLOR, FORMATTER, SEPARATOR, SerialInstruments
+from pyseq2.fakes.fake_serial import open_fake
+from pyseq2.utils.utils import IS_FAKE, InvalidResponse
 
 logger = getLogger(__name__)
 # © is not in ASCII. Looking at you Schneider Electrics (x-stage).
@@ -102,26 +103,32 @@ class COM:
         port_tx: str,
         port_rx: Optional[str] = None,
         *,
-        min_spacing: Annotated[int | float, "s"] = 0.01,
-        separator: bytes = b"\n",
+        min_spacing: Annotated[float, "s"] = 0.01,
         no_check: bool = False,
         test_params: Optional[dict[Any, Any]] = None,
     ):
         baudrate = 115200 if name in ("fpga", "arm9chem", "arm9pe") else 9600
         kwargs = {"name": name, "test_params": test_params} if test_params is not None else {}
-        self = cls(name, test_params, min_spacing, separator, no_check)
+        self = cls(name, test_params, min_spacing, no_check)
 
-        if port_rx is not None:
-            assert name == "fpga"
-            # Name and test_params is for fakeserial. Ignored in the real thing.
-            srx = await open_serial_connection(url=port_rx, baudrate=baudrate, **kwargs)
-            stx = await open_serial_connection(url=port_tx, baudrate=baudrate, **kwargs)
-            self._serial = Channel(reader=srx[0], writer=stx[1])
-            logger.info(f"{self.name}Started listening to ports {port_tx} and {port_rx}.")
-        else:
-            assert name != "fpga"
-            self._serial = Channel(*await open_serial_connection(url=port_tx, baudrate=baudrate, **kwargs))
-            logger.info(f"{self.name}Started listening to port {port_tx}.")
+        if not IS_FAKE:  # Real instrument
+            if port_rx is not None:
+                assert name == "fpga"
+                # Name and test_params is for fakeserial. Ignored in the real thing.
+                srx = await open_serial_connection(url=port_rx, baudrate=baudrate, **kwargs)
+                stx = await open_serial_connection(url=port_tx, baudrate=baudrate, **kwargs)
+                self._serial = Channel(reader=srx[0], writer=stx[1])
+                logger.info(f"{self.name}Started listening to ports {port_tx} and {port_rx}.")
+            else:
+                assert name != "fpga"
+                self._serial = Channel(
+                    *await open_serial_connection(url=port_tx, baudrate=baudrate, **kwargs)
+                )
+                logger.info(f"{self.name}Started listening to port {port_tx}.")
+
+        else:  # Fake instrument
+            self._serial = Channel(*await open_fake(port_tx, name, baudrate, test_params))
+            logger.warning(f"{self.name}Started listening to fake ports.")
 
         asyncio.create_task(self._read_forever())
         return self
@@ -130,14 +137,13 @@ class COM:
         self,
         name: SerialInstruments,
         test_params: Optional[dict[Any, Any]],
-        min_spacing: Annotated[int | float, "s"] = 0.01,
-        separator: bytes = b"\n",
+        min_spacing: Annotated[float, "s"] = 0.01,
         no_check: bool = False,
     ) -> None:
 
         self.name = f"[{COLOR[name]}]{name:10s}[/{COLOR[name]}]"
         self.formatter = FORMATTER[name]
-        self.sep = separator
+        self.sep = SEPARATOR.get(name, b"\n")
         self.no_check = no_check
         self.test_params = test_params
 
@@ -189,6 +195,8 @@ class COM:
                     del self._waiting[i]
                     buffer, rbuffer = "", b""
                     break
+            else:
+                logger.debug(f"(Still) mysterious response: {buffer}")
 
     @overload
     async def send(self, cmd: str) -> None:

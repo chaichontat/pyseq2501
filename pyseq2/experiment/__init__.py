@@ -4,10 +4,8 @@ from __future__ import annotations
 from copy import deepcopy
 from itertools import pairwise
 from logging import getLogger
-
 from pathlib import Path
 from typing import Any, Callable
-
 
 import yaml
 from pydantic import BaseModel, root_validator, validator

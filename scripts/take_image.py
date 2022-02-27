@@ -4,34 +4,26 @@
 
 import asyncio
 
-import matplotlib.pyplot as plt
-from PIL import Image
-
 from pyseq2.imager import Imager
 from pyseq2.utils.log import setup_logger
 from pyseq2.utils.ports import get_ports
 
-setup_logger(to_file=False)
-q: asyncio.Queue[int] = asyncio.Queue()
+setup_logger(level="DEBUG")
 
 
-async def watch():
-    while True:
-        print(await q.get())
+async def take():
+    ports = await get_ports()
+    imager = await Imager.ainit(ports)
+    # await imager.initialize()  # If not initialized in this session (defined by HiSeq power cycle).
+
+    # target, focus_plot = await imager.autofocus(channel=0)
+    # plt.plot(focus_plot)
+    await imager.y.move(1000000)
+    img, state = await imager.take(20, dark=True, channels=frozenset((0, 1, 2, 3)))
+    await imager.save("test.tiff", img)
+    print("Done!")
 
 
-ports = await get_ports()
-imager = await Imager.ainit(ports)
-# await imager.initialize()  # If not initialized in this session (defined by HiSeq power cycle).
-
-# target, focus_plot = await imager.autofocus(channel=0)
-# plt.plot(focus_plot)
-# If init takes too long, repeat.
-await imager.y.move(1000000)
-
-asyncio.create_task(watch())
-img = await imager.take(20, dark=True, channels=frozenset((0, 1)), event_queue=q)
-Image.fromarray(img[0]).save("dark.tiff")
-print("Done!")
+asyncio.run(take())
 
 # %%

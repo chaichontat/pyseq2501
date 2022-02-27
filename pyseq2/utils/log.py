@@ -12,7 +12,7 @@ def setup_logger(*, set_root: bool = False, save: bool = False, level: str = "IN
 
     install()
     handlers: list[Handler] = [RichHandler(rich_tracebacks=True, markup=True)]
-    handlers[0].setFormatter(Formatter("[yellow]%(module)-10s[/] %(message)s", datefmt="[%H:%M:%S] "))
+    handlers[0].setFormatter(Formatter("[yellow]%(name)-10s[/] %(message)s", datefmt="[%H:%M:%S] "))
 
     if save:
         path = Path(f"./logs/{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")

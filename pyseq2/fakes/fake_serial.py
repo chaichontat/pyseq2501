@@ -1,8 +1,17 @@
 import asyncio
 from asyncio import StreamReader, StreamWriter
-from typing import Literal
+from typing import Callable, Literal, Optional
 
-from pyseq2.base.instruments_types import SerialInstruments
+from pyseq2.base.instruments_types import SEPARATOR, SerialInstruments
+from pyseq2.fakes.fake_handlers import fake_fpga, fake_laser, fake_x, fake_y
+
+handlers: dict[SerialInstruments, Callable[[str], str]] = {
+    "x": fake_x,
+    "y": fake_y,
+    "laser_g": fake_laser,
+    "laser_r": fake_laser,
+    "fpga": fake_fpga,
+}
 
 
 class FakeTransport(asyncio.Transport):
@@ -11,13 +20,15 @@ class FakeTransport(asyncio.Transport):
         loop: asyncio.AbstractEventLoop,
         protocol: asyncio.StreamReaderProtocol,
         name: SerialInstruments,
-        test_params: dict,
+        test_params: Optional[dict] = None,
     ):
         super().__init__()
         self._name = name
         self._loop = loop
         self._protocol = protocol
+        self.f = handlers[name]
         self.test_params = test_params
+        self.sep = SEPARATOR.get(name, b"\n")
 
         self.q_rcvd: asyncio.Queue[bytes] = asyncio.Queue()
 
@@ -31,37 +42,30 @@ class FakeTransport(asyncio.Transport):
             self.q_rcvd.task_done()
 
     def write(self, data: bytes):
-        self.q_rcvd.put_nowait(data)
+        for res in self.f(data.strip().decode("ISO-8859-1")).split("\n"):
+            self.q_rcvd.put_nowait(res.encode("ISO-8859-1") + self.sep)
 
 
-FPGAChannel: tuple[StreamReader, StreamWriter] | None = None
-
-
-async def open_serial_connection(
-    url: str, name: SerialInstruments, baudrate: Literal[9600, 115200], test_params: dict
+async def open_fake(
+    url: str, name: SerialInstruments, baudrate: Literal[9600, 115200], test_params: Optional[dict] = None
 ) -> tuple[StreamReader, StreamWriter]:
-    global FPGAChannel  # FPGA uses separate ports for input/output.
-    if name == "fpga" and FPGAChannel is not None:
-        return FPGAChannel
     loop = asyncio.get_event_loop()
     reader = asyncio.StreamReader(loop=loop)
     protocol = asyncio.StreamReaderProtocol(reader, loop=loop)
     writer = asyncio.StreamWriter(FakeTransport(loop, protocol, name, test_params), protocol, reader, loop)
-    if name == "fpga":
-        FPGAChannel = (reader, writer)
     return reader, writer
 
 
 async def test():
-    reader, writer = await open_serial_connection("COMX", "fpga", 9600, {})
-    writer.write(b"RESET\n")
+    reader, writer = await open_fake("COMX", "fpga", 9600, {})
+    writer.write(b"RESET")
     print(await reader.readline())
-    print("Waiting for 1 second.")
-    t = asyncio.create_task(reader.readline())
-    await asyncio.sleep(0.5)
-    writer.write(b"echoooo\n")
-    await asyncio.sleep(0.5)
-    print(await t)
+    # print("Waiting for 1 second.")
+    # t = asyncio.create_task(reader.readline())
+    # await asyncio.sleep(0.5)
+    # writer.write(b"echoooo\n")
+    # await asyncio.sleep(0.5)
+    # print(await t)
 
 
 if __name__ == "__main__":

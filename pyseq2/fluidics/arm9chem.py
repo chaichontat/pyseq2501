@@ -22,11 +22,11 @@ def check01(f: Callable[P, T]) -> Callable[P, T]:
     return chkrng(f, 0, 1)
 
 
-def build_fc_pidsf(i: Literal[0, 1], param: PIDSF, v: int | float) -> str:
+def build_fc_pidsf(i: Literal[0, 1], param: PIDSF, v: float) -> str:
     return f"FCTEMP:{i}:{param}:{v}"
 
 
-def build_tec_pidsf(i: Literal[0, 1, 2], param: PIDSF, v: int | float) -> str:
+def build_tec_pidsf(i: Literal[0, 1, 2], param: PIDSF, v: float) -> str:
     return f"RETEC:{i}:{param}:{v}"
 
 
@@ -95,11 +95,11 @@ class ARM9Chem(UsesSerial):
     async def chiller_temp(self, i: Literal[0, 1, 2]) -> tuple[float, float, float]:
         return await self.com.send(ARM9Cmd.GET_CHILLER_TEMP)
 
-    async def set_fc_temp(self, i: Literal[0, 1], t: int | float) -> None:
+    async def set_fc_temp(self, i: Literal[0, 1], t: float) -> None:
         await self.com.send(ARM9Cmd.FC_ON(i))
         await self.com.send(ARM9Cmd.SET_FC_TEMP(i, t))
 
-    async def set_chiller_temp(self, i: Literal[0, 1, 2], t: int | float) -> None:
+    async def set_chiller_temp(self, i: Literal[0, 1, 2], t: float) -> None:
         await self.com.send(ARM9Cmd.SET_CHILLER_TEMP(i, t))
 
     async def set_vacuum(self, onoff: bool) -> None:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import re
 from typing import (
     Any,
@@ -18,14 +19,7 @@ from typing import (
 )
 
 FlowCell = Literal["A", "B"]
-FLOWCELL_ORIGIN: Dict[FlowCell, Tuple[int, int]] = {
-    "A": (17571, -180000),
-    "B": (43310, -180000),
-}
-
-# TODO: Move this
-X_SPUM = 0.4096
-Y_SPUM = 100
+IS_FAKE = os.environ.get("FAKE_HISEQ", "0") == "1"
 
 T, P = TypeVar("T"), ParamSpec("P")
 
@@ -72,11 +66,11 @@ def ok_re(target: str, f: Callable[..., T] = bool) -> Callable[[str], T]:
     return inner
 
 
-def chkrng(f: Callable[P, T], min_: int | float, max_: int | float) -> Callable[P, T]:
+def chkrng(f: Callable[P, T], min_: float, max_: float) -> Callable[P, T]:
     """Check the (x := first argument) of a function if min_ <= x <= max."""
 
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-        x = cast(int | float, args[0])
+        x = cast(float, args[0])
         if not (min_ <= x <= max_):
             raise ValueError(f"Invalid value for {f.__name__}: Got {x}. Expected [{min_}, {max_}].")
         return f(*args, **kwargs)
@@ -87,7 +81,7 @@ def chkrng(f: Callable[P, T], min_: int | float, max_: int | float) -> Callable[
 async def until(
     cond: Callable[[], Awaitable[bool]],
     attempts: int = 120,
-    gap: int | float = 1,
+    gap: float = 1,
 ) -> None:
     for _ in range(attempts):
         if await cond():
@@ -114,7 +108,7 @@ def λ_int(λ: Callable[[Any], T] | Callable[[Any, Any], T]) -> Callable[[int], 
     return inner
 
 
-IntFloat = int | float
+IntFloat = float
 
 
 @overload

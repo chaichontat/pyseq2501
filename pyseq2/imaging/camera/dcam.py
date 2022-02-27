@@ -35,6 +35,7 @@ from . import API, EXECUTOR
 from .dcam_api import DCAMException
 from .dcam_props import DCAMDict
 from pyseq2.imaging.camera.dcam_api import DCAM_CAPTURE_MODE
+from pyseq2.utils.utils import IS_FAKE
 
 logger = getLogger(__name__)
 
@@ -108,7 +109,7 @@ class _Camera:
 
     @staticmethod
     def init_properties(handle: c_void_p) -> DCAMDict:
-        if os.environ.get("FAKE_HISEQ", "0") == "1" or os.name != "nt":
+        if IS_FAKE:
             return DCAMDict(handle, pickle.loads((Path(__file__).parent / "saved_props.pk").read_bytes()))
         else:
             return DCAMDict.from_dcam(handle)
@@ -299,7 +300,7 @@ class Cameras:
 
         async def in_ctx():
             curr = 0
-            fut = asyncio.create_task(cast(Coroutine[Any, Any, Any], fut_capture))
+            fut = asyncio.create_task(cast(Coroutine[Any, Any, Any], fut_capture)) if fut_capture else None
             t0 = time.monotonic()
             while (n := self.n_frames_taken(cam)) < n_bundles:
                 await asyncio.sleep(0.05)
@@ -312,7 +313,8 @@ class Cameras:
             if event_queue is not None:
                 await asyncio.sleep(0.05)
                 event_queue[0].put_nowait(event_queue[1](n_bundles))
-            await fut
+            if fut:
+                await fut
 
         self.set_mode(mode)
         with self._attach(n_bundles=n_bundles, height=height, cam=cam) as bufs:

@@ -40,6 +40,25 @@ class OpticCmd:
     CLOSE_SHUTTER     = CmdParse("SWLSRSHUT 0", None, ok_if_match("SWLSRSHUT"))
     HOME_OD           = CmdParse(λ_int(lambda i   : f"EX{i}HM")    , None, ok_if_match(("EX1HM", "EX2HM")))
     SET_OD            = CmdParse(λ_int(lambda x, i: f"EX{i}MV {x}"), None, ok_if_match(("EX1MV", "EX2MV")))
+    
+    @staticmethod
+    def handle_fake(s: str) -> str:
+        match s:
+            case "EM2I" | "EM2O" as e:
+                return e
+            case "EX1HM" | "EX2HM" as e:
+                return e
+            case _:
+                ...
+
+        match s.split():
+            case ["SWLSRSHUT", _]:
+                return "SWLSRSHUT"
+            case ["EX1MV" as y, _] | ["EX2MV" as y, _]:
+                return y
+            case _:
+                return "what?"
+
 # fmt: on
 
 
@@ -65,7 +84,7 @@ class Filter(FPGAControlled):
     async def close(self) -> None:
         await self.move(-1)
 
-    async def move(self, od: int | float) -> None:
+    async def move(self, od: float) -> None:
         async with self.lock:
             try:
                 await self.com.send(OpticCmd.SET_OD(self.vals[f"{od:.1f}"], self.id_ + 1))

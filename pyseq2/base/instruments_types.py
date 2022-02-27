@@ -58,4 +58,17 @@ FORMATTER = cast(
         fpga=λ_str(lambda x:   f"{x}\n"),
     ),
 )
+
+SEPARATOR = dict(
+           x=b"\r",
+           y=b"\r\n",
+       pumpa=b"\r\n\xff",
+       pumpb=b"\r\n\xff",
+    valve_a1=b"\r",
+    valve_a2=b"\r",
+    valve_b1=b"\r",
+    valve_b2=b"\r",
+        fpga=b"\r\n",
+    )
+
 # fmt: on

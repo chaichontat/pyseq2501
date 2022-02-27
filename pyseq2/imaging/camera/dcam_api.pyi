@@ -1,10 +1,11 @@
-import os
-from typing import Any, Callable, Optional, ParamSpec, TypeVar, cast
+from typing import Any, Callable, Optional, ParamSpec, TypeVar
+
+from pyseq2.utils.utils import IS_FAKE
 
 P = ParamSpec("P")
 R = TypeVar("R")
 
-if os.name == "nt" and os.environ.get("FAKE_HISEQ", "0") != "1":
+if not IS_FAKE:
     from ctypes import WinDLL
 else:
     class WinDLL:

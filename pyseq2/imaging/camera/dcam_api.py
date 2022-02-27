@@ -6,10 +6,12 @@ from functools import wraps
 from logging import getLogger
 from typing import Callable, ParamSpec, TypeVar
 
+from pyseq2.utils.utils import IS_FAKE
+
 P = ParamSpec("P")
 R = TypeVar("R")
 
-if os.name == "nt" and os.environ.get("FAKE_HISEQ", "0") != "1":
+if not IS_FAKE:
     from ctypes import WinDLL
 
     # Ignore because in Windows, Pylance would complain that WinDLL is not a base class.
@@ -57,7 +59,8 @@ def check_if_failed(f: Callable[P, R]) -> Callable[P, R]:
 
 class CheckedDCAMAPI(DCAMAPI):  # type: ignore
     def __getitem__(self, name: str) -> Callable[..., bool]:
-        return check_if_failed(super().__getitem__(name))
+        f: Callable[..., bool] = super().__getitem__(name)
+        return check_if_failed(f)
 
 
 class DCAMException(Exception):

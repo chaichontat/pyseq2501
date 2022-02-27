@@ -11,9 +11,9 @@ from .fluidics.valve import ReagentPorts, Valves
 
 logger = logging.getLogger(__name__)
 
-μL = Annotated[int | float, "μL"]
-μLpermin = Annotated[int | float, "μL/min"]
-Seconds = Annotated[int | float, "s"]
+μL = Annotated[float, "μL"]
+μLpermin = Annotated[float, "μL/min"]
+Seconds = Annotated[float, "s"]
 
 T = TypeVar("T")
 
@@ -82,10 +82,10 @@ class AFlowCell:
     async def temp(self) -> float:
         return await self.arm9chem.fc_temp(self.id_)
 
-    async def set_temp(self, t: int | float) -> None:
+    async def set_temp(self, t: float) -> None:
         await self.arm9chem.set_fc_temp(self.id_, t)
 
-    async def temp_ok(self, t: int | float, tol: int | float = 1) -> bool:
+    async def temp_ok(self, t: float, tol: float = 1) -> bool:
         return abs(await self.temp - t) < tol
 
     @staticmethod

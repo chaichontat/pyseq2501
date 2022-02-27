@@ -18,23 +18,17 @@ class LaserException(Exception):
     ...
 
 
+def v_get_status(resp: str) -> bool:
+    # Tend to have status error on first calls.
+    return {"DISABLED": False, "ENABLED": True}.get(resp, False)
+
+
+def v_get_power(resp: str) -> int:
+    assert resp.endswith("mW")
+    return int(resp[:4])
+
+
 class LaserCmd:
-    """Laser commands
-
-    Returns:
-        [type]: [description]
-    """
-
-    @staticmethod
-    def v_get_status(resp: str) -> bool:
-        # Tend to have status error on first calls.
-        return {"DISABLED": False, "ENABLED": True}.get(resp, False)
-
-    @staticmethod
-    def v_get_power(resp: str) -> int:
-        assert resp.endswith("mW")
-        return int(resp[:4])
-
     # fmt: off
     ON = "ON"
     OFF = "OFF"

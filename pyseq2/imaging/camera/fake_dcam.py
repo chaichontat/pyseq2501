@@ -128,6 +128,7 @@ class FakeAPI:
     ) -> bool:
         pNewestFrameIndex.contents.value = self.ready
         pFrameCount.contents.value = self.fc
+        self.fc += 1
         return True
 
     def dcam_freeframe(self, h: Handle) -> bool:
@@ -139,11 +140,12 @@ class FakeAPI:
     # /*** --- user memory support --- ***/
     def dcam_attachbuffer(self, h: Handle, frames: Array[c_void_p], size: c_uint32) -> bool:
         """This allows the user to attach his/her own data buffer instead of using DCAM_ALLOCFRAME and using the DCAM buffer. This function accepts an array of pointers to image buffers. If used, this will take the place of DCAM_ALLOCFRAME and set the camera from STABLE to READY state."""
-        return False
+        return True
 
     def dcam_releasebuffer(self, h: Handle) -> bool:
         """This function works similar to DCAM_FREEFRAME except that this is used when using DCAM_ATTACHBUFFER. This will set the camera from READY to STABLE state."""
-        return False
+        self.fc = 0
+        return True
 
     # /*** --- data transfer --- ***/
     def dcam_lockdata(

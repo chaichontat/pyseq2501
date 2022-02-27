@@ -74,7 +74,7 @@ class Pump(UsesSerial):
     @classmethod
     async def ainit(cls, name: Literal["pumpa", "pumpb"], port_tx: str) -> Pump:
         self = cls(name)
-        self.com = await COM.ainit(name, port_tx, separator=b"\r\n\xff")
+        self.com = await COM.ainit(name, port_tx)
         return self
 
     def __init__(self, name: Literal["pumpa", "pumpb"]) -> None:
@@ -130,7 +130,7 @@ class Pump(UsesSerial):
         await self.wait(retries=retries)
 
     async def pump(
-        self, vol: Step, *, v_pull: Sps = 400, v_push: Sps = 6400, wait: Annotated[int | float, "s"] = 26
+        self, vol: Step, *, v_pull: Sps = 400, v_push: Sps = 6400, wait: Annotated[float, "s"] = 26
     ) -> None:
         if (pos := await self.pos) != 0:
             logger.warning(f"Pump {self.name} did not start empty but at pos {pos}.")

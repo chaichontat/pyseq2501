@@ -17,10 +17,11 @@ RANGE = (0, 65535)
 class ObjCmd:
     # fmt: off
     # Callable[[Annotated[int, "mm/s"]], str]
-    SET_VELO = CmdParse(λ_float(lambda x: f"ZSTEP {int(1288471 * x)}"), ok_if_match("ZSTEP"))
-    SET_POS  = CmdParse(chkrng(λ_int(lambda x: f"ZDACW {x}"), *RANGE), ok_if_match("ZDACW"))
     GET_TARGET_POS = CmdParse(     "ZDACR"              , ok_re(r"^ZDACR (\d+)$", int))  # D A
     GET_POS        = CmdParse(     "ZADCR"              , ok_re(r"^ZADCR (\d+)$", int))  # A D
+    
+    SET_VELO = CmdParse(λ_float(lambda x: f"ZSTEP {int(1288471 * x)}"), ok_if_match("ZSTEP"))
+    SET_POS  = CmdParse(chkrng(λ_int(lambda x: f"ZDACW {x}"), *RANGE), ok_if_match("ZDACW"))
     
     # Autofocus stuffs
     SET_TRIGGER = CmdParse(λ_int(lambda x: f"ZTRG {x}") , ok_if_match("ZTRG"))
@@ -28,6 +29,24 @@ class ObjCmd:
     Z_MOVE      = CmdParse(λ_int(lambda x: f"ZMV {x}")  , ok_if_match("@LOG Trigger Camera\nZMV"), n_lines=2)
     SWYZ        = CmdParse(                 "SWYZ_POS 1", ok_if_match("SWYZ_POS"))
     # fmt: on
+
+    @staticmethod
+    def handle_fake(s: str) -> str:
+        match s:
+            case "ZDACR" | "ZADCR" as e:
+                return e + " 0"
+            case _:
+                ...
+
+        match s.split():
+            case ["ZSTEP" as e, _] | ["ZDACW" as e, _] | ["ZTRG" as e, _] | ["SWYZ_POS" as e, _]:
+                return e
+            case ["ZYT" as e, _, _]:
+                return e
+            case ["ZMV", _]:
+                return "@LOG Trigger Camera\nZMV"
+            case _:
+                return "what?"
 
 
 class ZObj(FPGAControlled, Movable):

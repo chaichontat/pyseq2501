@@ -1,3 +1,4 @@
+# pyright: reportPrivateUsage=false
 from __future__ import annotations
 
 import asyncio
@@ -301,7 +302,6 @@ class Imager:
             img (UInt16Array): _description_
             state (State): _description_
         """
-        print(img.shape)
         if isinstance(path, Path):
             path = path.as_posix()
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ctypes
+import os
 import threading
 from ctypes import c_double, c_int32, pointer
 from dataclasses import dataclass
@@ -22,6 +23,7 @@ from .dcam_types import (
     Props,
     PropTypes,
 )
+from pyseq2.utils.utils import IS_FAKE
 
 # /* DCAM-API 3.0 */
 # BOOL DCAMAPI dcam_getpropertyattr	( HDCAM h, DCAM_PROPERTYATTR* param );
@@ -80,7 +82,7 @@ class DCAMProperty:
         return str(self) == str(__o)
 
 
-class DCAMDict(MutableMapping):
+class DCAMDict(MutableMapping[Props, float]):
     _TYPES = PrecomputedPropTypes
 
     def __init__(self, handle: Handle, prop_dict: dict[Props, DCAMProperty]):
@@ -90,7 +92,10 @@ class DCAMDict(MutableMapping):
     def __getitem__(self, name: Props) -> float:
         return self._dict[name].value
 
-    def __setitem__(self, name: Props, value: int | float) -> None:
+    def __setitem__(self, name: Props, value: float) -> None:
+        if IS_FAKE:
+            return
+
         with LOCK:
             prop = self._dict[name]
             # TODO: Check writable.
@@ -103,7 +108,7 @@ class DCAMDict(MutableMapping):
             API.dcam_setgetpropertyvalue(self.handle, prop.id_, pointer(to_set), c_int32(DCAM_DEFAULT_ARG))
             logger.info(f"Set {name} to {value}.")
             self.refresh()
-            assert np.allclose(self[name], value)
+            assert np.allclose(self[name], value), "Value in DCAM not same as target."
 
     def __delitem__(self, _: Props) -> NoReturn:
         raise Exception("Cannot remove properties!")
@@ -117,7 +122,9 @@ class DCAMDict(MutableMapping):
     def __str__(self) -> str:
         return f"Properties: {{{', '.join(map(str, self._dict.values()))}}}"
 
-    def __eq__(self, __o: DCAMDict) -> bool:
+    def __eq__(self, __o: object) -> bool:
+        if not isinstance(__o, DCAMDict):
+            return False
         return self._dict == __o._dict
 
     def refresh(self) -> None:

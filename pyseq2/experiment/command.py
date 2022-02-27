@@ -77,7 +77,7 @@ class Prime(BaseModel, AbstractCommand):
 
 
 class Temp(BaseModel, AbstractCommand):
-    temp: int | float
+    temp: float
     wait: bool = False
     op: Literal["temp"] = "temp"
 
