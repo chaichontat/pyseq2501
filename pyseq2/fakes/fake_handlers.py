@@ -29,7 +29,7 @@ def fake_x(s: str) -> str:
 def fake_y(s: str) -> str:
     s = s[1:]
     if (r := s.split("("))[0] == "R":
-        return f"1R({r[1]}\n1*+0"
+        return f"1R({r[1]}\n*+0"
 
     match s:
         case x if x.startswith("D"):
@@ -79,6 +79,15 @@ def fake_fpga(s: str) -> str:
             return e
         case ["ZMV", _]:
             return "@LOG Trigger Camera\nZMV"
+
+        case ["T1MOVETO" as e, _] | ["T2MOVETO" as e, _] | ["T3MOVETO" as e, _]:
+            return f"{e} 0"
+
+        case ["SWLSRSHUT", _]:
+            return "SWLSRSHUT"
+        case ["EX1MV" as y, _] | ["EX2MV" as y, _]:
+            return y
+
         case _:
             ...
 
@@ -102,11 +111,53 @@ def fake_fpga(s: str) -> str:
             return f"@TILTPOS{e[1]} -1\nT{e[1]}HM" + e
         case "T1CR" | "T2CR" | "T3CR" as e:
             return e
-        case "T1MOVETO" | "T2MOVETO" | "T3MOVETO" as e:
-            return f"{e} 0"
         case "T1VL" | "T2VL" | "T3VL" as e:
             return e
         case "T1CUR" | "T2CUR" | "T3CUR" as e:
             return e
+        case "EM2I" | "EM2O" as e:
+            return e
+        case "EX1HM" | "EX2HM" as e:
+            return e
         case _:
             return "what?"
+
+
+def fake_pump(s: str) -> str:
+    if s == "/1?":
+        return "/0`1"
+    return "/0`"
+
+
+def fake_valve(s: str) -> str:
+    match s:
+        case "ID":
+            return "ID = 1"
+        case x if x.startswith("GO"):
+            return ""
+        case "CP":
+            return "Position is  = 1"
+        case "NP":
+            return "NP = 10"
+        case _:
+            return "what?"
+
+
+def fake_arm9(s: str) -> str:
+    match s:
+        case "?IDN":
+            return "Illumina,Bruno Fluidics Controller,0,v2.0:A1"
+        case "INIT":
+            return "A1"
+        case "?RETEMP:3":
+            return "0.0C:0.0C:0.0:A1"
+        case "?asyphon:0":
+            return "0:A1"
+        case _:
+            ...
+
+    match s.split(":"):
+        case ["?FCTEMP", _]:
+            return "0.0C:A1"
+        case _:
+            return "A1"

@@ -3,13 +3,20 @@ from asyncio import StreamReader, StreamWriter
 from typing import Callable, Literal, Optional
 
 from pyseq2.base.instruments_types import SEPARATOR, SerialInstruments
-from pyseq2.fakes.fake_handlers import fake_fpga, fake_laser, fake_x, fake_y
+from pyseq2.fakes.fake_handlers import fake_arm9, fake_fpga, fake_laser, fake_pump, fake_valve, fake_x, fake_y
 
 handlers: dict[SerialInstruments, Callable[[str], str]] = {
     "x": fake_x,
     "y": fake_y,
     "laser_g": fake_laser,
     "laser_r": fake_laser,
+    "arm9chem": fake_arm9,
+    "pumpa": fake_pump,
+    "pumpb": fake_pump,
+    "valve_a1": fake_valve,
+    "valve_a2": fake_valve,
+    "valve_b1": fake_valve,
+    "valve_b2": fake_valve,
     "fpga": fake_fpga,
 }
 

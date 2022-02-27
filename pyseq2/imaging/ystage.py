@@ -74,7 +74,7 @@ class YCmd:
     IS_MOVING  = CmdParse("R(MV)"                         , lambda x: bool(gen_reader(r"R\(MV\)")(x)), n_lines=2)
     TARGET_POS = CmdParse("R(PT)",                          gen_reader(r"R\(PT\)")    , n_lines=2)
     
-    RETURN_WHEN_MOVE_DONE  = CmdParse("GOTO(CHKMV)"       , ok_if_match("1GOTO(CHKMV)"), n_lines=1, delayed_parser=ok_if_match("Move Done"), timeout=60)  # Returns when move is completed.
+    RETURN_WHEN_MOVE_DONE  = CmdParse("GOTO(CHKMV)"       , ok_if_match("1GOTO(CHKMV)"), delayed_parser=ok_if_match("Move Done"), timeout=60)  # Returns when move is completed.
     GAINS      = CmdParse(λ_str  (lambda x: f"GAINS({x})"), ok_re(r"GAINS\(([\d\.,]+)\)"))
     VELO       = CmdParse(λ_float(lambda x: f"V{x}")      , ok_re(r"V([\d\.]+)"))
 

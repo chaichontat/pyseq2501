@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import time
 from asyncio import Future, StreamReader, StreamWriter
 from dataclasses import dataclass
@@ -96,6 +97,21 @@ class COM:
         no_check (bool, optional): Do not check for return values. Defaults to False.
     """
 
+    FIRST_LINES = re.compile(
+        "|".join(
+            [
+                r"@LOG The FPGA is now online.  Enjoy!",
+                r"\??PR MV",
+                r"\??PR P",
+                r">EX 1",
+                r"1R\([A-Z]{2}\)",
+                r"1Z.*",
+                r"@LOG Trigger Camera",
+                r"@TILTPOS[123] \-?\d+",
+            ]
+        )
+    )
+
     @classmethod
     async def ainit(
         cls,
@@ -159,44 +175,49 @@ class COM:
     async def _read_forever(self) -> NoReturn:
         buffer, rbuffer = "", b""
         while True:
-            resp = (
-                (raw := await self._serial.reader.readuntil(self.sep))
-                .strip(b" \x03\r\n\xff")
-                .decode(**ENCODING_KW)
-            )
+            try:
+                resp = (
+                    (raw := await self._serial.reader.readuntil(self.sep))
+                    .strip(b" \x03\r\n\xff")
+                    .decode(**ENCODING_KW)
+                )
 
-            log_line = f"{self.name}[cyan]Raw: {str(raw)[2:-1]:20s}"
+                log_line = f"{self.name}[cyan]Raw: {str(raw)[2:-1]:20s}"
 
-            if not resp:
-                continue
+                if not resp:
+                    continue
 
-            if self.no_check:
-                logger.debug(log_line)
-                continue
+                if self.no_check:
+                    logger.debug(log_line)
+                    continue
 
-            if buffer:
-                buffer += "\n" + resp
-                rbuffer += raw
-            else:
-                buffer = resp
-                rbuffer = raw
-
-            del resp
-
-            for i in range(len(self._waiting)):
-                parser, fut = self._waiting[i]
-                try:
-                    parsed = parser(buffer)
-                except InvalidResponse:
-                    ...
+                if buffer:
+                    buffer += "\n" + resp
+                    rbuffer += raw
                 else:
-                    logger.debug(f"{log_line}[green]Parsed: '{parsed}'")
-                    fut.set_result(parsed)
-                    del self._waiting[i]
-                    buffer, rbuffer = "", b""
-                    break
-            else:
-                logger.debug(f"(Still) mysterious response: {buffer}")
+                    buffer = resp
+                    rbuffer = raw
+
+                del resp
+
+                for i in range(len(self._waiting)):
+                    parser, fut = self._waiting[i]
+                    try:
+                        parsed = parser(buffer)
+                    except InvalidResponse:
+                        ...
+                    else:
+                        logger.debug(f"{log_line}[green]Parsed: '{parsed}'")
+                        fut.set_result(parsed)
+                        del self._waiting[i]
+                        buffer, rbuffer = "", b""
+                        break
+                else:
+                    if not self.FIRST_LINES.search(buffer):
+                        raise InvalidResponse(f"{buffer}")
+
+            except BaseException as e:
+                logger.critical(f"{self.name}{type(e).__name__}: {e}")
 
     @overload
     async def send(self, cmd: str) -> None:
