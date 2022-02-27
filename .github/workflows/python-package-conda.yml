@@ -43,7 +43,7 @@ jobs:
       - name: Test with Pytest
         
         run: |
-          pip install . -e
+          pip install -e .
           pytest
 
       - name: Autoformat with Black
