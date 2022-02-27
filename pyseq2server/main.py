@@ -10,7 +10,6 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 
 from pyseq2.experiment import *
-from pyseq2.fakes import FakeFlowCells, FakeImager
 from pyseq2.imager import Imager
 from pyseq2.utils.ports import get_ports
 
@@ -37,13 +36,8 @@ app.add_middleware(
 
 async def setup_backend():
     ports = await get_ports(60)
-    if os.environ.get("FAKE_HISEQ", "0") != "1":
-        imager = await Imager.ainit(ports)
-        fcs = await FlowCells.ainit(ports)
-
-    else:
-        imager = await FakeImager.ainit(ports)
-        fcs = await FakeFlowCells.ainit(ports)
+    imager = await Imager.ainit(ports)
+    fcs = await FlowCells.ainit(ports)
 
     app.state.imager = imager
     app.state.fcs = fcs
