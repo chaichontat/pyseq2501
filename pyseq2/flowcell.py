@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Annotated, Literal, Optional, Type, TypeVar, cast
+from typing import Annotated, Literal, Optional, Type, TypeVar
 
 from .base.instruments_types import SerialPorts
 from .fluidics.arm9chem import ARM9Chem

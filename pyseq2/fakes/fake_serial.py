@@ -1,5 +1,8 @@
 import asyncio
+import random
+import time
 from asyncio import StreamReader, StreamWriter
+from logging import getLogger
 from typing import Callable, Literal, Optional
 
 from pyseq2.base.instruments_types import SEPARATOR, SerialInstruments
@@ -19,6 +22,8 @@ handlers: dict[SerialInstruments, Callable[[str], str]] = {
     "valve_b2": fake_valve,
     "fpga": fake_fpga,
 }
+
+logger = getLogger(__name__)
 
 
 class FakeTransport(asyncio.Transport):
@@ -44,12 +49,16 @@ class FakeTransport(asyncio.Transport):
 
     async def _process_forever(self):
         while True:
-            cmd = await self.q_rcvd.get()
-            self._protocol.data_received(cmd)  # Data received from the serial port.
-            self.q_rcvd.task_done()
+            try:
+                cmd = await self.q_rcvd.get()
+                self._protocol.data_received(cmd)  # Data received from the serial port.
+                self.q_rcvd.task_done()
+            except BaseException as e:
+                logger.critical(f"{type(e).__name__}: {e}")
 
     def write(self, data: bytes):
         for res in self.f(data.strip().decode("ISO-8859-1")).split("\n"):
+            # if time.time() - self.t0 < 5 or random.randint(0, 1):
             self.q_rcvd.put_nowait(res.encode("ISO-8859-1") + self.sep)
 
 

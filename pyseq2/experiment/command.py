@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 
 from pyseq2.experiment.reagent import Reagent
 from pyseq2.flowcell import FlowCells, Seconds, μL
-from pyseq2.imager import Imager, State, UInt16Array
+from pyseq2.imager import Imager, UInt16Array
 from pyseq2.utils import coords
 
 logger = getLogger(__name__)
@@ -202,7 +202,7 @@ class TakeImage(BaseModel, AbstractCommand):
                 )
                 big_img[iz] = img
             if self.save:
-                asyncio.create_task(imager.save(p, big_img.copy()))  # TODO state per each stack.
+                save_tasks.append(asyncio.create_task(imager.save(p, big_img.copy())))  # TODO state per each stack.
         if q is not None:
             q.put_nowait((n_bundles, len(zs), len(xs)))  # Make it look pleasing at the end.
         if self.save:
