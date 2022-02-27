@@ -40,6 +40,12 @@ jobs:
           activate-environment: pyseq
           use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
 
+      - name: Test with Pytest
+        
+        run: |
+          pip install . -e
+          pytest
+
       - name: Autoformat with Black
         run: |
           conda install black
@@ -52,11 +58,6 @@ jobs:
 
 #       - name: Debug with tmate
 #         uses: mxschmitt/action-tmate@v3
-
-      - name: Test with Pytest
-        run: |
-          pip install .
-          pytest
 
       - name: Build docs
         if: ${{ matrix.os == 'ubuntu-latest'}}
