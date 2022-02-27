@@ -24,7 +24,7 @@ def setup_web_logger(
         web_handler.setLevel(level)
         web_handler.setFormatter(logging.Formatter("%(message)s"))
         # if set_root:
-        logging.getLogger("pyseq2").handlers.append(web_handler)
+        logging.getLogger("pyseq2.experiment").handlers.append(web_handler)
         ps2.handlers.append(web_handler)
 
     ps2.setLevel(level)

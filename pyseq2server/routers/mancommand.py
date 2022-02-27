@@ -39,7 +39,9 @@ async def ret_cmd(ws: WebSocket) -> None:
         except CancelledError:
             break
         except BaseException as e:
-            ws.app.state.q_log.put_nowait(f"Error: {type(e).__name__}: {e}")
+            logger.error(f"Error in ret_cmd: {e}")
+            raise e
+            # ws.app.state.q_log.put_nowait(f"Error: {type(e).__name__}: {e}")
 
 
 class CommandWeb(BaseModel):
@@ -55,9 +57,11 @@ def cancel_wrapper(q_cmd: QCmd, q_log: asyncio.Queue[str], q_status: asyncio.Que
     except CancelledError:
         q_cmd.put_nowait(CommandResponse(error="Cancelled"))
     except BaseException as e:
-        q_log.put_nowait(f"Error: {type(e).__name__}: {e}")
+        logger.error(f"Error: {type(e).__name__}: {e}")
+        raise e
     finally:
         q_status.put_nowait(False)
+        q_cmd.put_nowait(CommandResponse(msg="moveDone"))
 
 
 async def meh():
@@ -79,10 +83,10 @@ async def cmd_endpoint(ws: WebSocket) -> None:
             p = us.image_params.copy()
             if c == "capture":
                 p.save = True
-                p.z_from, p.z_to = 0, 0
             else:
                 p.save = False
-            new_image = await us.image_params.run(fcs, p.fc, imager, q_cmd)  # type: ignore
+                p.z_from, p.z_to = 0, 0
+            new_image = await p.run(fcs, p.fc, imager, q_cmd)  # type: ignore
             ws.app.state.img = update_img(new_image)
             q_cmd.put_nowait(CommandResponse(msg="imgReady"))  # Doesn't seem to send with 1.
 
@@ -90,7 +94,6 @@ async def cmd_endpoint(ws: WebSocket) -> None:
         with cancel_wrapper(q_cmd, q_log, q_status):
             fc: bool = UserSettings.construct(**ws.app.state.user_settings).image_params["fc"]  # type: ignore
             await m.run(imager, fc)
-            q_cmd.put_nowait(CommandResponse(msg="moveDone"))
 
     task: Task[None] = asyncio.create_task(meh())
 
@@ -98,16 +101,17 @@ async def cmd_endpoint(ws: WebSocket) -> None:
         try:
             while True:
                 cmd = CommandWeb.parse_obj(await ws.receive_json())
+                print(cmd)
                 if cmd.cmd == "stop":
                     task.cancel()
-                    q_status.put_nowait(True)
+                    q_status.put_nowait(False)
                     continue
 
                 # if not task.done():
                 #     q_cmd.put_nowait(CommandResponse(error=f"Old command still running: {task}."))
                 #     continue
 
-                if (cmd.cmd) is not None:
+                if cmd.cmd in ["capture", "preview"]:
                     task = asyncio.create_task(cmd_image(cmd))
 
                 if (m := cmd.move) is not None:

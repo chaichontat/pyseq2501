@@ -33,7 +33,6 @@ async def poll(ws: WebSocket) -> NoReturn:
 
     global state
     wait_time = 5
-    send_now = False
     while True:
         try:
             running = await asyncio.wait_for(q_status.get(), wait_time)
@@ -41,19 +40,21 @@ async def poll(ws: WebSocket) -> NoReturn:
             ...
         else:
             if running:
-                send_now = True
                 wait_time = 0.5
             else:
-                send_now = False
                 wait_time = 5
         finally:
             try:
                 state = WebState(**(await imager.state).dict(), msg=message)
+            except TimeoutError:
+                ...
+            except asyncio.CancelledError as e:
+                raise e
             except BaseException as e:
-                state.msg = f"Error: {type(e).__name__}: {e}"
+                logger.error(f"Status error: {type(e).__name__}: {e}")
+                # state.msg = f"Status error: {type(e).__name__}: {e}
 
-            if send_now:
-                await ws.send_json(jsonable_encoder(state))
+            await ws.send_json(jsonable_encoder(state))
 
 
 @router.websocket("/status")
@@ -75,13 +76,9 @@ async def poll_status(ws: WebSocket):
 
     try:
         while True:
-            try:
-                message = await asyncio.wait_for(q_log.get(), 5)
-                state.msg = message
-            except asyncio.TimeoutError:
-                ...
-            finally:
-                await ws.send_json(jsonable_encoder(state))
+            message = await q_log.get()
+            state.msg = message
+            await ws.send_json(jsonable_encoder(state))
     except (WebSocketDisconnect, RuntimeError, ConnectionClosedOK):
         ...
     finally:
