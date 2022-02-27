@@ -9,7 +9,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.2.1">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.2.2">
     
     
       
@@ -29,7 +29,7 @@
       
         
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=:300,400,400i,700%7C&display=fallback">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=:300,300i,400,400i,700,700i%7C:400,400i,700,700i&display=fallback">
         <style>:root{--md-text-font:"";--md-code-font:""}</style>
       
     
@@ -389,26 +389,12 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pyseq2.imaging.laser.LaserCmd" class="md-nav__link">
-    LaserCmd
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#pyseq2.imaging.laser.Laser" class="md-nav__link">
     Laser
   </a>
   
     <nav class="md-nav" aria-label="Laser">
       <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pyseq2.imaging.laser.Laser.cmd" class="md-nav__link">
-    cmd
-  </a>
-  
-</li>
         
           <li class="md-nav__item">
   <a href="#pyseq2.imaging.laser.Laser.set_power" class="md-nav__link">
@@ -490,96 +476,6 @@
 
 
 
-
-
-  <div class="doc doc-object doc-class">
-
-
-
-<h2 id="pyseq2.imaging.laser.LaserCmd" class="doc doc-heading">
-        <code>
-LaserCmd        </code>
-
-
-
-</h2>
-
-    <div class="doc doc-contents ">
-
-      <p>Laser commands</p>
-
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>[type]</code></td>
-      <td><p>[description]</p></td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>pyseq2/imaging/laser.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">LaserCmd</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Laser commands</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        [type]: [description]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">v_get_status</span><span class="p">(</span><span class="n">resp</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="c1"># Tend to have status error on first calls.</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;DISABLED&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;ENABLED&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">v_get_power</span><span class="p">(</span><span class="n">resp</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="n">resp</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;mW&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">resp</span><span class="p">[:</span><span class="mi">4</span><span class="p">])</span>
-
-    <span class="c1"># fmt: off</span>
-    <span class="n">ON</span> <span class="o">=</span> <span class="s2">&quot;ON&quot;</span>
-    <span class="n">OFF</span> <span class="o">=</span> <span class="s2">&quot;OFF&quot;</span>
-    <span class="n">SET_POWER</span>  <span class="o">=</span> <span class="n">λ_int</span><span class="p">(</span><span class="n">chkrng</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;POWER=</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">POWER_RANGE</span><span class="p">))</span>
-    <span class="n">GET_POWER</span>  <span class="o">=</span> <span class="n">CmdParse</span><span class="p">(</span><span class="s2">&quot;POWER?&quot;</span>  <span class="p">,</span> <span class="n">v_get_power</span><span class="p">)</span>
-    <span class="n">GET_STATUS</span> <span class="o">=</span> <span class="n">CmdParse</span><span class="p">(</span><span class="s2">&quot;STAT?&quot;</span>   <span class="p">,</span> <span class="n">v_get_status</span><span class="p">)</span>
-    <span class="n">VERSION</span>    <span class="o">=</span> <span class="n">CmdParse</span><span class="p">(</span><span class="s2">&quot;VERSION?&quot;</span><span class="p">,</span> <span class="n">ok_if_match</span><span class="p">((</span><span class="s2">&quot;SMD-G-1.1.2&quot;</span><span class="p">,</span> <span class="s2">&quot;SMD-G-1.1.1&quot;</span><span class="p">)))</span>
-    <span class="c1"># fmt: on</span>
-</code></pre></div>
-        </details>
-
-
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-  </div>
 
 
 
@@ -681,96 +577,6 @@ Laser            (<span title="pyseq2.base.instruments.UsesSerial">UsesSerial</s
 
 
 
-
-
-  <div class="doc doc-object doc-class">
-
-
-
-<h3 id="pyseq2.imaging.laser.Laser.cmd" class="doc doc-heading">
-        <code>
-cmd        </code>
-
-
-
-</h3>
-
-    <div class="doc doc-contents ">
-
-      <p>Laser commands</p>
-
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>[type]</code></td>
-      <td><p>[description]</p></td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>pyseq2/imaging/laser.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">LaserCmd</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Laser commands</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        [type]: [description]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">v_get_status</span><span class="p">(</span><span class="n">resp</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="c1"># Tend to have status error on first calls.</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;DISABLED&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;ENABLED&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resp</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">v_get_power</span><span class="p">(</span><span class="n">resp</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="n">resp</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;mW&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">resp</span><span class="p">[:</span><span class="mi">4</span><span class="p">])</span>
-
-    <span class="c1"># fmt: off</span>
-    <span class="n">ON</span> <span class="o">=</span> <span class="s2">&quot;ON&quot;</span>
-    <span class="n">OFF</span> <span class="o">=</span> <span class="s2">&quot;OFF&quot;</span>
-    <span class="n">SET_POWER</span>  <span class="o">=</span> <span class="n">λ_int</span><span class="p">(</span><span class="n">chkrng</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;POWER=</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">POWER_RANGE</span><span class="p">))</span>
-    <span class="n">GET_POWER</span>  <span class="o">=</span> <span class="n">CmdParse</span><span class="p">(</span><span class="s2">&quot;POWER?&quot;</span>  <span class="p">,</span> <span class="n">v_get_power</span><span class="p">)</span>
-    <span class="n">GET_STATUS</span> <span class="o">=</span> <span class="n">CmdParse</span><span class="p">(</span><span class="s2">&quot;STAT?&quot;</span>   <span class="p">,</span> <span class="n">v_get_status</span><span class="p">)</span>
-    <span class="n">VERSION</span>    <span class="o">=</span> <span class="n">CmdParse</span><span class="p">(</span><span class="s2">&quot;VERSION?&quot;</span><span class="p">,</span> <span class="n">ok_if_match</span><span class="p">((</span><span class="s2">&quot;SMD-G-1.1.2&quot;</span><span class="p">,</span> <span class="s2">&quot;SMD-G-1.1.1&quot;</span><span class="p">)))</span>
-    <span class="c1"># fmt: on</span>
-</code></pre></div>
-        </details>
-
-
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-  </div>
 
 
 
@@ -893,6 +699,10 @@ Lasers        </code>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">power</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
         <span class="k">return</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="o">.</span><span class="n">power</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">power</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Laser</span><span class="p">]:</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span>
+
     <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">id_</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Laser</span><span class="p">:</span>
         <span class="k">match</span> <span class="nb">id</span><span class="k">_</span><span class="p">:</span>
             <span class="k">case</span> <span class="mi">0</span><span class="p">:</span>
@@ -934,11 +744,14 @@ Lasers        </code>
 
 
 
+
   </div>
 
     </div>
 
   </div>
+
+
 
 
 
@@ -957,7 +770,7 @@ Lasers        </code>
   <small>
     
       Last update:
-      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime">2022-02-24 23:38:17</span>
+      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime">2022-02-27 18:16:59</span>
       
     
   </small>
@@ -1033,7 +846,7 @@ Lasers        </code>
     <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "toc.integrate", "navigation.top"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.bd0b6b67.min.js"}</script>
     
     
-      <script src="../assets/javascripts/bundle.8aa65030.min.js"></script>
+      <script src="../assets/javascripts/bundle.9f3ca3d1.min.js"></script>
       
         <script src="../javascripts/mathjax.js"></script>
       
