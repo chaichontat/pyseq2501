@@ -307,8 +307,8 @@ class Cameras:
                 if n == 0 and time.monotonic() - t0 > 5:
                     raise Exception(f"Did not capture a single bundle before {5=}s.")
                 # Send every other bundle.
-                if event_queue is not None and n > curr + 1:
-                    event_queue[0].put_nowait(event_queue[1](n + 1))
+                if event_queue is not None and n > curr + 2:
+                    event_queue[0].put_nowait(event_queue[1](n + 2))
                     curr = n
             if event_queue is not None:
                 await asyncio.sleep(0.05)
