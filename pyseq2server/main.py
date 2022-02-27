@@ -59,6 +59,11 @@ app.include_router(user.router)
 app.include_router(mancommand.router)
 
 
+@app.get("/path/")
+async def get_path():
+    return {"path": os.getcwd()}
+
+
 # latest = np.random.randint(0, 256, (4, 128, 2048), dtype=np.uint8)
 # # img = update_img(np.random.randint(0, 256, (4, 128, 2048), dtype=np.uint8))
 # dark = np.zeros((2, 2048, 2048), dtype=np.uint8)
