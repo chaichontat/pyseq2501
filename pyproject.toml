@@ -19,3 +19,10 @@ reportUnusedFunction = false
 reportUnusedImport = false
 reportUnusedVariable = false
 reportWildcardImportFromLibrary = false
+typeCheckingMode = "strict"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = [
+  "tests",
+]

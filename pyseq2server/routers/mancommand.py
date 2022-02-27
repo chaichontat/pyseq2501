@@ -54,8 +54,9 @@ def cancel_wrapper(q_cmd: QCmd, q_log: asyncio.Queue[str], q_status: asyncio.Que
     q_status.put_nowait(True)
     try:
         yield
-    except CancelledError:
+    except CancelledError as e:
         q_cmd.put_nowait(CommandResponse(error="Cancelled"))
+        raise e
     except BaseException as e:
         logger.error(f"Error: {type(e).__name__}: {e}")
         raise e
