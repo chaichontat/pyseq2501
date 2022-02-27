@@ -16,6 +16,7 @@ reportUnknownMemberType = false
 reportUntypedFunctionDecorator = false
 reportUnusedImport = false
 reportUnusedVariable = "warning"
+typeCheckingMode = "strict"
 
 [tool.isort]
 known_first_party = ["pyseq2"]
