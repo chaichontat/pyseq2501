@@ -35,7 +35,7 @@ class XStage(UsesSerial, Movable):
     @classmethod
     async def ainit(cls, port_tx: str) -> XStage:
         self = cls()
-        self.com = await COM.ainit("x", port_tx)
+        self.com = await COM.ainit("x", port_tx, min_spacing=0.05)
         return self
 
     def __init__(self) -> None:

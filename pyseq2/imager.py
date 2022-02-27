@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from logging import getLogger
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Literal, Optional, TypeVar, cast
@@ -17,6 +18,7 @@ from .imaging.xstage import XStage
 from .imaging.ystage import YStage
 
 logger = getLogger(__name__)
+executor = ThreadPoolExecutor()
 
 
 class Position(BaseModel):
@@ -275,7 +277,17 @@ class Imager:
             return (target, intensity)
 
     @staticmethod
-    def save(path: str | Path, img: UInt16Array, state: Optional[State] = None) -> None:
+    def _save(path: str | Path, img: UInt16Array, state: Optional[State] = None) -> None:
+        with TiffWriter(path, ome=True) as tif:
+            tif.write(
+                img,
+                compression="ZLIB",
+                resolution=(1 / (0.375 * 10**-4), 1 / (0.375 * 10**-4), "CENTIMETER"),  # 0.375 μm/px
+                metadata={"axes": "CYX" if len(img.shape) == 3 else "ZCYX", "SignificantBits": 12},
+            )
+
+    @staticmethod
+    async def save(path: str | Path, img: UInt16Array, state: Optional[State] = None) -> None:
         """
         Based on 2016-06
         http://www.openmicroscopy.org/Schemas/Documentation/Generated/OME-2016-06/ome.html
@@ -289,19 +301,11 @@ class Imager:
             img (UInt16Array): _description_
             state (State): _description_
         """
+        print(img.shape)
         if isinstance(path, Path):
             path = path.as_posix()
 
         if not (path.endswith(".tif") or path.endswith(".tiff")):
             logger.warning("File name does not end with a tif extension.")
 
-        try:
-            with TiffWriter(path, ome=True) as tif:
-                tif.write(
-                    img,
-                    compression="ZLIB",
-                    resolution=(1 / (0.375 * 10**-4), 1 / (0.375 * 10**-4), "CENTIMETER"),  # 0.375 μm/px
-                    metadata={"axes": "CYX", "SignificantBits": 12},
-                )
-        except BaseException as e:
-            logger.error(f"Exception {e}")
+        await asyncio.get_event_loop().run_in_executor(executor, Imager._save, path, img, state)

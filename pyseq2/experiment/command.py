@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import math
+import os
 from abc import abstractmethod
 from logging import getLogger
 from pathlib import Path
@@ -137,7 +138,7 @@ class TakeImage(BaseModel, AbstractCommand):
     def default(cls) -> TakeImage:
         return TakeImage(
             name="",
-            path=".",
+            path=os.getcwd(),
             xy0=(0.0, 0.0),
             xy1=(1.0, 0.3),
             overlap=0.1,
@@ -169,6 +170,9 @@ class TakeImage(BaseModel, AbstractCommand):
         self, fcs: FlowCells, i: bool, imager: Imager, q: asyncio.Queue[tuple[int, int, int]] | None = None
     ) -> UInt16Array:
         logger.info("Started taking images.")
+        print(self)
+
+        save_tasks: list[asyncio.Task[None]] = []
         n_bundles, y_start, xs, zs = self.calc_pos(i)
 
         if not (n_bundles and len(xs) and len(zs)):
@@ -181,12 +185,15 @@ class TakeImage(BaseModel, AbstractCommand):
         path = Path(self.path) / self.name
         paths = [path.parent / f"{path.stem}_{i}.tif" for i in range(len(xs))]
         # Test if we can write to the directory
+        print(paths)
         if self.save:
+            path.parent.mkdir(parents=True, exist_ok=True)
             [p.touch() for p in paths]
 
         big_img = np.empty((len(zs), len(channels), 128 * n_bundles, 2048), dtype=np.uint16)
         for ix, (p, x) in enumerate(zip(paths, xs)):
             for iz, z in enumerate(zs):
+                logger.info(f"Imaging [{iz+1}/{len(zs)}z {ix+1}/{len(xs)}x] at {x=} y={y_start} {z=}.")
                 await imager.move(x=x, y=y_start, z_obj=z, z_tilt=self.z_tilt)
                 img, state = await imager.take(
                     n_bundles,
@@ -195,13 +202,24 @@ class TakeImage(BaseModel, AbstractCommand):
                 )
                 big_img[iz] = img
             if self.save:
-                logger.info("Writing to file.")
-                imager.save(p, big_img)  # TODO state per each stack.
+                asyncio.create_task(imager.save(p, big_img.copy()))  # TODO state per each stack.
         if q is not None:
             q.put_nowait((n_bundles, len(zs), len(xs)))  # Make it look pleasing at the end.
-
+        if self.save:
+            logger.info("Saving to file.")
+            await asyncio.gather(*save_tasks)
         logger.info("Done capture/preview.")
-        return big_img[0]
+        await asyncio.sleep(0.1)  # For logs to sync up.
+        if n_bundles > 32:
+            bin_size = (1 << (n_bundles // 32).bit_length()) >> 1
+            return (
+                big_img[0]
+                .reshape((len(channels), 128 * n_bundles // bin_size, bin_size, 2048 // bin_size, bin_size))
+                .max(4)
+                .max(2)
+            )  # Max pooling
+        else:
+            return big_img[0]
 
 
 class Goto(BaseModel, AbstractCommand):
