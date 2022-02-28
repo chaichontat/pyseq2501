@@ -38,8 +38,8 @@ export type LocalInfo = { "mode": "automatic" | "editingA" | "editingB" | "manua
 export const localStore: Writable<LocalInfo> = writable({ mode: "automatic", connected: false, img: { ...imgDefault } })
 
 
-export const statusStore: Readable<Status> =
-  try_connect && browser ? readableWebSocket(`ws://${ window.location.hostname }:8000/status`, { ...statusDefault }, { localStore })
+export const statusStore: Writable<Status> =
+  try_connect && browser ? writableWebSocket(`ws://${ window.location.hostname }:8000/status`, { ...statusDefault }, { localStore, sendOnSet: false })
     : writable({ ...statusDefault });
 
 export const userStore: Writable<UserSettings> = writable({ ...userDefault })

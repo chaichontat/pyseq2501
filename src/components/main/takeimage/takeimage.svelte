@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { cmdStore, userStore as us } from "$src/stores/store";
-  import XYInput from "$comps/main/xy_input.svelte";
   import { browser } from "$app/env";
-  import tooltip from "$src/tooltip";
+  import XYInput from "$comps/main/xy_input.svelte";
   import type { TakeImage } from "$src/stores/command";
-  import LaserChannels from "./laserChannels.svelte";
+  import { cmdStore, statusStore as ss, userStore as us } from "$src/stores/store";
+  import tooltip from "$src/tooltip";
+  import { checkRange, count } from "$src/utils";
   import Go from "../go.svelte";
-  import { count, checkRange } from "$src/utils";
+  import LaserChannels from "./laserChannels.svelte";
 
   export let inAuto: boolean = true;
   export let params: TakeImage;
@@ -49,7 +49,7 @@
     return t > 3600 ? `${d.substring(11, 19)} hrs` : `${d.substring(14, 19)} mins`;
   }
 
-  $: if (browser) blockControls(document.getElementById("control"), $us.block);
+  $: if (browser) blockControls(document.getElementById("control"), $ss.block);
 
   $: stats.height = Math.max(params.xy1[1], params.xy0[1]) - Math.min(params.xy1[1], params.xy0[1]);
   $: stats.width = Math.max(params.xy1[0], params.xy0[0]) - Math.min(params.xy1[0], params.xy0[0]);
@@ -59,7 +59,7 @@
   $: stats.n_z = Math.abs(params.z_to - params.z_from) + 1;
 </script>
 
-<!-- <div class:hidden={$us.block} class="absolute z-50  -mx-10 w-full h-96 bg-black/[0.1]" /> -->
+<!-- <div class:hidden={$ss.block} class="absolute z-50  -mx-10 w-full h-96 bg-black/[0.1]" /> -->
 <!-- Capture params. -->
 <div id="control" class="grid grid-cols-2 gap-y-6 gap-x-4">
   <section class="flex flex-col text-lg font-medium">
@@ -80,7 +80,7 @@
   <!-- Optics -->
   <section class="font-medium leading-10 ">
     <h2>Laser and Channels</h2>
-    <div class="grid grid-cols-2" class:opacity-70={$us.block}>
+    <div class="grid grid-cols-2" class:opacity-70={$ss.block}>
       <LaserChannels bind:params i={0} />
       <LaserChannels bind:params i={1} />
     </div>
@@ -160,7 +160,7 @@
           </div>
         </label>
         <div class="flex font-medium" id="zBox">
-          <span class="flex items-center border-l rounded-l-lg color-group" class:span-disabled={$us.block || !z_stack} use:tooltip={"Nyquist is 232."}>Spacing</span>
+          <span class="flex items-center border-l rounded-l-lg color-group" class:span-disabled={$ss.block || !z_stack} use:tooltip={"Nyquist is 232."}>Spacing</span>
           <input
             type="number"
             min="1"
@@ -169,10 +169,10 @@
             bind:value={params.z_spacing}
             use:checkRange={[1, 60000]}
             class="z-10 h-10 text-center rounded-none pretty w-28"
-            class:disabled={$us.block || !z_stack}
-            disabled={$us.block || !z_stack}
+            class:disabled={$ss.block || !z_stack}
+            disabled={$ss.block || !z_stack}
           />
-          <span use:tooltip={"Multiple of Spacing"} class="flex items-center color-group" class:span-disabled={$us.block || !z_stack}>From</span>
+          <span use:tooltip={"Multiple of Spacing"} class="flex items-center color-group" class:span-disabled={$ss.block || !z_stack}>From</span>
           <input
             type="number"
             min="-100"
@@ -181,10 +181,10 @@
             bind:value={params.z_from}
             use:checkRange={[-100, 100]}
             class="z-10 w-16 h-10 text-center rounded-none pretty"
-            class:disabled={$us.block || !z_stack}
-            disabled={$us.block || !z_stack}
+            class:disabled={$ss.block || !z_stack}
+            disabled={$ss.block || !z_stack}
           />
-          <span use:tooltip={"Multiple of Spacing"} class="flex items-center color-group" class:span-disabled={$us.block || !z_stack}>To</span>
+          <span use:tooltip={"Multiple of Spacing"} class="flex items-center color-group" class:span-disabled={$ss.block || !z_stack}>To</span>
           <input
             type="number"
             min="-100"
@@ -193,8 +193,8 @@
             bind:value={params.z_to}
             use:checkRange={[-100, 100]}
             class="z-10 w-16 h-10 text-center rounded-l-none rounded-r-lg pretty"
-            class:disabled={$us.block || !z_stack}
-            disabled={$us.block || !z_stack}
+            class:disabled={$ss.block || !z_stack}
+            disabled={$ss.block || !z_stack}
           />
         </div>
       </div>

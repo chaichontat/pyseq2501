@@ -3,8 +3,7 @@
   import Preview from "$comps/main/preview.svelte";
   import ProgressManual from "$src/components/main/manual/progress_manual.svelte";
   import Takeimage from "$src/components/main/takeimage/takeimage.svelte";
-
-  import { userStore as us } from "$src/stores/store";
+  import { statusStore as ss, userStore as us } from "$src/stores/store";
 
   let stats = { height: 0, width: 0, n_cols: 0, n_bundles: 0, n_z: 1, time: 0 };
 
@@ -16,7 +15,7 @@
     }
   }
 
-  $: if (browser) blockControls(document.getElementById("control"), $us.block);
+  $: if (browser) blockControls(document.getElementById("control"), Boolean($ss.block));
 </script>
 
 <div class="box-border sticky z-40 -mx-10 px-10 pb-6 shadow-md bg-white/[0.95] border-b top-16 ">

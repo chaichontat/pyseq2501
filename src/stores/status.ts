@@ -1,3 +1,10 @@
+export type FCState = {
+    running: boolean,
+    step: number,
+    msg: string
+}
+
+export const fcStateDefault: Readonly<FCState> = { running: false, step: 0, msg: "" }
 
 export type Status = {
     x: number;
@@ -8,6 +15,8 @@ export type Status = {
     lasers: [number, number];
     shutter: boolean;
     od: [number, number];
+    fcs: [FCState, FCState],
+    block: "" | "moving" | "capturing" | "previewing"
     msg: string;
 };
 
@@ -20,5 +29,7 @@ export const statusDefault: Readonly<Status> = {
     laser_onoff: [true, true],
     lasers: [-1, -1],
     shutter: false,
+    fcs: [{ ...fcStateDefault }, { ...fcStateDefault }],
+    block: "",
     msg: "Idle",
 };

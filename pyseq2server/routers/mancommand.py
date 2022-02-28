@@ -13,6 +13,7 @@ from websockets.exceptions import ConnectionClosedOK
 
 from pyseq2 import FlowCells, Imager
 from pyseq2server.imaging import Img, update_img
+from pyseq2server.routers.status import update_block
 
 from ..api_types import CommandResponse, MoveManual, UserSettings
 from ..utils.utils import q_listener
@@ -28,13 +29,10 @@ async def ret_cmd(ws: WebSocket) -> None:
     while True:
         try:
             res = await q_cmd.get()
-            print(res)
             if isinstance(res, CommandResponse):
                 to_send = res
             else:
                 to_send = CommandResponse(step=res)
-
-            print(f"sending {to_send}")
             await ws.send_json(jsonable_encoder(to_send))
         except CancelledError:
             break
@@ -54,15 +52,13 @@ def cancel_wrapper(q_cmd: QCmd, q_log: asyncio.Queue[str], q_status: asyncio.Que
     q_status.put_nowait(True)
     try:
         yield
-    except CancelledError as e:
-        q_cmd.put_nowait(CommandResponse(error="Cancelled"))
-        raise e
     except BaseException as e:
         logger.error(f"Error: {type(e).__name__}: {e}")
         raise e
     finally:
+        print("finally")
         q_status.put_nowait(False)
-        q_cmd.put_nowait(CommandResponse(msg="moveDone"))
+        update_block("")
 
 
 async def meh():
@@ -81,6 +77,7 @@ async def cmd_endpoint(ws: WebSocket) -> None:
         with cancel_wrapper(q_cmd, q_log, q_status):
             us = UserSettings.parse_obj(ws.app.state.user_settings)
             c = cmd.cmd
+            update_block("capturing" if c == "capture" else "previewing")
             p = us.image_params.copy()
             if c == "capture":
                 p.save = True
@@ -89,6 +86,7 @@ async def cmd_endpoint(ws: WebSocket) -> None:
                 p.z_from, p.z_to = 0, 0
             new_image = await p.run(fcs, p.fc, imager, q_cmd)  # type: ignore
             ws.app.state.img = update_img(new_image)
+            q_cmd.put_nowait(CommandResponse(msg="imgReady"))  # Doesn't seem to send with 1.
             q_cmd.put_nowait(CommandResponse(msg="imgReady"))  # Doesn't seem to send with 1.
 
     async def cmd_move(m: MoveManual):
@@ -104,13 +102,14 @@ async def cmd_endpoint(ws: WebSocket) -> None:
                 cmd = CommandWeb.parse_obj(await ws.receive_json())
                 print(cmd)
                 if cmd.cmd == "stop":
+                    logger.warning("Received stop signal.")
                     task.cancel()
                     q_status.put_nowait(False)
                     continue
 
-                # if not task.done():
-                #     q_cmd.put_nowait(CommandResponse(error=f"Old command still running: {task}."))
-                #     continue
+                if not task.done():
+                    q_cmd.put_nowait(CommandResponse(error=f"Old command still running: {task}."))
+                    continue
 
                 if cmd.cmd in ["capture", "preview"]:
                     task = asyncio.create_task(cmd_image(cmd))

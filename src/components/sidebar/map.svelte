@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { cmdStore, XY } from "$src/stores/store";
+  import { cmdStore, statusStore as ss, userStore as us, XY } from "$src/stores/store";
+  import { raw_to_local } from "../../coords";
   import BigZ from "./slide/big_z.svelte";
   import Slide from "./slide/slide.svelte";
-  import { statusStore as store, userStore as us } from "$src/stores/store";
-  import { raw_to_local } from "../../coords";
   import Toggle from "./toggle.svelte";
 
   const focus = (el: HTMLElement) => {
@@ -12,7 +11,7 @@
 
   let xy: XY = { x: 0, y: 0 };
   $: {
-    xy = raw_to_local($us.image_params.fc, $store.x, $store.y);
+    xy = raw_to_local($us.image_params.fc, $ss.x, $ss.y);
   }
 
   // let moving = false;
@@ -48,20 +47,20 @@
     <div>B</div>
   </span>
   <div class="-mt-4" />
-  <Slide name={$us.image_params.fc ? "B" : "A"} x={xy.x} y={xy.y} z_tilt={$store.z_tilt} />
+  <Slide name={$us.image_params.fc ? "B" : "A"} x={xy.x} y={xy.y} z_tilt={$ss.z_tilt} />
 
   <!-- Z Objective -->
   <section class="flex self-center flex-grow mt-4 space-x-8">
-    <BigZ name="All Tilt" value={`${($store.z_tilt.reduce((a, b) => a + b) / $store.z_tilt.length).toFixed(0)} ± ${(Math.max(...$store.z_tilt) - Math.min(...$store.z_tilt)) / 2}`} />
-    <BigZ name="Objective Z" value={$store.z_obj} bind:userValue={$us.image_params.z_obj} />
+    <BigZ name="All Tilt" value={`${($ss.z_tilt.reduce((a, b) => a + b) / $ss.z_tilt.length).toFixed(0)} ± ${(Math.max(...$ss.z_tilt) - Math.min(...$ss.z_tilt)) / 2}`} />
+    <BigZ name="Objective Z" value={$ss.z_obj} bind:userValue={$us.image_params.z_obj} />
   </section>
 
   <!-- Eject button -->
   <button
     class="self-center w-16 h-8 mt-2 text-white transition-colors bg-indigo-500 border shadow-md shadow-indigo-300 pretty hover:bg-indigo-600 active:bg-indigo-700 disabled:bg-gray-200 disabled:shadow-gray-200"
-    disabled={$us.block}
+    disabled={$ss.block}
     on:click={() => {
-      $us.block = "moving";
+      $ss.block = "moving";
       $cmdStore = { move: { xy0: [0, -7.5] } };
     }}
   >

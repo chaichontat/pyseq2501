@@ -106,7 +106,6 @@ class NTakeImage(TakeImage):
 class UserSettings(BaseModel):
     """None happens when the user left the input empty."""
 
-    block: Literal["", "moving", "capturing", "previewing"]
     max_uid: int
     exps: list[NExperiment]
     image_params: NTakeImage
@@ -114,7 +113,6 @@ class UserSettings(BaseModel):
     @classmethod
     def default(cls) -> UserSettings:
         return UserSettings(
-            block="",
             max_uid=2,
             exps=[NExperiment.default(False), NExperiment.default(True)],
             image_params=NTakeImage.default(),

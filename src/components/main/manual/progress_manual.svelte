@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { cmdStore, userStore as us } from "$src/stores/store";
+  import { cmdStore, statusStore as ss } from "$src/stores/store";
   import tooltip from "$src/tooltip";
 
   import { cubicOut } from "svelte/easing";
@@ -22,24 +22,40 @@
 
   let captureState: "ok" | "gray" | "stop" = "ok";
   let previewState: "ok" | "gray" | "stop" = "ok";
+  let interval: ReturnType<typeof setInterval> | undefined;
+  let t: number = 0;
 
-  $: captureState = $us.block === "capturing" ? "stop" : "ok";
-  $: previewState = $us.block === "previewing" ? "stop" : "ok";
+  $: captureState = $ss.block === "capturing" ? "stop" : "ok";
+  $: previewState = $ss.block === "previewing" ? "stop" : "ok";
+
+  $: if (!$ss.block && interval) clearInterval(interval);
+
   function handleCapture() {
-    if ($us.block === "capturing") {
+    console.log("hi");
+    if (interval) clearInterval(interval);
+    if ($ss.block === "capturing") {
       $cmdStore = { cmd: "stop" };
     } else {
+      t = 0;
+      interval = setInterval(() => {
+        t += 1;
+      }, 1000);
       $cmdStore = { cmd: "capture" };
-      $us.block = "capturing";
+      $ss.block = "capturing";
     }
   }
 
   function handlePreview() {
-    if ($us.block === "previewing") {
+    if (interval) clearInterval(interval);
+    if ($ss.block === "previewing") {
       $cmdStore = { cmd: "stop" };
     } else {
+      t = 0;
+      interval = setInterval(() => {
+        t += 1;
+      }, 1000);
       $cmdStore = { cmd: "preview" };
-      $us.block = "previewing";
+      $ss.block = "previewing";
     }
   }
 </script>
@@ -59,7 +75,7 @@
       disabled={captureState !== "ok"}
     >
       <div class="flex items-center h-12 text-lg">
-        {#if $us.block === "capturing" || $us.block === "previewing"}
+        {#if $ss.block === "capturing" || $ss.block === "previewing"}
           <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
@@ -79,7 +95,7 @@
       type="button"
       id="preview"
       class="text-lg mt-2 text-white focus:ring-4 focus:ring-sky-300 font-medium rounded-lg shadow px-4 py-2.5 text-center inline-flex items-center mr-2"
-      disabled={Boolean($us.block)}
+      disabled={Boolean($ss.block)}
       use:tooltip={"Take a 16-bundle image based on the current position without saving."}
       on:click={handlePreview}
     >
@@ -135,7 +151,7 @@
       </section>
 
       <section class="flex flex-col">
-        <span class="text-lg font-medium">Elapsed time: {(stats.n_bundles * stats.n_cols) / 10} s</span>
+        <span class="text-lg font-medium">Elapsed time: {t} s</span>
         <span class="text-lg font-medium">Total time: {(stats.n_bundles * stats.n_cols) / 10} s</span>
       </section>
     </div>

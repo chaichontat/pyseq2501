@@ -8,10 +8,11 @@ export type wsConfig = {
     f?: (x: ValidType) => any
     beforeOpen?: () => Promise<void>,
     localStore?: Writable<LocalInfo>
+    sendOnSet?: boolean
 }
 
 export function writableWebSocket<T extends object | string>(url: string, initialValue: T,
-    { f = JSON.parse, beforeOpen, localStore }: wsConfig = {}): Writable<T> {
+    { f = JSON.parse, beforeOpen, localStore, sendOnSet = true }: wsConfig = {}): Writable<T> {
     let socket: WebSocket
     let timeout: ReturnType<typeof setTimeout> | null
     const { set: setStore, subscribe, update } = writable(initialValue)
@@ -19,7 +20,6 @@ export function writableWebSocket<T extends object | string>(url: string, initia
     async function _open() {
         console.log("Connecting")
         timeout = null
-
 
         socket = new WebSocket(url);
         socket.onmessage = (event: MessageEvent): void => (setStore(f(event.data)))
@@ -44,7 +44,7 @@ export function writableWebSocket<T extends object | string>(url: string, initia
 
     return {
         set(v: T) {
-            if (socket && socket.readyState === WebSocket.OPEN) {
+            if (sendOnSet && socket && socket.readyState === WebSocket.OPEN) {
                 socket.send(typeof v === "object" ? JSON.stringify(v) : v)
             }
             setStore(v);

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { raw_to_local } from "$src/coords";
-  import { cmdStore, statusStore as status, userStore as us } from "$src/stores/store";
+  import { cmdStore, statusStore as status, userStore as us, statusStore as ss } from "$src/stores/store";
   import { checkRange } from "$src/utils";
   import { createEventDispatcher } from "svelte";
   import Go from "./go.svelte";
@@ -15,13 +15,13 @@
     xy[1] = Math.round((y + Number.EPSILON) * 100) / 100;
   }
   let disabled = false;
-  $: disabled = Boolean($us.block);
+  $: disabled = Boolean($ss.block);
 </script>
 
 <!-- XY Input -->
 <div class="flex gap-x-2">
   <div class="flex font-medium">
-    <span class="flex items-center border-l rounded-l-lg color-group" class:span-disabled={$us.block}>X</span>
+    <span class="flex items-center border-l rounded-l-lg color-group" class:span-disabled={$ss.block}>X</span>
     <input
       bind:value={xy[0]}
       on:change={() => dispatch("change")}
@@ -33,7 +33,7 @@
       class="z-10 h-10 text-center rounded-none pretty w-28"
       {disabled}
     />
-    <span class="flex items-center color-group" class:span-disabled={$us.block}>Y</span>
+    <span class="flex items-center color-group" class:span-disabled={$ss.block}>Y</span>
     <input
       bind:value={xy[1]}
       on:change={() => dispatch("change")}
@@ -50,7 +50,7 @@
   <Go
     {disabled}
     on:click={() => {
-      $us.block = "moving";
+      $ss.block = "moving";
       $cmdStore = { move: i === 0 ? { xy0: xy } : { xy1: xy } };
     }}
   />
