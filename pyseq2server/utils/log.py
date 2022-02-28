@@ -29,7 +29,7 @@ def setup_web_logger(
 
     ps2.setLevel(level)
 
-    for _log in ["uvicorn", "uvicorn.access", "fastapi"]:
+    for _log in ["uvicorn", "uvicorn.access", "uvicorn.error", "fastapi"]:
         logging.getLogger(_log).handlers = logging.getLogger("pyseq2").handlers if _log == "fastapi" else []
         logging.getLogger(_log).setLevel(level)
 
