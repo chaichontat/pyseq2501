@@ -27,6 +27,6 @@ py_version = 310
 src_paths = ["pyseq2", "tests", "scripts"]
 
 [tool.pytest.ini_options]
+asyncio_mode = "auto"
 minversion = "7.0"
 testpaths = ["tests"]
-asyncio_mode = "auto"
