@@ -295,9 +295,6 @@ class Cameras:
         cam: Literal[0, 1, 2] = 2,
         event_queue: tuple[asyncio.Queue[T], Callable[[int], T]] | None = None,
     ) -> UInt16Array:
-        if fut_capture is None:
-            fut_capture = nothing()
-
         async def in_ctx():
             curr = 0
             fut = asyncio.create_task(cast(Coroutine[Any, Any, Any], fut_capture)) if fut_capture else None

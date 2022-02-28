@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import re
 import time
-from asyncio import Future, StreamReader, StreamWriter
+from asyncio import CancelledError, Future, StreamReader, StreamWriter
 from dataclasses import dataclass
 from logging import getLogger
 from typing import (
@@ -216,6 +216,8 @@ class COM:
                     if not self.FIRST_LINES.search(buffer):
                         raise InvalidResponse(f"{buffer}")
 
+            except CancelledError as e:
+                raise e
             except BaseException as e:
                 logger.critical(f"{self.name}{type(e).__name__}: {e}")
 

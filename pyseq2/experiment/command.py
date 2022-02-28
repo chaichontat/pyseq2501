@@ -170,7 +170,6 @@ class TakeImage(BaseModel, AbstractCommand):
         self, fcs: FlowCells, i: bool, imager: Imager, q: asyncio.Queue[tuple[int, int, int]] | None = None
     ) -> UInt16Array:
         logger.info("Started taking images.")
-        print(self)
 
         save_tasks: list[asyncio.Task[None]] = []
         n_bundles, y_start, xs, zs = self.calc_pos(i)
@@ -202,7 +201,9 @@ class TakeImage(BaseModel, AbstractCommand):
                 )
                 big_img[iz] = img
             if self.save:
-                save_tasks.append(asyncio.create_task(imager.save(p, big_img.copy())))  # TODO state per each stack.
+                save_tasks.append(
+                    asyncio.create_task(imager.save(p, big_img.copy()))
+                )  # TODO state per each stack.
         if q is not None:
             q.put_nowait((n_bundles, len(zs), len(xs)))  # Make it look pleasing at the end.
         if self.save:

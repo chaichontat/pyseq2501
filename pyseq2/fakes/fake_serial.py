@@ -1,7 +1,5 @@
 import asyncio
-import random
-import time
-from asyncio import StreamReader, StreamWriter
+from asyncio import CancelledError, StreamReader, StreamWriter
 from logging import getLogger
 from typing import Callable, Literal, Optional
 
@@ -53,6 +51,8 @@ class FakeTransport(asyncio.Transport):
                 cmd = await self.q_rcvd.get()
                 self._protocol.data_received(cmd)  # Data received from the serial port.
                 self.q_rcvd.task_done()
+            except CancelledError as e:
+                raise e
             except BaseException as e:
                 logger.critical(f"{type(e).__name__}: {e}")
 
