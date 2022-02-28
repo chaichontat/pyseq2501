@@ -10,14 +10,36 @@ This is the web interface and the communication system for [PySeq 2501](https://
 
 
 ## Installation
+Install [`pyseq2501`](https://github.com/chaichontat/pyseq2501)
 Install [`npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) and clone this repo.
 
 Run
 ```sh
+pip install .
 npm i
 npm run build
-npm run preview
 ```
+
+## Run
+```sh
+pyseq2server
+```
+
+```
+Usage: pyseq2server [OPTIONS]
+
+Options:
+  -p, --port INTEGER  Port to run the server on (default: 8000).
+  -h, --host TEXT     Hostname to bind to (default: localhost). Set 0.0.0.0
+                      for network access.
+  -o, --open          Open a web browser
+  --fake              Use fake machine interface.
+  --donothost         Only host the websocket, not the interface. Useful when
+                      developing Svelte.
+  --help              Show this message and exit.
+```
+
+The interface is available at `http://localhost:8000/`.
 
 ## Sequence
 
