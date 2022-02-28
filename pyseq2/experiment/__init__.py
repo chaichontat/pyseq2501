@@ -1,4 +1,3 @@
-#%%
 from __future__ import annotations
 
 from copy import deepcopy
@@ -7,7 +6,6 @@ from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable
 
-import yaml
 from pydantic import BaseModel, root_validator, validator
 
 from .command import *
@@ -171,50 +169,3 @@ class Experiment(BaseModel):
                 if stop_on_exception:
                     logger.critical("Stopping.")
                     break
-
-
-#%%
-if __name__ == "__main__":
-    # Flush ports 1, 2, 3 with 250 μL per barrel simultaneously.
-    def test_basic():
-        waters: Reagents = [Reagent(name=f"water{port}", port=port) for port in (1, 2, 3)]
-        ops: list[Cmd] = [Pump(reagent=water.name) for water in waters]
-        ops.append(Autofocus(channel=0, laser_onoff=True, laser=5, od=0))
-        ops.append(Temp(temp=25))
-
-        experiment = Experiment("wash_ports_123", False, path=".", cmds=ops, reagents=waters)
-        assert Experiment.parse_raw(experiment.json()) == experiment
-        assert Experiment.parse_obj(yaml.safe_load(yaml.dump(experiment.dict()))) == experiment
-
-    def test_compile():
-        n = 3
-        mix: Reagents = []
-        mix.append(Reagent(name="water", port=14))
-        mix.append(ReagentGroup(name="gr"))
-        mix += (antibodies := [Reagent(name=f"antibody{port}", port=port) for port in range(1, n + 1)])
-
-        ops: list[Cmd] = [Pump(reagent="water"), Pump(reagent="gr"), Goto(step=0, n=n - 1)]
-        experiment_auto = Experiment("experiment", False, path=".", cmds=ops, reagents=mix)
-
-        ops = []
-        for i in range(1, n + 1):
-            ops.append(Pump(reagent="water"))
-            ops.append(Pump(reagent=f"antibody{i}"))
-
-        w: Reagents = [Reagent(name="water", port=14)]
-        w += antibodies
-        experiment_man = Experiment(
-            "experiment",
-            False,
-            path=".",
-            cmds=ops,
-            reagents=w,
-        )
-
-        assert experiment_auto.compile() == experiment_man.compile()
-        assert Experiment.parse_raw(experiment_auto.json()) == experiment_auto  # Original object not altered.
-        assert Experiment.parse_raw(experiment_man.json()) == experiment_man
-
-    test_basic()
-    test_compile()
-# %%
