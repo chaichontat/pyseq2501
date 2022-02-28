@@ -31,6 +31,16 @@ jobs:
 
   test-server:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "windows-latest"]
+      max-parallel: 5
+    env:
+      FAKE_HISEQ: 1
+
     steps:
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
@@ -47,8 +57,8 @@ jobs:
           conda env update -f environment.yml -n pyseq
           pip install .
 
-      - name: Debug with tmate
-        uses: mxschmitt/action-tmate@v3
+      # - name: Debug with tmate
+      #   uses: mxschmitt/action-tmate@v3
 
       - name: Test with Pytest
         run: |
