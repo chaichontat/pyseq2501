@@ -19,12 +19,13 @@ export function writableWebSocket<T extends object | string>(url: string, initia
     async function _open() {
         console.log("Connecting")
         timeout = null
-        if (beforeOpen) await beforeOpen()
+
 
         socket = new WebSocket(url);
         socket.onmessage = (event: MessageEvent): void => (setStore(f(event.data)))
 
-        socket.onopen = () => {
+        socket.onopen = async () => {
+            if (beforeOpen) await beforeOpen()
             if (localStore) localStore.update((curr) => ({ ...curr, connected: true }))
             if (timeout) {
                 clearTimeout(timeout)
