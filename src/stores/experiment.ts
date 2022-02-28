@@ -20,12 +20,14 @@ export type NExperiment = {
     cmds: NCmd[],
 }
 
-export const experimentDefault: NExperiment = {
-    name: "",
-    path: ".",
-    fc: false,
-    reagents: [{ uid: 0, reagent: { ...reagentDefault } }],
-    cmds: [{ uid: 0, cmd: { ...cmdDefaults.pump } }]
+export function genExperimentDefault(max_uid: number): NExperiment {
+    return {
+        name: "",
+        path: ".",
+        fc: false,
+        reagents: [{ uid: max_uid + 1, reagent: { ...reagentDefault } }],
+        cmds: [{ uid: max_uid + 2, cmd: { ...cmdDefaults.pump } }]
+    }
 }
 
 export function fromExperiment(e: Experiment, max_uid: number): NExperiment {

@@ -3,7 +3,7 @@
   import Reagents from "$comps/main/auto/reagents/reagents.svelte";
   import Steps from "$comps/main/auto/steps/steps.svelte";
   import Modal from "$src/components/modal.svelte";
-  import { Experiment, experimentDefault, fromExperiment, NExperiment, toExperiment } from "$src/stores/experiment";
+  import { Experiment, genExperimentDefault, fromExperiment, NExperiment, toExperiment } from "$src/stores/experiment";
   import rawExperimentSchema from "$src/stores/experiment_schema.json";
   import { userStore as us, localStore as ls } from "$src/stores/store";
   import { Menu, MenuButton, MenuItem, MenuItems } from "@rgossiaux/svelte-headlessui";
@@ -74,7 +74,6 @@
   </span>
 
   <!-- Download -->
-  <!-- REMOVE BEFORE FLIGHT -->
   <div class="flex gap-x-2">
     <button class="px-4 py-1 ml-8 text-base font-medium rounded-lg h-11 white-button" on:click={() => toYAML($us.exps[fc_])}>
       <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -121,7 +120,17 @@
         <div transition:fade={{ duration: 100, easing: cubicInOut }}>
           <!-- New -->
           <MenuItem let:active
-            ><div class:bg-blue-700={active} class:text-white={active} class="z-0 w-full px-2 py-2 pl-4" on:click={() => ($us.exps[fc_] = { ...experimentDefault })}>New</div></MenuItem
+            ><div
+              class:bg-blue-700={active}
+              class:text-white={active}
+              class="z-0 w-full px-2 py-2 my-1 pl-4"
+              on:click={() => {
+                $us.exps[fc_] = genExperimentDefault($us.max_uid);
+                $us.max_uid += 3;
+              }}
+            >
+              New
+            </div></MenuItem
           >
         </div>
       </MenuItems>

@@ -52,8 +52,8 @@ class NReagent(BaseModel):
     reagent: Reagent | ReagentGroup
 
     @classmethod
-    def default(cls):
-        return cls(uid=0, reagent=Reagent.default())
+    def default(cls, uid: int):
+        return cls(uid=uid, reagent=Reagent.default())
 
 
 class NCmd(BaseModel):
@@ -61,8 +61,8 @@ class NCmd(BaseModel):
     cmd: Annotated[Pump | Prime | Temp | Hold | Autofocus | TakeImage | Goto, Field(discriminator="op")]
 
     @classmethod
-    def default(cls) -> NCmd:
-        return cls(uid=0, cmd=Pump.default())
+    def default(cls, uid: int) -> NCmd:
+        return cls(uid=uid, cmd=Pump.default())
 
 
 class NExperiment(BaseModel):
@@ -90,8 +90,14 @@ class NExperiment(BaseModel):
         return NExperiment(name=e.name, path=e.path, fc=e.fc, reagents=reagents, cmds=cmds)
 
     @classmethod
-    def default(cls, fc: bool = False) -> NExperiment:
-        return cls(name="", path=".", fc=fc, reagents=[NReagent.default()], cmds=[NCmd.default()])
+    def default(cls, max_uid: int, fc: bool = False) -> NExperiment:
+        return cls(
+            name="",
+            path=".",
+            fc=fc,
+            reagents=[NReagent.default(max_uid + 1)],
+            cmds=[NCmd.default(max_uid + 2)],
+        )
 
 
 class NTakeImage(TakeImage):
@@ -113,7 +119,7 @@ class UserSettings(BaseModel):
     @classmethod
     def default(cls) -> UserSettings:
         return UserSettings(
-            max_uid=2,
-            exps=[NExperiment.default(False), NExperiment.default(True)],
+            max_uid=6,
+            exps=[NExperiment.default(0, False), NExperiment.default(3, True)],
             image_params=NTakeImage.default(),
         )

@@ -3,7 +3,7 @@ import { browser } from "$app/env";
 import type { Readable, Writable } from "svelte/store";
 import { writable } from "svelte/store";
 import { cmdDefaults, TakeImage } from "./command";
-import { experimentDefault, NExperiment } from "./experiment";
+import { genExperimentDefault, NExperiment } from "./experiment";
 import { Img, imgDefault } from "./imaging";
 import { Status, statusDefault } from "./status";
 import writableWebSocket, { AsymWritable, asymWritableWebSocket, readableWebSocket } from "./ws_store";
@@ -27,12 +27,10 @@ export type Block = "" | "moving" | "ejecting" | "capturing" | "previewing" | "a
 
 const userDefault: Readonly<UserSettings> = {
   block: "",
-  max_uid: 2,
-  exps: [{ ...experimentDefault }, { ...experimentDefault }],
+  max_uid: 6,
+  exps: [genExperimentDefault(0), genExperimentDefault(3)],
   image_params: { ...cmdDefaults["takeimage"], fc: false },
 };
-
-
 
 export type LocalInfo = { "mode": "automatic" | "editingA" | "editingB" | "manual", "connected": boolean, img: Img }
 export const localStore: Writable<LocalInfo> = writable({ mode: "automatic", connected: false, img: { ...imgDefault } })
