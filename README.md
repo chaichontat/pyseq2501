@@ -12,9 +12,10 @@ This is the web interface and the communication system for [PySeq 2501](https://
 ## Installation
 Install [`pyseq2501`](https://github.com/chaichontat/pyseq2501)
 Install [`npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) and clone this repo.
-
+The first command updates the `pyseq` environment.
 Run
 ```sh
+conda env update -n pyseq -f environment.yml
 pip install .
 npm i
 npm run build
