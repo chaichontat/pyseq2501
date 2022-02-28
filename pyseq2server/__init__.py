@@ -2,24 +2,20 @@ from __future__ import annotations
 
 import asyncio
 import os
+from logging import getLogger
 
 import numpy as np
-import uvicorn
 from fastapi import FastAPI
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 
-from pyseq2.experiment import *
-from pyseq2.imager import Imager
-from pyseq2.utils.ports import get_ports
+from pyseq2 import FlowCells, Imager, get_ports
 
 from .api_types import UserSettings
 from .imaging import update_img
 from .routers import mancommand, status, user
-from .utils.log import setup_web_logger
 
 q_log: asyncio.Queue[str] = asyncio.Queue()
-setup_web_logger(q_log, level="DEBUG")
 
 logger = getLogger(__name__)
 
@@ -89,5 +85,3 @@ async def get_path():
 #     except BaseException as e:
 #         raise HTTPException(400, detail=f"{type(e).__name__}: {e}")
 #     return "ok"
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)  # type: ignore

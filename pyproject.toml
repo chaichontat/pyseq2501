@@ -1,3 +1,7 @@
+[build-system]
+build-backend = 'setuptools.build_meta'
+requires = ["setuptools >= 43.0.0"]
+
 [tool.black]
 include = 'python'
 line-length = 110
@@ -22,7 +26,6 @@ reportWildcardImportFromLibrary = false
 typeCheckingMode = "strict"
 
 [tool.pytest.ini_options]
+asyncio_mode = "auto"
 minversion = "7.0"
-testpaths = [
-  "tests",
-]
+testpaths = ["tests"]

@@ -4,6 +4,5 @@ dependencies:
   - python=3.10
   - fastapi
   - matplotlib
-  - python-multipart
   - uvicorn
   - websockets
