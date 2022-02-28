@@ -18,7 +18,7 @@
   }
 
   .disabled {
-    @apply text-gray-500 border-gray-200 hover:bg-gray-50 active:bg-gray-50;
+    @apply text-gray-500 border-gray-200 hover:bg-gray-50 active:bg-gray-50 shadow-none;
   }
 
   .white-button {
