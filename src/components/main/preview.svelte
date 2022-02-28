@@ -40,7 +40,7 @@
 
   $: if (browser) imgFrame.src = $ls.img.img[currChannel];
   $: if (ctx && $ls.img) {
-    ctx.canvas.height = $ls.img.dim[0];
+    ctx.canvas.height = Math.max($ls.img.dim[0], 512);
     ctx.canvas.width = $ls.img.dim[1];
   }
 
