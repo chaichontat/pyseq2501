@@ -45,7 +45,7 @@ jobs:
         run: |
           git clone https://github.com/chaichontat/pyseq2501
           cd pyseq2501
-          conda env update -f environment.yml
+          conda env update -f environment.yml -n pyseq
           pip install .
 
       - name: Test with Pytest
