@@ -216,7 +216,7 @@ class COM:
                     if not self.FIRST_LINES.search(buffer):
                         raise InvalidResponse(f"{buffer}")
 
-            except CancelledError as e:
+            except (CancelledError, RuntimeError) as e:
                 raise e
             except BaseException as e:
                 logger.critical(f"{self.name}{type(e).__name__}: {e}")
@@ -271,7 +271,7 @@ class COM:
     async def catchable_future(self, fut: asyncio.Future[T], cmd: CmdParse[Any, T]) -> T:
         try:
             return await fut
-        except asyncio.CancelledError as e:
+        except (asyncio.CancelledError, RuntimeError) as e:
             for w in self._waiting:
                 if w[1] is fut:
                     self._waiting.remove(w)

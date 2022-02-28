@@ -1,7 +1,7 @@
 import asyncio
 from asyncio import CancelledError, StreamReader, StreamWriter
 from logging import getLogger
-from typing import Callable, Literal, Optional
+from typing import Callable, Literal, NoReturn, Optional
 
 from pyseq2.base.instruments_types import SEPARATOR, SerialInstruments
 from pyseq2.fakes.fake_handlers import fake_arm9, fake_fpga, fake_laser, fake_pump, fake_valve, fake_x, fake_y
@@ -43,15 +43,15 @@ class FakeTransport(asyncio.Transport):
         self.q_rcvd: asyncio.Queue[bytes] = asyncio.Queue()
 
         loop.call_soon(protocol.connection_made, self)
-        asyncio.create_task(self._process_forever())
+        self.task = asyncio.create_task(self._process_forever())
 
-    async def _process_forever(self):
+    async def _process_forever(self) -> NoReturn:
         while True:
             try:
                 cmd = await self.q_rcvd.get()
                 self._protocol.data_received(cmd)  # Data received from the serial port.
                 self.q_rcvd.task_done()
-            except CancelledError as e:
+            except (CancelledError, RuntimeError) as e:
                 raise e
             except BaseException as e:
                 logger.critical(f"{type(e).__name__}: {e}")
@@ -65,7 +65,7 @@ class FakeTransport(asyncio.Transport):
 async def open_fake(
     url: str, name: SerialInstruments, baudrate: Literal[9600, 115200], test_params: Optional[dict] = None
 ) -> tuple[StreamReader, StreamWriter]:
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     reader = asyncio.StreamReader(loop=loop)
     protocol = asyncio.StreamReaderProtocol(reader, loop=loop)
     writer = asyncio.StreamWriter(FakeTransport(loop, protocol, name, test_params), protocol, reader, loop)

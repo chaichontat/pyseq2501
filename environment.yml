@@ -16,3 +16,4 @@ dependencies:
   - tifffile
   - pip:
       - pyserial-asyncio
+      - pytest-asyncio
