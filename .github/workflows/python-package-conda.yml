@@ -43,6 +43,7 @@ jobs:
       - name: Test with Pytest
         run: |
           pip install pytest pytest-asyncio
+          pip install .
           pytest -rP
 
       - name: Autoformat with Black
