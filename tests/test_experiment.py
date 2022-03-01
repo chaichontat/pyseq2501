@@ -1,4 +1,9 @@
+import pytest
 import yaml
+from black import nullcontext
+from hypothesis import given
+from hypothesis.strategies import integers
+from pydantic import ValidationError
 
 from pyseq2.experiment import Experiment
 from pyseq2.experiment.command import Autofocus, Cmd, Goto, Pump, Temp
@@ -17,12 +22,17 @@ def test_basic():
     assert Experiment.parse_obj(yaml.safe_load(yaml.dump(experiment.dict()))) == experiment
 
 
-def test_compile():
-    n = 4
+@given(integers(1, 10))
+def test_compile(n: int):
     mix: Reagents = []
     mix.append(Reagent(name="water", port=14))
     mix.append(ReagentGroup(name="gr"))
-    mix += (antibodies := [Reagent(name=f"antibody{port}", port=port) for port in range(1, n + 1)])
+
+    cond = n + 1 > 9
+    with pytest.raises(ValidationError) if cond else nullcontext():
+        mix += (antibodies := [Reagent(name=f"antibody{port}", port=port) for port in range(1, n + 1)])
+    if cond:
+        return
 
     ops: list[Cmd] = [Pump(reagent="water"), Pump(reagent="gr"), Goto(step=0, n=n - 1)]
     experiment_auto = Experiment("experiment", False, path=".", cmds=ops, reagents=mix)

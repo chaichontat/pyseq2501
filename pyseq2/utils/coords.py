@@ -69,10 +69,10 @@ def mm_to_raw(
 ) -> None | int | tuple[int, int]:
     x_offset = B_LEFT if flowcell else A_LEFT
 
-    if x is not None and not (-5 <= x <= 30):
-        logger.warning(f"x={x} is out of range.")
-    if y is not None and not (-5 <= y <= 80):
-        logger.warning(f"y={y} is out of range.")
+    # if x is not None and not (-5 <= x <= 30):
+    #     logger.warning(f"x={x} is out of range.")
+    # if y is not None and not (-5 <= y <= 80):
+    #     logger.warning(f"y={y} is out of range.")
 
     if x is not None and y is not None:
         return (int(x * X_STEP_MM + x_offset), int(y * Y_STEP_MM + Y_UPPER))

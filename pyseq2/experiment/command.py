@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Annotated, Any, Literal, Type, TypeVar, cast
 
 import numpy as np
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 from pyseq2.experiment.reagent import Reagent
 from pyseq2.flowcell import FlowCells, Seconds, μL
@@ -154,14 +154,25 @@ class TakeImage(BaseModel, AbstractCommand):
             z_to=0,
         )
 
+    @validator("overlap")
+    def val_overlap(cls, v: float) -> float:
+        assert 0.0 <= v < 1.0, "Overlap must be between 0 and 1."
+        return v
+
     def calc_pos(self, i: bool) -> tuple[int, int, list[int], list[int]]:
-        n_bundles = math.ceil((max(self.xy0[1], self.xy1[1]) - (min(self.xy0[1], self.xy1[1]))) / 0.048)
-        y_start = coords.mm_to_raw(i, y=min(self.xy0[1], self.xy1[1]))
+        # mm
+        xs = self.xy0[0], self.xy1[0]  # Left edges
+        ys = self.xy0[1], self.xy1[1]  # Bottom edges
+
+        n_bundles = math.ceil((max(ys) - min(ys)) / 0.048)
 
         x_step = 0.768 * (1 - self.overlap)
-        x_n = math.ceil((max(self.xy0[0], self.xy1[0]) - (x_start := min(self.xy0[0], self.xy1[0]))) / x_step)
-
-        xs = [coords.mm_to_raw(i, x=x_start + n * x_step) for n in range(x_n)] if self.xy0[0] != self.xy1[0] else [self.xy0[0]]
+        x_start, x_end = min(xs), max(xs) + 0.768
+        x_n = math.ceil((x_end - x_start) / x_step) if self.xy0[0] != self.xy1[0] else 1
+        
+        # raw
+        y_start = coords.mm_to_raw(i, y=max(ys))
+        xs = [coords.mm_to_raw(i, x=x_start + n * x_step) for n in range(x_n)]
         zs = [self.z_obj + n * self.z_spacing for n in range(self.z_from, self.z_to + 1)]
 
         return n_bundles, y_start, xs, zs
