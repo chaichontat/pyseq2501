@@ -65,15 +65,14 @@ async def poll_state(ws: WebSocket) -> NoReturn:
                 logger.error(f"Status error: {type(e).__name__}: {e}")
                 wait_time = 5
                 # state.msg = f"Status error: {type(e).__name__}: {e
-
-        if wait_time != 5:
-            await ws.send_json(jsonable_encoder(state))
+        await ws.send_json(jsonable_encoder(state))
 
 
 @router.websocket("/status")
 async def poll_msg(ws: WebSocket):
     """
     Get status every 5 seconds
+    Sending responsibility is not mine
 
     Args:
       websocket (WebSocket): The websocket connection to the client.
