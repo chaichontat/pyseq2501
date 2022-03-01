@@ -16,12 +16,11 @@
     }
   }
 
-  let captureState: "ok" | "gray" | "stop" = "ok";
-  let previewState: "ok" | "gray" | "stop" = "ok";
+  let startState: "ok" | "gray" | "stop" = "ok";
   let interval: ReturnType<typeof setInterval> | undefined;
   let t: number = 0;
 
-  $: captureState = $ss.block === "capturing" ? "stop" : "ok";
+  $: startState = $ss.block === "capturing" ? "stop" : "ok";
   $: previewState = $ss.block === "previewing" ? "stop" : "ok";
 
   $: if (!$ss.block && interval) clearInterval(interval);
@@ -41,32 +40,22 @@
     }
   }
 
-  function handlePreview() {
-    if (interval) clearInterval(interval);
-    if ($ss.block === "previewing") {
-      $cmdStore = { cmd: "stop" };
-    } else {
-      t = 0;
-      interval = setInterval(() => {
-        t += 1;
-      }, 1000);
-      $cmdStore = { cmd: "preview" };
-      $ss.block = "previewing";
-    }
+  function handleValidate() {
+    $cmdStore = { fccmd: { fc: Boolean(fc_), cmd: "validate" } };
   }
 </script>
 
-<Progress {progress}>
+<Progress bind:progress>
   <div slot="buttons" class="grid grid-flow-row w-36">
     <button
       type="button"
       class="text-lg text-white focus:ring-4 shadow-lg font-medium rounded-lg px-5 py-2.5 text-center mr-2 mb-2"
-      class:focus:ring-indigo-300={captureState === "ok"}
-      class:focus:ring-orange-300={captureState === "stop"}
-      class:start={captureState === "ok"}
-      class:stop={captureState === "stop"}
+      class:focus:ring-indigo-300={startState === "ok"}
+      class:focus:ring-orange-300={startState === "stop"}
+      class:start={startState === "ok"}
+      class:stop={startState === "stop"}
       on:click={handleCapture}
-      disabled={captureState !== "ok"}
+      disabled={startState !== "ok"}
     >
       <div class="flex items-center h-12 text-lg">
         {#if $ss.block === "capturing" || $ss.block === "previewing"}
@@ -89,9 +78,8 @@
       type="button"
       id="preview"
       class="text-lg mt-2 text-white focus:ring-4 focus:ring-violet-300 font-medium rounded-lg shadow px-4 py-2.5 text-center inline-flex items-center mr-2"
-      disabled={Boolean($ss.block)}
-      use:tooltip={"Take a 16-bundle image based on the current position without saving."}
-      on:click={handlePreview}
+      use:tooltip={"Validate your experiment."}
+      on:click={handleValidate}
     >
       <div class="flex items-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">

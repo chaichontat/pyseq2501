@@ -9,7 +9,7 @@
   export let stats: { height: number; width: number; n_cols: number; n_bundles: number; n_z: number; time: number };
 
   $: {
-    if ($cmdStore?.step) {
+    if (progress && $cmdStore?.step) {
       step = $cmdStore.step;
       progress.set((step[2] * (stats.n_z * stats.n_bundles) + step[1] * stats.n_bundles + step[0]) / (stats.n_bundles * stats.n_cols * stats.n_z));
     }
@@ -55,7 +55,7 @@
   }
 </script>
 
-<Progress {progress}>
+<Progress bind:progress>
   <div slot="buttons" class="grid grid-flow-row w-36">
     <button
       type="button"
