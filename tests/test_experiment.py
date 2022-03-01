@@ -1,6 +1,7 @@
+from contextlib import nullcontext
+
 import pytest
 import yaml
-from black import nullcontext
 from hypothesis import given
 from hypothesis.strategies import integers
 from pydantic import ValidationError

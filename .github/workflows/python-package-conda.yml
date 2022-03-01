@@ -23,15 +23,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-#       - name: Cache conda
-#         uses: actions/cache@v2
-#         env:
-#           # Increase this value to reset cache if etc/example-environment.yml has not changed
-#           CACHE_NUMBER: 0
-#         with:
-#           path: ~/conda_pkgs_dir
-#           key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
-#             hashFiles('environment.yml') }}
+      #       - name: Cache conda
+      #         uses: actions/cache@v2
+      #         env:
+      #           # Increase this value to reset cache if etc/example-environment.yml has not changed
+      #           CACHE_NUMBER: 0
+      #         with:
+      #           path: ~/conda_pkgs_dir
+      #           key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+      #             hashFiles('environment.yml') }}
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
@@ -42,7 +42,7 @@ jobs:
 
       - name: Test with Pytest
         run: |
-          pip install pytest pytest-asyncio
+          pip install pytest pytest-asyncio hypothesis
           pip install .
           pytest -rP
 
@@ -51,13 +51,13 @@ jobs:
           conda install black
           black --line-length 110 --check pyseq2/
 
-#       - name: Type check with Pyright
-#         run: |
-#           npm i -g pyright
-#           pyright --warnings
+      #       - name: Type check with Pyright
+      #         run: |
+      #           npm i -g pyright
+      #           pyright --warnings
 
-#       - name: Debug with tmate
-#         uses: mxschmitt/action-tmate@v3
+      #       - name: Debug with tmate
+      #         uses: mxschmitt/action-tmate@v3
 
       - name: Build docs
         if: ${{ matrix.os == 'ubuntu-latest'}}
