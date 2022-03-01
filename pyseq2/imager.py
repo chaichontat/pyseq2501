@@ -162,25 +162,25 @@ class Imager(metaclass=Singleton):
         shutter: Optional[bool] = None,
         od: Optional[tuple[float | None, float | None]] = None,
     ) -> None:
-
-        cmds: list[Awaitable[Any]] = []
-        if x is not None:
-            cmds.append(self.x.move(x))
-        if y is not None:
-            cmds.append(self.y.move(y))
-        if z_obj is not None:
-            cmds.append(self.z_obj.move(z_obj))
-        if z_tilt is not None:
-            cmds.append(self.z_tilt.move(z_tilt))
-        if lasers is not None:
-            cmds += [la.set_power(p) for la, p in zip(self.lasers, lasers) if p is not None]
-        if laser_onoff is not None:
-            cmds += [la.set_onoff(lo) for la, lo in zip(self.lasers, laser_onoff) if lo is not None]
-        if shutter is not None:
-            cmds.append(self.optics._open() if shutter else self.optics._close())
-        if od is not None:
-            cmds += [f.move(o) for f, o in zip(self.optics.filters, od) if o is not None]
-        await asyncio.gather(*cmds)
+        async with self.lock:
+            cmds: list[Awaitable[Any]] = []
+            if x is not None:
+                cmds.append(self.x.move(x))
+            if y is not None:
+                cmds.append(self.y.move(y))
+            if z_obj is not None:
+                cmds.append(self.z_obj.move(z_obj))
+            if z_tilt is not None:
+                cmds.append(self.z_tilt.move(z_tilt))
+            if lasers is not None:
+                cmds += [la.set_power(p) for la, p in zip(self.lasers, lasers) if p is not None]
+            if laser_onoff is not None:
+                cmds += [la.set_onoff(lo) for la, lo in zip(self.lasers, laser_onoff) if lo is not None]
+            if shutter is not None:
+                cmds.append(self.optics._open() if shutter else self.optics._close())
+            if od is not None:
+                cmds += [f.move(o) for f, o in zip(self.optics.filters, od) if o is not None]
+            await asyncio.gather(*cmds)
 
     async def take(
         self,
@@ -309,4 +309,4 @@ class Imager(metaclass=Singleton):
         if not (path.endswith(".tif") or path.endswith(".tiff")):
             logger.warning("File name does not end with a tif extension.")
 
-        await asyncio.get_event_loop().run_in_executor(executor, Imager._save, path, img, state)
+        await asyncio.get_running_loop().run_in_executor(executor, Imager._save, path, img, state)
