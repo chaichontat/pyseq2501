@@ -10,20 +10,31 @@ This is the web interface and the communication system for [PySeq 2501](https://
 
 
 ## Installation
-Install [`pyseq2501`](https://github.com/chaichontat/pyseq2501)
-Install [`npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) and clone this repo.
-The first command updates the `pyseq` environment.
-Run
-```sh
-conda env update -n pyseq -f environment.yml
-pip install .
-npm i
-npm run build
-```
+- Install [`pyseq2501`](https://github.com/chaichontat/pyseq2501)
+    ```sh
+    git clone https://github.com/chaichontat/pyseq2501
+    conda env create -n pyseq -f environment.yml
+    conda activate pyseq
+    pip install pyseq2501/.
+    ```
+
+
+- Install [`npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
+- Clone this repo and run. The first command updates the `pyseq` environment.
+    ```sh
+    git clone https://github.com/chaichontat/pyseq2501-web
+    cd pyseq2501-web
+    conda env update -n pyseq -f environment.yml
+    pip install .
+    npm i
+    npm run build
+    ```
+
+A [`tox`](https://tox.wiki/en/latest/) environment is available to make sure everything works.
 
 ## Run
 ```sh
-pyseq2server
+pyseq2server --fake
 ```
 
 ```
@@ -40,7 +51,7 @@ Options:
   --help              Show this message and exit.
 ```
 
-The interface is available at `http://localhost:8000/`.
+The interface should be waiting for you at `http://localhost:8000/`!
 
 ## Sequence
 
