@@ -126,7 +126,7 @@ class Pump(UsesSerial):
                 await self.com.send(PumpCmd.PUSH(target, speed))
             case _:
                 raise ValueError("Invalid command.")
-        
+
         if not IS_FAKE:
             logger.debug("Waiting for pumping to finish.")
             await asyncio.sleep(abs(target - pos) / speed + 0.5)
@@ -138,6 +138,6 @@ class Pump(UsesSerial):
         if (pos := await self.pos) != 0:
             logger.warning(f"Pump {self.name} was not fully pulled out but at pos {pos}.")
         await self._pushpull("pull", vol, speed=v_pull)
-        logger.info("Waiting for {wait}s.")
+        logger.info(f"Waiting for {wait}s.")
         await asyncio.sleep(wait)  # From HiSeq log. Wait for pressure to equalize.
         await self._pushpull("push", 0, speed=v_push)
