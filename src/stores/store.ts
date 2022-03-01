@@ -32,6 +32,11 @@ const userDefault: Readonly<UserSettings> = {
   image_params: { ...cmdDefaults["takeimage"], fc: false },
 };
 
+export type FCCmd = {
+  fc: boolean,
+  cmd: "start" | "validate" | "stop"
+}
+
 export type LocalInfo = { "mode": "automatic" | "editingA" | "editingB" | "manual", "connected": boolean, img: Img }
 export const localStore: Writable<LocalInfo> = writable({ mode: "automatic", connected: false, img: { ...imgDefault } })
 
@@ -58,7 +63,7 @@ export type MoveManual = {
 }
 
 export type CommandResponse = { step?: [number, number, number]; msg?: string, error?: string };
-export type CommandWeb = { move?: Partial<MoveManual>, cmd?: "preview" | "capture" | "stop" }
+export type CommandWeb = { move?: Partial<MoveManual>, cmd?: "preview" | "capture" | "stop", fccmd?: FCCmd }
 export const cmdStore: AsymWritable<Partial<CommandResponse>, Partial<CommandWeb>> =
   asymWritableWebSocket(`ws://${ browser ? window.location.hostname : "" }:8000/cmd`, { msg: "ok" }, { cmd: "stop" })
 

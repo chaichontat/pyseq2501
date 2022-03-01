@@ -1,10 +1,13 @@
+export type Message = { msg: string, t: number }
+
 export type FCState = {
     running: boolean,
     step: number,
-    msg: string
+    msg: Message
 }
 
-export const fcStateDefault: Readonly<FCState> = { running: false, step: 0, msg: "" }
+
+export const fcStateDefault: Readonly<FCState> = { running: false, step: 0, msg: { msg: "", t: Date.now() } }
 
 export type Status = {
     x: number;
@@ -17,7 +20,7 @@ export type Status = {
     od: [number, number];
     fcs: [FCState, FCState],
     block: "" | "moving" | "capturing" | "previewing"
-    msg: string;
+    msg: Message
 };
 
 export const statusDefault: Readonly<Status> = {
@@ -31,5 +34,5 @@ export const statusDefault: Readonly<Status> = {
     shutter: false,
     fcs: [{ ...fcStateDefault }, { ...fcStateDefault }],
     block: "",
-    msg: "Idle",
+    msg: { msg: "Error: not connected.", t: Date.now() }
 };

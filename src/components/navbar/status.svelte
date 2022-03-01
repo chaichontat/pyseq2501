@@ -8,15 +8,17 @@
   const re = /(ing)/;
 
   let div: HTMLElement;
+  let latest: number;
   $: {
-    if (browser && message !== $statusStore.msg) {
-      message = $statusStore.msg;
+    if (browser && latest !== $statusStore.msg.t) {
+      message = $statusStore.msg.msg;
+      latest = $statusStore.msg.t;
       flash(div);
     }
   }
 </script>
 
-<div class="relative py-2 font-mono text-base font-semibold text-gray-800" use:tooltip={message}>
+<div class="relative flex items-center py-2 font-mono text-base font-semibold text-gray-800" use:tooltip={message}>
   <div class="absolute w-full h-full ml-4 rounded-lg" />
   <div class="ml-2">
     {#if message.search("Error") != -1}
