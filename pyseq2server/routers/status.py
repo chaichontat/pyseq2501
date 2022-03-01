@@ -49,8 +49,12 @@ state = WebState(
 )
 
 
-def update_block(b: BlockState):
-    state.block = b
+def update_block(b: BlockState, fc: int | None = None) -> None:
+    if fc is None:
+        state.block = b
+    else:
+        state.fcs[fc].running = bool(b)
+        state.fcs[fc].msg = Message(msg=b, t=time.time())
     try:
         if fast_refresh.is_set():
             ...

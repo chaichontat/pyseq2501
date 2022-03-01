@@ -109,8 +109,9 @@ async def cmd_endpoint(ws: WebSocket) -> None:
     async def cmd_run_exp(fc: bool):
         exp = await cmd_validate(fc)
         with cancel_wrapper(q_cmd, q_log, fast_refresh):
+            update_block("capturing", fc)
             await exp.run(fcs, fc, imager, q_cmd)
-            
+            update_block("", fc)
 
     task: Task[Any] = asyncio.create_task(meh())
     fc_tasks: list[Task[Any]] = [asyncio.create_task(meh()), asyncio.create_task(meh())]

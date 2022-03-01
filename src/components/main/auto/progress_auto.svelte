@@ -59,8 +59,8 @@
       on:click={handleCapture}
       disabled={startState !== "ok"}
     >
-      <div class="flex items-center h-12 text-lg">
-        {#if $ss.block === "capturing" || $ss.block === "previewing"}
+      <div class="flex items-center h-12 text-lg cursor-pointer">
+        {#if running}
           <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
@@ -82,6 +82,7 @@
       class="text-lg mt-2 text-white focus:ring-4 focus:ring-violet-300 font-medium rounded-lg shadow px-4 py-2.5 text-center inline-flex items-center mr-2"
       use:tooltip={"Validate your experiment."}
       on:click={handleValidate}
+      disabled={running}
     >
       <div class="flex items-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
