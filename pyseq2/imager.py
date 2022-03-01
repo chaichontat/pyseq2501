@@ -17,6 +17,7 @@ from .imaging.fpga import FPGA
 from .imaging.laser import Laser, Lasers
 from .imaging.xstage import XStage
 from .imaging.ystage import YStage
+from .utils.utils import Singleton
 
 logger = getLogger(__name__)
 executor = ThreadPoolExecutor()
@@ -56,7 +57,7 @@ CHANNEL = {0: 1, 1: 3, 2: 2, 3: 0}
 T = TypeVar("T")
 
 
-class Imager:
+class Imager(metaclass=Singleton):
     UM_PER_PX = 0.375
 
     @classmethod

@@ -8,6 +8,7 @@ from .base.instruments_types import SerialPorts
 from .fluidics.arm9chem import ARM9Chem
 from .fluidics.pump import Pump
 from .fluidics.valve import Valves
+from .utils.utils import Singleton
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +103,7 @@ class AFlowCell:
         return int((speed / Pump.BARREL_VOL) * Pump.STEPS / 60)
 
 
-class FlowCells:
+class FlowCells(metaclass=Singleton):
     @classmethod
     async def ainit(
         cls,

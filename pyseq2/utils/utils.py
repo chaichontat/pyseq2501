@@ -3,25 +3,21 @@ from __future__ import annotations
 import asyncio
 import os
 import re
-from typing import (
-    Any,
-    Awaitable,
-    Callable,
-    Container,
-    Dict,
-    Literal,
-    ParamSpec,
-    Sequence,
-    Tuple,
-    TypeVar,
-    cast,
-    overload,
-)
+from typing import Any, Awaitable, Callable, Container, Literal, ParamSpec, Sequence, TypeVar, cast, overload
 
 FlowCell = Literal["A", "B"]
 IS_FAKE = os.environ.get("FAKE_HISEQ", "0") == "1"
 
 T, P = TypeVar("T"), ParamSpec("P")
+
+# https://python-3-patterns-idioms-test.readthedocs.io/en/latest/Metaprogramming.html#intercepting-class-creation
+class Singleton(type):
+    instance = None
+
+    def __call__(cls, *args: Any, **kwargs: Any) -> Singleton:
+        if not cls.instance:
+            cls.instance = super().__call__(*args, **kwargs)
+        return cls.instance
 
 
 class InvalidResponse(Exception):
