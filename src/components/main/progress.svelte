@@ -12,7 +12,7 @@
   <slot name="buttons" />
 
   <!-- Big box -->
-  <content class="flex-grow px-4 py-2 border rounded-lg border-base-300">
+  <content class="flex-grow px-4 py-2 border rounded-lg border-base-300 bg-white/60">
     <slot />
 
     <!-- Lower bar -->

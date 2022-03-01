@@ -59,7 +59,10 @@
   }
 </script>
 
-<div class="flex items-center">
+<div class="relative flex items-center">
+  <div class="absolute text-[500px] right-60 -top-20 font-semibold text-indigo-700 opacity-10 -z-10" class:text-purple-700={fc_}>
+    {{ 0: "A", 1: "B" }[fc_]}
+  </div>
   <span>
     <!-- Back -->
     <button on:click={() => ($ls.mode = "automatic")}>
@@ -140,9 +143,9 @@
     <ProgressAuto {fc_} />
   </div>
   <div>
-    <p class="pb-3 mt-8 text-2xl font-bold text-gray-800 border-b">Details</p>
+    <p class="pb-3 mt-8 text-2xl font-bold text-gray-800 border-b border-gray-300">Details</p>
     <div class="flex flex-col text-lg font-medium">
-      <p class="text-lg">Name</p>
+      <p class="pt-3 text-lg">Name</p>
       <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={$us.exps[fc_].name} class:invalid={!$us.exps[fc_].name} />
       <!-- FileSystemAccessAPI cannot give path upstream of what user chooses. -->
       <p class="text-lg">Image Path</p>
