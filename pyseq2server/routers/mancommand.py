@@ -4,7 +4,7 @@ import asyncio
 from asyncio import CancelledError, Task
 from contextlib import contextmanager
 from logging import getLogger
-from typing import Literal, NoReturn
+from typing import Any, Literal, NoReturn
 
 from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
 from fastapi.encoders import jsonable_encoder
@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from websockets.exceptions import ConnectionClosedOK
 
 from pyseq2 import FlowCells, Imager
+from pyseq2.experiment import Experiment
 from pyseq2server.imaging import Img, update_img
 from pyseq2server.routers.status import update_block
 
@@ -99,12 +100,20 @@ async def cmd_endpoint(ws: WebSocket) -> None:
             fc: bool = UserSettings.construct(**ws.app.state.user_settings).image_params["fc"]  # type: ignore
             await m.run(imager, fc)
 
-    async def cmd_validate(fc: bool):
+    async def cmd_validate(fc: bool) -> Experiment:
         with cancel_wrapper(q_cmd, q_log, fast_refresh):
-            logger.debug(NExperiment(**UserSettings.construct(**ws.app.state.user_settings).exps[fc]).to_experiment())  # type: ignore
+            out = NExperiment(**UserSettings.construct(**ws.app.state.user_settings).exps[fc]).to_experiment()  # type: ignore
             q_log.put_nowait("Validation successful.")
+        return out
 
-    task: Task[None] = asyncio.create_task(meh())
+    async def cmd_run_exp(fc: bool):
+        exp = await cmd_validate(fc)
+        with cancel_wrapper(q_cmd, q_log, fast_refresh):
+            await exp.run(fcs, fc, imager, q_cmd)
+            
+
+    task: Task[Any] = asyncio.create_task(meh())
+    fc_tasks: list[Task[Any]] = [asyncio.create_task(meh()), asyncio.create_task(meh())]
 
     with q_listener(ret_cmd(ws)):
         try:
@@ -125,6 +134,10 @@ async def cmd_endpoint(ws: WebSocket) -> None:
                         task = asyncio.create_task(cmd_image(cmd))
                     case CommandWeb(fccmd=FCCmd(fc=fc, cmd="validate")):
                         task = asyncio.create_task(cmd_validate(fc))
+                    case CommandWeb(fccmd=FCCmd(fc=fc, cmd="start")):
+                        fc_tasks[fc] = asyncio.create_task(cmd_run_exp(fc))
+                    case CommandWeb(fccmd=FCCmd(fc=fc, cmd="stop")):
+                        fc_tasks[fc].cancel()
                     case _:
                         ...
 

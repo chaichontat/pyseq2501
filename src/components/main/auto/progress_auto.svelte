@@ -1,14 +1,18 @@
 <script lang="ts">
-  import { cmdStore, statusStore as ss } from "$src/stores/store";
+  import { cmdStore, statusStore as ss, userStore as us } from "$src/stores/store";
   import tooltip from "$src/tooltip";
   import type { Tweened } from "svelte/motion";
   import Progress from "../progress.svelte";
 
   let step: [number, number, number] = [0, 0, 0];
   let progress: Tweened<number>;
-  // export let stats: { height: number; width: number; n_cols: number; n_bundles: number; n_z: number; time: number };
-  export let fc_ = 0;
+  let running: boolean = false;
 
+  // export let stats: { height: number; width: number; n_cols: number; n_bundles: number; n_z: number; time: number };
+  export let fc_: 0 | 1;
+  const fc = Boolean(fc_);
+
+  $: running = $ss.fcs[fc_].running;
   $: {
     if ($cmdStore?.step) {
       step = $cmdStore.step;
@@ -16,32 +20,30 @@
     }
   }
 
-  let startState: "ok" | "gray" | "stop" = "ok";
+  let startState: "ok" | "stop" = "ok";
   let interval: ReturnType<typeof setInterval> | undefined;
   let t: number = 0;
 
-  $: startState = $ss.block === "capturing" ? "stop" : "ok";
-  $: previewState = $ss.block === "previewing" ? "stop" : "ok";
-
-  $: if (!$ss.block && interval) clearInterval(interval);
+  $: startState = running ? "stop" : "ok";
+  $: if (!running && interval) clearInterval(interval);
 
   function handleCapture() {
     console.log("hi");
     if (interval) clearInterval(interval);
-    if ($ss.block === "capturing") {
-      $cmdStore = { cmd: "stop" };
+    if (running) {
+      $cmdStore = { fccmd: { fc, cmd: "stop" } };
     } else {
       t = 0;
       interval = setInterval(() => {
         t += 1;
       }, 1000);
-      $cmdStore = { cmd: "capture" };
-      $ss.block = "capturing";
+      $cmdStore = { fccmd: { fc, cmd: "start" } };
+      $ss.fcs[fc_].running = true;
     }
   }
 
   function handleValidate() {
-    $cmdStore = { fccmd: { fc: Boolean(fc_), cmd: "validate" } };
+    $cmdStore = { fccmd: { fc, cmd: "validate" } };
   }
 </script>
 
@@ -102,32 +104,14 @@
         <span class="text-4xl font-bold">
           <span class="font-mono">{step[0]}</span>
           /
-          <span class="w-32 px-2 font-mono text-4xl font-bold ">{1}</span>
+          <span class="w-32 px-2 font-mono text-4xl font-bold">{$us.exps[fc_].cmds.length}</span>
         </span>
       </div>
       Steps
     </section>
-
-    <section class="flex flex-col gap-y-1">
-      <div class="flex items-center">
-        <span class="text-4xl font-bold">
-          <span class="font-mono">{step[1]}</span>
-          /
-          <span class="w-32 px-2 font-mono text-4xl font-bold ">{2}</span>
-        </span>
-      </div>
-      Z-steps taken
-    </section>
-
-    <section class="flex flex-col gap-y-1">
-      <div class="flex items-center">
-        <span class="text-4xl font-bold">
-          <span class="font-mono">{step[2]}</span>
-          /
-          <span class="w-32 px-2 font-mono text-4xl font-bold ">{4}</span>
-        </span>
-      </div>
-      Columns taken
+    <section class="flex flex-col">
+      <span class="text-lg">Imaging time: {t} s</span>
+      <span class="text-lg">Pump time: {t} s</span>
     </section>
 
     <section class="flex flex-col">

@@ -120,7 +120,7 @@
             ><div
               class:bg-blue-700={active}
               class:text-white={active}
-              class="z-0 w-full px-2 py-2 my-1 pl-4"
+              class="z-0 w-full px-2 py-2 pl-4 my-1"
               on:click={() => {
                 $us.exps[fc_] = genExperimentDefault($us.max_uid);
                 $us.max_uid += 3;
@@ -135,15 +135,20 @@
   </div>
 </div>
 
-<ProgressAuto {fc_} />
-
-<p class="pb-3 mt-8 text-2xl font-bold text-gray-800 border-b">Details</p>
-<div class="flex flex-col text-lg font-medium">
-  <p class="text-lg">Name</p>
-  <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={$us.exps[fc_].name} class:invalid={!$us.exps[fc_].name} />
-  <!-- FileSystemAccessAPI cannot give path upstream of what user chooses. -->
-  <p class="text-lg">Image Path</p>
-  <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={$us.exps[fc_].path} class:invalid={!$us.exps[fc_].path} />
+<div class="flex flex-col">
+  <div>
+    <ProgressAuto {fc_} />
+  </div>
+  <div>
+    <p class="pb-3 mt-8 text-2xl font-bold text-gray-800 border-b">Details</p>
+    <div class="flex flex-col text-lg font-medium">
+      <p class="text-lg">Name</p>
+      <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={$us.exps[fc_].name} class:invalid={!$us.exps[fc_].name} />
+      <!-- FileSystemAccessAPI cannot give path upstream of what user chooses. -->
+      <p class="text-lg">Image Path</p>
+      <input type="text" class="max-w-md mt-1 mb-4 pretty" bind:value={$us.exps[fc_].path} class:invalid={!$us.exps[fc_].path} />
+    </div>
+  </div>
 </div>
 
 <Reagents {fc_} />
