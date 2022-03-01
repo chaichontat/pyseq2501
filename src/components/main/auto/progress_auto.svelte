@@ -6,12 +6,13 @@
 
   let step: [number, number, number] = [0, 0, 0];
   let progress: Tweened<number>;
-  export let stats: { height: number; width: number; n_cols: number; n_bundles: number; n_z: number; time: number };
+  // export let stats: { height: number; width: number; n_cols: number; n_bundles: number; n_z: number; time: number };
+  export let fc_ = 0;
 
   $: {
     if ($cmdStore?.step) {
       step = $cmdStore.step;
-      progress.set((step[2] * (stats.n_z * stats.n_bundles) + step[1] * stats.n_bundles + step[0]) / (stats.n_bundles * stats.n_cols * stats.n_z));
+      // progress.set((step[2] * (stats.n_z * stats.n_bundles) + step[1] * stats.n_bundles + step[0]) / (stats.n_bundles * stats.n_cols * stats.n_z));
     }
   }
 
@@ -60,11 +61,10 @@
     <button
       type="button"
       class="text-lg text-white focus:ring-4 shadow-lg font-medium rounded-lg px-5 py-2.5 text-center mr-2 mb-2"
-      class:focus:ring-blue-300={captureState === "ok"}
+      class:focus:ring-indigo-300={captureState === "ok"}
       class:focus:ring-orange-300={captureState === "stop"}
       class:start={captureState === "ok"}
       class:stop={captureState === "stop"}
-      use:tooltip={"Take image and save."}
       on:click={handleCapture}
       disabled={captureState !== "ok"}
     >
@@ -80,7 +80,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          Capture
+          Start
         {/if}
       </div>
     </button>
@@ -88,7 +88,7 @@
     <button
       type="button"
       id="preview"
-      class="text-lg mt-2 text-white focus:ring-4 focus:ring-sky-300 font-medium rounded-lg shadow px-4 py-2.5 text-center inline-flex items-center mr-2"
+      class="text-lg mt-2 text-white focus:ring-4 focus:ring-violet-300 font-medium rounded-lg shadow px-4 py-2.5 text-center inline-flex items-center mr-2"
       disabled={Boolean($ss.block)}
       use:tooltip={"Take a 16-bundle image based on the current position without saving."}
       on:click={handlePreview}
@@ -102,7 +102,7 @@
             d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
           />
         </svg>
-        Preview
+        Validate
       </div>
     </button>
   </div>
@@ -114,10 +114,10 @@
         <span class="text-4xl font-bold">
           <span class="font-mono">{step[0]}</span>
           /
-          <span class="w-32 px-2 font-mono text-4xl font-bold ">{stats.n_bundles}</span>
+          <span class="w-32 px-2 font-mono text-4xl font-bold ">{1}</span>
         </span>
       </div>
-      Bundles taken
+      Steps
     </section>
 
     <section class="flex flex-col gap-y-1">
@@ -125,7 +125,7 @@
         <span class="text-4xl font-bold">
           <span class="font-mono">{step[1]}</span>
           /
-          <span class="w-32 px-2 font-mono text-4xl font-bold ">{stats.n_z}</span>
+          <span class="w-32 px-2 font-mono text-4xl font-bold ">{2}</span>
         </span>
       </div>
       Z-steps taken
@@ -136,7 +136,7 @@
         <span class="text-4xl font-bold">
           <span class="font-mono">{step[2]}</span>
           /
-          <span class="w-32 px-2 font-mono text-4xl font-bold ">{stats.n_cols}</span>
+          <span class="w-32 px-2 font-mono text-4xl font-bold ">{4}</span>
         </span>
       </div>
       Columns taken
@@ -144,14 +144,14 @@
 
     <section class="flex flex-col">
       <span class="text-lg font-medium">Elapsed time: {t} s</span>
-      <span class="text-lg font-medium">Total time: {(stats.n_bundles * stats.n_cols) / 10} s</span>
+      <span class="text-lg font-medium">Total time: {5 / 10} s</span>
     </section>
   </div>
 </Progress>
 
 <style lang="postcss">
   .start {
-    @apply transition-all bg-gradient-to-r from-blue-500 to-blue-700 shadow-blue-500/50 hover:from-blue-600 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 active:from-blue-700;
+    @apply transition-all bg-gradient-to-r from-indigo-500 to-indigo-700 shadow-indigo-500/50 hover:from-indigo-600 hover:to-indigo-800 focus:ring-4 focus:ring-indigo-300 active:from-indigo-700;
   }
 
   .stop {
@@ -159,6 +159,6 @@
   }
 
   #preview {
-    @apply transition-all bg-gradient-to-r from-sky-400 to-sky-600 shadow-sky-500/50 hover:from-sky-500 hover:to-sky-700 active:from-sky-600 disabled:text-gray-400 disabled:from-gray-50 disabled:via-gray-100 disabled:to-gray-200 disabled:shadow-gray-400/50;
+    @apply transition-all bg-gradient-to-r from-violet-400 to-violet-600 shadow-violet-500/50 hover:from-violet-500 hover:to-violet-700 active:from-violet-600 disabled:text-gray-400 disabled:from-gray-50 disabled:via-gray-100 disabled:to-gray-200 disabled:shadow-gray-400/50;
   }
 </style>

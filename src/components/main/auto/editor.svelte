@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { browser } from "$app/env";
+  import ProgressAuto from "./progress_auto.svelte";
   import Reagents from "$comps/main/auto/reagents/reagents.svelte";
   import Steps from "$comps/main/auto/steps/steps.svelte";
-  import Modal from "$src/components/modal.svelte";
   import { Experiment, genExperimentDefault, fromExperiment, NExperiment, toExperiment } from "$src/stores/experiment";
   import rawExperimentSchema from "$src/stores/experiment_schema.json";
   import { userStore as us, localStore as ls } from "$src/stores/store";
@@ -11,11 +10,9 @@
   import yaml from "js-yaml";
   import { cubicInOut } from "svelte/easing";
   import { fade } from "svelte/transition";
-  import ProgressManual from "../manual/progress_manual.svelte";
-  import Preview from "../preview.svelte";
 
   // let files: FileList;
-  export let fc_: 0 | 1;
+  export let fc_: 0 | 1 = 0;
 
   const ajv = new Ajv();
   const validate = ajv.compile(rawExperimentSchema);
@@ -138,13 +135,8 @@
   </div>
 </div>
 
-<!-- <ProgressManual bind:stats /> -->
-<!-- <ProgressAuto fc={fc} /> -->
+<ProgressAuto {fc_} />
 
-<!-- {#if $us.exps[fc]} -->
-
-<!-- Name, Image Path -->
-<!-- <ProgressManual /> -->
 <p class="pb-3 mt-8 text-2xl font-bold text-gray-800 border-b">Details</p>
 <div class="flex flex-col text-lg font-medium">
   <p class="text-lg">Name</p>
