@@ -14,13 +14,6 @@
   export let z_stack = false;
   export let fc_: 0 | 1 = 0;
 
-  let path: string = "";
-  if (browser) {
-    fetch(`http://${window.location.hostname}:8000/path`)
-      .then((res) => res.json())
-      .then((res) => (path = res.path));
-  }
-
   function blockControls(div: HTMLElement | null, changeTo: boolean): void {
     if (div) {
       div.querySelectorAll("input").forEach((el) => (el.disabled = changeTo));
