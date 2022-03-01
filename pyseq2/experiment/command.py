@@ -169,7 +169,7 @@ class TakeImage(BaseModel, AbstractCommand):
         x_step = 0.768 * (1 - self.overlap)
         x_start, x_end = min(xs), max(xs) + 0.768
         x_n = math.ceil((x_end - x_start) / x_step) if self.xy0[0] != self.xy1[0] else 1
-        
+
         # raw
         y_start = coords.mm_to_raw(i, y=max(ys))
         xs = [coords.mm_to_raw(i, x=x_start + n * x_step) for n in range(x_n)]
