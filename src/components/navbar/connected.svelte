@@ -3,14 +3,14 @@
 </script>
 
 {#if $localStore.connected}
-  <span class="text-sm font-semibold" style="color:rgb(26, 127, 55);">
+  <span class="flex items-center text-sm font-semibold" style="color:rgb(26, 127, 55);">
     Connected
     <svg aria-label="connected" role="img" height="16" viewBox="0 0 16 16" fill="rgb(26, 127, 55)" class="pl-1">
       <path fill-rule="evenodd" d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z" />
     </svg>
   </span>
 {:else}
-  <span class="mt-1 text-sm font-semibold animate-bounce" style="color:rgb(207, 34, 46);">
+  <span class="flex items-center mt-1 text-sm font-semibold translate-y-1 animate-bounce" style="color:rgb(207, 34, 46);">
     Not Connected
     <svg role="img" height="16" viewBox="0 0 16 16" version="1.1" fill="rgb(207, 34, 46)" class="pl-1">
       <path
