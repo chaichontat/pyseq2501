@@ -65,7 +65,7 @@
     </div>
 
     {#if !inAuto}
-      <p class="text-lg" use:tooltip={path}>Image Path</p>
+      <p class="text-lg">Image Path</p>
       <input type="text" class="max-w-md mb-4 pretty" bind:value={params.path} class:invalid={!params.path} />
     {/if}
   </section>
