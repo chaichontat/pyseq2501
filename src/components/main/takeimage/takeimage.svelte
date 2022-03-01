@@ -46,7 +46,7 @@
 
   $: stats.height = Math.max(params.xy1[1], params.xy0[1]) - Math.min(params.xy1[1], params.xy0[1]);
   $: stats.width = Math.max(params.xy1[0], params.xy0[0]) - Math.min(params.xy1[0], params.xy0[0]);
-  $: stats.n_cols = Math.ceil(stats.width / (0.768 * (1 - params.overlap)));
+  $: stats.n_cols = stats.width == 0 ? 1 : Math.ceil(stats.width / (0.768 * (1 - params.overlap)));
   $: stats.n_bundles = Math.ceil(stats.height / 0.048);
   $: stats.time = (stats.n_bundles * stats.n_cols) / 20;
   $: stats.n_z = Math.abs(params.z_to - params.z_from) + 1;
