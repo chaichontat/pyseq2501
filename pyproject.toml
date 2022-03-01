@@ -3,7 +3,7 @@ build-backend = 'setuptools.build_meta'
 requires = ["setuptools >= 43.0.0"]
 
 [tool.black]
-include = 'python'
+include = 'pyseq2server'
 line-length = 110
 target-version = ['py310']
 

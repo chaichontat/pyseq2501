@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from typing import Literal, NoReturn
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -15,45 +16,61 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 BlockState = Literal["", "moving", "capturing", "previewing"]
-q_status: asyncio.Queue[bool]
+fast_refresh: asyncio.Event
+
+
+class Message(BaseModel):
+    msg: str
+    t: float
 
 
 class FCState(BaseModel):
     running: bool
     step: int
-    msg: str
+    msg: Message
 
     @classmethod
     def default(cls) -> FCState:
-        return FCState(step=0, running=False, msg="")
+        return FCState(step=0, running=False, msg=Message(msg="", t=time.time()))
 
 
 class WebState(State):
     fcs: tuple[FCState, FCState]
     block: BlockState
-    msg: str
+    msg: Message
 
 
 message = "Idle"
-state = WebState(**State.default().dict(), fcs=(FCState.default(), FCState.default()), block="", msg=message)
+state = WebState(
+    **State.default().dict(),
+    fcs=(FCState.default(), FCState.default()),
+    block="",
+    msg=Message(msg=message, t=time.time()),
+)
 
 
 def update_block(b: BlockState):
     state.block = b
     try:
-        q_status.put_nowait(True)
+        if fast_refresh.is_set():
+            ...
+        else:
+            fast_refresh.set()
+            fast_refresh.clear()
     except AttributeError:
         ...
 
 
 async def poll_state(ws: WebSocket) -> NoReturn:
-    global q_status, state
+    global fast_refresh, state
     imager: Imager = ws.app.state.imager
-    q_status = ws.app.state.q_status
-    wait_time = 5
+    fast_refresh = ws.app.state.fast_refresh
     while True:
         try:
-            wait_time = 5 if await asyncio.wait_for(q_status.get(), wait_time) else 0.5
+            if fast_refresh.is_set():
+                await asyncio.sleep(0.5)
+            else:
+                await asyncio.wait_for(fast_refresh.wait(), 5)
         except asyncio.TimeoutError:
             ...
         finally:
@@ -63,8 +80,6 @@ async def poll_state(ws: WebSocket) -> NoReturn:
                 raise e
             except BaseException as e:
                 logger.error(f"Status error: {type(e).__name__}: {e}")
-                wait_time = 5
-                # state.msg = f"Status error: {type(e).__name__}: {e
         await ws.send_json(jsonable_encoder(state))
 
 
@@ -89,7 +104,7 @@ async def poll_msg(ws: WebSocket):
     try:
         while True:
             message = await q_log.get()
-            state.msg = message
+            state.msg = Message(msg=message, t=time.time())
             await ws.send_json(jsonable_encoder(state))
     except (WebSocketDisconnect, RuntimeError, ConnectionClosedOK):
         ...

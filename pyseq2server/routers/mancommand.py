@@ -15,7 +15,7 @@ from pyseq2 import FlowCells, Imager
 from pyseq2server.imaging import Img, update_img
 from pyseq2server.routers.status import update_block
 
-from ..api_types import CommandResponse, MoveManual, UserSettings
+from ..api_types import CommandResponse, MoveManual, NExperiment, UserSettings
 from ..utils.utils import q_listener
 
 router = APIRouter()
@@ -42,22 +42,27 @@ async def ret_cmd(ws: WebSocket) -> None:
             # ws.app.state.q_log.put_nowait(f"Error: {type(e).__name__}: {e}")
 
 
+class FCCmd(BaseModel):
+    fc: bool
+    cmd: Literal["start", "validate", "stop"]
+
+
 class CommandWeb(BaseModel):
     move: MoveManual | None = None
     cmd: Literal["preview", "capture"] | None = None
+    fccmd: FCCmd | None = None
 
 
 @contextmanager
-def cancel_wrapper(q_cmd: QCmd, q_log: asyncio.Queue[str], q_status: asyncio.Queue[bool]):
-    q_status.put_nowait(True)
+def cancel_wrapper(q_cmd: QCmd, q_log: asyncio.Queue[str], fast_refresh: asyncio.Event):
+    fast_refresh.set()
     try:
         yield
     except BaseException as e:
         logger.error(f"Error: {type(e).__name__}: {e}")
         raise e
     finally:
-        print("finally")
-        q_status.put_nowait(False)
+        fast_refresh.clear()
         update_block("")
 
 
@@ -70,11 +75,11 @@ async def cmd_endpoint(ws: WebSocket) -> None:
     await ws.accept()
     imager: Imager = ws.app.state.imager
     fcs: FlowCells = ws.app.state.fcs
-    q_status: asyncio.Queue[bool] = ws.app.state.q_status
+    fast_refresh: asyncio.Event = ws.app.state.fast_refresh
     q_log: asyncio.Queue[str] = ws.app.state.q_log
 
     async def cmd_image(cmd: CommandWeb):
-        with cancel_wrapper(q_cmd, q_log, q_status):
+        with cancel_wrapper(q_cmd, q_log, fast_refresh):
             us = UserSettings.parse_obj(ws.app.state.user_settings)
             c = cmd.cmd
             update_block("capturing" if c == "capture" else "previewing")
@@ -90,9 +95,14 @@ async def cmd_endpoint(ws: WebSocket) -> None:
             q_cmd.put_nowait(CommandResponse(msg="imgReady"))  # Doesn't seem to send with 1.
 
     async def cmd_move(m: MoveManual):
-        with cancel_wrapper(q_cmd, q_log, q_status):
+        with cancel_wrapper(q_cmd, q_log, fast_refresh):
             fc: bool = UserSettings.construct(**ws.app.state.user_settings).image_params["fc"]  # type: ignore
             await m.run(imager, fc)
+
+    async def cmd_validate(fc: bool):
+        with cancel_wrapper(q_cmd, q_log, fast_refresh):
+            logger.debug(NExperiment(**UserSettings.construct(**ws.app.state.user_settings).exps[fc]).to_experiment())  # type: ignore
+            q_log.put_nowait("Validation successful.")
 
     task: Task[None] = asyncio.create_task(meh())
 
@@ -104,18 +114,23 @@ async def cmd_endpoint(ws: WebSocket) -> None:
                 if cmd.cmd == "stop":
                     logger.warning("Received stop signal.")
                     task.cancel()
-                    q_status.put_nowait(False)
                     continue
 
                 if not task.done():
                     q_cmd.put_nowait(CommandResponse(error=f"Old command still running: {task}."))
                     continue
 
-                if cmd.cmd in ["capture", "preview"]:
-                    task = asyncio.create_task(cmd_image(cmd))
+                match cmd:
+                    case CommandWeb(cmd="capture") | CommandWeb(cmd="preview"):
+                        task = asyncio.create_task(cmd_image(cmd))
+                    case CommandWeb(fccmd=FCCmd(fc=fc, cmd="validate")):
+                        task = asyncio.create_task(cmd_validate(fc))
+                    case _:
+                        ...
 
                 if (m := cmd.move) is not None:
                     task = asyncio.create_task(cmd_move(m))
+                    continue
 
         except (WebSocketDisconnect, RuntimeError, ConnectionClosedOK):
             ...
