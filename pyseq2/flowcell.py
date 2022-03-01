@@ -54,9 +54,11 @@ class AFlowCell:
         self.v: Valves
         self.p: Pump
         self.arm9chem: ARM9Chem
+        self.lock = asyncio.Lock()
 
     async def initialize(self) -> None:
-        await asyncio.gather(self.v.initialize(), self.p.initialize())
+        async with self.lock:
+            await asyncio.gather(self.v.initialize(), self.p.initialize())
 
     async def flow(
         self,
@@ -71,7 +73,7 @@ class AFlowCell:
         if not (1 <= port <= 19) and port != 9:
             raise ValueError("Invalid port number.")
 
-        async with self.arm9chem.shutoff_valve(), self.v.move(port):
+        async with self.arm9chem.shutoff_valve(), self.v.move(port), self.lock:
             await self.p.pump(
                 vol=self.steps_from_vol(vol_barrel),
                 v_pull=self.sps_from_μLpermin(v_pull),
