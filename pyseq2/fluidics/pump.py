@@ -6,7 +6,7 @@ from typing import Annotated, Callable, ClassVar, Literal, TypeVar
 
 from pyseq2.base.instruments import UsesSerial
 from pyseq2.com.async_com import COM, CmdParse
-from pyseq2.utils.utils import ok_re
+from pyseq2.utils.utils import IS_FAKE, ok_re
 
 logger = logging.getLogger(__name__)
 
@@ -126,14 +126,18 @@ class Pump(UsesSerial):
                 await self.com.send(PumpCmd.PUSH(target, speed))
             case _:
                 raise ValueError("Invalid command.")
-        await asyncio.sleep(abs(target - pos) / speed + 0.5)
+        
+        if not IS_FAKE:
+            logger.debug("Waiting for pumping to finish.")
+            await asyncio.sleep(abs(target - pos) / speed + 0.5)
         await self.wait(retries=retries)
 
     async def pump(
         self, vol: Step, *, v_pull: Sps = 400, v_push: Sps = 6400, wait: Annotated[float, "s"] = 26
     ) -> None:
         if (pos := await self.pos) != 0:
-            logger.warning(f"Pump {self.name} did not start empty but at pos {pos}.")
+            logger.warning(f"Pump {self.name} was not fully pulled out but at pos {pos}.")
         await self._pushpull("pull", vol, speed=v_pull)
+        logger.info("Waiting for {wait}s.")
         await asyncio.sleep(wait)  # From HiSeq log. Wait for pressure to equalize.
         await self._pushpull("push", 0, speed=v_push)

@@ -125,7 +125,7 @@ def fake_fpga(s: str) -> str:
 
 def fake_pump(s: str) -> str:
     if s == "/1?":
-        return "/0`1"
+        return "/0`1"  # Position
     return "/0`"
 
 

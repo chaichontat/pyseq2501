@@ -73,7 +73,7 @@ class AFlowCell:
         if not (1 <= port <= 19) and port != 9:
             raise ValueError("Invalid port number.")
 
-        async with self.arm9chem.shutoff_valve(), self.v.move(port), self.lock:
+        async with self.arm9chem.shutoff_valve(), self.v.move_port(port), self.lock:
             await self.p.pump(
                 vol=self.steps_from_vol(vol_barrel),
                 v_pull=self.sps_from_μLpermin(v_pull),

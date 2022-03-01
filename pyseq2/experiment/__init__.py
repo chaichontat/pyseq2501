@@ -165,7 +165,6 @@ class Experiment(BaseModel):
                 await c.run(fcs, i, imager)
                 logger.info(g(step, f"{c.op.capitalize()} finished."))
             except BaseException as e:
-                logger.error(g(step, f"{c.op.capitalize()} {type(e).__name__}: {e}."))
+                logger.critical(g(step, f"{c.op.capitalize()} {type(e).__name__}: {e}."))
                 if stop_on_exception:
-                    logger.critical("Stopping.")
-                    break
+                    raise e

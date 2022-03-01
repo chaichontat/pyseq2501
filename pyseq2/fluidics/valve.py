@@ -4,12 +4,12 @@ import asyncio
 import logging
 import time
 from contextlib import asynccontextmanager
-from typing import Literal, cast, get_args
+from typing import AsyncGenerator, Literal, cast, get_args
 
 from pyseq2.base.instruments import Movable, UsesSerial
 from pyseq2.base.instruments_types import ValveName
 from pyseq2.com.async_com import COM, CmdParse
-from pyseq2.utils.utils import ok_re, λ_int
+from pyseq2.utils.utils import IS_FAKE, ok_re, λ_int
 
 logger = logging.getLogger(__name__)
 ValvePorts = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -51,19 +51,19 @@ class _Valve(Movable, UsesSerial):
         assert p in get_args(ValvePorts)
         return cast(ValvePorts, p)
 
-    async def move(self, p: ValvePorts) -> None:
+    async def move(self, pos: int) -> None:
         # If pos is the same as current position, will get `GO${p} = Bad command` as return.
         async with self.com.big_lock:  # Possible for valve to change after awaiting self.pos.
             if time.time() - self.t_lastcmd < 10.0:
                 logger.warning(
                     "Time between valve moves is less than 10 seconds. Illumina does not like this."
                 )
-            if await self.pos == p:
+            if await self.pos == pos:
                 return
-            await self.com.send(ValveCmd.SET_POS(p))
+            await self.com.send(ValveCmd.SET_POS(pos))
             self.t_lastcmd = time.time()
-            if await self.pos != p:
-                raise Exception(f"Port {self.name} did not move to {p}.")
+            if not IS_FAKE and await self.pos != pos:
+                raise Exception(f"Port {self.name} did not move to {pos}.")
 
 
 class Valves(Movable):
@@ -107,10 +107,14 @@ class Valves(Movable):
                 await asyncio.gather(self[0].move(10), self[1].move(cast(ValvePorts, p - 9)))
             else:
                 await self[0].move(cast(ValvePorts, p))
-            assert await self.pos == p
+            if not IS_FAKE:
+                assert await self.pos == p
+
+    async def move(self, pos: int) -> None:
+        raise NotImplementedError("Use the async context manager move_port instead.")
 
     @asynccontextmanager
-    async def move(self, pos: int):
+    async def move_port(self, pos: int) -> AsyncGenerator[None, None]:
         try:
             await self._move(pos)
             yield

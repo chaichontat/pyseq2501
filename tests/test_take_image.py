@@ -1,15 +1,17 @@
 # Run this in Jupyter or Shift+Enter in VSCode.
 # https://ipython.readthedocs.io/en/stable/interactive/autoawait.html
 
+from pyseq2.flowcell import FlowCells
 from pyseq2.imager import Imager
-from pyseq2.utils.log import setup_logger
 from pyseq2.utils.ports import get_ports
+from pyseq2.utils.utils import Singleton
 
 
+# init: tuple[Imager, FlowCells]
 async def test_take():
-    setup_logger()
     ports = await get_ports()
     imager = await Imager.ainit(ports)
+    fcs = await FlowCells.ainit(ports)
     # await imager.initialize()  # If not initialized in this session (defined by HiSeq power cycle).
 
     # target, focus_plot = await imager.autofocus(channel=0)
