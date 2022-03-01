@@ -1,10 +1,10 @@
 import asyncio
 from contextlib import asynccontextmanager
 from logging import getLogger
-from typing import Any, AsyncGenerator, Awaitable, Coroutine
+from typing import AsyncGenerator, Awaitable
 
 from pyseq2.base.instruments import FPGAControlled, Movable
-from pyseq2.com.async_com import CmdParse
+from pyseq2.com.async_com import COM, CmdParse
 from pyseq2.utils.utils import chkrng, ok_if_match, ok_re, λ_float, λ_int
 
 logger = getLogger(__name__)
@@ -56,33 +56,43 @@ class ZObj(FPGAControlled, Movable):
 
     cmd = ObjCmd
 
+    def __init__(self, fpga_com: COM) -> None:
+        super().__init__(fpga_com)
+        self.lock = asyncio.Lock()
+
     async def initialize(self) -> bool | None:
         return await self.com.send(ObjCmd.SET_VELO(5))
 
     @property
     async def pos(self) -> int:
-        return await self.com.send(ObjCmd.GET_POS)
+        async with self.lock:
+            return await self.com.send(ObjCmd.GET_POS)
+
+    async def _move(self, pos: int) -> None:
+        await self.com.send(ObjCmd.SET_POS(int(pos)))
 
     async def move(self, pos: int) -> None:
-        await self.com.send(ObjCmd.SET_POS(int(pos)))
+        async with self.lock:
+            await self._move(pos)
 
     @asynccontextmanager
     async def af_arm(
-        self, z_min: int = 2621, z_max: int = 60292
+        self, z_min: int = 2621, z_max: int = 60292, speed: float = 0.42
     ) -> AsyncGenerator[Awaitable[None | bool], None]:
-        try:
-            await self.com.send(ObjCmd.SET_POS(z_max))  # Returns when done.
-            await asyncio.gather(
-                *[
-                    self.com.send(x)
-                    for x in (
-                        ObjCmd.SWYZ,
-                        ObjCmd.SET_VELO(0.42),
-                        ObjCmd.SET_TRIGGER(z_max),
-                        ObjCmd.ARM_TRIGGER,
-                    )
-                ]
-            )
-            yield self.com.send(ObjCmd.Z_MOVE(z_min))
-        finally:
-            await self.com.send(ObjCmd.SET_VELO(5))
+        async with self.lock:
+            try:
+                await self._move(z_max)  # Returns when done.
+                await asyncio.gather(
+                    *[
+                        self.com.send(x)
+                        for x in (
+                            ObjCmd.SWYZ,
+                            ObjCmd.SET_VELO(speed),
+                            ObjCmd.SET_TRIGGER(z_max),
+                            ObjCmd.ARM_TRIGGER,
+                        )
+                    ]
+                )
+                yield self.com.send(ObjCmd.Z_MOVE(z_min))
+            finally:
+                await self.com.send(ObjCmd.SET_VELO(5))
