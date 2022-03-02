@@ -6,16 +6,15 @@ const mode = process.env.NODE_ENV
 const dev = mode === "development"
 
 const config = {
-  plugins: [
+  plugins: {
     //Some plugins, like tailwindcss/nesting, need to run before Tailwind,
-    tailwindcss(),
+    'postcss-import': {},
+    'tailwindcss/nesting': {},
+    tailwindcss: {},
     //But others, like autoprefixer, need to run after,
-    autoprefixer(),
-    !dev &&
-    cssnano({
-      preset: "default",
-    }),
-  ],
+    autoprefixer: {},
+    cssnano: { preset: "default" },
+  },
 }
 
 module.exports = config
