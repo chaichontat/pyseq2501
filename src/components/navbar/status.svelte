@@ -1,10 +1,12 @@
 <script lang="ts">
+  import { browser } from "$app/env";
+  import Spinning from "$comps/spinning.svelte";
+  import tooltip from "$src/tooltip";
+  import Prism from "prismjs";
   import { statusStore } from "../../stores/store";
   import { flash } from "../../utils";
-  import Spinning from "$comps/spinning.svelte";
-  import { browser } from "$app/env";
+  import "./prism.css";
   let message = "Idle";
-  import tooltip from "$src/tooltip";
   const re = /(ing)/;
 
   let div: HTMLElement;
@@ -37,5 +39,7 @@
     {/if}
   </div>
   <!-- Text -->
-  <span class="mx-1 px-2 py-2 rounded-lg max-w-[80vh] overflow-ellipsis overflow-hidden whitespace-nowrap" bind:this={div}>{message}</span>
+  <code class="max-w-full px-2 py-2 mx-1 overflow-hidden rounded-lg overflow-ellipsis whitespace-nowrap" bind:this={div}>
+    {@html Prism.highlight(message, Prism.languages.javascript, "javascript")}
+  </code>
 </div>

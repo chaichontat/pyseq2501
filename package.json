@@ -13,6 +13,7 @@
     "@sveltejs/adapter-static": "^1.0.0-next.21",
     "@sveltejs/kit": "next",
     "@types/js-yaml": "^4.0.5",
+    "@types/prismjs": "^1.26.0",
     "@types/ws": "^8.2.0",
     "autoprefixer": "^10.4.0",
     "clone": "^2.1.2",
@@ -39,6 +40,7 @@
     "@tailwindcss/forms": "^0.4.0",
     "ajv": "^8.10.0",
     "js-yaml": "^4.1.0",
+    "prismjs": "^1.27.0",
     "svelte-canvas": "^0.7.1",
     "svelte-dnd-action": "^0.9.14",
     "tippy.js": "^6.3.7"

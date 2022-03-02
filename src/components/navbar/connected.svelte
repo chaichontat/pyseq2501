@@ -1,5 +1,9 @@
 <script lang="ts">
-  import { localStore } from "$src/stores/store";
+  import { localStore, statusStore } from "$src/stores/store";
+
+  $: if (!$localStore.connected) {
+    $statusStore.msg = { msg: "Error: Not connected.", t: Date.now() / 1000 };
+  }
 </script>
 
 {#if $localStore.connected}
