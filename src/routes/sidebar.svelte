@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { statusStore as ss } from "$src/stores/store";
+  import { localStore, statusStore as ss } from "$src/stores/store";
   import Logo from "$comps/logo.svelte";
   import Division from "$src/components/sidebar/division.svelte";
   import Lasers from "$comps/sidebar/lasers.svelte";
   import Map from "$src/components/sidebar/map.svelte";
   import Modal from "$src/components/modal.svelte";
   import Preview from "$src/components/main/preview.svelte";
+  import Fluidics from "$src/components/sidebar/fluidics.svelte";
 
   // onMount(() => {
   //   const sse = new EventSource("http://localhost:8000/status");
@@ -63,8 +64,20 @@
     </section>
 
     <section class:hidden={tab !== "fluidics"} class="relative">
+      <ol class="p-2 overflow-auto menu">
+        <Division name="Pump">
+          <Fluidics />
+        </Division>
+      </ol>
+    </section>
+
+    <section class:hidden={tab !== "misc"} class="relative">
       <ol class="p-2 menu ">
-        <Division name="Prime">Drop selection port volume speed up down</Division>
+        <Division name="Miscellaneous">
+          <div class="flex flex-col items-center gap-4 p-2">
+            <button type="button" class="justify-center w-[80%] py-2 font-medium text-center text-gray-900 rounded-lg white-button" disabled={!$localStore.connected}>Reinitialize</button>
+          </div>
+        </Division>
       </ol>
     </section>
   </aside>

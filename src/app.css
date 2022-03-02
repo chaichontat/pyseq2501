@@ -13,7 +13,7 @@
   }
 
   .white-clickable {
-    @apply transition-all duration-100 border-gray-300 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 disabled:text-gray-500 disabled:border-gray-200 disabled:hover:bg-gray-50 disabled:active:bg-gray-50;
+    @apply transition-all duration-100 border-gray-300 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 disabled:text-gray-500 disabled:border-gray-200 disabled:hover:bg-gray-50 disabled:active:bg-gray-50 focus:ring focus:ring-gray-200 focus:ring-opacity-50;
     /* dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 */
   }
 
@@ -22,7 +22,7 @@
   }
 
   .white-button {
-    @apply flex items-center border white-clickable;
+    @apply flex items-center border border-gray-300 shadow-sm white-clickable;
   }
 
   .title {
