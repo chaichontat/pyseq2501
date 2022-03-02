@@ -69,6 +69,7 @@ async def poll_state(ws: WebSocket) -> NoReturn:
     global fast_refresh, state
     imager: Imager = ws.app.state.imager
     fast_refresh = ws.app.state.fast_refresh
+
     while True:
         try:
             if fast_refresh.is_set():
@@ -79,7 +80,10 @@ async def poll_state(ws: WebSocket) -> NoReturn:
             ...
         finally:
             try:
-                state = WebState.parse_obj(state.dict() | (await imager.state).dict())
+                # Do not put this in the argument for the copy line.
+                # Otherwise the old state would be stored while awaiting the new state, resulting in old data overwriting the new.
+                new_state = await imager.state
+                state = state.copy(update=new_state.dict())
             except asyncio.CancelledError as e:
                 raise e
             except BaseException as e:
@@ -98,7 +102,7 @@ async def poll_msg(ws: WebSocket):
       imager (Imager): Imager
       q_log (asyncio.Queue[str]): asyncio.Queue[str]
     """
-    global message
+    global message, state
     q_log: asyncio.Queue[str] = ws.app.state.q_log
 
     task = asyncio.create_task(poll_state(ws))
@@ -108,7 +112,8 @@ async def poll_msg(ws: WebSocket):
     try:
         while True:
             message = await q_log.get()
-            state.msg = Message(msg=message, t=time.time())
+            state = state.copy(update={"msg": Message(msg=message, t=time.time())})
+            # await asyncio.sleep(0.05)
             await ws.send_json(jsonable_encoder(state))
     except (WebSocketDisconnect, RuntimeError, ConnectionClosedOK):
         ...
