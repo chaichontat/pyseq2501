@@ -32,10 +32,10 @@
 {:else}
   <!-- Reagent proper -->
   <td class="px-6 py-2 text-gray-900 whitespace-nowrap ">
-    <input bind:value={reagent.port} type="number" class:invalid={portInvalid(reagent.port)} class="w-16 pretty font-semibold" min="1" max="19" required />
+    <input bind:value={reagent.port} type="number" class:invalid={portInvalid(reagent.port)} class="w-16 font-semibold pretty" min="1" max="19" required />
   </td>
   <td class="px-4 text-gray-900 whitespace-nowrap">
-    <input bind:value={reagent.name} class:invalid={nameInvalid(reagent.name)} type="text" class="w-full pretty font-medium" required />
+    <input bind:value={reagent.name} class:invalid={nameInvalid(reagent.name)} type="text" class="w-full font-medium pretty" required />
   </td>
   <td class="px-4 text-gray-900 whitespace-nowrap">
     <input bind:value={reagent.v_prime} type="number" class="w-full pretty" use:checkRange={[1, 2500]} min="1" max="2500" required />
@@ -53,7 +53,8 @@
     <button
       type="button"
       class="transition-colors shadow focus:ring-4 font-semibold rounded-lg px-4 py-2.5 text-center inline-flex items-center mr-2 text-sm"
-      class:blue={!primed}
+      class:indigo={!primed && fc_ == 0}
+      class:purple={!primed && fc_ == 1}
       class:green={primed}
     >
       <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -76,11 +77,15 @@
 </td>
 
 <style lang="postcss">
-  .blue {
-    @apply shadow-blue-500/50 text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800;
+  .indigo {
+    @apply shadow-indigo-500/50 text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-300 active:bg-indigo-800;
+  }
+
+  .purple {
+    @apply shadow-purple-500/50 text-white bg-purple-600 hover:bg-purple-700 focus:ring-purple-300 active:bg-purple-800;
   }
 
   .green {
-    @apply shadow-green-500/50 text-white bg-green-600 hover:bg-green-700 focus:ring-green-300 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800;
+    @apply shadow-green-500/50 text-white bg-green-600 hover:bg-green-700 focus:ring-green-300 active:bg-green-800;
   }
 </style>

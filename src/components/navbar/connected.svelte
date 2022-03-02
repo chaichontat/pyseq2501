@@ -3,6 +3,7 @@
 
   $: if (!$localStore.connected) {
     $statusStore.msg = { msg: "Error: Not connected.", t: Date.now() / 1000 };
+    $statusStore.block = "capturing";
   }
 </script>
 

@@ -27,14 +27,14 @@
 
     <div id="mode-selector" class="flex h-full gap-x-2">
       <button
-        class="relative inline-flex flex-wrap items-center justify-center h-full px-2 text-lg font-medium text-center text-gray-500 transition-colors translate-y-0.5 border-b-2 cursor-pointer hover:text-gray-800 hover:border-b-gray-600"
+        class="relative inline-flex flex-wrap items-center justify-center h-full px-4 text-lg font-medium text-center text-gray-500 transition-colors translate-y-0.5 border-b-2 cursor-pointer hover:text-gray-800 hover:border-b-gray-600"
         on:click={() => ($ls.mode = "manual")}
         class:active={$ls.mode === "manual"}
       >
         Manual
       </button>
       <button
-        class="relative inline-flex flex-wrap items-center justify-center h-full px-2 text-lg font-medium text-center text-gray-500 transition-colors translate-y-0.5 border-b-2 cursor-pointer hover:text-gray-800 hover:border-b-gray-600"
+        class="relative inline-flex flex-wrap items-center justify-center h-full px-4 text-lg font-medium text-center text-gray-500 transition-colors translate-y-0.5 border-b-2 cursor-pointer hover:text-gray-800 hover:border-b-gray-600"
         on:click={() => ($ls.mode = "automatic")}
         class:active={$ls.mode !== "manual"}
       >
