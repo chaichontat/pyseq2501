@@ -1,71 +1,40 @@
 <script lang="ts">
   import { statusStore as ss } from "$src/stores/store";
-
-  let editing = [false, false, false];
-
-  import Pencil from "../../svgs/pencil.svelte";
-  import Editable from "./editable.svelte";
 </script>
 
-<div class="dot left top-8">
-  <div>
-    Tilt 3<Editable
-      bind:editing={editing[2]}
-      value={$ss.z_tilt[2]}
-      clDisp="absolute right-8 leading-6 font-mono font-medium"
-      clInp="absolute text-base top-5 right-6 input input-smaller w-16 text-right"
-    />
-  </div>
-  <Pencil class="ml-2" on:click={() => (editing[2] = true)} />
+<div class="dot left top-10">
+  <div>Tilt 3</div>
+  <p>{$ss.z_tilt[2]}</p>
 </div>
 
-<span class="dot left" style="top: 19rem;">
-  <div>
-    Tilt 2<Editable
-      bind:editing={editing[1]}
-      value={$ss.z_tilt[1]}
-      clDisp="absolute right-8 leading-6 font-mono font-medium"
-      clInp="absolute text-base top-5 right-6 input input-smaller w-16 text-right"
-    />
-  </div>
-  <Pencil class="ml-2" on:click={() => (editing[1] = true)} />
+<span class="dot left top-[18rem]">
+  Tilt 2
+  <p>{$ss.z_tilt[1]}</p>
 </span>
 
 <span class="dot right">
-  <Pencil class="mr-2" on:click={() => (editing[0] = true)} />
-  <div>
-    Tilt 1
-    <Editable bind:editing={editing[0]} value={$ss.z_tilt[0]} clDisp="absolute left-6 leading-6 font-mono font-medium" clInp="absolute top-5 left-4 text-base input input-smaller w-16" />
-  </div>
+  Tilt 1
+  <p class="translate-x-[1px]">{$ss.z_tilt[0]}</p>
 </span>
 
 <style lang="postcss">
   .dot {
-    @apply absolute flex text-sm w-16;
+    @apply absolute text-sm w-16 leading-4;
   }
 
   .dot span {
     @apply font-mono;
   }
 
-  /* .left::after,
-  .right::before {
-    position: absolute;
-    content: "";
-    clip-path: circle();
-     transform: translateX(-1.2em) translateY(0.4em);
-    width: 1rem;
-    height: 1rem;
-    background: black;
-    opacity: 0.5;
-  */
+  p {
+    @apply font-mono text-base text-gray-700;
+  }
 
   .right {
-    top: 19rem;
-    left: 9.5rem;
+    @apply top-[18rem] left-36;
   }
 
   .left {
-    @apply text-right float-right right-32;
+    @apply text-right float-right right-40;
   }
 </style>

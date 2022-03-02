@@ -35,30 +35,23 @@
 <li>
   <!-- Toggle -->
   <span class="flex items-center justify-center mb-4 space-x-2 text-lg -translate-y-6 monomedium">
-    <div>A</div>
+    <div class="transition-all" class:font-semibold={!$us.image_params.fc}>A</div>
     <Toggle bind:checked={$us.image_params.fc} />
-    <!-- <input
-      type="checkbox"
-      bind:checked={$us.flowcell}
-      class="self-center mx-1 toggle toggle-md toggl-dark"
-      class:opacity-40={$ls.mode.startsWith("editing")}
-      disabled={$ls.mode.startsWith("editing")}
-    /> -->
-    <div>B</div>
+    <div class="transition-all" class:font-semibold={$us.image_params.fc}>B</div>
   </span>
   <div class="-mt-4" />
-  <Slide name={$us.image_params.fc ? "B" : "A"} x={xy.x} y={xy.y} z_tilt={$ss.z_tilt} />
+  <Slide name={$us.image_params.fc ? "B" : "A"} x={xy.x} y={xy.y} />
 
   <!-- Z Objective -->
   <section class="flex self-center flex-grow mt-4 space-x-8">
     <BigZ name="All Tilt" value={`${($ss.z_tilt.reduce((a, b) => a + b) / $ss.z_tilt.length).toFixed(0)} ± ${(Math.max(...$ss.z_tilt) - Math.min(...$ss.z_tilt)) / 2}`} />
-    <BigZ name="Objective Z" value={$ss.z_obj} bind:userValue={$us.image_params.z_obj} />
+    <BigZ name="Objective Z" value={$ss.z_obj} />
   </section>
 
   <!-- Eject button -->
   <button
-    class="self-center w-16 h-8 mt-2 text-white transition-colors bg-indigo-500 border shadow-md shadow-indigo-300 pretty hover:bg-indigo-600 active:bg-indigo-700 disabled:bg-gray-200 disabled:shadow-gray-200"
-    disabled={$ss.block}
+    class="self-center w-16 h-8 mt-2 text-white transition-colors bg-gray-500 border rounded-lg shadow-md shadow-gray-300 pretty hover:bg-gray-600 active:bg-gray-700 disabled:bg-gray-200 disabled:shadow-gray-200 focus:ring-gray-400"
+    disabled={Boolean($ss.block)}
     on:click={() => {
       $ss.block = "moving";
       $cmdStore = { move: { xy0: [0, -7.5] } };
