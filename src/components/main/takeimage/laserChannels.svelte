@@ -35,7 +35,7 @@
 
     <input
       type="number"
-      class="w-20 h-8 pretty"
+      class="w-[4.5rem] h-8 pr-2 pretty"
       class:pretty-disabled={!params.laser_onoff[0]}
       bind:value={params.lasers[i]}
       min="0"
@@ -70,7 +70,7 @@
 
   <span class="ml-8 font-normal opacity-85">
     Filter OD
-    <select class="py-1 text-sm border-gray-400 rounded-lg disabled:border-gray-300" on:change={transformOD}>
+    <select class="py-1 text-sm border-gray-400 rounded-lg disabled:border-gray-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" on:change={transformOD}>
       {#if i == 0}
         <option>Open</option>
         <option>1.0</option>

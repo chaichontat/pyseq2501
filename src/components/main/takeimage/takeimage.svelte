@@ -54,11 +54,11 @@
 
 <!-- <div class:hidden={$ss.block} class="absolute z-50  -mx-10 w-full h-96 bg-black/[0.1]" /> -->
 <!-- Capture params. -->
-<div id="control" class="grid grid-cols-2 gap-y-6 gap-x-4">
+<div id="control" class="grid gap-y-6" style="grid-template-columns: minmax(500px, 1fr) 1fr;">
   <section class="flex flex-col text-lg font-medium">
     <p class="mt-1 text-lg">Name</p>
-    <div class="flex w-full max-w-md gap-x-2">
-      <input type="text" class="flex-grow mb-4 pretty text-lg h-12" bind:value={params.name} class:invalid={isInvalid(params.name)} />
+    <div class="flex gap-x-2">
+      <input type="text" class="flex-grow h-12 max-w-md mb-4 text-lg pretty" bind:value={params.name} class:invalid={isInvalid(params.name)} />
       {#if inAuto}
         <Go color="sky" cl="text-lg font-semibold shadow-md shadow-sky-700/10 h-12">Preview</Go>
       {/if}
@@ -73,7 +73,7 @@
   <!-- Optics -->
   <section class="font-medium leading-10 ">
     <h2>Laser and Channels</h2>
-    <div class="grid grid-cols-2" class:opacity-70={$ss.block}>
+    <div class="grid grid-cols-2 min-w-[600px]" class:opacity-70={$ss.block}>
       <LaserChannels bind:params i={0} />
       <LaserChannels bind:params i={1} />
     </div>
@@ -141,9 +141,9 @@
 
       <div class="space-y-2">
         <label class="flex items-center gap-x-1">
-          <input type="checkbox" class="mr-1 rounded" bind:checked={z_stack} />
+          <input type="checkbox" class="mr-1 rounded focus:ring-blue-600" bind:checked={z_stack} />
           <div class="flex divide-x-2">
-            <div class="pr-2">Z-Stack</div>
+            <div class="pr-2" class:font-medium={z_stack}>Z-Stack</div>
             {#if z_stack}
               <div class="px-2 font-base">
                 {stats.n_z} Z step{#if stats.n_z > 1}s{/if} from {params.z_obj + params.z_from * params.z_spacing} to {params.z_obj + params.z_to * params.z_spacing}
