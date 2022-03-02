@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { cmdStore, statusStore as ss, userStore as us } from "$src/stores/store";
+  import { cmdStore, localStore, statusStore as ss, userStore as us } from "$src/stores/store";
   import tooltip from "$src/tooltip";
   import type { Tweened } from "svelte/motion";
   import Progress from "../progress.svelte";
@@ -57,7 +57,7 @@
       class:start={startState === "ok"}
       class:stop={startState === "stop"}
       on:click={handleCapture}
-      disabled={startState !== "ok"}
+      disabled={startState !== "ok" || !$localStore.connected}
     >
       <div class="flex items-center h-12 text-lg cursor-pointer">
         {#if running}
@@ -82,7 +82,7 @@
       class="text-lg mt-2 text-white focus:ring-4 focus:ring-violet-300 font-medium rounded-lg shadow px-4 py-2.5 text-center inline-flex items-center mr-2"
       use:tooltip={"Validate your experiment."}
       on:click={handleValidate}
-      disabled={running}
+      disabled={running || !$localStore.connected}
     >
       <div class="flex items-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -124,11 +124,11 @@
 
 <style lang="postcss">
   .start {
-    @apply transition-all bg-gradient-to-r from-indigo-500 to-indigo-700 shadow-indigo-500/50 hover:from-indigo-600 hover:to-indigo-800 focus:ring-4 focus:ring-indigo-300 active:from-indigo-700;
+    @apply transition-all bg-gradient-to-r from-indigo-500 to-indigo-700 shadow-indigo-500/50 hover:from-indigo-600 hover:to-indigo-800 focus:ring-4 focus:ring-indigo-300 active:from-indigo-700 disabled:text-gray-400 disabled:from-gray-50 disabled:via-gray-100 disabled:to-gray-200 disabled:shadow-gray-400/50 disabled:shadow-sm;
   }
 
   .stop {
-    @apply transition-all bg-gradient-to-r from-orange-500 to-orange-700 shadow-orange-500/50 hover:from-orange-600 hover:to-orange-800 active:from-orange-700 focus:ring-orange-300;
+    @apply transition-all bg-gradient-to-r from-orange-500 to-orange-700 shadow-orange-500/50 hover:from-orange-600 hover:to-orange-800 active:from-orange-700 focus:ring-orange-300 disabled:text-gray-400 disabled:from-gray-50 disabled:via-gray-100 disabled:to-gray-200 disabled:shadow-gray-400/50 disabled:shadow-sm;
   }
 
   #preview {

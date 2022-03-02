@@ -60,7 +60,7 @@
 </script>
 
 <div class="relative flex items-center">
-  <div class="absolute text-[500px] right-60 -top-20 font-semibold text-indigo-700 opacity-10 -z-10" class:text-purple-700={fc_}>
+  <div class="absolute text-[500px] right-60 -top-20 font-semibold text-indigo-700 opacity-10 -z-10" class:text-fuchsia-700={fc_}>
     {{ 0: "A", 1: "B" }[fc_]}
   </div>
   <span>

@@ -1,6 +1,5 @@
 <script lang="ts">
-  import type { Status } from "$src/stores/status";
-  import { statusStore } from "$src/stores/store";
+  import { statusStore as ss } from "$src/stores/store";
   import Logo from "$comps/logo.svelte";
   import Division from "$src/components/sidebar/division.svelte";
   import Lasers from "$comps/sidebar/lasers.svelte";
@@ -8,7 +7,6 @@
   import Modal from "$src/components/modal.svelte";
   import Preview from "$src/components/main/preview.svelte";
 
-  let connected: boolean = false;
   // onMount(() => {
   //   const sse = new EventSource("http://localhost:8000/status");
   //   sse.onmessage = (event: MessageEvent<string>) => (status = JSON.parse(event.data));
@@ -16,35 +14,25 @@
   //     if (sse.readyState === 1) sse.close();
   //   };
   // });
-  let status: Status = $statusStore;
-  let curr: "imaging" | "fluidics" | "misc" = "imaging";
 
-  $: {
-    status = $statusStore;
-    connected = $statusStore != undefined ? true : false;
-  }
-  $: console.log(curr);
+  let tab: "imaging" | "fluidics" | "misc" = "imaging";
 </script>
 
 <div class="drawer drawer-side">
   <label for="main-menu" class="drawer-overlay" />
-  <aside class="flex flex-col overflow-y-auto sidebar bg-base-100">
-    <div class="sticky inset-x-0 top-0 z-40 hidden w-full h-16 bg-white transition duration-200 ease-in-out shadow-sm lg:block ring-1 ring-gray-900 ring-opacity-5">
+  <aside class="flex flex-col overflow-y-auto border-r border-gray-300 w-[26rem] bg-base-100">
+    <div class="sticky inset-x-0 top-0 z-40 hidden w-full h-16 transition duration-200 ease-in-out bg-white shadow-sm lg:block ring-1 ring-gray-900 ring-opacity-5">
       <Logo />
     </div>
 
     <div class="w-full mt-2 tabs">
-      <button class="font-medium tab tab-lg tab-lifted" on:click={() => (curr = "imaging")} class:tab-active={curr === "imaging"} class:text-gray-800={curr === "imaging"}>Imaging</button>
-      <button class="font-medium tab tab-lg tab-lifted" on:click={() => (curr = "fluidics")} class:tab-active={curr === "fluidics"} class:text-gray-800={curr === "fluidics"}>Fluidics</button>
-      <button class="font-medium tab tab-lg tab-lifted" on:click={() => (curr = "misc")} class:tab-active={curr === "misc"} class:text-gray-800={curr === "misc"}>Misc.</button>
+      <button class="font-medium tab tab-lg tab-lifted" on:click={() => (tab = "imaging")} class:tab-active={tab === "imaging"} class:text-gray-800={tab === "imaging"}>Imaging</button>
+      <button class="font-medium tab tab-lg tab-lifted" on:click={() => (tab = "fluidics")} class:tab-active={tab === "fluidics"} class:text-gray-800={tab === "fluidics"}>Fluidics</button>
+      <button class="font-medium tab tab-lg tab-lifted" on:click={() => (tab = "misc")} class:tab-active={tab === "misc"} class:text-gray-800={tab === "misc"}>Misc.</button>
       <div class="flex-1 cursor-default tab tab-lifted" />
     </div>
 
-    <section class:hidden={curr !== "imaging"} class="relative">
-      <!-- <div
-        class:translucent={!connected}
-        class="absolute hidden w-full h-full transition-all"
-      /> -->
+    <section class:hidden={tab !== "imaging"} class="relative">
       <ol class="p-2 menu ">
         <Division name="Map">
           <Map />
@@ -55,14 +43,14 @@
           <li>
             <span class="self-center mt-2 text-lg">
               Shutter:&nbsp; <p class="font-mono font-bold">
-                {status.shutter ? "OPENED" : "CLOSED"}
+                {$ss.shutter ? "OPENED" : "CLOSED"}
               </p>
             </span>
           </li>
 
           <Modal>
-            <button slot="button" type="button" class="mt-2 h-10 px-4 py-2 font-medium text-gray-800 rounded-lg  white-button">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <button slot="button" type="button" class="h-10 px-4 py-2 mt-2 font-medium text-gray-800 rounded-lg white-button">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
 
@@ -74,30 +62,10 @@
       </ol>
     </section>
 
-    <section class:hidden={curr !== "fluidics"} class="relative">
+    <section class:hidden={tab !== "fluidics"} class="relative">
       <ol class="p-2 menu ">
         <Division name="Prime">Drop selection port volume speed up down</Division>
       </ol>
     </section>
   </aside>
 </div>
-
-<style lang="postcss">
-  .sidebar {
-    @apply border-r border-gray-300;
-    width: 26rem;
-  }
-
-  .translucent {
-    @apply bg-white opacity-40 z-50 block;
-  }
-
-  .circle {
-    background: #456bd9;
-    border: 0.1875em solid #0f1c3f;
-    border-radius: 50%;
-    box-shadow: 0.375em 0.375em 0 0 rgba(15, 28, 63, 0.125);
-    height: 5em;
-    width: 5em;
-  }
-</style>

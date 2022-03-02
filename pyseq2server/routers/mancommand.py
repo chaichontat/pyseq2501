@@ -98,7 +98,10 @@ async def cmd_endpoint(ws: WebSocket) -> None:
     async def cmd_move(m: MoveManual):
         with cancel_wrapper(q_cmd, q_log, fast_refresh):
             fc: bool = UserSettings.construct(**ws.app.state.user_settings).image_params["fc"]  # type: ignore
+            to_show = {k: v for k, v in m.dict().items() if v is not None}
+            logger.info(f"Setting {to_show}.")
             await m.run(imager, fc)
+            logger.info(f"Done set {to_show}.")
 
     async def cmd_validate(fc: bool) -> Experiment:
         with cancel_wrapper(q_cmd, q_log, fast_refresh):
@@ -121,24 +124,27 @@ async def cmd_endpoint(ws: WebSocket) -> None:
             while True:
                 cmd = CommandWeb.parse_obj(await ws.receive_json())
                 print(cmd)
-                if cmd.cmd == "stop":
-                    logger.warning("Received stop signal.")
-                    task.cancel()
-                    continue
-
-                if not task.done():
-                    q_cmd.put_nowait(CommandResponse(error=f"Old command still running: {task}."))
-                    continue
 
                 match cmd:
+                    case MoveManual(_) as m:
+                        task = asyncio.create_task(cmd_move(m))
+
                     case CommandWeb(cmd="capture") | CommandWeb(cmd="preview"):
+                        if not task.done():
+                            q_cmd.put_nowait(CommandResponse(error=f"Old command still running: {task}."))
+                            continue
                         task = asyncio.create_task(cmd_image(cmd))
+                    case CommandWeb(cmd="stop"):
+                        logger.warning("Received stop signal.")
+                        task.cancel()
+
                     case CommandWeb(fccmd=FCCmd(fc=fc, cmd="validate")):
                         task = asyncio.create_task(cmd_validate(fc))
                     case CommandWeb(fccmd=FCCmd(fc=fc, cmd="start")):
                         fc_tasks[fc] = asyncio.create_task(cmd_run_exp(fc))
                     case CommandWeb(fccmd=FCCmd(fc=fc, cmd="stop")):
                         fc_tasks[fc].cancel()
+
                     case _:
                         ...
 

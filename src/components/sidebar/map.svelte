@@ -35,9 +35,9 @@
 <li>
   <!-- Toggle -->
   <span class="flex items-center justify-center mb-4 space-x-2 text-lg -translate-y-6 monomedium">
-    <div class="transition-all" class:font-semibold={!$us.image_params.fc}>A</div>
+    <div class="transition-all text-gray-500" class:text-gray-800={!$us.image_params.fc} class:font-semibold={!$us.image_params.fc}>A</div>
     <Toggle bind:checked={$us.image_params.fc} />
-    <div class="transition-all" class:font-semibold={$us.image_params.fc}>B</div>
+    <div class="transition-all text-gray-500" class:text-gray-800={$us.image_params.fc} class:font-semibold={$us.image_params.fc}>B</div>
   </span>
   <div class="-mt-4" />
   <Slide name={$us.image_params.fc ? "B" : "A"} x={xy.x} y={xy.y} />

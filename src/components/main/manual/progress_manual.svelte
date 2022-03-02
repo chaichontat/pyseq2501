@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { cmdStore, statusStore as ss } from "$src/stores/store";
+  import { cmdStore, localStore, statusStore as ss } from "$src/stores/store";
   import tooltip from "$src/tooltip";
   import type { Tweened } from "svelte/motion";
   import Progress from "../progress.svelte";
@@ -66,7 +66,7 @@
       class:stop={captureState === "stop"}
       use:tooltip={"Take image and save."}
       on:click={handleCapture}
-      disabled={captureState !== "ok"}
+      disabled={captureState !== "ok" || !$localStore.connected}
     >
       <div class="flex items-center h-12 text-lg cursor-pointer">
         {#if $ss.block === "capturing" || $ss.block === "previewing"}
@@ -89,7 +89,7 @@
       type="button"
       id="preview"
       class="text-lg mt-2 text-white focus:ring-4 focus:ring-sky-300 font-medium rounded-lg shadow px-4 py-2.5 text-center inline-flex items-center mr-2"
-      disabled={Boolean($ss.block)}
+      disabled={Boolean($ss.block) || !$localStore.connected}
       use:tooltip={"Take a 16-bundle image based on the current position without saving."}
       on:click={handlePreview}
     >
@@ -151,11 +151,11 @@
 
 <style lang="postcss">
   .start {
-    @apply transition-all bg-gradient-to-r from-blue-500 to-blue-700 shadow-blue-500/50 hover:from-blue-600 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 active:from-blue-700;
+    @apply transition-all bg-gradient-to-r from-blue-500 to-blue-700 shadow-blue-500/50 hover:from-blue-600 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 active:from-blue-700 disabled:text-gray-400 disabled:from-gray-50 disabled:via-gray-100 disabled:to-gray-200 disabled:shadow-gray-400/50 disabled:shadow-sm;
   }
 
   .stop {
-    @apply transition-all bg-gradient-to-r from-orange-500 to-orange-700 shadow-orange-500/50 hover:from-orange-600 hover:to-orange-800 active:from-orange-700 focus:ring-orange-300;
+    @apply transition-all bg-gradient-to-r from-orange-500 to-orange-700 shadow-orange-500/50 hover:from-orange-600 hover:to-orange-800 active:from-orange-700 focus:ring-orange-300 disabled:text-gray-400 disabled:from-gray-50 disabled:via-gray-100 disabled:to-gray-200 disabled:shadow-gray-400/50 disabled:shadow-sm;
   }
 
   #preview {
