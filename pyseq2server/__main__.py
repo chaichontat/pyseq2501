@@ -38,7 +38,12 @@ def run(port: int, host: str, fake: bool, open: bool, donothost: bool, loglevel:
     app = gen_server()
 
     if not donothost:
-        app.mount("/", StaticFiles(directory=Path(__file__).parent.parent / "build", html=True), name="build")
+        try:
+            app.mount("/", StaticFiles(directory=Path(__file__).parent.parent / "build", html=True))
+        except RuntimeError as e:
+            raise RuntimeError(
+                f"Most liekly, the system cannot find the built interface. Run `npm run build` to build."
+            ) from e
 
     setup_web_logger(q_log, level=loglevel.upper())
 
