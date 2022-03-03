@@ -7,6 +7,7 @@ import uvicorn
 from websockets.client import connect
 
 from pyseq2server.routers.status import WebState
+from pyseq2server.server import gen_server
 
 
 # https://github.com/encode/uvicorn/issues/742#issuecomment-674411676
@@ -30,7 +31,7 @@ class Server(uvicorn.Server):
 
 @pytest.fixture(scope="session")
 def server():
-    config = uvicorn.Config("pyseq2server:app", host="127.0.0.1", port=8000)
+    config = uvicorn.Config(gen_server(), host="127.0.0.1", port=8000)
     with Server(config=config).run_in_thread():
         yield
 

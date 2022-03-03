@@ -32,8 +32,8 @@ from .utils.log import setup_web_logger
     "--loglevel", type=click.Choice(["debug", "info", "warning", "error", "critical"]), default="info"
 )
 def run(port: int, host: str, fake: bool, open: bool, donothost: bool, loglevel: str) -> None:
-    if os.name == "nt":
-        os.environ["FAKE_HISEQ"] = "1" if fake else "0"
+    if os.name == "nt" and fake:
+        os.environ["FAKE_HISEQ"] = "1"
 
     app = gen_server()
 
