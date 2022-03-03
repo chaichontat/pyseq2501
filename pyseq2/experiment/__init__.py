@@ -159,7 +159,7 @@ class Experiment(BaseModel):
             return compiled
 
         g = self.gen_log(i, len(compiled))
-        for step, c in enumerate(compiled):
+        for step, c in enumerate(compiled, 1):
             try:
                 logger.info(g(step, f"{c.op.capitalize()} started."))
                 await c.run(fcs, i, imager)

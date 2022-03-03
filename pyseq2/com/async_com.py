@@ -127,7 +127,7 @@ class COM:
         kwargs = {"name": name, "test_params": test_params} if test_params is not None else {}
         self = cls(name, test_params, min_spacing, no_check)
 
-        if not IS_FAKE:  # Real instrument
+        if not IS_FAKE():  # Real instrument
             if port_rx is not None:
                 assert name == "fpga"
                 # Name and test_params is for fakeserial. Ignored in the real thing.

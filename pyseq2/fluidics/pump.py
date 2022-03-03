@@ -127,7 +127,7 @@ class Pump(UsesSerial):
             case _:
                 raise ValueError("Invalid command.")
 
-        if not IS_FAKE:
+        if not IS_FAKE():
             logger.debug("Waiting for pumping to finish.")
             await asyncio.sleep(abs(target - pos) / speed + 0.5)
         await self.wait(retries=retries)

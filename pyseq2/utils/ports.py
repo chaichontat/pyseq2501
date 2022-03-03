@@ -42,7 +42,7 @@ async def get_ports(timeout: float = 1, show_all: bool = False) -> dict[SerialPo
     Returns:
         Ports: Dataclass of relevant components and their COM ports.
     """
-    if IS_FAKE:
+    if IS_FAKE():
         logger.warning("Using fake ports.")
         return FAKE_PORTS
 

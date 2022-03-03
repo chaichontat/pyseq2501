@@ -93,7 +93,7 @@ class DCAMDict(MutableMapping[Props, float]):
         return self._dict[name].value
 
     def __setitem__(self, name: Props, value: float) -> None:
-        if IS_FAKE:
+        if IS_FAKE():
             return
 
         with LOCK:

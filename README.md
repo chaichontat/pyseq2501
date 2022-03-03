@@ -25,6 +25,26 @@ This can be fast. Click on the image for a controllable animation!
 #### With debug info (all communications)
 [![Full debug](https://user-images.githubusercontent.com/34997334/148764144-0be332ef-a44a-46a2-a21c-bbe1d49e69d5.gif)](https://asciinema.org/a/s67mKomEwGj6l7azkx0PCboeO?autoplay=1)
 
+## Installation
+This package is written for Python 3.10+ and requires Windows 10 to function. For those using Windows 7, you can perform a [dual-boot](https://www.techadvisor.com/how-to/windows/how-dual-boot-windows-3633084/) installation on any other partitions relatively easily.
+
+The only required custom driver is the Illumina/ActiveSilicon [driver](https://github.com/chaichontat/pyseq2501/tree/main/driver) which functions in both Windows 7 and Windows 10.
+
+Using conda,
+```bash
+conda env create -n pyseq -f environment.yml
+pip install .
+```
+If you want to make sure that this works:
+```bash
+pip install pytest pytest-asyncio hypothesis
+pytest
+```
+or you could use a [`tox`](https://tox.wiki/en/latest/) environment.
+```bash
+pip install tox tox-conda
+tox -vv
+```
 
 ## Architecture
 The scientific logic are in `Experiment`, `FlowCell`, and `Imager`. `Experiment` coordinates `FlowCell` and `Imager`. `Imager` and `FlowCell` communicates high-level commands to each instrument class, which then sends the actual command to each instrument.
@@ -48,15 +68,3 @@ The scientific logic are in `Experiment`, `FlowCell`, and `Imager`. `Experiment`
       FlowCell-->Pump;
       FlowCell-->Valve;
 ```
-
-## Installation
-This package is written for Python 3.10+ and requires Windows 10 to function. For those using Windows 7, you can perform a [dual-boot](https://www.techadvisor.com/how-to/windows/how-dual-boot-windows-3633084/) installation on any other partitions relatively easily.
-
-The only required custom driver is the Illumina/ActiveSilicon [driver](https://github.com/chaichontat/pyseq2501/tree/main/driver) which functions in both Windows 7 and Windows 10.
-
-Using conda,
-```bash
-conda env create -n pyseq -f environment.yml
-pip install -e .
-```
-
