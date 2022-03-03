@@ -9,7 +9,7 @@ import uvicorn
 from asgiref.typing import ASGIApplication
 from fastapi.staticfiles import StaticFiles
 
-from . import app, q_log
+from .server import gen_server, q_log
 from .utils.log import setup_web_logger
 
 
@@ -32,11 +32,15 @@ from .utils.log import setup_web_logger
     "--loglevel", type=click.Choice(["debug", "info", "warning", "error", "critical"]), default="info"
 )
 def run(port: int, host: str, fake: bool, open: bool, donothost: bool, loglevel: str) -> None:
+    if os.name == "nt":
+        os.environ["FAKE_HISEQ"] = "1" if fake else "0"
+
+    app = gen_server()
+
     if not donothost:
         app.mount("/", StaticFiles(directory=Path(__file__).parent.parent / "build", html=True), name="build")
 
     setup_web_logger(q_log, level=loglevel.upper())
-    os.environ["FAKE_HISEQ"] = "1" if fake else "0"
 
     for _log in ["uvicorn", "uvicorn.access", "uvicorn.error", "fastapi"]:
         logging.getLogger(_log).handlers = logging.getLogger("pyseq2").handlers if _log == "fastapi" else []
