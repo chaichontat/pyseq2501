@@ -250,7 +250,7 @@ class Imager(metaclass=Singleton):
     def calc_delta_pos(n_px_y: int) -> int:
         return int(n_px_y * Imager.UM_PER_PX * YStage.STEPS_PER_UM)
 
-    async def autofocus(self, channel: Literal[0, 1, 2, 3] = 1) -> tuple[int, UInt16Array, UInt16Array]:
+    async def autofocus(self, channel: Literal[0, 1, 2, 3] = 1) -> tuple[int, UInt16Array]:
         """Moves to z_max and takes 232 (2048 × 5) images while moving to z_min.
         Returns the z position of maximum intensity and the images.
         """
@@ -265,25 +265,28 @@ class Imager(metaclass=Singleton):
 
             await self.wait_ready()
 
-            n_bundles, height = 258, 64
+            n_bundles, height = 259, 64
             z_min, z_max = 2621, 60292
-            cam = 0 if CHANNEL[channel] in (0, 1) else 1
+            cam = CHANNEL[channel] >> 1
 
-            async with self.z_obj.af_arm(z_min=z_min, z_max=z_max) as start_move:
+            async with self.z_obj.af_arm(z_min=z_min, z_max=z_max, speed=0.1) as start_move:
                 async with self.optics.open_shutter():
                     img = await self.cams.capture(
-                        n_bundles, (height, 4096), fut_capture=start_move, mode=Mode.FOCUS_SWEEP, cam=cam
+                        n_bundles,
+                        (height, 4096),
+                        fut_capture=start_move,
+                        mode=Mode.FOCUS_SWEEP,
+                        cam=cast(Literal[0, 1], cam),
                     )
 
             stack: UInt16Array = np.reshape(img[CHANNEL[channel] - 2 * cam], (n_bundles, height, 2048))
-            intensity = np.mean(stack, axis=(1, 2))
             var_laplacian = np.var(self.laplacian(stack), axis=(1, 2))
-            cv = var_laplacian / intensity
-            target = int(z_max - (((z_max - z_min) / n_bundles) * np.argmax(cv) + z_min))  # type: ignore
+
+            target = int(z_max - ((z_max - z_min) * np.argmax(var_laplacian) / n_bundles))  # type: ignore
             logger.info(f"Done autofocus. Optimum={target}")
             if not 10000 < target < 50000:
                 logger.info(f"Target too close to edge, considering moving the tilt motors.")
-            return (target, cv, stack)
+            return (target, stack)
 
     @staticmethod
     def laplacian(img: UInt16Array) -> UInt16Array:
