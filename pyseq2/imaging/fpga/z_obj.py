@@ -19,10 +19,10 @@ class ObjCmd:
     # Callable[[Annotated[int, "mm/s"]], str]
     GET_TARGET_POS = CmdParse(     "ZDACR"              , ok_re(r"^ZDACR (\d+)$", int))  # D A
     GET_POS        = CmdParse(     "ZADCR"              , ok_re(r"^ZADCR (\d+)$", int))  # A D
-    
+
     SET_VELO = CmdParse(λ_float(lambda x: f"ZSTEP {int(1288471 * x)}"), ok_if_match("ZSTEP"))
     SET_POS  = CmdParse(chkrng(λ_int(lambda x: f"ZDACW {x}"), *RANGE), ok_if_match("ZDACW"))
-    
+
     # Autofocus stuffs
     SET_TRIGGER = CmdParse(λ_int(lambda x: f"ZTRG {x}") , ok_if_match("ZTRG"))
     ARM_TRIGGER = CmdParse(                 "ZYT 0 3"   , ok_if_match("ZYT"))

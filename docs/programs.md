@@ -12,4 +12,4 @@ This uses the partial area mode of the camera to take 232 frames of 10,240 pixel
 `TDIYARM 2` This is probably used to generate thumbnails. Generate image of size 4096 × 2688 pixels.
 
 ## Large TDI
-`TDIYARM 3` Production run. Image the entire flow cell, generate image of size 4096 × 160000 pixels. 
+`TDIYARM 3` Production run. Image the entire flow cell, generate image of size 4096 × 160000 pixels.

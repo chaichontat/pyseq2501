@@ -35,7 +35,7 @@ A lot of problems with `win32api DLL`. Probably from different versions
     - Set `AllowTcpForwarding yes` in `%ALLUSERSPROFILE%\ssh\sshd_config`.
     - See https://superuser.com/questions/1451241/command-to-copy-client-public-key-to-windows-openssh-sftp-ssh-server-authorized to set public key authentication.
       - TL;DR Copy your `id_rsa.pub` to `%ALLUSERSPROFILE%\ssh\administrators_authorized_keys`.
-      
+
 
 ### Nov 17th
 - Forum https://forum.hackteria.org/c/reseq/19

@@ -18,7 +18,7 @@ Lists of commands are available in the beginning of all instrument files and at 
 Commands can be of two formats: `Callable[..., str]` or `str` for commands with and without arguments.
 
 To ensure that there are no silent failures, all responses to commands are compared against the expected response.
-Any unexpected response throws an `Exception`. 
+Any unexpected response throws an `Exception`.
 The command and its parser are bundled together in the `CmdParse` object.
 
 Sending a `CmdParse` command results in a `Future` object, which could be used to access the parsed response once it is completed.

@@ -7,4 +7,5 @@ async def ports():
     p = await get_ports(show_all=True)
     print(p)
 
+
 asyncio.run(ports())

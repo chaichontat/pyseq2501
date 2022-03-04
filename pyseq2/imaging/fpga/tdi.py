@@ -14,7 +14,7 @@ class TDICmd:
     # fmt: off
     GET_ENCODER_Y = CmdParse(                    "TDIYERD"                               , ok_re(r"TDIYERD (\d+)", lambda x: int(x) - Y_OFFSET))
     N_PULSES      = CmdParse(                    "TDIPULSES"                             , ok_re(r"TDIPULSES (\d+)", lambda x: int(x) - 1))
-    
+
     SET_ENCODER_Y = CmdParse(λ_int(lambda x:    f"TDIYEWR {x + Y_OFFSET}")               , ok_if_match("TDIYEWR"))
     SET_TRIGGER   = CmdParse(λ_int(lambda x:    f"TDIYPOS {x + Y_OFFSET - 80000}")       , ok_if_match("TDIYPOS"))
     # WHATISTHIS    = CmdParse(λ_int(lambda n:    f"TDIYARM2 {n} 1")                       , ok_if_match("TDIYARM2"))

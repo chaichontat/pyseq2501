@@ -27,7 +27,7 @@ def test_y(fc: bool, y_start: int, n_bundles: float):
     y0 = coords.raw_to_mm(fc, y=y_start)
     y1 = y0 + dy
 
-    t = TakeImage.parse_obj(TakeImage.default().dict() | {"xy0": (0, y0), "xy1": (0, y1)})
+    t = TakeImage.default().copy(update={"xy0": (0, y0), "xy1": (0, y1)})
     nb, ys, _, _ = t.calc_pos(fc)
 
     assert abs(max(y0, y1) - coords.raw_to_mm(fc, y=ys)) < 0.001
@@ -42,9 +42,7 @@ def test_x(fc: bool, x_start: int, nx: float, posneg: bool, overlap: float):
 
     cond = overlap != 1
     with nullcontext() if cond else pytest.raises(ValidationError):
-        t = TakeImage.parse_obj(
-            TakeImage.default().dict() | {"xy0": (x0, 0), "xy1": (x1, 1), "overlap": overlap}
-        )
+        t = TakeImage.default().copy(update={"xy0": (x0, 0), "xy1": (x1, 1), "overlap": overlap})
     if cond:
         return
 

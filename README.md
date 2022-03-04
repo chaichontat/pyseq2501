@@ -17,7 +17,7 @@ Example scripts are in the [`scripts/`](scripts) folder. The showcase is `take_i
 
 Note that the actual capture of 12 bundles took less than a second.
 
-This can be fast. Click on the image for a controllable animation! 
+This can be fast. Click on the image for a controllable animation!
 
 #### Overview
 [![No debug](https://user-images.githubusercontent.com/34997334/148763734-23c424a9-708a-4826-b347-6a291c6ab416.gif)](https://asciinema.org/a/GQXJvYMSXkKVMkfin9czNUk56?autoplay=1)
