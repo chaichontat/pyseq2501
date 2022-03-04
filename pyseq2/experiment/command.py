@@ -79,10 +79,16 @@ class Prime(BaseModel, AbstractCommand):
 class Temp(BaseModel, AbstractCommand):
     temp: float
     wait: bool = False
+    tol: float = 3.
+    timeout: float = 60.
     op: Literal["temp"] = "temp"
 
     async def run(self, fcs: FlowCells, i: bool, imager: Imager) -> None:
-        await fcs[cast(Literal[0, 1], i)].set_temp(self.temp)
+        fc = fcs[cast(Literal[0, 1], i)]
+        await fc.set_temp(self.temp)
+        if self.wait:
+            while abs(await fc.temp - self.temp) > self.tol:
+                await asyncio.sleep(0.5)
 
     @classmethod
     def default(cls) -> Temp:
