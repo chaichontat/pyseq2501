@@ -238,7 +238,7 @@ class Imager(metaclass=Singleton):
             imgs = np.clip(np.flip(imgs, axis=1), 0, 4096)
             if cam == 1:
                 return imgs[[x - 2 for x in c], :-128, :]  # type: ignore
-            return imgs[:, :-128, :], state  # Remove oversaturated first bundle.
+            return imgs[c, :-128, :], state  # Remove oversaturated first bundle.
 
     @staticmethod
     def calc_delta_pos(n_px_y: int) -> int:
