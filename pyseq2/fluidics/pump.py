@@ -141,7 +141,6 @@ class Pump(UsesSerial):
             yield
         finally:
             await self._pushpull("push", 0, speed=v_push)
-        
 
     async def pump(
         self, vol: Step, *, v_pull: Sps = 400, v_push: Sps = 6400, wait: Annotated[float, "s"] = 26
