@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from tifffile import TiffWriter
 
 from .base.instruments_types import SerialPorts
-from .imaging.camera.dcam import Cameras, UInt16Array
+from .imaging.camera.dcam import Cameras, Mode, UInt16Array
 from .imaging.fpga import FPGA
 from .imaging.laser import Laser, Lasers
 from .imaging.xstage import XStage
@@ -53,7 +53,7 @@ class State(Position, OpticState):  # type: ignore
 
 # Due to the optical arrangement, the actual channel ordering
 # is not in order of increasing wavelength.
-CHANNEL = {0: 1, 1: 3, 2: 2, 3: 0}
+CHANNEL = {0: 1, 1: 2, 2: 0, 3: 3}
 T = TypeVar("T")
 
 
@@ -222,7 +222,7 @@ class Imager(metaclass=Singleton):
             assert end_y_pos > -7e6
 
             await asyncio.gather(self.tdi.prepare_for_imaging(n_px_y, pos), self.y.set_mode("IMAGING"))
-            cap = self.cams.acapture(
+            cap = self.cams.capture(
                 n_bundles, fut_capture=self.y.move(end_y_pos, slowly=True), cam=cam, event_queue=event_queue
             )
 
@@ -265,8 +265,8 @@ class Imager(metaclass=Singleton):
 
             async with self.z_obj.af_arm(z_min=z_min, z_max=z_max) as start_move:
                 async with self.optics.open_shutter():
-                    img = await self.cams.acapture(
-                        n_bundles, height, fut_capture=start_move, mode="FOCUS_SWEEP", cam=cam
+                    img = await self.cams.capture(
+                        n_bundles, (height, 4096), fut_capture=start_move, mode=Mode.FOCUS_SWEEP, cam=cam
                     )
 
             intensity = np.mean(

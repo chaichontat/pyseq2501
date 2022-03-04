@@ -35,6 +35,7 @@ from . import API, EXECUTOR
 from .dcam_api import DCAMException
 from .dcam_props import DCAMDict
 from pyseq2.imaging.camera.dcam_api import DCAM_CAPTURE_MODE
+from pyseq2.imaging.camera.dcam_types import Props
 from pyseq2.utils.utils import IS_FAKE
 
 logger = getLogger(__name__)
@@ -61,17 +62,18 @@ ID = Literal[0, 1]
 Cam = Literal[0, 1, 2]
 UInt16Array = npt.NDArray[np.uint16]
 FourImages = tuple[UInt16Array, UInt16Array, UInt16Array, UInt16Array]
+ModeDict = Mapping[Props, float]
 
 
 async def nothing() -> None:
     return None
 
 
-class Mode(Enum):
+class Mode:
     """DCAM properties preset"""
 
-    FOCUS_SWEEP = {"sensor_mode": 6, "exposure_time": 0.001, "partial_area_vsize": 5}
-    TDI = {"sensor_mode": 4, "sensor_mode_line_bundle_height": 128}
+    FOCUS_SWEEP: ModeDict = {"sensor_mode": 6, "exposure_time": 0.001, "partial_area_vsize": 5}
+    TDI: ModeDict = {"sensor_mode": 4, "sensor_mode_line_bundle_height": 128}
 
 
 class _Camera:
@@ -146,21 +148,22 @@ class _Camera:
             raise DCAMException(f"Invalid status. Got {s.value}.")
 
     @contextmanager
-    def attach(self, n_bundles: int, height: int) -> Generator[UInt16Array, None, None]:
+    def attach(self, n_bundles: int, dim: tuple[int, int]) -> Generator[UInt16Array, None, None]:
         """Generates a numpy array and "attach" it to the camera.
         Aka. Tells the camera to write captured bundles here.
 
         Args:
             n_bundles (int): Number of bundles
-            height (int): Height of each bundle. 128 for TDI. 5 for focus sweep.
+            height (tuple[int, int]): Dim of each bundle.
 
         Yields:
-            Generator[UInt16Array, None, None]: Output array (n_bundles × height, 4096)
+            Generator[UInt16Array, None, None]: Output array (n_bundles × height, dim[1])
         """
-        arr: npt.NDArray[np.uint16] = np.zeros((n_bundles * height, self.IMG_WIDTH), dtype=np.uint16)
+        arr: npt.NDArray[np.uint16] = np.zeros((n_bundles * dim[0], dim[1]), dtype=np.uint16)
         addr, ptr_arr = arr.ctypes.data, (c_void_p * n_bundles)()
         for i in range(n_bundles):
-            ptr_arr[i] = 2 * 4096 * height * i + addr
+            # sizeof(uint16) * width * height
+            ptr_arr[i] = 2 * dim[1] * dim[0] * i + addr
 
         try:
             API.dcam_attachbuffer(self.handle, ptr_arr, c_uint32(sizeof(ptr_arr)))
@@ -239,7 +242,7 @@ class Cameras:
         self._cams = _cams
 
         self.properties = TwoProps(*[c.properties for c in self._cams])
-        self.set_mode("TDI")
+        self.set_mode(Mode.TDI)
 
     def __getitem__(self, id_: ID) -> _Camera:
         return self._cams[id_]
@@ -253,48 +256,52 @@ class Cameras:
     @overload
     @contextmanager
     def _attach(
-        self, n_bundles: int, height: int, cam: Literal[0, 1] = ...
+        self, n_bundles: int, dim: tuple[int, int], cam: Literal[0, 1] = ...
     ) -> Generator[UInt16Array, None, None]:
         ...
 
     @overload
     @contextmanager
     def _attach(
-        self, n_bundles: int, height: int, cam: Literal[2] = ...
+        self, n_bundles: int, dim: tuple[int, int], cam: Literal[2] = ...
     ) -> Generator[tuple[UInt16Array, UInt16Array], None, None]:
         ...
 
     @contextmanager
     def _attach(
-        self, n_bundles: int, height: int, cam: Cam = 2
+        self, n_bundles: int, dim: tuple[int, int], cam: Cam = 2
     ) -> Generator[UInt16Array, None, None] | Generator[tuple[UInt16Array, UInt16Array], None, None]:
         if cam == 2:
-            with self[0].attach(n_bundles, height) as buf1, self[1].attach(n_bundles, height) as buf2:
+            with self[0].attach(n_bundles, dim) as buf1, self[1].attach(n_bundles, dim) as buf2:
                 logger.debug(f"Allocated memory for {n_bundles} bundles.")
                 yield (buf1, buf2)
         else:
-            with self[cam].attach(n_bundles, height) as buf1:
+            with self[cam].attach(n_bundles, dim) as buf1:
                 logger.debug(f"Allocated memory for {n_bundles} bundles for cam {cam}.")
                 yield buf1
 
     @property
-    def mode(self) -> str:
+    def mode(self) -> ModeDict:
         return self._mode
 
-    def set_mode(self, m: Literal["TDI", "FOCUS_SWEEP"]) -> None:
-        self.properties.update(Mode[m].value)
+    def set_mode(self, m: ModeDict) -> None:
+        self.properties.update(m)
         self._mode = m
 
-    async def acapture(
+    async def capture(
         self,
         n_bundles: int,
-        height: int = 128,
+        dim: tuple[int, int] = (128, 4096),
         start_attach: Callable[[], Any] = lambda: None,
         fut_capture: Awaitable[Any] | None = None,
-        mode: Literal["TDI", "FOCUS_SWEEP"] = "TDI",
+        mode: ModeDict = Mode.TDI,
         cam: Literal[0, 1, 2] = 2,
         event_queue: tuple[asyncio.Queue[T], Callable[[int], T]] | None = None,
     ) -> UInt16Array:
+
+        if cam == 2 and dim != (128, 4096):
+            raise ValueError("Dim needs to be (128, 4096) when using both cameras.")
+
         async def in_ctx():
             curr = 0
             fut = asyncio.create_task(cast(Coroutine[Any, Any, Any], fut_capture)) if fut_capture else None
@@ -314,7 +321,7 @@ class Cameras:
                 await fut
 
         self.set_mode(mode)
-        with self._attach(n_bundles=n_bundles, height=height, cam=cam) as bufs:
+        with self._attach(n_bundles=n_bundles, dim=dim, cam=cam) as bufs:
             start_attach()
             if cam == 2:
                 with self[0].capture(), self[1].capture():
@@ -327,57 +334,6 @@ class Cameras:
         if cam == 2:
             bufs = cast(tuple[UInt16Array, UInt16Array], bufs)
             return np.hstack(bufs).reshape(-1, 4, 2048).transpose(1, 0, 2)
+
         bufs = cast(UInt16Array, bufs)
-        return bufs.reshape(-1, 2, 2048).transpose(1, 0, 2)
-
-    def capture(
-        self,
-        n_bundles: int,
-        fut_capture: Callable[[], Future[Any]],
-        height: int = 128,
-        start_attach: Callable[[], Any] = lambda: None,
-        mode: Literal["TDI", "FOCUS_SWEEP"] = "TDI",
-        cam: Literal[0, 1, 2] = 2,
-    ) -> UInt16Array:
-        """Captures images and split them into channels.
-        Timeout if no bundle was captured within the first 5 seconds.
-
-        Args:
-            n_bundles (int): Number of bundles.
-            height (int, optional): Height of each bundle. Defaults to 128.
-            start_attach (Callable[[], Any], optional): Function to call upon storage attachment. Defaults to lambda:None.
-            fut_capture (Callable[[], Future[Any]], optional): Function that produces a Future object that resolves when
-                imaging is completed. Used for move commands that return when completed. Defaults to lambda:gen_future(None).
-            mode (Literal["TDI", "FOCUS_SWEEP"], optional): Defaults to "TDI".
-            cam (Literal[0, 1, 2], optional): Which camera(s) to capture. 2 means both. Defaults to 2.
-
-        Returns:
-            UInt16Array: Either (2, n_bundles × height, 2048) or (4, n_bundles × height, 2048).
-        """
-
-        def in_ctx():
-            fut = fut_capture()
-            t0 = time.monotonic()
-            while self.n_frames_taken(cam) < n_bundles:
-                time.sleep(0.1)
-                if taken == 0 and time.monotonic() - t0 > 5:
-                    raise Exception(f"Did not capture a single bundle before {5=}s.")
-            fut.result()
-
-        self.set_mode(mode)
-        with self._attach(n_bundles=n_bundles, height=height, cam=cam) as bufs:
-            taken = 0
-            start_attach()
-            if cam == 2:
-                with self[0].capture(), self[1].capture():
-                    in_ctx()
-            else:
-                with self[cam].capture():
-                    in_ctx()
-            logger.info(f"Retrieved all {n_bundles} bundles.")
-
-        if cam == 2:
-            bufs = cast(tuple[UInt16Array, UInt16Array], bufs)
-            return np.hstack(bufs).reshape(-1, 4, 2048).transpose(1, 0, 2)
-        bufs = cast(UInt16Array, bufs)
-        return bufs.reshape(-1, 2, 2048).transpose(1, 0, 2)
+        return bufs.reshape(-1, 2, 2048).transpose(1, 0, 2) if dim[1] == 4096 else bufs
