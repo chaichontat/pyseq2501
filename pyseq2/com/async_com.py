@@ -195,8 +195,7 @@ class COM:
                     buffer += "\n" + resp
                     rbuffer += raw
                 else:
-                    buffer = resp
-                    rbuffer = raw
+                    buffer, rbuffer = resp, raw
 
                 del resp
 
@@ -214,6 +213,7 @@ class COM:
                         break
                 else:
                     if not self.FIRST_LINES.search(buffer):
+                        buffer, rbuffer = "", b""
                         raise InvalidResponse(f"{buffer}")
 
             except (CancelledError, RuntimeError) as e:
