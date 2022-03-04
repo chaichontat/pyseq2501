@@ -161,7 +161,7 @@ class FakeImager(Imager):
         self,
         n_bundles: int,
         dark: bool = False,
-        channels: frozenset[Literal[0, 1, 2, 3]] = frozenset((0, 1, 2, 3)),
+        channels: list[Literal[0, 1, 2, 3]] = list((0, 1, 2, 3)),
         move_back_to_start: bool = True,
         event_queue: tuple[asyncio.Queue[T], Callable[[int], T]] | None = None,
     ) -> tuple[UInt16Array, State]:

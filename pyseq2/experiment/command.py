@@ -79,8 +79,8 @@ class Prime(BaseModel, AbstractCommand):
 class Temp(BaseModel, AbstractCommand):
     temp: float
     wait: bool = False
-    tol: float = 3.
-    timeout: float = 60.
+    tol: float = 3.0
+    timeout: float = 60.0
     op: Literal["temp"] = "temp"
 
     async def run(self, fcs: FlowCells, i: bool, imager: Imager) -> None:
@@ -194,9 +194,7 @@ class TakeImage(BaseModel, AbstractCommand):
         if not (n_bundles and len(xs) and len(zs)):
             raise ValueError("Invalid number of bundles, x, or z.")
 
-        channels = cast(
-            frozenset[Literal[0, 1, 2, 3]], frozenset(i for i, c in enumerate(self.channels) if c)
-        )
+        channels = cast(list[Literal[0, 1, 2, 3]], list(i for i, c in enumerate(self.channels) if c))
 
         path = Path(self.path) / self.name
         paths = [path.parent / f"{path.stem}_{i}.tif" for i in range(len(xs))]

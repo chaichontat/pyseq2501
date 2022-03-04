@@ -186,13 +186,19 @@ class Imager(metaclass=Singleton):
         self,
         n_bundles: int,
         dark: bool = False,
-        channels: frozenset[Literal[0, 1, 2, 3]] = frozenset((0, 1, 2, 3)),
+        channels: list[Literal[0, 1, 2, 3]] = [0, 1, 2, 3],
         move_back_to_start: bool = True,
         event_queue: tuple[asyncio.Queue[T], Callable[[int], T]] | None = None,
     ) -> tuple[UInt16Array, State]:
         assert self.cams is not None
         if self.lock.locked():
             logger.info("Waiting for the previous imaging operation to complete.")
+
+        if len(channels) != len(set(channels)):
+            raise ValueError("Channels must be unique.")
+
+        if min(channels) < 0 or max(channels) > 3:
+            raise ValueError("Channels must be between 0 and 3.")
 
         async with self.lock:
             if not 0 < n_bundles < 1500:
@@ -259,7 +265,7 @@ class Imager(metaclass=Singleton):
 
             await self.wait_ready()
 
-            n_bundles, height = 232, 5
+            n_bundles, height = 258, 64
             z_min, z_max = 2621, 60292
             cam = 0 if CHANNEL[channel] in (0, 1) else 1
 
