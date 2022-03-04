@@ -62,7 +62,7 @@ class _Valve(Movable, UsesSerial):
                 return
             await self.com.send(ValveCmd.SET_POS(pos))
             self.t_lastcmd = time.time()
-            if not IS_FAKE and await self.pos != pos:
+            if not IS_FAKE() and await self.pos != pos:
                 raise Exception(f"Port {self.name} did not move to {pos}.")
 
 
@@ -107,7 +107,7 @@ class Valves(Movable):
                 await asyncio.gather(self[0].move(10), self[1].move(cast(ValvePorts, p - 9)))
             else:
                 await self[0].move(cast(ValvePorts, p))
-            if not IS_FAKE:
+            if not IS_FAKE():
                 assert await self.pos == p
 
     async def move(self, pos: int) -> None:

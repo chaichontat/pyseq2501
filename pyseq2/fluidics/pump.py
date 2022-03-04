@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Annotated, Callable, ClassVar, Literal, TypeVar
+from contextlib import asynccontextmanager
+from typing import Annotated, AsyncGenerator, Callable, ClassVar, Literal, TypeVar
 
 from pyseq2.base.instruments import UsesSerial
 from pyseq2.com.async_com import COM, CmdParse
@@ -88,7 +89,7 @@ class Pump(UsesSerial):
             else:
                 await asyncio.sleep(0.25)
         else:
-            raise Exception("Pump not ready after too long.")
+            raise TimeoutError("Pump not ready after too long.")
 
     async def initialize(self) -> None:
         async with self.com.big_lock:
@@ -109,35 +110,45 @@ class Pump(UsesSerial):
     async def _pushpull(
         self, cmd: Literal["push", "pull"], target: int, *, speed: int = 8000, retries: int = 10
     ) -> None:
-        await self.wait()
-        pos = await self.pos
-        match cmd:
-            case "pull":
-                if pos >= target:
-                    raise ValueError(
-                        f"Current pump pos of {pos} greater than the requested pull pos of {target}."
-                    )
-                await self.com.send(PumpCmd.PULL(target, speed))
-            case "push":
-                if pos <= target:
-                    raise ValueError(
-                        f"Current pump pos of {pos} smaller than the requested push pos of {target}."
-                    )
-                await self.com.send(PumpCmd.PUSH(target, speed))
-            case _:
-                raise ValueError("Invalid command.")
+        await asyncio.wait_for(self.wait(), timeout=30)
+        async with self.com.big_lock:
+            pos = await self.pos
+            match cmd:
+                case "pull":
+                    if pos >= target:
+                        raise ValueError(
+                            f"Current pump pos of {pos} greater than the requested pull pos of {target}."
+                        )
+                    await self.com.send(PumpCmd.PULL(target, speed))
+                case "push":
+                    if pos <= target:
+                        raise ValueError(
+                            f"Current pump pos of {pos} smaller than the requested push pos of {target}."
+                        )
+                    await self.com.send(PumpCmd.PUSH(target, speed))
+                case _:
+                    raise ValueError("Invalid command.")
 
-        if not IS_FAKE:
+        if not IS_FAKE():
             logger.debug("Waiting for pumping to finish.")
             await asyncio.sleep(abs(target - pos) / speed + 0.5)
         await self.wait(retries=retries)
+
+    @asynccontextmanager
+    async def _pump(self, vol: Step, *, v_pull: Sps = 400, v_push: Sps = 6400) -> AsyncGenerator[None, None]:
+        try:
+            await self._pushpull("pull", vol, speed=v_pull)
+            yield
+        finally:
+            await self._pushpull("push", 0, speed=v_push)
+        
 
     async def pump(
         self, vol: Step, *, v_pull: Sps = 400, v_push: Sps = 6400, wait: Annotated[float, "s"] = 26
     ) -> None:
         if (pos := await self.pos) != 0:
             logger.warning(f"Pump {self.name} was not fully pulled out but at pos {pos}.")
-        await self._pushpull("pull", vol, speed=v_pull)
-        logger.info(f"Waiting for {wait}s.")
-        await asyncio.sleep(wait)  # From HiSeq log. Wait for pressure to equalize.
-        await self._pushpull("push", 0, speed=v_push)
+
+        async with self._pump(vol, v_pull=v_pull, v_push=v_push):
+            logger.info(f"Waiting for {wait}s.")
+            await asyncio.sleep(wait)  # From HiSeq log. Wait for pressure to equalize.

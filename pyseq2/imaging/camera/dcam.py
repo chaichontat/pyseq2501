@@ -109,7 +109,7 @@ class _Camera:
 
     @staticmethod
     def init_properties(handle: c_void_p) -> DCAMDict:
-        if IS_FAKE:
+        if IS_FAKE():
             return DCAMDict(handle, pickle.loads((Path(__file__).parent / "saved_props.pk").read_bytes()))
         else:
             return DCAMDict.from_dcam(handle)

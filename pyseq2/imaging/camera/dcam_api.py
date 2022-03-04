@@ -11,7 +11,7 @@ from pyseq2.utils.utils import IS_FAKE
 P = ParamSpec("P")
 R = TypeVar("R")
 
-if not IS_FAKE:
+if not IS_FAKE():
     from ctypes import WinDLL
 
     # Ignore because in Windows, Pylance would complain that WinDLL is not a base class.

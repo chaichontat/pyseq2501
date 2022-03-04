@@ -6,7 +6,7 @@ import re
 from typing import Any, Awaitable, Callable, Container, Literal, ParamSpec, Sequence, TypeVar, cast, overload
 
 FlowCell = Literal["A", "B"]
-IS_FAKE = os.environ.get("FAKE_HISEQ", "0") == "1"
+IS_FAKE = lambda: os.name != "nt" or os.environ.get("FAKE_HISEQ", "0") == "1"
 
 T, P = TypeVar("T"), ParamSpec("P")
 

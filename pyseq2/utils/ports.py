@@ -1,15 +1,13 @@
 #%%
 import asyncio
 import logging
-import os
-import time
 from pprint import pprint
 from typing import TypeVar, cast
 
 import serial.tools.list_ports
 
-from pyseq2.utils.utils import IS_FAKE
 from pyseq2.base.instruments_types import SerialPorts
+from pyseq2.utils.utils import IS_FAKE
 
 T = TypeVar("T")
 logger = logging.getLogger(__name__)
@@ -42,32 +40,31 @@ async def get_ports(timeout: float = 1, show_all: bool = False) -> dict[SerialPo
     Returns:
         Ports: Dataclass of relevant components and their COM ports.
     """
-    if IS_FAKE:
+    if IS_FAKE():
         logger.warning("Using fake ports.")
         return FAKE_PORTS
 
-    t0 = time.monotonic()
-    while time.monotonic() - t0 < timeout:
-        ports = cast(
-            dict[str, str],
-            {
-                dev.serial_number: dev.name
-                for dev in await asyncio.get_running_loop().run_in_executor(
-                    None, serial.tools.list_ports.comports  # type: ignore
-                )
-                if dev.serial_number is not None
-            },
+    ports = cast(
+        dict[str, str],
+        {
+            dev.serial_number: dev.name
+            for dev in await asyncio.get_running_loop().run_in_executor(
+                None, serial.tools.list_ports.comports  # type: ignore
+            )
+            if dev.serial_number is not None
+        },
+    )
+    try:
+        res = {name: ports[id_] for name, id_ in serial_names.items()}
+        if show_all:
+            pprint(f"{ports}")
+        return cast(dict[SerialPorts, str], res)
+    except KeyError as e:
+        missing = [k for k, v in serial_names.items() if v == e.args[0]]
+        raise RuntimeError(
+            f"Cannot find {missing[0]}. If you are running a fake HiSeq, set the environment variable FAKE_HISEQ=1.",
+            e.args[0],
         )
-        try:
-            res = {name: ports[id_] for name, id_ in serial_names.items()}
-            if show_all:
-                pprint(f"{ports}")
-            return cast(dict[SerialPorts, str], res)
-        except KeyError as e:
-            print(f"Cannot find {e}.")
-            time.sleep(0.5)
-
-    raise Exception(f"Cannot find ports after {timeout} seconds.")
 
 
 if __name__ == "__main__":

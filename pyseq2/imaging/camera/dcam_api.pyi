@@ -5,7 +5,7 @@ from pyseq2.utils.utils import IS_FAKE
 P = ParamSpec("P")
 R = TypeVar("R")
 
-if not IS_FAKE:
+if not IS_FAKE():
     from ctypes import WinDLL
 else:
     class WinDLL:
