@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { TakeImage } from "$src/stores/command";
-  import { cmdStore, userStore as us } from "$src/stores/store";
+  import { cmdStore, userStore as us, statusStore as ss } from "$src/stores/store";
   import { checkRange } from "$src/utils";
   import Go from "../go.svelte";
   export let params: TakeImage;
@@ -45,6 +45,7 @@
     />
     mW
     <Go
+      disabled={$ss.block}
       on:click={() => {
         $us.image_params.laser_onoff[i] = params.laser_onoff[i];
         $us.image_params.lasers[i] = params.lasers[i];

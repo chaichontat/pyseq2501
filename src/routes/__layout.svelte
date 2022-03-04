@@ -16,7 +16,7 @@
 <div>
   <div class="drawer drawer-mobile">
     <input id="main-menu" type="checkbox" class="drawer-toggle" />
-    <main class="flex-grow block overflow-x-hidden bg-white shadow-md text-base-content drawer-content">
+    <main class="flex-grow block overflow-x-hidden overflow-y-scroll bg-white shadow-md text-base-content drawer-content">
       <Nav />
       <div class="px-10 py-4">
         <slot />

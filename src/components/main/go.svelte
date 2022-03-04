@@ -18,7 +18,7 @@
 
 <button
   type="button"
-  class={`px-4 py-1 text-sm font-semibold rounded-lg white-button ${colorMap[color]} disabled:bg-gray-50 disabled:hover:bg-gray-50 disabled:active:bg-gray-50 disabled:text-gray-500 ${cl}`}
+  class={`px-4 py-1 text-sm font-semibold rounded-lg white-button transition-all duration-100 ${colorMap[color]} disabled:bg-gray-50 disabled:hover:bg-gray-50 disabled:active:bg-gray-50 disabled:text-gray-500 ${cl}`}
   tabindex="0"
   on:click={() => dispatch("click")}
   {disabled}

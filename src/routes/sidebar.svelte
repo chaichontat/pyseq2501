@@ -65,7 +65,7 @@
 
     <section class:hidden={tab !== "fluidics"} class="relative">
       <ol class="p-2 overflow-auto menu">
-        <Division name="Pump">
+        <Division name="Ports">
           <Fluidics />
         </Division>
       </ol>
