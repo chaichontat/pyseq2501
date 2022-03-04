@@ -72,7 +72,7 @@ async def nothing() -> None:
 class Mode:
     """DCAM properties preset"""
 
-    FOCUS_SWEEP: ModeDict = {"sensor_mode": 6, "exposure_time": 0.001, "partial_area_vsize": 5}
+    FOCUS_SWEEP: ModeDict = {"sensor_mode": 6, "exposure_time": 0.001, "partial_area_vsize": 64}
     TDI: ModeDict = {"sensor_mode": 4, "sensor_mode_line_bundle_height": 128}
 
 

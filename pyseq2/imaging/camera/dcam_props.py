@@ -108,7 +108,9 @@ class DCAMDict(MutableMapping[Props, float]):
             API.dcam_setgetpropertyvalue(self.handle, prop.id_, pointer(to_set), c_int32(DCAM_DEFAULT_ARG))
             logger.info(f"Set {name} to {value}.")
             self.refresh()
-            assert np.allclose(self[name], value), "Value in DCAM not same as target."
+            assert np.allclose(
+                self[name], value
+            ), f"Value in DCAM not same as target. Expected {value}, got {self[name]}."
 
     def __delitem__(self, _: Props) -> NoReturn:
         raise Exception("Cannot remove properties!")
