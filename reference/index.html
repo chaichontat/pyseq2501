@@ -505,7 +505,7 @@ Laser            (<span title="pyseq2.base.instruments.UsesSerial">UsesSerial</s
     <span class="nd">@classmethod</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">ainit</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;g&quot;</span><span class="p">],</span> <span class="n">port_tx</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Laser</span><span class="p">:</span>
         <span class="bp">self</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">com</span> <span class="o">=</span> <span class="k">await</span> <span class="n">COM</span><span class="o">.</span><span class="n">ainit</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">SerialInstruments</span><span class="p">,</span> <span class="s2">&quot;laser_&quot;</span> <span class="o">+</span> <span class="n">name</span><span class="p">),</span> <span class="n">port_tx</span><span class="o">=</span><span class="n">port_tx</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">com</span> <span class="o">=</span> <span class="k">await</span> <span class="n">COM</span><span class="o">.</span><span class="n">ainit</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">SerialInstruments</span><span class="p">,</span> <span class="s2">&quot;laser_&quot;</span> <span class="o">+</span> <span class="n">name</span><span class="p">),</span> <span class="n">min_spacing</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">port_tx</span><span class="o">=</span><span class="n">port_tx</span><span class="p">)</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span>
 
@@ -771,7 +771,7 @@ Lasers        </code>
   <small>
     
       Last update:
-      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime">2022-03-05 18:27:32</span>
+      <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_datetime">2022-03-05 20:15:23</span>
       
     
   </small>
