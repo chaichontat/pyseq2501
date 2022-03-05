@@ -43,27 +43,30 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: Cache conda
+        uses: actions/cache@v2
+        env:
+          # Increase this value to reset cache if etc/example-environment.yml has not changed
+          CACHE_NUMBER: 0
+        with:
+          path: ~/conda_pkgs_dir
+          key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+            hashFiles('.github/ci_env.yml') }}
+
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniforge-version: latest
-          environment-file: environment.yml
+          environment-file: .github/ci_env.yml
           activate-environment: pyseq
           use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
 
-      - name: Install PySeq2501
+      - name: Install with Poetry
         run: |
-          git clone https://github.com/chaichontat/pyseq2501
-          cd pyseq2501
-          conda env update -f environment.yml -n pyseq
-          pip install .
-
-      # - name: Debug with tmate
-      #   uses: mxschmitt/action-tmate@v3
+          poetry install
 
       - name: Test with Pytest
         run: |
-          pip install pytest pytest-asyncio
-          pip install .
           pytest -rP
 
   test-tox:
@@ -80,13 +83,24 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: Cache conda
+        uses: actions/cache@v2
+        env:
+          # Increase this value to reset cache if etc/example-environment.yml has not changed
+          CACHE_NUMBER: 0
+        with:
+          path: ~/conda_pkgs_dir
+          key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+            hashFiles('.github/ci_env.yml') }}
+
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniforge-version: latest
+          environment-file: .github/ci_env.yml
+          activate-environment: pyseq
           use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
 
-      - name: Run Tox
+      - name: Test with Tox
         run: |
-          conda install tox
-          pip install tox-conda
-          tox
+          tox -vv
