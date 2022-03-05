@@ -4,7 +4,7 @@ import asyncio
 from asyncio import CancelledError, Task
 from contextlib import contextmanager
 from logging import getLogger
-from typing import Any, Literal, NoReturn
+from typing import Any, Literal
 
 from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
 from fastapi.encoders import jsonable_encoder

@@ -57,8 +57,8 @@
 <div id="control" class="grid gap-y-6" style="grid-template-columns: minmax(500px, 1fr) 1fr;">
   <section class="flex flex-col text-lg font-medium">
     <p class="mt-1 text-lg">Name</p>
-    <div class="flex gap-x-2">
-      <input type="text" class="flex-grow h-12 max-w-md mb-4 text-lg pretty" bind:value={params.name} class:invalid={isInvalid(params.name)} />
+    <div class="flex-grow flex gap-x-2 max-w-[470px]">
+      <input type="text" class="flex-grow h-12 mb-4 text-lg pretty" bind:value={params.name} class:invalid={isInvalid(params.name)} />
       {#if inAuto}
         <Go color="sky" cl="text-lg font-semibold shadow-md shadow-sky-700/10 h-12">Preview</Go>
       {/if}

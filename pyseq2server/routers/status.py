@@ -100,6 +100,7 @@ async def poll_state(ws: WebSocket) -> None:
     ]
     await ws.accept()
     await ws.send_json(jsonable_encoder(state))
+    await ws.send_json(jsonable_encoder(state))
 
     try:
         while True:
