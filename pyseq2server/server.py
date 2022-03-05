@@ -10,9 +10,10 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 
 from pyseq2 import FlowCells, Imager, get_ports
+from pyseq2.utils.coords import raw_to_mm
 
 from .api_types import UserSettings
-from .imaging import update_img
+from .imaging import update_afimg, update_img
 from .routers import mancommand, status, user
 
 q_log: asyncio.Queue[str] = asyncio.Queue()
@@ -46,8 +47,23 @@ def gen_server():
         app.state.q_log = q_log
         app.state.q_log2 = q_log2
         app.state.fast_refresh = asyncio.Event()
-        app.state.user_settings = jsonable_encoder(UserSettings.default())
+
+        state = await imager.state
+        xy = raw_to_mm(False, x=round(state.x, 2), y=round(state.y, 2))
+        user = UserSettings.default()
+        user.image_params = user.image_params.copy(
+            update=dict(
+                xy0=xy,
+                xy1=xy,
+                laser_onoff=state.laser_onoff,
+                lasers=state.lasers,
+                od=state.od,
+            )
+        )
+
+        app.state.user_settings = jsonable_encoder(user)
         app.state.img = update_img(np.random.randint(0, 256, (4, 128, 2048), dtype=np.uint8))
+        app.state.afimg = update_afimg(np.random.randint(0, 256, (259, 64, 256), dtype=np.uint8))
 
     app.on_event("startup")(setup_backend)
     app.include_router(status.router)

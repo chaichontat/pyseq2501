@@ -8,6 +8,11 @@
   let progress: Tweened<number>;
   export let stats: { height: number; width: number; n_cols: number; n_bundles: number; n_z: number; time: number };
 
+  export function resetProgress() {
+    step = [0, 0, 0];
+    progress.set(0);
+  }
+
   $: {
     if (progress && $cmdStore?.step) {
       step = $cmdStore.step;
@@ -26,7 +31,6 @@
   $: if (!$ss.block && interval) clearInterval(interval);
 
   function handleCapture() {
-    console.log("hi");
     if (interval) clearInterval(interval);
     if ($ss.block === "capturing") {
       $cmdStore = { cmd: "stop" };
@@ -37,6 +41,7 @@
       }, 1000);
       $cmdStore = { cmd: "capture" };
       $ss.block = "capturing";
+      resetProgress();
     }
   }
 
@@ -51,6 +56,7 @@
       }, 1000);
       $cmdStore = { cmd: "preview" };
       $ss.block = "previewing";
+      resetProgress();
     }
   }
 </script>

@@ -99,6 +99,8 @@ async def poll_state(ws: WebSocket) -> None:
         asyncio.create_task(poll_msg(ws, ws.app.state.q_log2, "msg2")),
     ]
     await ws.accept()
+    new_state = await imager.state
+    state = state.copy(update=new_state.dict())
     await ws.send_json(jsonable_encoder(state))
     await ws.send_json(jsonable_encoder(state))
 

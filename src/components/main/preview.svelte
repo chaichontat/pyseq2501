@@ -40,8 +40,9 @@
 
   $: if (browser) imgFrame.src = $ls.img.img[currChannel];
   $: if (ctx && $ls.img) {
-    ctx.canvas.height = Math.max($ls.img.dim[0], 512);
+    ctx.canvas.height = $ls.img.dim[0];
     ctx.canvas.width = $ls.img.dim[1];
+    panSpace.style.height = `${Math.min(512, $ls.img.dim[0])}px`;
   }
 
   function genTabClass(color: string, selected: boolean, enabled: boolean): string {

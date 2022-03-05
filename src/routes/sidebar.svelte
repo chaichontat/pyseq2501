@@ -4,8 +4,6 @@
   import Division from "$src/components/sidebar/division.svelte";
   import Lasers from "$comps/sidebar/lasers.svelte";
   import Map from "$src/components/sidebar/map.svelte";
-  import Modal from "$src/components/modal.svelte";
-  import Preview from "$src/components/main/preview.svelte";
   import Fluidics from "$src/components/sidebar/fluidics.svelte";
 
   // onMount(() => {

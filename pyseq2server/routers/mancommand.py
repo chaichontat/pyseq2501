@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from logging import getLogger
 from typing import Any, Literal
 
+import numpy as np
 from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
@@ -13,7 +14,8 @@ from websockets.exceptions import ConnectionClosedOK
 
 from pyseq2 import FlowCells, Imager
 from pyseq2.experiment import Experiment
-from pyseq2server.imaging import Img, update_img
+from pyseq2.experiment.command import Autofocus
+from pyseq2server.imaging import Img, update_afimg, update_img
 from pyseq2server.routers.status import update_block
 
 from ..api_types import CommandResponse, MoveManual, NExperiment, UserSettings
@@ -50,7 +52,7 @@ class FCCmd(BaseModel):
 
 class CommandWeb(BaseModel):
     move: MoveManual | None = None
-    cmd: Literal["preview", "capture"] | None = None
+    cmd: Literal["preview", "capture", "autofocus"] | None = None
     fccmd: FCCmd | None = None
 
 
@@ -95,6 +97,15 @@ async def cmd_endpoint(ws: WebSocket) -> None:
             q_cmd.put_nowait(CommandResponse(msg="imgReady"))  # Doesn't seem to send with 1.
             q_cmd.put_nowait(CommandResponse(msg="imgReady"))  # Doesn't seem to send with 1.
 
+    async def cmd_autofocus():
+        with cancel_wrapper(q_cmd, q_log, fast_refresh):
+            update_block("capturing")
+            # point, stack = await imager.autofocus()
+            stack = np.load("C:\\Users\\Chaichontat\\pyseq2501\\pyseq2\\working.npy")
+            ws.app.state.afimg = update_afimg(stack[:, :, 896:1152])
+            update_block("")
+            q_cmd.put_nowait(CommandResponse(msg="afimgReady"))
+
     async def cmd_move(m: MoveManual):
         with cancel_wrapper(q_cmd, q_log, fast_refresh):
             fc: bool = UserSettings.construct(**ws.app.state.user_settings).image_params["fc"]  # type: ignore
@@ -137,6 +148,8 @@ async def cmd_endpoint(ws: WebSocket) -> None:
                     case CommandWeb(cmd="stop"):
                         logger.warning("Received stop signal.")
                         task.cancel()
+                    case CommandWeb(cmd="autofocus"):
+                        task = asyncio.create_task(cmd_autofocus())
 
                     case CommandWeb(fccmd=FCCmd(fc=fc, cmd="validate")):
                         task = asyncio.create_task(cmd_validate(fc))
@@ -159,3 +172,8 @@ async def cmd_endpoint(ws: WebSocket) -> None:
 @router.get("/img", response_model=Img)
 async def get_img(request: Request):
     return request.app.state.img
+
+
+@router.get("/afimg")
+async def get_afimg(request: Request):
+    return request.app.state.afimg
