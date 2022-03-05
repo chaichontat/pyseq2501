@@ -22,7 +22,7 @@ from typing import (
 from serial_asyncio import open_serial_connection
 
 from pyseq2.base.instruments_types import COLOR, FORMATTER, SEPARATOR, SerialInstruments
-from pyseq2.fakes.fake_serial import open_fake
+from pyseq2.fakes.fake_serial import FakeOptions, open_fake
 from pyseq2.utils.utils import IS_FAKE, InvalidResponse
 
 logger = getLogger(__name__)
@@ -121,25 +121,24 @@ class COM:
         *,
         min_spacing: Annotated[float, "s"] = 0.01,
         no_check: bool = False,
-        test_params: Optional[dict[Any, Any]] = None,
+        test_params: Optional[FakeOptions] = None,
     ):
         baudrate = 115200 if name in ("fpga", "arm9chem", "arm9pe") else 9600
-        kwargs = {"name": name, "test_params": test_params} if test_params is not None else {}
+        if test_params is None:
+            test_params = FakeOptions()
         self = cls(name, test_params, min_spacing, no_check)
 
         if not IS_FAKE():  # Real instrument
             if port_rx is not None:
                 assert name == "fpga"
                 # Name and test_params is for fakeserial. Ignored in the real thing.
-                srx = await open_serial_connection(url=port_rx, baudrate=baudrate, **kwargs)
-                stx = await open_serial_connection(url=port_tx, baudrate=baudrate, **kwargs)
+                srx = await open_serial_connection(url=port_rx, baudrate=baudrate)
+                stx = await open_serial_connection(url=port_tx, baudrate=baudrate)
                 self._serial = Channel(reader=srx[0], writer=stx[1])
                 logger.info(f"{self.name}Started listening to ports {port_tx} and {port_rx}.")
             else:
                 assert name != "fpga"
-                self._serial = Channel(
-                    *await open_serial_connection(url=port_tx, baudrate=baudrate, **kwargs)
-                )
+                self._serial = Channel(*await open_serial_connection(url=port_tx, baudrate=baudrate))
                 logger.info(f"{self.name}Started listening to port {port_tx}.")
 
         else:  # Fake instrument
@@ -152,7 +151,7 @@ class COM:
     def __init__(
         self,
         name: SerialInstruments,
-        test_params: Optional[dict[Any, Any]],
+        test_params: FakeOptions,
         min_spacing: Annotated[float, "s"] = 0.01,
         no_check: bool = False,
     ) -> None:
