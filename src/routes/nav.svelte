@@ -6,7 +6,7 @@
 </script>
 
 <div id="nav" class="sticky inset-x-0 top-0 z-50 w-full h-16 transition duration-200 ease-in-out bg-white shadow-sm opacity-95 ring-1 ring-gray-900 ring-opacity-5">
-  <div class="flex items-center h-full mx-auto gap-x-6">
+  <div class="flex items-center h-full mx-auto gap-x-4">
     <div class="flex-none">
       <label for="main-menu" class="lg:hidden">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-6 h-6 stroke-current">
