@@ -16,6 +16,7 @@ from .imaging import update_img
 from .routers import mancommand, status, user
 
 q_log: asyncio.Queue[str] = asyncio.Queue()
+q_log2: asyncio.Queue[str] = asyncio.Queue()
 
 logger = getLogger(__name__)
 
@@ -43,6 +44,7 @@ def gen_server():
         app.state.imager = imager
         app.state.fcs = fcs
         app.state.q_log = q_log
+        app.state.q_log2 = q_log2
         app.state.fast_refresh = asyncio.Event()
         app.state.user_settings = jsonable_encoder(UserSettings.default())
         app.state.img = update_img(np.random.randint(0, 256, (4, 128, 2048), dtype=np.uint8))
@@ -51,10 +53,6 @@ def gen_server():
     app.include_router(status.router)
     app.include_router(user.router)
     app.include_router(mancommand.router)
-
-    @app.get("/path/")
-    async def get_path():
-        return {"path": os.getcwd()}
 
     return app
 

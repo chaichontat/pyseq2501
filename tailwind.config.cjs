@@ -1,4 +1,4 @@
-const defaultTheme = require('tailwindcss/defaultTheme')
+const defaultTheme = require("tailwindcss/defaultTheme");
 const config = {
   mode: "jit",
   content: ["./src/**/*.{html,js,svelte,ts}"],
@@ -6,12 +6,12 @@ const config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter var', ...defaultTheme.fontFamily.sans],
+        sans: ["Inter var", ...defaultTheme.fontFamily.sans],
       },
     },
   },
 
-  plugins: [require("daisyui"), require('@tailwindcss/forms')]
-}
+  plugins: [require("daisyui"), require("@tailwindcss/forms")],
+};
 
-module.exports = config
+module.exports = config;

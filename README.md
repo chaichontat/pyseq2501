@@ -8,31 +8,32 @@ This is the web interface and the communication system for [PySeq 2501](https://
 
 ![2022-01-10 20 04 44](https://user-images.githubusercontent.com/34997334/148863230-8b66ae28-5212-4e1e-a74c-33ebe695be9f.gif)
 
-
 ## Installation
-- Install [`pyseq2501`](https://github.com/chaichontat/pyseq2501)
-    ```sh
-    git clone https://github.com/chaichontat/pyseq2501
-    conda env create -n pyseq -f environment.yml
-    conda activate pyseq
-    pip install pyseq2501/.
-    ```
 
+- Install [`pyseq2501`](https://github.com/chaichontat/pyseq2501)
+
+  ```sh
+  git clone https://github.com/chaichontat/pyseq2501
+  conda env create -n pyseq -f environment.yml
+  conda activate pyseq
+  pip install pyseq2501/.
+  ```
 
 - Install [`npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
 - Clone this repo and run. The first command updates the `pyseq` environment.
-    ```sh
-    git clone https://github.com/chaichontat/pyseq2501-web
-    cd pyseq2501-web
-    conda env update -n pyseq -f environment.yml
-    pip install .
-    npm i
-    npm run build
-    ```
+  ```sh
+  git clone https://github.com/chaichontat/pyseq2501-web
+  cd pyseq2501-web
+  conda env update -n pyseq -f environment.yml
+  pip install .
+  npm i
+  npm run build
+  ```
 
 A [`tox`](https://tox.wiki/en/latest/) environment is available to make sure everything works.
 
 ## Run
+
 ```sh
 pyseq2server --fake
 ```
@@ -81,5 +82,5 @@ sequenceDiagram
     Imager->>FastAPI: Image
     Note right of FastAPI: "imgReady" via cmdStore<br> with image through GET
 
-    
+
 ```

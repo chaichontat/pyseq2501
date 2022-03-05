@@ -9,7 +9,7 @@ import uvicorn
 from asgiref.typing import ASGIApplication
 from fastapi.staticfiles import StaticFiles
 
-from .server import gen_server, q_log
+from .server import gen_server, q_log, q_log2
 from .utils.log import setup_web_logger
 
 
@@ -45,7 +45,7 @@ def run(port: int, host: str, fake: bool, open: bool, donothost: bool, loglevel:
                 f"Most liekly, the system cannot find the built interface. Run `npm run build` to build."
             ) from e
 
-    setup_web_logger(q_log, level=loglevel.upper())
+    setup_web_logger(q_log, q_log2, level=loglevel.upper())
 
     for _log in ["uvicorn", "uvicorn.access", "uvicorn.error", "fastapi"]:
         logging.getLogger(_log).handlers = logging.getLogger("pyseq2").handlers if _log == "fastapi" else []

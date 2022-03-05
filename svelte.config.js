@@ -1,8 +1,8 @@
-import adapter from "@sveltejs/adapter-static"
-import path from 'path'
-import preprocess from "svelte-preprocess"
+import adapter from "@sveltejs/adapter-static";
+import path from "path";
+import preprocess from "svelte-preprocess";
 
-const ci = process.env.CI === 'true'
+const ci = process.env.CI === "true";
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -18,22 +18,16 @@ const config = {
     vite: {
       resolve: {
         alias: {
-          '$src': path.resolve('./src'),
-          '$comps': path.resolve('./src/components'),
-        }
+          $src: path.resolve("./src"),
+          $comps: path.resolve("./src/components"),
+        },
       },
       optimizeDeps: {
-        include: [
-          "fast-deep-equal",
-          "clone",
-          "semver",
-          "json-stringify-pretty-compact",
-          "fast-json-stable-stringify",
-        ],
+        include: ["fast-deep-equal", "clone", "semver", "json-stringify-pretty-compact", "fast-json-stable-stringify"],
       },
     },
     paths: {
-      base: ci ? "/pyseq2501-web" : ""
+      base: ci ? "/pyseq2501-web" : "",
     },
     appDir: "internal",
     adapter: adapter({
@@ -43,6 +37,6 @@ const config = {
       fallback: null,
     }),
   },
-}
+};
 
-export default config
+export default config;
