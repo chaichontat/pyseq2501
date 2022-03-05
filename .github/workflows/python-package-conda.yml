@@ -23,34 +23,32 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      #       - name: Cache conda
-      #         uses: actions/cache@v2
-      #         env:
-      #           # Increase this value to reset cache if etc/example-environment.yml has not changed
-      #           CACHE_NUMBER: 0
-      #         with:
-      #           path: ~/conda_pkgs_dir
-      #           key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
-      #             hashFiles('environment.yml') }}
+      - name: Cache conda
+        uses: actions/cache@v2
+        env:
+          # Increase this value to reset cache if etc/example-environment.yml has not changed
+          CACHE_NUMBER: 0
+        with:
+          path: ~/conda_pkgs_dir
+          key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+            hashFiles('.github/ci_env.yml') }}
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniforge-version: latest
-          environment-file: environment.yml
+          environment-file: .github/ci_env.yml
           activate-environment: pyseq
           use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
 
+      # - uses: pre-commit/action@v2.0.3
+
+      - name: Install with Poetry
+        run: |
+          poetry install
+
       - name: Test with Pytest
         run: |
-          pip install pytest pytest-asyncio hypothesis
-          pip install .
           pytest -rP
-
-      - name: Autoformat with Black
-        run: |
-          conda install black
-          black --line-length 110 --check pyseq2/
-
       #       - name: Type check with Pyright
       #         run: |
       #           npm i -g pyright
@@ -87,11 +85,24 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: Cache conda
+        uses: actions/cache@v2
+        env:
+          # Increase this value to reset cache if etc/example-environment.yml has not changed
+          CACHE_NUMBER: 0
+        with:
+          path: ~/conda_pkgs_dir
+          key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+            hashFiles('.github/ci_env.yml') }}
+
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniforge-version: latest
+          environment-file: .github/ci_env.yml
+          activate-environment: pyseq
+          use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
 
       - name: Test with Tox
         run: |
-          pip install tox tox-conda
           tox -vv
