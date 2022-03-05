@@ -226,16 +226,13 @@ class TakeImage(BaseModel, AbstractCommand):
             await asyncio.gather(*save_tasks)
         logger.info("Done capture/preview.")
         await asyncio.sleep(0.1)  # For logs to sync up.
-        if n_bundles > 32:
-            bin_size = (1 << (n_bundles // 32).bit_length()) >> 1
-            return (
-                big_img[0]
-                .reshape((len(channels), 128 * n_bundles // bin_size, bin_size, 2048 // bin_size, bin_size))
-                .max(4)
-                .max(2)
-            )  # Max pooling
-        else:
-            return big_img[0]
+        bin_size = (1 << (n_bundles // 16).bit_length()) >> 1 if n_bundles > 16 else 2
+        return (
+            big_img[0]
+            .reshape((len(channels), (128 * n_bundles) // bin_size, bin_size, 2048 // bin_size, bin_size))
+            .max(4)
+            .max(2)
+        )  # Max pooling
 
 
 class Goto(BaseModel, AbstractCommand):
