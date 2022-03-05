@@ -10,25 +10,28 @@ This is the web interface and the communication system for [PySeq 2501](https://
 
 ## Installation
 
-- Install [`pyseq2501`](https://github.com/chaichontat/pyseq2501)
+<!-- ```sh
+pip install git+https://github.com/chaichontat/pyseq2501-web
+``` -->
 
-  ```sh
-  git clone https://github.com/chaichontat/pyseq2501
-  conda env create -n pyseq -f environment.yml
-  conda activate pyseq
-  pip install pyseq2501/.
-  ```
+### For development
 
 - Install [`npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
-- Clone this repo and run. The first command updates the `pyseq` environment.
+- Install [`poetry`](https://python-poetry.org/docs/).
+  - If you have a `conda` environment, you can create a new environment with `python=3.10 poetry` as dependencies.
   ```sh
-  git clone https://github.com/chaichontat/pyseq2501-web
-  cd pyseq2501-web
-  conda env update -n pyseq -f environment.yml
-  pip install .
-  npm i
-  npm run build
+  conda create -n {NAME REPLACE THIS} python=3.10 poetry
   ```
+
+Then,
+
+```sh
+git clone https://github.com/chaichontat/pyseq2501-web
+cd pyseq2501-web
+poetry install
+npm i
+npm run build
+```
 
 A [`tox`](https://tox.wiki/en/latest/) environment is available to make sure everything works.
 
