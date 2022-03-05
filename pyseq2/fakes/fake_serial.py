@@ -29,6 +29,7 @@ logger = getLogger(__name__)
 class FakeOptions(BaseModel):
     drop: bool = False
     delay: float = 0
+    split_delay: float = 0
 
 
 class FakeTransport(asyncio.Transport):
@@ -67,13 +68,16 @@ class FakeTransport(asyncio.Transport):
                 logger.critical(f"{type(e).__name__}: {e}")
 
     def write(self, data: bytes):
-        for res in self.f(data.strip().decode("ISO-8859-1")).split("\n"):
-            if self.test_params.drop:
+        if self.test_params.drop:
+            return
+
+        for i, res in enumerate(self.f(data.strip().decode("ISO-8859-1")).split("\n")):
+            res = res.encode("ISO-8859-1") + self.sep
+            if self.test_params.delay or (i > 0 and self.test_params.split_delay):
+                self.loop.call_later(self.test_params.delay, self.q_rcvd.put_nowait, res)
                 continue
-            if self.test_params.delay:
-                self.loop.call_later(self.test_params.delay, self.q_rcvd.put_nowait, res.encode("ISO-8859-1"))
-                continue
-            self.q_rcvd.put_nowait(res.encode("ISO-8859-1") + self.sep)
+
+            self.q_rcvd.put_nowait(res)
 
 
 async def open_fake(

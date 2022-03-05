@@ -59,5 +59,7 @@ src_paths = ["pyseq2", "tests", "scripts"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+log_cli = 1
+# log_cli_level = "DEBUG"
 minversion = "7.0"
 testpaths = ["tests"]
