@@ -6,12 +6,16 @@ type ValidType = string; // | ArrayBufferLike | Blob | ArrayBufferView;
 
 export type wsConfig = {
   f?: (x: ValidType) => any;
-  beforeOpen?: () => Promise<void>;
+  onOpen?: () => Promise<void>;
   localStore?: Writable<LocalInfo>;
   sendOnSet?: boolean;
 };
 
-export function writableWebSocket<T extends object | string>(url: string, initialValue: T, { f = JSON.parse, beforeOpen, localStore, sendOnSet = true }: wsConfig = {}): Writable<T> {
+export function writableWebSocket<T extends object | string>(
+  url: string,
+  initialValue: T,
+  { f = JSON.parse, onOpen, localStore, sendOnSet = true }: wsConfig = {}
+): Writable<T> {
   let socket: WebSocket;
   let timeout: ReturnType<typeof setTimeout> | null;
   const { set: setStore, subscribe, update } = writable(initialValue);
@@ -24,7 +28,7 @@ export function writableWebSocket<T extends object | string>(url: string, initia
     socket.onmessage = (event: MessageEvent): void => setStore(f(event.data));
 
     socket.onopen = async () => {
-      if (beforeOpen) await beforeOpen();
+      if (onOpen) await onOpen();
       if (localStore) localStore.update((curr) => ({ ...curr, connected: true }));
       if (timeout) {
         clearTimeout(timeout);

@@ -30,21 +30,34 @@
     imgFrame.src = $ls.afimg.afimg[n_stack - step - 1];
   }
 
-  function genTabClass(color: string, selected: boolean, enabled: boolean): string {
-    let out = `tab-button ${selected ? `text-white` : `${enabled ? `text-gray-700 hover:text-black bg-gray-50 hover:bg-${color}-300` : "text-gray-400"}`}`;
+  const hoverColors: { [key in string]: string } = {
+    green: "hover:bg-green-300 active:bg-green-700",
+    orange: "hover:bg-orange-300",
+    rose: "hover:bg-rose-300",
+    amber: "hover:bg-amber-600",
+  };
+
+  function genTabClass(color: string, selected: boolean): string {
+    let out = `tab-button transition-all ${selected ? "text-white" : `text-gray-700 hover:text-black bg-gray-50 ${hoverColors[color]}`}`;
     return out;
   }
+
+  function argmax() {
+    return 258 - $ls.afimg.laplacian.map((x, i) => [x, i]).reduce((r, a) => (a[0] > r[0] ? a : r))[1];
+  }
+
+  $: if ($ls.afimg.laplacian) step = argmax();
 </script>
 
 <div class="space-y-12">
   <div class="flex max-w-lg mx-auto gap-x-4">
     <div class="flex-grow">
       <TabGroup on:change={(idx) => (currChannel = idx.detail)}>
-        <TabList class="grid grid-cols-4 p-1 space-x-1 rounded-lg bg-gray-50 white-button">
-          <Tab let:selected><button class:bg-green-600={selected} class={genTabClass("green", selected, $us.image_params.channels[0])}>Channel 0</button></Tab>
-          <Tab let:selected><button class:bg-orange-500={selected} class={genTabClass("orange", selected, $us.image_params.channels[1])}>Channel 1</button></Tab>
-          <Tab let:selected><button class:bg-rose-600={selected} class={genTabClass("rose", selected, $us.image_params.channels[2])}>Channel 2</button></Tab>
-          <Tab let:selected><button class:bg-amber-800={selected} class={genTabClass("amber", selected, $us.image_params.channels[3])}>Channel 3</button></Tab>
+        <TabList class="grid grid-cols-4 p-1 space-x-1 border border-gray-300 rounded-lg shadow-sm bg-gray-50">
+          <Tab let:selected><button class:bg-green-600={selected} class={genTabClass("green", selected) + " active:ring-green-500"}>Channel 0</button></Tab>
+          <Tab let:selected><button class:bg-orange-500={selected} class={genTabClass("orange", selected) + " active:ring-orange-500"}>Channel 1</button></Tab>
+          <Tab let:selected><button class:bg-rose-600={selected} class={genTabClass("rose", selected) + " active:ring-rose-500"}>Channel 2</button></Tab>
+          <Tab let:selected><button class:bg-amber-800={selected} class={genTabClass("amber", selected) + " active:ring-amber-500"}>Channel 3</button></Tab>
         </TabList>
       </TabGroup>
     </div>
@@ -65,38 +78,30 @@
       <div class="h-[32px]" />
 
       <!-- Number and Copy -->
-      <div class="flex gap-x-4">
+      <div class="flex w-full gap-x-4 content-evenly">
         <button
           type="button"
           class="px-4 py-1 text-sm font-medium text-gray-900 rounded-lg white-button disabled:bg-gray-50 disabled:hover:bg-gray-50 disabled:active:bg-gray-50 disabled:text-gray-500"
-          on:click={() => (step = 258 - $ls.afimg.laplacian.map((x, i) => [x, i]).reduce((r, a) => (a[0] > r[0] ? a : r))[1])}
+          on:click={() => (step = argmax())}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
-            />
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
           Jump to Focus
         </button>
 
-        <span class="px-4 py-2 font-medium rounded-lg bg-blue-50 tabular-nums">{real_steps[n_stack - step - 1]}</span>
+        <span class="px-4 py-2 font-medium border border-blue-200 rounded-lg shadow-sm bg-blue-50 tabular-nums">{real_steps[n_stack - step - 1]}</span>
 
         <button
           type="button"
           class="px-4 py-1 text-sm font-medium text-gray-900 rounded-lg white-button disabled:bg-gray-50 disabled:hover:bg-gray-50 disabled:active:bg-gray-50 disabled:text-gray-500"
+          on:click={() => ($us.image_params.z_obj = real_steps[n_stack - step - 1])}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
-            />
-          </svg>
           To Z Obj
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 ml-2 -mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
         </button>
       </div>
 

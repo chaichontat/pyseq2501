@@ -49,7 +49,7 @@ def gen_server():
         app.state.fast_refresh = asyncio.Event()
 
         state = await imager.state
-        xy = raw_to_mm(False, x=round(state.x, 2), y=round(state.y, 2))
+        xy = tuple(map(lambda x: round(x, 2), raw_to_mm(False, x=state.x, y=state.y)))
         user = UserSettings.default()
         user.image_params = user.image_params.copy(
             update=dict(

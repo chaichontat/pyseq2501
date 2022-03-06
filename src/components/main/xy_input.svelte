@@ -30,7 +30,7 @@
       max="30"
       step="0.01"
       use:checkRange={[-5, 30]}
-      class="z-10 h-10 text-center rounded-none pretty w-28"
+      class="z-10 w-24 h-10 text-center rounded-none pretty"
       {disabled}
     />
     <span class="flex items-center color-group" class:span-disabled={$ss.block}>Y</span>
@@ -42,22 +42,14 @@
       max="80"
       use:checkRange={[-5, 80]}
       step="0.01"
-      class="z-10 h-10 text-center rounded-l-none rounded-r-lg pretty w-28"
+      class="z-10 w-24 h-10 text-center rounded-l-none rounded-r-lg pretty"
       {disabled}
     />
   </div>
 
-  <Go
-    {disabled}
-    on:click={() => {
-      $ss.block = "moving";
-      $cmdStore = { move: i === 0 ? { xy0: xy } : { xy1: xy } };
-    }}
-  />
-
   <button
     type="button"
-    class="px-4 py-1 text-sm font-medium text-gray-900 rounded-lg white-button disabled:bg-gray-50 disabled:hover:bg-gray-50 disabled:active:bg-gray-50 disabled:text-gray-500"
+    class="px-3 py-1 text-sm font-medium text-gray-900 rounded-lg white-button disabled:bg-gray-50 disabled:hover:bg-gray-50 disabled:active:bg-gray-50 disabled:text-gray-500"
     {disabled}
     on:click={copyCurrent}
   >
@@ -71,6 +63,15 @@
     </svg>
     Current
   </button>
+
+  <Go
+    color="sky"
+    {disabled}
+    on:click={() => {
+      $cmdStore = { cmd: `preview${i}` };
+      $ss.block = "previewing";
+    }}>Preview</Go
+  >
 </div>
 
 <style lang="postcss">

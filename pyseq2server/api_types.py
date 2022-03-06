@@ -21,7 +21,7 @@ class MoveManual(BaseModel):
     shutter: bool | None = None
     od: tuple[float | None, float | None] | None = None
 
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def validate_xy(cls, values: dict[str, Any]) -> dict[str, Any]:
         if values["xy0"] and values["xy1"]:
             raise ValueError("MoveManual: xy0 and xy1 cannot be set at the same time")
@@ -74,8 +74,8 @@ class NExperiment(BaseModel):
 
     def to_experiment(self) -> Experiment:
         return Experiment(
-            self.name,
-            self.fc,
+            name=self.name,
+            fc=self.fc,
             path=self.path,
             reagents=[r.reagent for r in self.reagents],
             cmds=[c.cmd for c in self.cmds],

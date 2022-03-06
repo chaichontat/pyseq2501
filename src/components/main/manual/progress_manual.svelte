@@ -1,12 +1,15 @@
 <script lang="ts">
   import { cmdStore, localStore, statusStore as ss } from "$src/stores/store";
   import tooltip from "$src/tooltip";
+  import { createEventDispatcher } from "svelte";
   import type { Tweened } from "svelte/motion";
   import Progress from "../progress.svelte";
 
   let step: [number, number, number] = [0, 0, 0];
   let progress: Tweened<number>;
   export let stats: { height: number; width: number; n_cols: number; n_bundles: number; n_z: number; time: number };
+
+  const dispatch = createEventDispatcher();
 
   export function resetProgress() {
     step = [0, 0, 0];
@@ -16,7 +19,8 @@
   $: {
     if (progress && $cmdStore?.step) {
       step = $cmdStore.step;
-      progress.set((step[2] * (stats.n_z * stats.n_bundles) + step[1] * stats.n_bundles + step[0]) / (stats.n_bundles * stats.n_cols * stats.n_z));
+      const percent = (step[2] * (stats.n_z * stats.n_bundles) + step[1] * stats.n_bundles + step[0]) / (stats.n_bundles * stats.n_cols * stats.n_z);
+      if (percent) progress.set(percent > 1 ? 1 : percent);
     }
   }
 
@@ -44,25 +48,10 @@
       resetProgress();
     }
   }
-
-  function handlePreview() {
-    if (interval) clearInterval(interval);
-    if ($ss.block === "previewing") {
-      $cmdStore = { cmd: "stop" };
-    } else {
-      t = 0;
-      interval = setInterval(() => {
-        t += 1;
-      }, 1000);
-      $cmdStore = { cmd: "preview" };
-      $ss.block = "previewing";
-      resetProgress();
-    }
-  }
 </script>
 
 <Progress bind:progress>
-  <div slot="buttons" class="grid grid-flow-row w-36">
+  <div slot="buttons" class="grid w-40 grid-flow-row">
     <button
       type="button"
       class="text-lg text-white focus:ring-4 shadow-lg font-medium rounded-lg px-5 py-2.5 text-center mr-2 mb-2"
@@ -96,8 +85,8 @@
       id="preview"
       class="text-lg mt-2 text-white focus:ring-4 focus:ring-sky-300 font-medium rounded-lg shadow px-4 py-2.5 text-center inline-flex items-center mr-2"
       disabled={Boolean($ss.block) || !$localStore.connected}
-      use:tooltip={"Take a 16-bundle image based on the current position without saving."}
-      on:click={handlePreview}
+      use:tooltip={"See the autofocus pane."}
+      on:click={() => dispatch("autofocus")}
     >
       <div class="flex items-center">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -108,7 +97,7 @@
             d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
           />
         </svg>
-        Preview
+        Autofocus
       </div>
     </button>
   </div>

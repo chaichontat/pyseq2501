@@ -45,14 +45,14 @@ export const localStore: Writable<LocalInfo> = writable({
 
 export const statusStore: Writable<Status> =
   try_connect && browser
-    ? writableWebSocket(`ws://${window.location.hostname}:8000/status`, { ...statusDefault }, { localStore, sendOnSet: false })
+    ? writableWebSocket(`ws://${window.location.hostname}:8000/status`, { ...statusDefault }, { localStore, onOpen: firstLoad, sendOnSet: false })
     : writable({ ...statusDefault });
 
 export const userStore: Writable<UserSettings> = writable({ ...userDefault });
 
 const user_ws: Writable<UserSettings> =
   try_connect && browser
-    ? writableWebSocket(`ws://${window.location.hostname}:8000/user`, { ...userDefault }, { beforeOpen: initial_get })
+    ? writableWebSocket(`ws://${window.location.hostname}:8000/user`, { ...userDefault }, { onOpen: initial_get })
     : writable({ ...userDefault });
 
 export type MoveManual = {
@@ -67,7 +67,7 @@ export type MoveManual = {
 };
 
 export type CommandResponse = { step?: [number, number, number]; msg?: string; error?: string };
-export type CommandWeb = { move?: Partial<MoveManual>; cmd?: "preview" | "capture" | "stop" | "autofocus"; fccmd?: FCCmd };
+export type CommandWeb = { move?: Partial<MoveManual>; cmd?: "preview0" | "preview1" | "capture" | "stop" | "autofocus"; fccmd?: FCCmd };
 export const cmdStore: AsymWritable<Partial<CommandResponse>, Partial<CommandWeb>> = asymWritableWebSocket(
   `ws://${browser ? window.location.hostname : ""}:8000/cmd`,
   { msg: "ok" },
@@ -133,6 +133,20 @@ function updateImg(c: CommandResponse) {
 }
 
 cmdStore.subscribe(updateImg);
+
+async function firstLoad() {
+  fetch(`http://${window.location.hostname}:8000/img`)
+    .then((response: Response) => response.json())
+    .then((img: Img) => localStore.update((l) => ({ ...l, img })))
+    .catch(() => {});
+
+  fetch(`http://${window.location.hostname}:8000/afimg`)
+    .then((response: Response) => response.json())
+    .then((afimg: AFImg) => localStore.update((l) => ({ ...l, afimg })))
+    .catch(() => {});
+}
+
+if (browser) firstLoad();
 
 // function genSSE(): EventSource {
 //   const sse = new EventSource(`http://${ window.location.hostname }:8000/status`);

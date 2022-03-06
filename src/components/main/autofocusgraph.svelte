@@ -8,7 +8,7 @@
   const z_max = 60292;
   const z_min = 2621;
   const n_stack = 259;
-  const real_steps = [...Array(259)].map((_, i) => Math.round(z_max - ((z_max - z_min) * i) / n_stack));
+  const real_steps = [...Array(n_stack)].map((_, i) => Math.round(z_max - ((z_max - z_min) * i) / n_stack));
 
   let min = 0;
   let max = 100;
@@ -16,8 +16,7 @@
     points = $localStore.afimg.laplacian.map((v, i) => ({ x: real_steps[i], y: v }));
     min = Math.min(...$localStore.afimg.laplacian);
     min = min * 0.9;
-    max = Math.max(...$localStore.afimg.laplacian);
-    console.log(points);
+    max = Math.max(...$localStore.afimg.laplacian, 1);
   }
 </script>
 
@@ -41,7 +40,7 @@
 
     <Pancake.Svg>
       <Pancake.SvgLine data={points} let:d>
-        <path class="data stroke-blue-300" {d} />
+        <path class="fill-transparent stroke-blue-300" {d} />
       </Pancake.SvgLine>
     </Pancake.Svg>
 
@@ -57,29 +56,6 @@
 <style lang="postcss">
   .horizontal {
     @apply w-full border-b left-0;
-  }
-
-  .grid-line {
-    position: relative;
-    display: block;
-  }
-
-  .grid-line.vertical {
-    height: calc(100%+1rem);
-    border-right: 1px dashed #ccc;
-  }
-
-  .grid-line span {
-    position: absolute;
-    bottom: 0;
-    left: 2px;
-    font-family: sans-serif;
-    font-size: 14px;
-    color: #999;
-  }
-
-  .axes {
-    @apply w-full h-full border-l border-b border-dashed border-gray-400;
   }
 
   .y.label {
@@ -100,25 +76,8 @@
     text-align: center;
   }
 
-  path.data {
+  path {
     stroke-linejoin: round;
     stroke-linecap: round;
-    stroke-width: 2px;
-    fill: none;
-  }
-
-  .annotation {
-    position: absolute;
-    white-space: nowrap;
-    bottom: 1em;
-    line-height: 1.2;
-    background-color: rgba(255, 255, 255, 0.9);
-    padding: 0.2em 0.4em;
-    border-radius: 2px;
-  }
-
-  .annotation strong {
-    display: block;
-    font-size: 20px;
   }
 </style>

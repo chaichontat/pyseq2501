@@ -23,7 +23,7 @@
 
 <div class="box-border sticky z-40 -mx-10 px-10 pb-6 shadow-md bg-white/[0.95] border-b top-16 ">
   <div class="w-full h-4" />
-  <ProgressManual bind:stats />
+  <ProgressManual bind:stats on:autofocus={() => (tab = "autofocus")} />
 </div>
 
 <p class="mt-6 title">Capture Parameters</p>

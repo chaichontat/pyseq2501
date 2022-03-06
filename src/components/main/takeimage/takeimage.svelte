@@ -7,7 +7,6 @@
   import { checkRange, count } from "$src/utils";
   import Go from "../go.svelte";
   import LaserChannels from "./laserChannels.svelte";
-
   export let inAuto: boolean = true;
   export let params: TakeImage;
   export let stats = { height: 0, width: 0, n_cols: 0, n_bundles: 0, n_z: 1, time: 0 };
@@ -59,9 +58,9 @@
     <p class="mt-1 text-lg">Name</p>
     <div class="flex-grow flex gap-x-2 max-w-[470px]">
       <input type="text" class="flex-grow h-12 mb-4 text-lg pretty" bind:value={params.name} class:invalid={isInvalid(params.name)} />
-      {#if inAuto}
+      <!-- {#if inAuto}
         <Go color="sky" cl="text-lg font-semibold shadow-md shadow-sky-700/10 h-12">Preview</Go>
-      {/if}
+      {/if} -->
     </div>
 
     {#if !inAuto}

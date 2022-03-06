@@ -8,6 +8,7 @@
   export let primed: boolean = false;
   export let reagent: Reagent | ReagentGroup;
   export let fc_: 0 | 1;
+  export let invalid: boolean = false;
 
   function nameInvalid(s: string) {
     if (!s) return true;
@@ -22,12 +23,28 @@
     if (count(ports)[p] > 1) return true;
     return false;
   }
+
+  // function groupInvalid(s: string) {
+  //   const ports = $us.exps[fc_].reagents.filter((r) => "port" in r.reagent).map((r) => (r.reagent as Reagent).port);
+  //   if (count(ports)[p] > 1) return true;
+  // }
 </script>
 
 {#if !("port" in reagent)}
   <!-- Reagent group -->
-  <td colspan="7" class="h-12 px-4 mx-4 text-xl font-medium transition-colors bg-orange-50 hover:bg-orange-100">
+  <td colspan="7" class="h-12 px-4 mx-4 text-xl font-medium transition-colors bg-violet-50 hover:bg-violet-100">
     Group <input bind:value={reagent.name} class:invalid={nameInvalid(reagent.name)} type="text" class="w-32 m-2 text-xl pretty bg-orange-50" required />
+  </td>
+  <!-- Close -->
+  <td class="bg-violet-50 hover:bg-violet-100" on:click={() => dispatch("delete")}>
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-2 cursor-pointer" viewBox="0 0 20 20" fill="currentColor">
+      <path
+        fill-rule="evenodd"
+        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+        clip-rule="evenodd"
+        class="s-TGrNU-FH6_7v"
+      />
+    </svg>
   </td>
 {:else}
   <!-- Reagent proper -->
@@ -63,18 +80,19 @@
       Prime
     </button>
   </td>
+
+  <!-- Close -->
+  <td on:click={() => dispatch("delete")}>
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-2 cursor-pointer" viewBox="0 0 20 20" fill="currentColor">
+      <path
+        fill-rule="evenodd"
+        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+        clip-rule="evenodd"
+        class="s-TGrNU-FH6_7v"
+      />
+    </svg>
+  </td>
 {/if}
-<!-- Close -->
-<td on:click={() => dispatch("delete")}>
-  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-2 cursor-pointer" viewBox="0 0 20 20" fill="currentColor">
-    <path
-      fill-rule="evenodd"
-      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-      clip-rule="evenodd"
-      class="s-TGrNU-FH6_7v"
-    />
-  </svg>
-</td>
 
 <style lang="postcss">
   .indigo {

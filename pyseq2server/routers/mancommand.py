@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import traceback
 from asyncio import CancelledError, Task
 from contextlib import contextmanager
 from logging import getLogger
@@ -52,7 +53,7 @@ class FCCmd(BaseModel):
 
 class CommandWeb(BaseModel):
     move: MoveManual | None = None
-    cmd: Literal["preview", "capture", "autofocus"] | None = None
+    cmd: Literal["preview0", "preview1", "capture", "autofocus"] | None = None
     fccmd: FCCmd | None = None
 
 
@@ -63,6 +64,7 @@ def cancel_wrapper(q_cmd: QCmd, q_log: asyncio.Queue[str], fast_refresh: asyncio
         yield
     except BaseException as e:
         logger.error(f"Error: {type(e).__name__}: {e}")
+        traceback.print_exception(e)
         raise e
     finally:
         fast_refresh.clear()
@@ -87,11 +89,20 @@ async def cmd_endpoint(ws: WebSocket) -> None:
             c = cmd.cmd
             update_block("capturing" if c == "capture" else "previewing")
             p = us.image_params.copy()
-            if c == "capture":
-                p.save = True
-            else:
-                p.save = False
-                p.z_from, p.z_to = 0, 0
+            q_cmd.put_nowait((0, 0, 0))
+            match c:
+                case "capture":
+                    p.save = True
+                case "preview0" | "preview1" as c:
+                    p.save = False
+                    p.z_from, p.z_to = 0, 0
+                    if c == "preview0":
+                        p.xy1 = (p.xy0[0], p.xy0[1] - 0.768)
+                    else:
+                        p.xy0 = (p.xy1[0], p.xy1[1] + 0.768)
+                case _:
+                    assert False, "Should not be here"
+
             new_image = await p.run(fcs, p.fc, imager, q_cmd)  # type: ignore
             ws.app.state.img = update_img(new_image)
             q_cmd.put_nowait(CommandResponse(msg="imgReady"))  # Doesn't seem to send with 1.
@@ -139,16 +150,18 @@ async def cmd_endpoint(ws: WebSocket) -> None:
                     case MoveManual(_) as m:
                         task = asyncio.create_task(cmd_move(m))
 
-                    case CommandWeb(cmd="capture") | CommandWeb(cmd="preview"):
+                    case CommandWeb(cmd="capture") | CommandWeb(cmd="preview0") | CommandWeb(cmd="preview1"):
                         if not task.done():
                             q_cmd.put_nowait(CommandResponse(error=f"Old command still running: {task}."))
                             continue
                         task = asyncio.create_task(cmd_image(cmd))
+
+                    case CommandWeb(cmd="autofocus"):
+                        task = asyncio.create_task(cmd_autofocus())
+
                     case CommandWeb(cmd="stop"):
                         logger.warning("Received stop signal.")
                         task.cancel()
-                    case CommandWeb(cmd="autofocus"):
-                        task = asyncio.create_task(cmd_autofocus())
 
                     case CommandWeb(fccmd=FCCmd(fc=fc, cmd="validate")):
                         task = asyncio.create_task(cmd_validate(fc))
