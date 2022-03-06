@@ -3,7 +3,7 @@ import type { Writable } from "svelte/store";
 import { writable } from "svelte/store";
 import { cmdDefaults, TakeImage } from "./command";
 import { genExperimentDefault, NExperiment } from "./experiment";
-import { Img, imgDefault } from "./imaging";
+import { AFImg, Img, imgDefault } from "./imaging";
 import { Status, statusDefault } from "./status";
 import writableWebSocket, { AsymWritable, asymWritableWebSocket, readableWebSocket } from "./ws_store";
 
@@ -35,16 +35,25 @@ export type FCCmd = {
   cmd: "start" | "validate" | "stop";
 };
 
-export type LocalInfo = { mode: "automatic" | "editingA" | "editingB" | "manual"; connected: boolean; img: Img; afimg: string[] };
-export const localStore: Writable<LocalInfo> = writable({ mode: "automatic", connected: false, img: { ...imgDefault }, afimg: Array(259).fill("") });
+export type LocalInfo = { mode: "automatic" | "editingA" | "editingB" | "manual"; connected: boolean; img: Img; afimg: AFImg };
+export const localStore: Writable<LocalInfo> = writable({
+  mode: "automatic",
+  connected: false,
+  img: { ...imgDefault },
+  afimg: { afimg: Array(259).fill(""), laplacian: Array(259).fill(0) },
+});
 
 export const statusStore: Writable<Status> =
-  try_connect && browser ? writableWebSocket(`ws://${window.location.hostname}:8000/status`, { ...statusDefault }, { localStore, sendOnSet: false }) : writable({ ...statusDefault });
+  try_connect && browser
+    ? writableWebSocket(`ws://${window.location.hostname}:8000/status`, { ...statusDefault }, { localStore, sendOnSet: false })
+    : writable({ ...statusDefault });
 
 export const userStore: Writable<UserSettings> = writable({ ...userDefault });
 
 const user_ws: Writable<UserSettings> =
-  try_connect && browser ? writableWebSocket(`ws://${window.location.hostname}:8000/user`, { ...userDefault }, { beforeOpen: initial_get }) : writable({ ...userDefault });
+  try_connect && browser
+    ? writableWebSocket(`ws://${window.location.hostname}:8000/user`, { ...userDefault }, { beforeOpen: initial_get })
+    : writable({ ...userDefault });
 
 export type MoveManual = {
   xy0: [number?, number?];
@@ -59,7 +68,11 @@ export type MoveManual = {
 
 export type CommandResponse = { step?: [number, number, number]; msg?: string; error?: string };
 export type CommandWeb = { move?: Partial<MoveManual>; cmd?: "preview" | "capture" | "stop" | "autofocus"; fccmd?: FCCmd };
-export const cmdStore: AsymWritable<Partial<CommandResponse>, Partial<CommandWeb>> = asymWritableWebSocket(`ws://${browser ? window.location.hostname : ""}:8000/cmd`, { msg: "ok" }, { cmd: "stop" });
+export const cmdStore: AsymWritable<Partial<CommandResponse>, Partial<CommandWeb>> = asymWritableWebSocket(
+  `ws://${browser ? window.location.hostname : ""}:8000/cmd`,
+  { msg: "ok" },
+  { cmd: "stop" }
+);
 
 export async function initial_get() {
   if (browser) {
@@ -110,7 +123,7 @@ function updateImg(c: CommandResponse) {
     } else if (c.msg === "afimgReady") {
       fetch(`http://${window.location.hostname}:8000/afimg`)
         .then((response: Response) => response.json())
-        .then((afimg: { afimg: string[] }) => localStore.update((l) => ({ ...l, ...afimg })))
+        .then((afimg: AFImg) => localStore.update((l) => ({ ...l, afimg })))
         .catch((e) => alert(e));
       userStore.update((u) => ({ ...u, block: "" }));
     } else if (c.msg === "moveDone") {

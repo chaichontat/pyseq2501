@@ -15,7 +15,7 @@ from websockets.exceptions import ConnectionClosedOK
 from pyseq2 import FlowCells, Imager
 from pyseq2.experiment import Experiment
 from pyseq2.experiment.command import Autofocus
-from pyseq2server.imaging import Img, update_afimg, update_img
+from pyseq2server.imaging import AFImg, Img, update_afimg, update_img
 from pyseq2server.routers.status import update_block
 
 from ..api_types import CommandResponse, MoveManual, NExperiment, UserSettings
@@ -100,9 +100,8 @@ async def cmd_endpoint(ws: WebSocket) -> None:
     async def cmd_autofocus():
         with cancel_wrapper(q_cmd, q_log, fast_refresh):
             update_block("capturing")
-            # point, stack = await imager.autofocus()
-            stack = np.load("C:\\Users\\Chaichontat\\pyseq2501\\pyseq2\\working.npy")
-            ws.app.state.afimg = update_afimg(stack[:, :, 896:1152])
+            point, laplacian, stack = await imager.autofocus()
+            ws.app.state.afimg = update_afimg(stack[:, :, 896:1152], list(laplacian))
             update_block("")
             q_cmd.put_nowait(CommandResponse(msg="afimgReady"))
 
@@ -174,6 +173,6 @@ async def get_img(request: Request):
     return request.app.state.img
 
 
-@router.get("/afimg")
+@router.get("/afimg", response_model=AFImg)
 async def get_afimg(request: Request):
     return request.app.state.afimg

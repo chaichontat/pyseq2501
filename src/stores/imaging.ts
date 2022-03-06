@@ -3,6 +3,11 @@ export type Hist = {
   bin_edges: number[];
 };
 
+export type AFImg = {
+  afimg: string[];
+  laplacian: number[];
+};
+
 export type Img = {
   n: number;
   img: string[];
@@ -11,4 +16,10 @@ export type Img = {
   dim: [number, number];
 };
 
-export const imgDefault: Readonly<Img> = { n: 0, img: [""], hist: [{ counts: [10], bin_edges: [0] }], channels: [false, false, false, false], dim: [0, 0] };
+export const imgDefault: Readonly<Img> = {
+  n: 0,
+  img: [""],
+  hist: [{ counts: [10], bin_edges: [0] }],
+  channels: [false, false, false, false],
+  dim: [0, 0],
+};

@@ -1,5 +1,13 @@
 {
-  "printWidth": 200,
+  "printWidth": 150,
   "useTabs": false,
-  "htmlWhitespaceSensitivity": "ignore"
+  "htmlWhitespaceSensitivity": "ignore",
+  "overrides": [
+    {
+      "files": "*.svelte",
+      "options": {
+        "printWidth": 200
+      }
+    }
+  ]
 }

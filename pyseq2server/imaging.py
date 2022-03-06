@@ -16,6 +16,7 @@ class Hist(BaseModel):
 
 class AFImg(BaseModel):
     afimg: list[str]
+    laplacian: list[float]
 
 
 class Img(BaseModel):
@@ -26,9 +27,9 @@ class Img(BaseModel):
     dim: tuple[int, int]
 
 
-def update_afimg(stack: UInt16Array) -> AFImg:
+def update_afimg(stack: UInt16Array, laplacian: list[float]) -> AFImg:
     minmax = (stack.min(), stack.max())
-    return AFImg(afimg=[process_img(i, minmax) for i in stack])
+    return AFImg(afimg=[process_img(i, minmax) for i in stack], laplacian=laplacian)
 
 
 def update_img(arr: UInt16Array) -> Img:

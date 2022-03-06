@@ -63,7 +63,9 @@ def gen_server():
 
         app.state.user_settings = jsonable_encoder(user)
         app.state.img = update_img(np.random.randint(0, 256, (4, 128, 2048), dtype=np.uint8))
-        app.state.afimg = update_afimg(np.random.randint(0, 256, (259, 64, 256), dtype=np.uint8))
+        app.state.afimg = update_afimg(
+            np.random.randint(0, 256, (259, 64, 256), dtype=np.uint8), laplacian=[0 for _ in range(259)]
+        )
 
     app.on_event("startup")(setup_backend)
     app.include_router(status.router)
