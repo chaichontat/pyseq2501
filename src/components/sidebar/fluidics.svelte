@@ -7,7 +7,7 @@
 
   const ports = [...Array(20).keys()].filter((x) => x != 0 && x != 9);
   let selected: number[] = [];
-  let v_pull: number = 2000;
+  let v_pull: number = 250;
   let v_push: number = 2000;
   let wait: number = 26;
   let vol: number = 250;
@@ -30,7 +30,7 @@
       if (!fcs[i]) continue;
 
       const expt: NExperiment = {
-        name: "pump",
+        name: `pump${i}`,
         path: "",
         fc: Boolean(i),
         reagents,
@@ -38,7 +38,7 @@
       };
 
       $us.exps[i] = expt;
-      setTimeout(() => ($cmdStore = { fccmd: { fc: Boolean(i), cmd: "start" } }), 100);
+      setTimeout(() => ($cmdStore = { fccmd: { fc: Boolean(i), cmd: "start" } }), 500); // For usersettings to sync to server.
       $ss.fcs[i].running = true;
     }
   }

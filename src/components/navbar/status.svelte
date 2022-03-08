@@ -12,7 +12,9 @@
   let div: HTMLElement;
   let latest: number;
   $: {
-    if (browser && latest !== $ss.msg.t) {
+    // Same log message can be sent at different times. Need to flash when that happens.
+    // Also, somehow some messages could be sent within 100 ns of each other.
+    if (browser && (latest !== $ss.msg.t || message !== $ss.msg.msg)) {
       message = $ss.msg.msg;
       latest = $ss.msg.t;
       flash(div);

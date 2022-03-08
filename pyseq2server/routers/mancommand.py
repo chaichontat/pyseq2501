@@ -124,14 +124,15 @@ async def cmd_endpoint(ws: WebSocket) -> None:
             await m.run(imager, fc)
             logger.info(f"Done set {to_show}.")
 
-    async def cmd_validate(fc: bool) -> Experiment:
+    async def cmd_validate(fc: bool, *, shout: bool = False) -> Experiment:
         with cancel_wrapper(q_cmd, q_log, fast_refresh):
             out = NExperiment(**UserSettings.construct(**ws.app.state.user_settings).exps[fc]).to_experiment()  # type: ignore
-            q_log.put_nowait("Validation successful.")
+            if shout:
+                q_log.put_nowait("Validation successful.")
         return out
 
     async def cmd_run_exp(fc: bool):
-        exp = await cmd_validate(fc)
+        exp = await cmd_validate(fc, shout=False)
         with cancel_wrapper(q_cmd, q_log, fast_refresh, fc):
             update_block("capturing", fc)
             await exp.run(fcs, fc, imager, q_cmd)

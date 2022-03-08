@@ -27,6 +27,8 @@ def setup_web_logger(
         logging.getLogger(_log).handlers = logging.getLogger("pyseq2").handlers if _log == "fastapi" else []
         logging.getLogger(_log).setLevel(level)
 
+    ps2 = logging.getLogger("pyseq2")
+    ps2e = logging.getLogger("pyseq2.experiment")
     ps2s = logging.getLogger("pyseq2server")
 
     web_handlers = [logging.StreamHandler(AsyncQueueStream(q)) for q in (q1, q2)]
@@ -35,11 +37,15 @@ def setup_web_logger(
         web_handler.setFormatter(logging.Formatter("%(message)s"))
     # if set_root:
 
-    logging.getLogger("pyseq2.experiment").handlers.append(web_handlers[0])
-    logging.getLogger("pyseq2.experiment").propagate = False
-    logging.getLogger("pyseq2").handlers.append(web_handlers[1])
+    # pyseq2 logs to secondary display.
+    ps2.handlers.append(web_handlers[1])
+    ps2e.propagate = False
 
-    ps2s.handlers.append(web_handlers[0])
+    # pyseq2.experiment logs to primary display.
+    ps2e.handlers = [web_handlers[0], ps2.handlers[0]]  # RichHandler
+
+    # pyseq2server logs to primary display.
+    ps2s.handlers = [web_handlers[0], ps2.handlers[0]]
     ps2s.setLevel(level)
 
     # print(
