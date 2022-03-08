@@ -1,28 +1,31 @@
 <script lang="ts">
-  const ports = [...Array(20).keys()].filter((x) => x != 0 && x != 9);
-
-  let selected: number[] = [];
-  import { cmdStore, userStore as us, statusStore as ss } from "$src/stores/store";
-  import { checkRange } from "$src/utils";
   import type { NCmd, NExperiment, NReagent } from "$src/stores/experiment";
-  import Go from "../main/go.svelte";
   import type { Status } from "$src/stores/status";
+  import { cmdStore, statusStore as ss, userStore as us } from "$src/stores/store";
+  import { checkRange, flash } from "$src/utils";
+  import Go from "../main/go.svelte";
 
+  const ports = [...Array(20).keys()].filter((x) => x != 0 && x != 9);
+  let selected: number[] = [];
   let v_pull: number = 2000;
   let v_push: number = 2000;
   let wait: number = 26;
-  let vol: number = 2000;
+  let vol: number = 250;
   let fcs: [boolean, boolean] = [false, false];
 
+  let fcdiv: HTMLSpanElement;
+
   function genExperiment() {
-    if (fcs.every((f) => !f)) alert("Please select at least one flowcell.");
+    if (fcs.every((f) => !f)) {
+      flash(fcdiv);
+      return;
+    }
 
     const raw = selected.map((p): NReagent => ({ uid: p, reagent: { name: p.toString(10), port: p, v_pull: v_pull, v_prime: 2000, v_push: v_push, wait: wait } }));
+    const cmds: NCmd[] = [{ uid: 0, cmd: { op: "pump", reagent: "group", volume: vol } }];
+    if (raw.length > 1) cmds.push({ uid: 1, cmd: { op: "goto", step: 1, n: raw.length - 1 } });
 
     const reagents: NReagent[] = [{ uid: 0, reagent: { name: "group" } }, ...raw];
-    const cmds: NCmd[] = [{ uid: 0, cmd: { op: "pump", reagent: "group", volume: vol } }];
-    if (reagents.length > 2) cmds.push({ uid: 1, cmd: { op: "goto", step: 1, n: reagents.length - 1 } });
-
     for (let i = 0; i < 2; i++) {
       if (!fcs[i]) continue;
 
@@ -53,7 +56,7 @@
 </script>
 
 <div class="flex items-center mt-2 ml-6 gap-x-6 ">
-  <select multiple disabled={fcs.every((f) => !f)} class="min-h-[550px] rounded-lg overflow-y-auto text-center px-0 py-0" bind:value={selected}>
+  <select multiple class="min-h-[550px] rounded-lg overflow-y-auto text-center px-0 py-0" bind:value={selected}>
     {#each ports as port}
       <option class="px-6 py-1" value={port}>
         {port}
@@ -62,7 +65,7 @@
   </select>
 
   <div class="flex flex-col gap-y-5">
-    <span class="flex flex-col items-center pt-1 pb-2 font-medium text-gray-800 rounded-lg bg-sky-200/30 gap-y-1">
+    <span class="flex flex-col items-center pt-1 pb-2 font-medium text-gray-800 rounded-lg bg-sky-200/30 gap-y-1" bind:this={fcdiv}>
       <p>Flowcell</p>
       <span class="flex justify-center space-x-4 ">
         <label>

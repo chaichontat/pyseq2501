@@ -15,7 +15,6 @@ from websockets.exceptions import ConnectionClosedOK
 
 from pyseq2 import FlowCells, Imager
 from pyseq2.experiment import Experiment
-from pyseq2.experiment.command import Autofocus
 from pyseq2server.imaging import AFImg, Img, update_afimg, update_img
 from pyseq2server.routers.status import update_block
 
@@ -58,7 +57,9 @@ class CommandWeb(BaseModel):
 
 
 @contextmanager
-def cancel_wrapper(q_cmd: QCmd, q_log: asyncio.Queue[str], fast_refresh: asyncio.Event):
+def cancel_wrapper(
+    q_cmd: QCmd, q_log: asyncio.Queue[str], fast_refresh: asyncio.Event, fc: bool | None = None
+):
     fast_refresh.set()
     try:
         yield
@@ -68,7 +69,7 @@ def cancel_wrapper(q_cmd: QCmd, q_log: asyncio.Queue[str], fast_refresh: asyncio
         raise e
     finally:
         fast_refresh.clear()
-        update_block("")
+        update_block("", fc)
 
 
 async def meh():
@@ -113,7 +114,6 @@ async def cmd_endpoint(ws: WebSocket) -> None:
             update_block("capturing")
             point, laplacian, stack = await imager.autofocus()
             ws.app.state.afimg = update_afimg(stack[:, :, 896:1152], list(laplacian))
-            update_block("")
             q_cmd.put_nowait(CommandResponse(msg="afimgReady"))
 
     async def cmd_move(m: MoveManual):
@@ -132,10 +132,9 @@ async def cmd_endpoint(ws: WebSocket) -> None:
 
     async def cmd_run_exp(fc: bool):
         exp = await cmd_validate(fc)
-        with cancel_wrapper(q_cmd, q_log, fast_refresh):
+        with cancel_wrapper(q_cmd, q_log, fast_refresh, fc):
             update_block("capturing", fc)
             await exp.run(fcs, fc, imager, q_cmd)
-            update_block("", fc)
 
     task: Task[Any] = asyncio.create_task(meh())
     fc_tasks: list[Task[Any]] = [asyncio.create_task(meh()), asyncio.create_task(meh())]
