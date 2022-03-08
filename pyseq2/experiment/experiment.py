@@ -160,11 +160,11 @@ class Experiment(BaseModel):
         g = self.gen_log(i, len(compiled))
         for step, c in enumerate(compiled, 1):
             try:
-                logger.info(g(step, f"{c.op.capitalize()} running."))
+                logger.info(g(step, f"{c} running."))
                 await c.run(fcs, i, imager)
-                logger.info(g(step, f"{c.op.capitalize()} finished."))
+                logger.info(g(step, f"{c} finished."))
             except BaseException as e:
-                logger.critical(g(step, f"{c.op.capitalize()} {type(e).__name__}: {e}."))
+                logger.critical(g(step, f"{c} {type(e).__name__}: {e}."))
                 if stop_on_exception:
                     raise e
 

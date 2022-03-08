@@ -62,6 +62,11 @@ class Pump(BaseModel, AbstractCommand):
     def default(cls) -> Pump:
         return Pump(reagent="water")
 
+    def __str__(self) -> str:
+        if isinstance(self.reagent, Reagent):
+            return f"Pump `{self.reagent.name}`"
+        return f"Pump `{self.reagent}`"
+
 
 class Prime(BaseModel, AbstractCommand):
     reagent: str | Reagent
@@ -74,6 +79,11 @@ class Prime(BaseModel, AbstractCommand):
     @classmethod
     def default(cls) -> Prime:
         return Prime(reagent="water")
+
+    def __str__(self) -> str:
+        if isinstance(self.reagent, Reagent):
+            return f"Prime `{self.reagent.name}`"
+        return f"Prime `{self.reagent}`"
 
 
 class Temp(BaseModel, AbstractCommand):
@@ -94,6 +104,9 @@ class Temp(BaseModel, AbstractCommand):
     def default(cls) -> Temp:
         return Temp(temp=25)
 
+    def __str__(self) -> str:
+        return f"Wait temp to {self.temp}"
+
 
 class Hold(BaseModel, AbstractCommand):
     time: Seconds
@@ -105,6 +118,9 @@ class Hold(BaseModel, AbstractCommand):
     @classmethod
     def default(cls) -> Hold:
         return Hold(time=1)
+
+    def __str__(self) -> str:
+        return f"Hold {self.time} s"
 
 
 class Autofocus(BaseModel, AbstractCommand):
@@ -122,6 +138,9 @@ class Autofocus(BaseModel, AbstractCommand):
     @classmethod
     def default(cls) -> Autofocus:
         return Autofocus(channel=0, laser_onoff=True, laser=5, od=0.0)
+
+    def __str__(self) -> str:
+        return f"Autofocus channel {self.channel}"
 
 
 class TakeImage(BaseModel, AbstractCommand):
@@ -235,6 +254,9 @@ class TakeImage(BaseModel, AbstractCommand):
             .max(4)
             .max(2)
         )  # Max pooling
+
+    def __str__(self) -> str:
+        return f"Take image `{self.name}`"
 
 
 class Goto(BaseModel, AbstractCommand):
