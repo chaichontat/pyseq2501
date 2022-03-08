@@ -1,7 +1,7 @@
 def fake_x(s: str) -> str:
     match s.split(" "):
         case ["PR", x]:
-            return f"PR {x}\n0"
+            return f"PR {x}\n12000"
         case ["MA", _]:
             return "MA 0,1\n?!"
         case _:

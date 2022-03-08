@@ -128,7 +128,7 @@ class FakeAPI:
     ) -> bool:
         pNewestFrameIndex.contents.value = self.ready
         pFrameCount.contents.value = self.fc
-        self.fc += 1
+        self.fc += 4
         return True
 
     def dcam_freeframe(self, h: Handle) -> bool:
