@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from contextlib import asynccontextmanager
-from typing import Annotated, AsyncGenerator, Callable, ClassVar, Literal, TypeVar
+from typing import Annotated, AsyncGenerator, Callable, ClassVar, Literal, TypeVar, cast
 
 from pyseq2.base.instruments import UsesSerial
 from pyseq2.com.async_com import COM, CmdParse
@@ -74,11 +74,11 @@ class Pump(UsesSerial):
 
     @classmethod
     async def ainit(cls, name: Literal["pumpa", "pumpb"], port_tx: str) -> Pump:
-        self = cls(name)
+        self = cls(cast(Literal["A", "B"], name[-1].upper()))
         self.com = await COM.ainit(name, port_tx)
         return self
 
-    def __init__(self, name: Literal["pumpa", "pumpb"]) -> None:
+    def __init__(self, name: Literal["A", "B"]) -> None:
         self.com: COM
         self.name = name
 
@@ -89,15 +89,15 @@ class Pump(UsesSerial):
             else:
                 await asyncio.sleep(0.25)
         else:
-            raise TimeoutError("Pump not ready after too long.")
+            raise TimeoutError(f"Pump {self.name} not ready after too long.")
 
     async def initialize(self) -> None:
         async with self.com.big_lock:
-            logger.info(f"Initializing {self.name}")
+            logger.info(f"Initializing pump {self.name}.")
             await self.com.send(PumpCmd.INIT)
             await asyncio.sleep(1)
             await self._pushpull("push", 0)
-            logger.info(f"{self.name} initialized.")
+            logger.info(f"Pump {self.name} initialized.")
 
     @property
     async def pos(self) -> int:
@@ -130,24 +130,28 @@ class Pump(UsesSerial):
                     raise ValueError("Invalid command.")
 
         if not IS_FAKE():
-            logger.debug("Waiting for pumping to finish.")
+            # logger.debug("Pump {self.name}: Waiting for pumping to finish.")
             await asyncio.sleep(abs(target - pos) / speed + 0.5)
         await self.wait(retries=retries)
 
     @asynccontextmanager
     async def _pump(self, vol: Step, *, v_pull: Sps = 400, v_push: Sps = 6400) -> AsyncGenerator[None, None]:
         try:
+            logger.info(f"Pump {self.name}: Pulling.")
             await self._pushpull("pull", vol, speed=v_pull)
+            logger.info(f"Pump {self.name}: Pull completed.")
             yield
         finally:
+            logger.info(f"Pump {self.name}: Pushing.")
             await self._pushpull("push", 0, speed=v_push)
+            logger.info(f"Pump {self.name}: Push completed.")
 
     async def pump(
         self, vol: Step, *, v_pull: Sps = 400, v_push: Sps = 6400, wait: Annotated[float, "s"] = 26
     ) -> None:
         if (pos := await self.pos) != 0:
-            logger.warning(f"Pump {self.name} was not fully pulled out but at pos {pos}.")
+            logger.warning(f"Pump {self.name} was not fully pulled out at start but at pos {pos}.")
 
         async with self._pump(vol, v_pull=v_pull, v_push=v_push):
-            logger.info(f"Waiting for {wait}s.")
+            logger.info(f"Pump {self.name}: Waiting for {wait} s.")
             await asyncio.sleep(wait)  # From HiSeq log. Wait for pressure to equalize.
