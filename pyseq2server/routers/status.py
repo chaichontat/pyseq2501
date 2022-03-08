@@ -59,7 +59,7 @@ def update_block(b: BlockState, fc: int | None = None) -> None:
     try:
         if fast_refresh.is_set():
             ...
-        else:
+        else:  # Ping once.
             fast_refresh.set()
             fast_refresh.clear()
     except AttributeError:

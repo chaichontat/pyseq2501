@@ -2,17 +2,58 @@
   const ports = [...Array(20).keys()].filter((x) => x != 0 && x != 9);
 
   let selected: number[] = [];
+  import { cmdStore, userStore as us, statusStore as ss } from "$src/stores/store";
   import { checkRange } from "$src/utils";
+  import type { NCmd, NExperiment, NReagent } from "$src/stores/experiment";
   import Go from "../main/go.svelte";
+  import type { Status } from "$src/stores/status";
 
   let v_pull: number = 2000;
   let v_push: number = 2000;
   let wait: number = 26;
+  let vol: number = 2000;
   let fcs: [boolean, boolean] = [false, false];
+
+  function genExperiment() {
+    if (fcs.every((f) => !f)) alert("Please select at least one flowcell.");
+
+    const raw = selected.map((p): NReagent => ({ uid: p, reagent: { name: p.toString(10), port: p, v_pull: v_pull, v_prime: 2000, v_push: v_push, wait: wait } }));
+
+    const reagents: NReagent[] = [{ uid: 0, reagent: { name: "group" } }, ...raw];
+    const cmds: NCmd[] = [{ uid: 0, cmd: { op: "pump", reagent: "group", volume: vol } }];
+    if (reagents.length > 2) cmds.push({ uid: 1, cmd: { op: "goto", step: 1, n: reagents.length - 1 } });
+
+    for (let i = 0; i < 2; i++) {
+      if (!fcs[i]) continue;
+
+      const expt: NExperiment = {
+        name: "pump",
+        path: "",
+        fc: Boolean(i),
+        reagents,
+        cmds,
+      };
+
+      $us.exps[i] = expt;
+      setTimeout(() => ($cmdStore = { fccmd: { fc: Boolean(i), cmd: "start" } }), 100);
+      $ss.fcs[i].running = true;
+    }
+  }
+
+  let disabled: boolean = false;
+  function isDisabled(s: Status, f: [boolean, boolean]): boolean {
+    for (let i = 0; i < 2; i++) {
+      if (!f[i]) continue;
+      if (s.fcs[i].running) return true;
+    }
+    return false;
+  }
+
+  $: disabled = isDisabled($ss, fcs);
 </script>
 
 <div class="flex items-center mt-2 ml-6 gap-x-6 ">
-  <select multiple disabled={fcs.every((f) => !f)} class="min-h-[500px] rounded-lg overflow-y-auto text-center px-0 py-0" bind:value={selected}>
+  <select multiple disabled={fcs.every((f) => !f)} class="min-h-[550px] rounded-lg overflow-y-auto text-center px-0 py-0" bind:value={selected}>
     {#each ports as port}
       <option class="px-6 py-1" value={port}>
         {port}
@@ -56,8 +97,12 @@
       Wait time (s)
       <input type="number" min="1" max="60000" step="1" bind:value={wait} use:checkRange={[0, 60000]} class="pr-2 text-right pretty" />
     </div>
+    <div class="flex flex-col font-medium gap-y-1">
+      Volume (μL)
+      <input type="number" min="1" max="60000" step="1" bind:value={vol} use:checkRange={[0, 60000]} class="pr-2 text-right pretty" />
+    </div>
 
-    <Go cl="text-lg mt-2" disabled={fcs.every((f) => !f)}>Pump</Go>
+    <Go cl="text-lg mt-2" on:click={genExperiment} {disabled}>Pump</Go>
   </div>
 </div>
 
