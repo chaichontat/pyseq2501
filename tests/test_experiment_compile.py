@@ -18,7 +18,7 @@ def test_basic():
     ops.append(Autofocus(channel=0, laser_onoff=True, laser=5, od=0))
     ops.append(Temp(temp=25))
 
-    experiment = Experiment("wash_ports_123", False, path=".", cmds=ops, reagents=waters)
+    experiment = Experiment(name="wash_ports_123", fc=False, path=".", cmds=ops, reagents=waters)
     assert Experiment.parse_raw(experiment.json()) == experiment
     assert Experiment.parse_obj(yaml.safe_load(yaml.dump(experiment.dict()))) == experiment
 
@@ -35,8 +35,8 @@ def test_compile(n: int):
     if cond:
         return
 
-    ops: list[Cmd] = [Pump(reagent="water"), Pump(reagent="gr"), Goto(step=0, n=n - 1)]
-    experiment_auto = Experiment("experiment", False, path=".", cmds=ops, reagents=mix)
+    ops: list[Cmd] = [Pump(reagent="water"), Pump(reagent="gr"), Goto(step=1, n=n - 1)]
+    experiment_auto = Experiment(name="experiment", fc=False, path=".", cmds=ops, reagents=mix)
 
     ops = []
     for i in range(1, n + 1):
@@ -46,8 +46,8 @@ def test_compile(n: int):
     w: Reagents = [Reagent(name="water", port=14)]
     w += antibodies
     experiment_man = Experiment(
-        "experiment",
-        False,
+        name="experiment",
+        fc=False,
         path=".",
         cmds=ops,
         reagents=w,

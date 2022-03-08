@@ -12,10 +12,10 @@ async def test_run():
     fcs = await FlowCells.ainit(ports)
 
     exp = Experiment(
-        "test",
-        False,
+        name="test",
+        fc=False,
         path=".",
         reagents=[Reagent(name="water", port=14, wait=0.1)],
-        cmds=[Pump(reagent="water")],
+        cmds=[Pump(reagent="water") for _ in range(10)],
     )
     await exp.run(fcs, False, imager)
