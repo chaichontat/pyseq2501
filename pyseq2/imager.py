@@ -5,7 +5,9 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Literal, Optional, TypeVar, cast
+from typing import Any, Awaitable, Callable
+from typing import Literal as L
+from typing import Optional, TypeVar, cast
 
 import numpy as np
 from pydantic import BaseModel
@@ -17,7 +19,7 @@ from .imaging.fpga import FPGA
 from .imaging.laser import Laser, Lasers
 from .imaging.xstage import XStage
 from .imaging.ystage import YStage
-from .utils.utils import Singleton
+from .utils.utils import IS_FAKE, Singleton
 
 logger = getLogger(__name__)
 executor = ThreadPoolExecutor()
@@ -186,7 +188,7 @@ class Imager(metaclass=Singleton):
         self,
         n_bundles: int,
         dark: bool = False,
-        channels: list[Literal[0, 1, 2, 3]] = [0, 1, 2, 3],
+        channels: list[L[0, 1, 2, 3]] = [0, 1, 2, 3],
         move_back_to_start: bool = True,
         event_queue: tuple[asyncio.Queue[T], Callable[[int], T]] | None = None,
     ) -> tuple[UInt16Array, State]:
@@ -250,7 +252,9 @@ class Imager(metaclass=Singleton):
     def calc_delta_pos(n_px_y: int) -> int:
         return int(n_px_y * Imager.UM_PER_PX * YStage.STEPS_PER_UM)
 
-    async def autofocus(self, channel: Literal[0, 1, 2, 3] = 1) -> tuple[int, UInt16Array]:
+    async def autofocus(
+        self, channel: L[0, 1, 2, 3] = 1
+    ) -> tuple[int, np.ndarray[L[259], np.dtype[np.float64]], UInt16Array]:
         """Moves to z_max and takes 232 (2048 × 5) images while moving to z_min.
         Returns the z position of maximum intensity and the images.
         """
@@ -276,17 +280,19 @@ class Imager(metaclass=Singleton):
                         (height, 4096),
                         fut_capture=start_move,
                         mode=Mode.FOCUS_SWEEP,
-                        cam=cast(Literal[0, 1], cam),
+                        cam=cast(L[0, 1], cam),
                     )
 
             stack: UInt16Array = np.reshape(img[CHANNEL[channel] - 2 * cam], (n_bundles, height, 2048))
+            if IS_FAKE() and (path := Path(__file__).parent / "imaging" / "afdata.npy").exists():
+                stack = np.load(path)
             var_laplacian = np.var(self.laplacian(stack), axis=(1, 2))
 
             target = int(z_max - ((z_max - z_min) * np.argmax(var_laplacian) / n_bundles))  # type: ignore
             logger.info(f"Done autofocus. Optimum={target}")
             if not 10000 < target < 50000:
                 logger.info(f"Target too close to edge, considering moving the tilt motors.")
-            return (target, stack)
+            return (target, var_laplacian, stack)
 
     @staticmethod
     def laplacian(img: UInt16Array) -> UInt16Array:

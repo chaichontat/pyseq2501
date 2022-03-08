@@ -114,8 +114,10 @@ class Autofocus(BaseModel, AbstractCommand):
     od: float
     op: Literal["autofocus"] = "autofocus"
 
-    async def run(self, fcs: FlowCells, i: bool, imager: Imager) -> None:
-        await imager.autofocus(self.channel)
+    async def run(
+        self, fcs: FlowCells, i: bool, imager: Imager
+    ) -> tuple[int, np.ndarray[Literal[259], np.dtype[np.float64]], UInt16Array]:
+        return await imager.autofocus(self.channel)
 
     @classmethod
     def default(cls) -> Autofocus:
