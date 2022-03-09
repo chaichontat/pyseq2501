@@ -3,7 +3,6 @@
   import type { Status } from "$src/stores/status";
   import { cmdStore, statusStore as ss, userStore as us } from "$src/stores/store";
   import { checkRange, flash } from "$src/utils";
-  import Go from "../main/go.svelte";
 
   const ports = [...Array(20).keys()].filter((x) => x != 0 && x != 9);
   let selected: number[] = [];
@@ -14,49 +13,64 @@
   let fcs: [boolean, boolean] = [false, false];
 
   let fcdiv: HTMLSpanElement;
+  let portList: HTMLSelectElement;
 
-  function genExperiment() {
-    if (fcs.every((f) => !f)) {
-      flash(fcdiv);
-      return;
-    }
+  let buttonState: "ok" | "stop" | "disabled" = "ok";
+  let currExp: [NExperiment | null, NExperiment | null] = [null, null];
+
+  function genExperiment(sel: number[], fs: [boolean, boolean], i: 0 | 1): NExperiment | null {
+    if (!fcs[i]) return null;
 
     const raw = selected.map((p): NReagent => ({ uid: p, reagent: { name: p.toString(10), port: p, v_pull: v_pull, v_prime: 2000, v_push: v_push, wait: wait } }));
     const cmds: NCmd[] = [{ uid: 0, cmd: { op: "pump", reagent: "group", volume: vol } }];
     if (raw.length > 1) cmds.push({ uid: 1, cmd: { op: "goto", step: 1, n: raw.length - 1 } });
 
     const reagents: NReagent[] = [{ uid: 0, reagent: { name: "group" } }, ...raw];
+
+    const expt: NExperiment = {
+      name: `pump${i}`,
+      path: "",
+      fc: Boolean(i),
+      reagents,
+      cmds,
+    };
+    return expt;
+  }
+
+  function runExperiment() {
+    if (fcs.every((f) => !f)) {
+      flash(fcdiv);
+      return;
+    }
+
+    if (selected.length == 0) {
+      flash(portList);
+      return;
+    }
     for (let i = 0; i < 2; i++) {
       if (!fcs[i]) continue;
-
-      const expt: NExperiment = {
-        name: `pump${i}`,
-        path: "",
-        fc: Boolean(i),
-        reagents,
-        cmds,
-      };
-
-      $us.exps[i] = expt;
-      setTimeout(() => ($cmdStore = { fccmd: { fc: Boolean(i), cmd: "start" } }), 500); // For usersettings to sync to server.
+      currExp[i] = genExperiment(selected, fcs, i as 0 | 1);
+      if (currExp[i] == null) return;
+      $us.exps[i] = currExp[i] as NExperiment;
+      setTimeout(() => ($cmdStore = { fccmd: { fc: Boolean(i), cmd: "start" } }), 400); // For usersettings to sync to server.
       $ss.fcs[i].running = true;
     }
   }
 
-  let disabled: boolean = false;
-  function isDisabled(s: Status, f: [boolean, boolean]): boolean {
+  function isDisabled(s: Status, f: [boolean, boolean]): "ok" | "stop" | "disabled" {
     for (let i = 0; i < 2; i++) {
       if (!f[i]) continue;
-      if (s.fcs[i].running) return true;
+      if (s.fcs[i].running) return currExp[i] === $us.exps[i] ? "stop" : "disabled";
     }
-    return false;
+    return "ok";
   }
 
-  $: disabled = isDisabled($ss, fcs);
+  $: currExp = [genExperiment(selected, fcs, 0), genExperiment(selected, fcs, 1)];
+  $: buttonState = isDisabled($ss, fcs);
 </script>
 
-<div class="flex items-center mt-2 ml-6 gap-x-6 ">
-  <select multiple class="min-h-[550px] rounded-lg overflow-y-auto text-center px-0 py-0" bind:value={selected}>
+<div class="flex items-center mt-2 ml-6 gap-x-6">
+  <select multiple class="min-h-[550px] rounded-lg overflow-y-auto text-center px-0 py-0" bind:value={selected} bind:this={portList}>
     {#each ports as port}
       <option class="px-6 py-1" value={port}>
         {port}
@@ -105,12 +119,35 @@
       <input type="number" min="1" max="60000" step="1" bind:value={vol} use:checkRange={[0, 60000]} class="pr-2 text-right pretty" />
     </div>
 
-    <Go cl="text-lg mt-2" on:click={genExperiment} {disabled}>Pump</Go>
+    <button
+      type="button"
+      class="px-4 py-1 text-lg font-semibold transition-all duration-100 rounded-lg white-button disabled:bg-gray-50 disabled:hover:bg-gray-50 disabled:active:bg-gray-50 disabled:text-gray-500"
+      class:blue={buttonState === "ok"}
+      class:orange={buttonState === "stop"}
+      tabindex="0"
+      on:click={runExperiment}
+      disabled={buttonState === "disabled"}
+    >
+      <div class="mx-auto">
+        {#if buttonState === "stop"}
+          Stop
+        {:else}
+          Pump
+        {/if}
+      </div>
+    </button>
   </div>
 </div>
 
 <style lang="postcss">
   .run {
     @apply transition-all bg-gradient-to-r from-blue-500 to-blue-700 shadow-blue-500/50 hover:from-blue-600 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 active:from-blue-700 disabled:text-gray-400 disabled:from-gray-50 disabled:via-gray-100 disabled:to-gray-200 disabled:shadow-gray-400/50 disabled:shadow-sm;
+  }
+  .blue {
+    @apply text-blue-800 border-blue-300 hover:bg-blue-100 active:bg-blue-200 bg-blue-50;
+  }
+
+  .orange {
+    @apply text-orange-800 border-orange-300 hover:bg-orange-100 active:bg-orange-200 bg-orange-50;
   }
 </style>
