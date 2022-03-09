@@ -244,9 +244,10 @@ class Imager(metaclass=Singleton):
 
             await self.y.move(pos if move_back_to_start else end_y_pos + 100000)  # Correct for overshoot.
             imgs = np.clip(np.flip(imgs, axis=1), 0, 4096)
-            if cam == 1:
-                return imgs[[x - 2 for x in c], :-128, :]  # type: ignore
-            return imgs[c, :-128, :], state  # Remove oversaturated first bundle.
+            return (
+                imgs[c if cam != 1 else [x - 2 for x in c], :-128, :],
+                state,
+            )  # Remove oversaturated first bundle.
 
     @staticmethod
     def calc_delta_pos(n_px_y: int) -> int:
