@@ -28,7 +28,7 @@
     const reagents: NReagent[] = [{ uid: 0, reagent: { name: "group" } }, ...raw];
 
     const expt: NExperiment = {
-      name: `pump${i}`,
+      name: `pump${{ 0: "A", 1: "B" }[i]}`,
       path: "",
       fc: Boolean(i),
       reagents,
@@ -148,6 +148,6 @@
   }
 
   .orange {
-    @apply text-orange-800 border-orange-300 hover:bg-orange-100 active:bg-orange-200 bg-orange-50;
+    @apply text-orange-900 border-orange-400 hover:bg-orange-300 active:bg-orange-400 bg-orange-200;
   }
 </style>

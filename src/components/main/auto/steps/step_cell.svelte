@@ -1,12 +1,12 @@
 <script lang="ts">
-  import Dropdown from "./dropdown.svelte";
-  import { userStore as us } from "$src/stores/store";
-  import type { Cmd, Ops } from "$src/stores/command";
-  import { createEventDispatcher } from "svelte";
-  import { checkRange } from "$src/utils";
   import Takeimage from "$src/components/main/takeimage/takeimage.svelte";
   import Modal from "$src/components/modal.svelte";
+  import type { Cmd, Ops } from "$src/stores/command";
+  import { userStore as us } from "$src/stores/store";
+  import { checkRange } from "$src/utils";
+  import { createEventDispatcher } from "svelte";
   import Preview from "../../preview.svelte";
+  import Dropdown from "./dropdown.svelte";
   export let n: number;
   export let cmd: Cmd;
 
@@ -16,18 +16,17 @@
   const dispatch = createEventDispatcher();
 
   const borderColor: { [key in Ops]: string } = {
-    pump: "blue",
-    prime: "sky",
-    takeimage: "red",
-    hold: "green",
-    temp: "teal",
-    autofocus: "orange",
-    goto: "red",
+    pump: "border-blue-300",
+    prime: "border-sky-300",
+    takeimage: "border-red-300",
+    hold: "border-green-300",
+    temp: "border-teal-300",
+    autofocus: "border-orange-300",
+    goto: "border-red-300",
   };
-  // $: cmd = { ...cmdDefaults[cmd.op], ...cmd }; // Second overwrites first.
 </script>
 
-<li class={`relative flex py-4 pb-6 pl-2 transition-all ease-in-out border-t-2 hover:bg-gray-50 border-${borderColor[cmd.op]}-300`}>
+<li class={`relative flex py-4 pb-6 pl-2 transition-all ease-in-out border-t-2 hover:bg-gray-50 ${borderColor[cmd.op]}`}>
   <!-- Close -->
   <svg xmlns="http://www.w3.org/2000/svg" class="absolute w-5 h-5 -mt-1 cursor-pointer right-2" viewBox="0 0 20 20" fill="currentColor" on:click={() => dispatch("delete")}>
     <path
@@ -40,33 +39,31 @@
   <!-- n -->
   <div class="mr-8">
     <span class="flex items-center justify-center text-lg font-bold bg-blue-100 rounded-full w-14 h-14">
-      <!-- {#key n} -->
       <div>{n}</div>
-      <!-- {/key} -->
     </span>
   </div>
 
   <div class="w-full mr-8">
-    <span class="flex gap-x-16 items-center">
+    <span class="flex items-center gap-x-16">
       <div><Dropdown bind:cmd /></div>
 
       <!-- Hold -->
       {#if cmd.op === "hold"}
         <p>
-          Time <input type="number" class="w-16 py-1 ml-3 mr-1 pretty font-medium" bind:value={cmd.time} use:checkRange={[0, 99]} min="0" max="99" />
+          Time <input type="number" class="w-16 py-1 ml-3 mr-1 font-medium pretty" bind:value={cmd.time} use:checkRange={[0, 99]} min="0" max="99" />
           h
-          <input type="number" class="w-16 py-1 ml-3 mr-1 pretty font-medium" bind:value={cmd.time} use:checkRange={[0, 59]} min="0" max="59" />
+          <input type="number" class="w-16 py-1 ml-3 mr-1 font-medium pretty" bind:value={cmd.time} use:checkRange={[0, 59]} min="0" max="59" />
           m
-          <input type="number" class="w-16 py-1 ml-3 mr-1 pretty font-medium" bind:value={cmd.time} use:checkRange={[0, 59]} min="0" max="59" />
+          <input type="number" class="w-16 py-1 ml-3 mr-1 font-medium pretty" bind:value={cmd.time} use:checkRange={[0, 59]} min="0" max="59" />
           s
         </p>
 
         <!--  Goto considered harmful -->
       {:else if cmd.op === "goto"}
         <p>
-          Go to <input type="number" class="w-16 py-1 mx-2 pretty font-medium" bind:value={cmd.step} use:checkRange={[1, n]} min="1" max={n} />
+          Go to <input type="number" class="w-16 py-1 mx-2 font-medium pretty" bind:value={cmd.step} use:checkRange={[1, n]} min="1" max={n} />
           for
-          <input type="number" class="w-16 py-1 mx-2 pretty font-medium" bind:value={cmd.n} use:checkRange={[1, Infinity]} min="1" />
+          <input type="number" class="w-16 py-1 mx-2 font-medium pretty" bind:value={cmd.n} use:checkRange={[1, Infinity]} min="1" />
           times.
         </p>
 
@@ -75,7 +72,7 @@
         <p>
           <span>
             Reagent
-            <select class="pretty mx-2">
+            <select class="mx-2 pretty">
               {#each $us.exps[fc_].reagents as { uid, reagent }}
                 {#if "port" in reagent}
                   <option>{`${reagent.port} - ${reagent.name}`}</option>
@@ -87,7 +84,7 @@
           </span>
 
           <span class="ml-4">
-            Volume <input type="number" class="w-24 py-1 mx-2 pretty font-medium" use:checkRange={[1, 2000]} min="1" max="2000" bind:value={cmd.volume} />
+            Volume <input type="number" class="w-24 py-1 mx-2 font-medium pretty" use:checkRange={[1, 2000]} min="1" max="2000" bind:value={cmd.volume} />
             μl
           </span>
         </p>
@@ -107,14 +104,14 @@
           </select>
 
           <span>
-            Volume <input type="number" class="w-24 py-1 mx-2 pretty font-medium" use:checkRange={[1, 2000]} min="1" max="2000" bind:value={cmd.volume} />
+            Volume <input type="number" class="w-24 py-1 mx-2 font-medium pretty" use:checkRange={[1, 2000]} min="1" max="2000" bind:value={cmd.volume} />
             μl
           </span>
         </p>
         <!-- Temp -->
       {:else if cmd.op === "temp"}
         <p>
-          Temperature <input type="number" class="w-24 py-1 mx-2 pretty font-medium" use:checkRange={[10, 60]} min="10" max="60" bind:value={cmd.temp} />
+          Temperature <input type="number" class="w-24 py-1 mx-2 font-medium pretty" use:checkRange={[10, 60]} min="10" max="60" bind:value={cmd.temp} />
           °C
         </p>
         <!-- Image -->

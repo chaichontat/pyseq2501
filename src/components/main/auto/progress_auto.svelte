@@ -65,11 +65,11 @@
   <div slot="buttons" class="grid grid-flow-row w-36">
     <button
       type="button"
-      class="text-lg text-white focus:ring-4 shadow-lg font-medium rounded-lg px-5 py-2.5 text-center mr-2 mb-2"
+      class="transition-all text-lg text-white focus:ring-4 shadow-lg font-medium rounded-lg px-5 py-2.5 text-center mr-2 mb-2"
       class:start={!running}
       class:stop={running}
       on:click={handleCapture}
-      disabled={startState !== "ok" || !$localStore.connected}
+      disabled={!$localStore.connected}
     >
       <div class="flex items-center h-12 text-lg cursor-pointer">
         {#if running}
@@ -91,7 +91,7 @@
     <button
       type="button"
       id="preview"
-      class="text-lg mt-2 text-white focus:ring-4 focus:ring-violet-300 font-medium rounded-lg shadow px-4 py-2.5 text-center inline-flex items-center mr-2"
+      class="transition-all text-lg mt-2 text-white focus:ring-4 focus:ring-violet-300 font-medium rounded-lg shadow px-4 py-2.5 text-center inline-flex items-center mr-2"
       use:tooltip={"Validate your experiment."}
       on:click={handleValidate}
       disabled={running || !$localStore.connected}

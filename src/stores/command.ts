@@ -95,3 +95,23 @@ export const cmdDefaults: Readonly<CmdDefaults> = {
   },
   goto: { step: 1, n: 4, op: "goto" },
 };
+
+// TODO: Calc time with reagents.
+export function calcTime(c: Cmd): number {
+  switch (c.op) {
+    case "pump":
+      return 60;
+    case "prime":
+      return 45;
+    case "temp":
+      return 10;
+    case "hold":
+      return c.time;
+    case "takeimage":
+      return 60;
+    case "autofocus":
+      return 0;
+    case "goto":
+      return 0;
+  }
+}

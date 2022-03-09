@@ -22,10 +22,6 @@
     @apply absolute text-sm w-16 leading-4;
   }
 
-  .dot span {
-    @apply font-mono;
-  }
-
   p {
     @apply font-mono text-base text-gray-700;
   }
