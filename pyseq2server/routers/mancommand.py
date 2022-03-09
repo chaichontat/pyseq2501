@@ -18,7 +18,7 @@ from pyseq2.experiment import Experiment
 from pyseq2server.imaging import AFImg, Img, update_afimg, update_img
 from pyseq2server.routers.status import update_block
 
-from ..api_types import CommandResponse, MoveManual, NExperiment, UserSettings
+from ..api_types import CommandResponse, MoveManual, NExperiment, NTakeImage, UserSettings
 from ..utils.utils import q_listener
 
 router = APIRouter()
@@ -86,10 +86,9 @@ async def cmd_endpoint(ws: WebSocket) -> None:
 
     async def cmd_image(cmd: CommandWeb):
         with cancel_wrapper(q_cmd, q_log, fast_refresh):
-            us = UserSettings.parse_obj(ws.app.state.user_settings)
+            p = NTakeImage.parse_obj(UserSettings.construct(**ws.app.state.user_settings).image_params)
             c = cmd.cmd
             update_block("capturing" if c == "capture" else "previewing")
-            p = us.image_params.copy()
             q_cmd.put_nowait((0, 0, 0))
             match c:
                 case "capture":
