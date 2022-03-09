@@ -59,12 +59,12 @@
     >
   </span>
 
-  <label class="rounded-lg channel ring-red-500" class:text-gray-400={!params.channels[2 * i]}>
+  <label class="rounded-lg channel ring-red-500">
     <input type="checkbox" class={`mr-1 rounded ${i ? "text-rose-700 focus:ring-rose-500" : "text-green-500 focus:ring-green-300"}`} bind:checked={params.channels[2 * i]} />
     Channel {2 * i}
   </label>
 
-  <label class="channel" class:text-gray-400={!params.channels[2 * i + 1]}>
+  <label class="channel">
     <input type="checkbox" class={`mr-1 rounded ${i ? "text-amber-900 focus:ring-amber-700" : "text-orange-600 rounded focus:ring-orange-300"}`} bind:checked={params.channels[2 * i + 1]} />
     Channel {2 * i + 1}
   </label>

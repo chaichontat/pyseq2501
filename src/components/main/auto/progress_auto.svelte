@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { NCmd } from "$src/stores/experiment";
   import { cmdStore, localStore, statusStore as ss, userStore as us } from "$src/stores/store";
   import tooltip from "$src/tooltip";
   import type { Tweened } from "svelte/motion";
@@ -7,6 +8,7 @@
   let step: [number, number, number] = [0, 0, 0];
   let progress: Tweened<number>;
   let running: boolean = false;
+  let n_steps = 1;
 
   // export let stats: { height: number; width: number; n_cols: number; n_bundles: number; n_z: number; time: number };
   export let fc_: 0 | 1;
@@ -20,7 +22,6 @@
     }
   }
 
-  let startState: "ok" | "stop" = "ok";
   let interval: ReturnType<typeof setInterval> | undefined;
   let t: number = 0;
 
@@ -28,8 +29,8 @@
   $: if (!running && interval) clearInterval(interval);
 
   function handleCapture() {
-    console.log("hi");
     if (interval) clearInterval(interval);
+
     if (running) {
       $cmdStore = { fccmd: { fc, cmd: "stop" } };
     } else {
@@ -45,6 +46,19 @@
   function handleValidate() {
     $cmdStore = { fccmd: { fc, cmd: "validate" } };
   }
+
+  function calcSteps(cs: NCmd[]): number {
+    let n = cs.length;
+    for (const [i, c] of cs.entries()) {
+      if (c.cmd.op === "goto") {
+        n -= 1; // Get rid of the goto.
+        n += c.cmd.n * (i - (c.cmd.step - 1));
+      }
+    }
+    return n;
+  }
+
+  $: n_steps = calcSteps($us.exps[fc_].cmds);
 </script>
 
 <Progress bind:progress>
@@ -52,10 +66,8 @@
     <button
       type="button"
       class="text-lg text-white focus:ring-4 shadow-lg font-medium rounded-lg px-5 py-2.5 text-center mr-2 mb-2"
-      class:focus:ring-indigo-300={startState === "ok"}
-      class:focus:ring-orange-300={startState === "stop"}
-      class:start={startState === "ok"}
-      class:stop={startState === "stop"}
+      class:start={!running}
+      class:stop={running}
       on:click={handleCapture}
       disabled={startState !== "ok" || !$localStore.connected}
     >
@@ -105,7 +117,7 @@
         <span class="text-4xl font-bold">
           <span class="font-mono">{step[0]}</span>
           /
-          <span class="w-32 px-2 font-mono text-4xl font-bold">{$us.exps[fc_].cmds.length}</span>
+          <span class="w-32 px-2 font-mono text-4xl font-bold">{n_steps}</span>
         </span>
       </div>
       Steps

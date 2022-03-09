@@ -11,7 +11,9 @@ export type wsConfig = {
   sendOnSet?: boolean;
 };
 
-export function writableWebSocket<T extends object | string>(
+type Sendable = object | string | number | Array<object> | Array<string> | Array<number>;
+
+export function writableWebSocket<T extends Sendable | Set<Sendable>>(
   url: string,
   initialValue: T,
   { f = JSON.parse, onOpen, localStore, sendOnSet = true }: wsConfig = {}
@@ -48,7 +50,8 @@ export function writableWebSocket<T extends object | string>(
   return {
     set(v: T) {
       if (sendOnSet && socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(typeof v === "object" ? JSON.stringify(v) : v);
+        if (v instanceof Set) socket.send(JSON.stringify(Array.from(v)));
+        else socket.send(typeof v === "string" ? v : JSON.stringify(v));
       }
       setStore(v);
     },
@@ -73,7 +76,7 @@ export interface AsymWritable<FromBack, ToBack> extends Omit<Writable<FromBack>,
   set(v: ToBack): void;
 }
 
-export function asymWritableWebSocket<FromBack extends object | string, ToBack extends object>(
+export function asymWritableWebSocket<FromBack extends Sendable, ToBack extends Sendable | Set<Sendable>>(
   url: string,
   initialValue: FromBack,
   initialToBack: ToBack,
@@ -115,8 +118,8 @@ export function asymWritableWebSocket<FromBack extends object | string, ToBack e
     set(v: ToBack) {
       if (socket && socket.readyState === WebSocket.OPEN) {
         console.log();
-
-        socket.send(typeof v === "object" ? JSON.stringify(v) : v);
+        if (v instanceof Set) socket.send(JSON.stringify(Array.from(v)));
+        else socket.send(typeof v === "string" ? v : JSON.stringify(v));
       }
     },
     update() {
