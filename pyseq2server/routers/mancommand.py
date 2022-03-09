@@ -105,7 +105,7 @@ async def cmd_endpoint(ws: WebSocket) -> None:
                     assert False, "Should not be here"
 
             new_image = await p.run(fcs, p.fc, imager, q_cmd)  # type: ignore
-            ws.app.state.img = update_img(new_image)
+            ws.app.state.img = update_img(new_image, p.channels)
             q_cmd.put_nowait(CommandResponse(msg="imgReady"))  # Doesn't seem to send with 1.
             q_cmd.put_nowait(CommandResponse(msg="imgReady"))  # Doesn't seem to send with 1.
 

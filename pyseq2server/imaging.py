@@ -32,12 +32,10 @@ def update_afimg(stack: UInt16Array, laplacian: list[float]) -> AFImg:
     return AFImg(afimg=[process_img(i, minmax) for i in stack], laplacian=laplacian)
 
 
-def update_img(arr: UInt16Array) -> Img:
+def update_img(arr: UInt16Array, channels: tuple[bool, bool, bool, bool]) -> Img:
     img = [process_img(i) for i in arr]
     hist = [gen_hist(i) for i in arr]
-    return Img(
-        n=arr.shape[1] // 128, img=img, hist=hist, channels=(True, True, True, True), dim=arr.shape[1:]
-    )
+    return Img(n=arr.shape[1] // 128, img=img, hist=hist, channels=channels, dim=arr.shape[1:])
 
 
 def process_img(img: UInt16Array, minmax: tuple[int, int] | None = None) -> str:

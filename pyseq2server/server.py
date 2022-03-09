@@ -54,7 +54,7 @@ def gen_server():
         user.image_params = user.image_params.copy(
             update=dict(
                 xy0=xy,
-                xy1=xy,
+                xy1=(xy[0], xy[1] - 0.7),
                 laser_onoff=state.laser_onoff,
                 lasers=state.lasers,
                 od=state.od,
@@ -62,9 +62,11 @@ def gen_server():
         )
 
         app.state.user_settings = jsonable_encoder(user)
-        app.state.img = update_img(np.random.randint(0, 256, (4, 128, 2048), dtype=np.uint8))
+        app.state.img = update_img(
+            np.random.randint(0, 4096, (4, 128, 2048), dtype=np.uint16), channels=(True, True, True, True)
+        )
         app.state.afimg = update_afimg(
-            np.random.randint(0, 256, (259, 64, 256), dtype=np.uint8), laplacian=[0 for _ in range(259)]
+            np.random.randint(0, 4096, (259, 64, 256), dtype=np.uint16), laplacian=[0 for _ in range(259)]
         )
 
     app.on_event("startup")(setup_backend)
