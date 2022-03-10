@@ -76,6 +76,8 @@ class Pump(UsesSerial):
     async def ainit(cls, name: Literal["pumpa", "pumpb"], port_tx: str) -> Pump:
         self = cls(cast(Literal["A", "B"], name[-1].upper()))
         self.com = await COM.ainit(name, port_tx)
+        await self.com.send(PumpCmd.INIT)
+        await asyncio.sleep(1)
         return self
 
     def __init__(self, name: Literal["A", "B"]) -> None:
@@ -92,12 +94,11 @@ class Pump(UsesSerial):
             raise TimeoutError(f"Pump {self.name} not ready after too long.")
 
     async def initialize(self) -> None:
-        async with self.com.big_lock:
-            logger.info(f"Initializing pump {self.name}.")
-            await self.com.send(PumpCmd.INIT)
-            await asyncio.sleep(1)
+        logger.info(f"Initializing pump {self.name}.")
+        if await self.pos != 0:
+            logger.info(f"Moving pump {self.name} to home.")
             await self._pushpull("push", 0)
-            logger.info(f"Pump {self.name} initialized.")
+        logger.info(f"Pump {self.name} initialized.")
 
     @property
     async def pos(self) -> int:
@@ -110,7 +111,6 @@ class Pump(UsesSerial):
     async def _pushpull(
         self, cmd: Literal["push", "pull"], target: int, *, speed: int = 8000, retries: int = 10
     ) -> None:
-        await asyncio.wait_for(self.wait(), timeout=30)
         async with self.com.big_lock:
             pos = await self.pos
             match cmd:
