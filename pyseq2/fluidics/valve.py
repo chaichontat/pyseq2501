@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 # fmt: off
 class ValveCmd:
     ID          = CmdParse("ID", ok_re(r"ID = (.+)", lambda x: x))
+    CLEAR_ID    = f"*ID*"
     SET_POS     = λ_int(lambda x: f"GO{x}")
     GET_POS     = CmdParse("CP", ok_re(r"Position is  = (\d+)", int))
     GET_N_PORTS = CmdParse("NP", ok_re(r"NP = (\d+)", int))
@@ -26,29 +27,29 @@ class ValveCmd:
 class _Valve(Movable, UsesSerial):
     @classmethod
     async def ainit(cls, name: ValveName, port_tx: str) -> _Valve:
-        self = cls(name)
+        n_ports = 24 if CONFIG.machine == "HiSeq2500" and name.startswith("valve_b") else 10
+        self = cls(name, n_ports)
         self.com = await COM.ainit(name, port_tx)  # VICI hates \n 🙄.
+
+        async with self.com.big_lock:
+            logger.info(f"Initializing {self.name}.")
+            await self.com.send(ValveCmd.CLEAR_ID)
+            if await self.com.send(ValveCmd.ID) != "not used":
+                raise Exception(f"Already cleared ID but ID is still here.")
+            assert await self.com.send(ValveCmd.GET_N_PORTS) == self.n_ports
+            logger.info(f"{self.name} initialized.")
+
         return self
 
-    def __init__(self, name: ValveName) -> None:
+    def __init__(self, name: ValveName, n_ports: Literal[10, 24]) -> None:
         self.com: COM
         self.name = name
-
-        if CONFIG.machine == "HiSeq2500" and name.startswith("valve_b"):
-            self.n_ports = 24
-        else:
-            self.n_ports = 10
+        self.n_ports = n_ports
 
         self.t_lastcmd = 0.0
 
     async def initialize(self) -> None:
-        async with self.com.big_lock:
-            logger.info(f"Initializing {self.name}.")
-            if (id_ := await self.com.send(ValveCmd.ID)) != "not used":
-                raise Exception(f"ID for {self.name} is {id_}. Need to add prefix.")
-            # All valves seem to have 10 ports (at least on the 2000).
-            assert await self.com.send(ValveCmd.GET_N_PORTS) == self.n_ports
-            logger.info(f"{self.name} initialized.")
+        ...
 
     @property
     async def pos(self) -> int:
