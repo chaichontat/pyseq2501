@@ -36,6 +36,7 @@ const config = {
       assets: "build",
       fallback: null,
     }),
+    prerender: { default: true },
   },
 };
 
