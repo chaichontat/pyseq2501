@@ -22,9 +22,9 @@ async def interactive() -> None:
 
     ports = await get_ports()
     if name == "fpga":
-        com = await COM.ainit(name, ports["fpgacmd"], ports["fpgaresp"])
+        com = await COM.ainit(name, ports["fpgacmd"], ports["fpgaresp"], no_check=True)
     else:
-        com = await COM.ainit(name, ports[name])
+        com = await COM.ainit(name, ports[name], no_check=True)
 
     while True:
         await asyncio.sleep(0.2)
