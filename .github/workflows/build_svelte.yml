@@ -57,7 +57,7 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniforge-version: latest
-          environment-file: .github/ci_env.yml
+          environment-file: environment.yml
           activate-environment: pyseq
           use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
 
