@@ -1,14 +1,22 @@
-#%%
+from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel
+import yaml
+from pydantic import BaseSettings
 
 
-class Config(BaseModel):
+class Config(BaseSettings):
     machine: Literal["HiSeq2000", "HiSeq2500"] = "HiSeq2000"
-    logPath: str = "logs"
+    logPath: str = "~/pyseq2/logs"
+    logLevel: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
 
-print(Config.schema_json(indent=2))
+def load_config(path: Path | str = "~/pyseq.yml") -> Config:
+    if isinstance(path, str):
+        path = Path(path)
+    if not path.exists():
+        return Config()
+    return Config(**yaml.safe_load(path.read_text()))
 
-# %%
+
+CONFIG = load_config()
