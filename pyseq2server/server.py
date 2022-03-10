@@ -22,7 +22,7 @@ q_log2: asyncio.Queue[str] = asyncio.Queue()
 logger = getLogger(__name__)
 
 
-def gen_server():
+def gen_server(init: bool = True):
     app = FastAPI()
     app.add_middleware(
         CORSMiddleware,
@@ -32,7 +32,7 @@ def gen_server():
         allow_headers=["*"],
     )
 
-    async def setup_backend():
+    async def setup_backend(init: bool = True) -> None:
         try:
             ports = await get_ports(60)
         except RuntimeError as e:
@@ -41,6 +41,9 @@ def gen_server():
             )
         imager = await Imager.ainit(ports)
         fcs = await FlowCells.ainit(ports)
+
+        if init:
+            await asyncio.gather(imager.initialize(), fcs.initialize())
 
         app.state.imager = imager
         app.state.fcs = fcs
