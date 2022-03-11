@@ -7,6 +7,7 @@ from typing import Annotated, AsyncGenerator, Callable, ClassVar, Literal, TypeV
 
 from pyseq2.base.instruments import UsesSerial
 from pyseq2.com.async_com import COM, CmdParse
+from pyseq2.utils.log import init_log
 from pyseq2.utils.utils import IS_FAKE, ok_re
 
 logger = logging.getLogger(__name__)
@@ -93,12 +94,11 @@ class Pump(UsesSerial):
         else:
             raise TimeoutError(f"Pump {self.name} not ready after too long.")
 
+    @init_log(logger, "Pump")
     async def initialize(self) -> None:
-        logger.info(f"Initializing pump {self.name}.")
         if await self.pos != 0:
             logger.info(f"Moving pump {self.name} to home.")
             await self._pushpull("push", 0)
-        logger.info(f"Pump {self.name} initialized.")
 
     @property
     async def pos(self) -> int:

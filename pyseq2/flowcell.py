@@ -8,6 +8,7 @@ from .base.instruments_types import SerialPorts
 from .fluidics.arm9chem import ARM9Chem
 from .fluidics.pump import Pump
 from .fluidics.valve import Valves
+from .utils.log import init_log
 from .utils.utils import Singleton
 
 logger = logging.getLogger(__name__)
@@ -58,7 +59,9 @@ class AFlowCell:
 
     async def initialize(self) -> None:
         async with self.lock:
-            await asyncio.gather(self.v.initialize(), self.p.initialize())
+            for i, f in enumerate((self.v.initialize(), self.p.initialize()), 1):
+                await f
+                logger.info(f"Flowcell {self.name} init [{i}/2] completed.")
 
     async def flow(
         self,
@@ -134,5 +137,6 @@ class FlowCells(metaclass=Singleton):
             case _:
                 raise AttributeError(f"No attribute {s_}.")
 
+    @init_log(logger, info=True)
     async def initialize(self) -> None:
         await asyncio.gather(self[0].initialize(), self[1].initialize())

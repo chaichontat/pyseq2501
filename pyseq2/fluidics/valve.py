@@ -10,6 +10,7 @@ from pyseq2.base.instruments import Movable, UsesSerial
 from pyseq2.base.instruments_types import ValveName
 from pyseq2.com.async_com import COM, CmdParse
 from pyseq2.config import CONFIG
+from pyseq2.utils.log import init_log
 from pyseq2.utils.utils import IS_FAKE, ok_re, λ_int
 
 logger = logging.getLogger(__name__)
@@ -32,12 +33,10 @@ class _Valve(Movable, UsesSerial):
         self.com = await COM.ainit(name, port_tx)  # VICI hates \n 🙄.
 
         async with self.com.big_lock:
-            logger.info(f"Initializing {self.name}.")
             await self.com.send(ValveCmd.CLEAR_ID)
             if await self.com.send(ValveCmd.ID) != "not used":
                 raise Exception(f"Already cleared ID but ID is still here.")
             assert await self.com.send(ValveCmd.GET_N_PORTS) == self.n_ports
-            logger.info(f"{self.name} initialized.")
 
         return self
 
@@ -89,8 +88,10 @@ class Valves(Movable):
     def __getitem__(self, i: Literal[0, 1]) -> _Valve:
         return self.v[i]
 
+    @init_log(logger, "Valve")
     async def initialize(self) -> None:
         async with self.lock:
+            # Valve initialization is intentionally empty.
             await asyncio.gather(self.v[0].initialize(), self.v[1].initialize())
             if CONFIG.machine == "HiSeq2500":
                 await self.set_fc_inlet(8)
