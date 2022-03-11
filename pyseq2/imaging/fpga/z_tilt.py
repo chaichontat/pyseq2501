@@ -59,6 +59,7 @@ class ZTilt(FPGAControlled):
     def __init__(self, fpga_com: COM) -> None:
         super().__init__(fpga_com)
         self.lock = asyncio.Lock()
+        self.max_tries = 3
 
     async def all_z(self, cmd: Callable[[int], CmdParse[Any, T]]) -> tuple[T, T, T]:
         return await asyncio.gather(self.com.send(cmd(1)), self.com.send(cmd(3)), self.com.send(cmd(2)))
@@ -90,7 +91,16 @@ class ZTilt(FPGAControlled):
     @property
     async def pos(self) -> tuple[int, int, int]:
         async with self.lock:
-            resp = await self.all_z(TiltCmd.READ_POS)
-            if not all(map(lambda x: x >= 0, resp)):
-                raise Exception("Invalid Z position. Initialize first.")
+            for i in range(self.max_tries):
+                resp = await self.all_z(TiltCmd.READ_POS)
+                all_good = all(map(lambda x: x >= 0, resp))
+                if all_good:
+                    break
+                elif not all_good and  i < self.max_tries:
+                    # Try rehoming tilt motors
+                    logger.info(f"Invalid Z position. Homing attempt {i}.")
+                    await self.all_z(TiltCmd.GO_HOME)
+                    await self.all_z(TiltCmd.CLEAR_REGISTER)
+                else:
+                    raise Exception("Invalid Z position. Unable to home.")
             return resp
