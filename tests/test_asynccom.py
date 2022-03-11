@@ -1,10 +1,13 @@
 import asyncio
+from logging import getLogger
 
 import pytest
 
 from pyseq2.com.async_com import COM, CmdParse
 from pyseq2.fakes.fake_serial import FakeOptions, open_fake
 from pyseq2.utils.utils import ok_if_match
+
+logger = getLogger(__name__)
 
 
 async def test_openfake():
@@ -17,8 +20,9 @@ async def test_openfake():
 async def test_drop():
     # Test that missing commands do not freeze the program.
     com = await COM.ainit("fpga", "COMX", min_spacing=0.0, test_params=FakeOptions(drop=True))
+    logger.error("Testing drop. Errors expected here.")
     cmd = CmdParse(
-        "RESET", ok_if_match("@LOG The FPGA is now online.  Enjoy!\nRESET"), n_lines=2, timeout=0.5
+        "RESET", ok_if_match("@LOG The FPGA is now online.  Enjoy!\nRESET"), n_lines=2, timeout=0.1
     )
     try:
         await asyncio.gather(*[com.send(cmd) for _ in range(5)], return_exceptions=False)
@@ -44,6 +48,7 @@ async def test_delayed_response():
 
 async def test_gibberish():
     # Test unknown responses do not block.
+    logger.error("Testing for unknown response. Errors expected here.")
     f = FakeOptions()
     com = await COM.ainit("y", "COMX", min_spacing=0, test_params=f)
     task = asyncio.create_task(com.send(CmdParse("G", ok_if_match(f"meh"), timeout=1)))
