@@ -22,24 +22,6 @@ class TiltCmd:
     SET_POS  = CmdParse(λ_int(chkrng(lambda i, x: f"T{i}MOVETO {x}", *RANGE)), None, ok_re(r"^T[123]MOVETO \d+$"))
     SET_VELO =    CmdParse(λ_int(    lambda i, x: f"T{i}VL {x}"),     ok_re(r"^T[123]VL$"))
     SET_CURRENT = CmdParse(λ_int(    lambda i, x: f"T{i}CUR {x}"),    ok_re(r"^T[123]CUR$"))
-
-    @staticmethod
-    def handle_fake(s: str) -> str:
-        match s:
-            case "T1RD" | "T2RD" | "T3RD" as e:
-                return f"{e} 0"
-            case "T1HM" | "T2HM" | "T3HM" as e:
-                return f"@TILTPOS{e[1]} -1\nT{e[1]}HM" + e
-            case "T1CR" | "T2CR" | "T3CR" as e:
-                return e
-            case "T1MOVETO" | "T2MOVETO" | "T3MOVETO" as e:
-                return f"{e} 0"
-            case "T1VL" | "T2VL" | "T3VL" as e:
-                return e
-            case "T1CUR" | "T2CUR" | "T3CUR" as e:
-                return e
-            case _:
-                return "what?"
 # fmt:on
 
 

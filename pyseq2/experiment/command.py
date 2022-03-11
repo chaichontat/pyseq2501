@@ -240,13 +240,14 @@ class TakeImage(BaseModel, AbstractCommand):
                 save_tasks.append(
                     asyncio.create_task(imager.save(p, big_img.copy()))
                 )  # TODO state per each stack.
+
         if q is not None:
             q.put_nowait((n_bundles, len(zs), len(xs)))  # Make it look pleasing at the end.
         if self.save:
             logger.info("Saving to file.")
             await asyncio.gather(*save_tasks)
         logger.info("Done capture/preview.")
-        await asyncio.sleep(0.1)  # For logs to sync up.
+        # await asyncio.sleep(0.1)  # For logs to sync up.
         bin_size = (1 << (n_bundles // 16).bit_length()) >> 1 if n_bundles > 16 else 2
         return (
             big_img[0]
@@ -267,6 +268,16 @@ class Goto(BaseModel, AbstractCommand):
     @classmethod
     def default(cls) -> Goto:
         return Goto(step=1, n=1)
+
+    @validator("step")
+    def val_step(cls, v: int) -> int:
+        assert v > 0, "Step must be greater than 0."
+        return v
+
+    @validator("n")
+    def val_n(cls, v: int) -> int:
+        assert v > 0, "n must be greater than 0."
+        return v
 
 
 Cmd = Annotated[Pump | Prime | Temp | Hold | Autofocus | TakeImage | Goto, Field(discriminator="op")]

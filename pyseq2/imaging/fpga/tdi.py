@@ -21,26 +21,6 @@ class TDICmd:
     ARM_TRIGGER   = CmdParse(λ_int(lambda n, y: f"TDIYARM3 {n} {y + Y_OFFSET - 10000} 1"), ok_if_match("TDIYARM3"))
     # fmt: on
 
-    @staticmethod
-    def handle_fake(s: str) -> str:
-        match s:
-            case "TDIYERD" as e:
-                return f"{e} 1"
-            case "TDIPULSES" as e:
-                return f"{e} 1"
-            case _:
-                ...
-
-        match s.split():
-            case ["TDIYEWR", _] as e:
-                return "TDIYEWR"
-            case ["TDIYPOS", _] as e:
-                return "TDIYPOS"
-            case ["TDIYARM3", _, _, _] as e:
-                return "TDIYARM3"
-            case _:
-                return "what?"
-
 
 # TDIYPOS == Set when to send first trigger aka starting position
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 from logging import getLogger
-from typing import Awaitable
 
 from .led import LED
 from .optics import Optics
