@@ -34,7 +34,7 @@ class _Valve(Movable, UsesSerial):
         self.com: COM
         self.name = name
 
-        if CONFIG.machine == "HiSeq2500" and name.startswith("valve_b"):
+        if CONFIG.machine == "HiSeq2500" and name[-1] == '2':
             self.n_ports = 24
         else:
             self.n_ports = 10
