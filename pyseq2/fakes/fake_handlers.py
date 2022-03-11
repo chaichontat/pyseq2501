@@ -133,6 +133,8 @@ def fake_pump(s: str) -> str:
 
 def fake_valve(s: str) -> str:
     match s:
+        case "*ID*":
+            return ""
         case "ID":
             return "ID = not used"
         case x if x.startswith("GO"):

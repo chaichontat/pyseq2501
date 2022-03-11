@@ -125,5 +125,14 @@ class FlowCells(metaclass=Singleton):
     def __getitem__(self, i: Literal[0, 1]) -> AFlowCell:
         return self.fcs[i]
 
+    def __getattr__(self, s_: str) -> AFlowCell:
+        match s_:
+            case "A" | "a":
+                return self.fcs[0]
+            case "B" | "b":
+                return self.fcs[1]
+            case _:
+                raise AttributeError(f"No attribute {s_}.")
+
     async def initialize(self) -> None:
         await asyncio.gather(self[0].initialize(), self[1].initialize())
