@@ -4,16 +4,15 @@ import asyncio
 import logging
 import time
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, Literal, cast, get_args
+from typing import AsyncGenerator, Literal
 
 from pyseq2.base.instruments import Movable, UsesSerial
 from pyseq2.base.instruments_types import ValveName
 from pyseq2.com.async_com import COM, CmdParse
+from pyseq2.config import CONFIG
 from pyseq2.utils.utils import IS_FAKE, ok_re, λ_int
 
 logger = logging.getLogger(__name__)
-ValvePorts = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-
 
 # fmt: off
 class ValveCmd:
@@ -34,6 +33,12 @@ class _Valve(Movable, UsesSerial):
     def __init__(self, name: ValveName) -> None:
         self.com: COM
         self.name = name
+
+        if CONFIG.machine == "HiSeq2500" and name.startswith("valve_b"):
+            self.n_ports = 24
+        else:
+            self.n_ports = 10
+
         self.t_lastcmd = 0.0
 
     async def initialize(self) -> None:
@@ -42,14 +47,12 @@ class _Valve(Movable, UsesSerial):
             if (id_ := await self.com.send(ValveCmd.ID)) != "not used":
                 raise Exception(f"ID for {self.name} is {id_}. Need to add prefix.")
             # All valves seem to have 10 ports (at least on the 2000).
-            assert await self.com.send(ValveCmd.GET_N_PORTS) == 10
+            assert await self.com.send(ValveCmd.GET_N_PORTS) == self.n_ports
             logger.info(f"{self.name} initialized.")
 
     @property
-    async def pos(self) -> ValvePorts:
-        p = await self.com.send(ValveCmd.GET_POS)
-        assert p in get_args(ValvePorts)
-        return cast(ValvePorts, p)
+    async def pos(self) -> int:
+        return await self.com.send(ValveCmd.GET_POS)
 
     async def move(self, pos: int) -> None:
         # If pos is the same as current position, will get `GO${p} = Bad command` as return.
@@ -88,27 +91,53 @@ class Valves(Movable):
     async def initialize(self) -> None:
         async with self.lock:
             await asyncio.gather(self.v[0].initialize(), self.v[1].initialize())
+            if CONFIG.machine == "HiSeq2500":
+                await self.set_fc_inlet(8)
 
     @property
     async def pos(self) -> int:
         p1, p2 = await asyncio.gather(self[0].pos, self[1].pos)
-        if p1 == 10:
-            return p2 + 9
-        return p1
+        if CONFIG.machine == "HiSeq2000":
+            if p1 == 9:
+                return 0
+            if p1 == 10:
+                return p2 + 9
+            return p1
+
+        elif CONFIG.machine == "HiSeq2500":
+            if p1 == 6:
+                return 0
+            return p2
+
+        else:
+            assert False
 
     async def _move(self, p: int) -> None:
-        # if self.lock.locked():
-        #     raise Exception("Do not send multiple move commands at once.")
-
         async with self.lock:
-            if not 1 <= p <= 18 and p != 9:
-                raise ValueError("Invalid port number. Range is [1, 18], excluding 9.")
-            if p > 9:
-                await asyncio.gather(self[0].move(10), self[1].move(cast(ValvePorts, p - 9)))
+            if CONFIG.machine == "HiSeq2000":
+                match p:
+                    case 0:
+                        await self[0].move(9)
+                    case x if 1 <= x <= 8:
+                        await self[0].move(p)
+                    case x if 10 <= x <= 19:
+                        await asyncio.gather(self[0].move(10), self[1].move(p - 9))
+                    case _:
+                        raise ValueError("Invalid port number. Range is [1, 18], excluding 9.")
+
+            elif CONFIG.machine == "HiSeq2500":
+                match p:
+                    case 0:
+                        await self[0].move(6)
+                    case x if 1 <= x <= 24:
+                        await self[1].move(p)
+                    case _:
+                        raise ValueError("Invalid port number. Range is [1, 24].")
             else:
-                await self[0].move(cast(ValvePorts, p))
-            if not IS_FAKE():
-                assert await self.pos == p
+                assert False
+
+        if not IS_FAKE():
+            assert await self.pos == p
 
     async def move(self, pos: int) -> None:
         raise NotImplementedError("Use the async context manager move_port instead.")
@@ -119,4 +148,16 @@ class Valves(Movable):
             await self._move(pos)
             yield
         finally:
-            await self._move(cast(int, 9))  # "Safe" position.
+            await self._move(0)  # "Safe" position.
+
+    async def set_fc_inlet(self, n: Literal[2, 8]) -> None:
+        if CONFIG.machine == "HiSeq2000":
+            raise NotImplementedError("This option is not valid for the HiSeq 2000.")
+
+        match self.name:
+            case "A":
+                await self[0].move(2 if n == 2 else 3)
+            case "B":
+                await self[0].move(4 if n == 2 else 5)
+            case _:
+                assert False

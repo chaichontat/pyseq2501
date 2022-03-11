@@ -9,8 +9,6 @@ Control your HiSeq 2000/2500 with ease.
 
 **Web control (under development) available [here](https://github.com/chaichontat/pyseq2501-web).**
 
-Fluidics control coming soon!
-
 ## Usage
 
 Example scripts are in the [`scripts/`](scripts) folder. The showcase is `take_image.py`(scripts/take_image.py) which demonstrates fast image capture and autofocus.
@@ -30,21 +28,35 @@ This package is written for Python 3.10+ and requires Windows 10 to function. Fo
 
 The only required custom driver is the Illumina/ActiveSilicon [driver](https://github.com/chaichontat/pyseq2501/tree/main/driver) which functions in both Windows 7 and Windows 10.
 
-Using conda,
-```bash
-conda env create -n pyseq -f environment.yml
-pip install .
+You can install everything from the PyPI repository `pip install git+https://github.com/chaichontat/pyseq2501` but that seems more error-prone. A safer way would be to use `conda` to setup most of the packages then use `pip` to install. We have a dependency that is not in `conda-forge`, which prevents this package fromm being deployed to `conda-forge`.
+
+### Conda
+```sh
+conda env create -n NAME_CHANGE_ME -f environment.yml
+conda activate NAME_CHANGE_ME
+pip install git+https://github.com/chaichontat/pyseq2501
 ```
-If you want to make sure that this works:
-```bash
+#### Test
+```sh
 pip install pytest pytest-asyncio hypothesis
 pytest
 ```
+
+### For development
+```sh
+conda env create -n NAME_CHANGE_ME -f environment.yml
+conda activate NAME_CHANGE_ME
+conda install poetry
+poetry install
+```
+
 or you could use a [`tox`](https://tox.wiki/en/latest/) environment.
 ```bash
 pip install tox tox-conda
 tox -vv
 ```
+
+If this still fails, see the [CI](.github/workflows/python-package-conda.yml) template. This is tested to run (at least) on Windows and Ubuntu.
 
 ## Architecture
 The scientific logic are in `Experiment`, `FlowCell`, and `Imager`. `Experiment` coordinates `FlowCell` and `Imager`. `Imager` and `FlowCell` communicates high-level commands to each instrument class, which then sends the actual command to each instrument.

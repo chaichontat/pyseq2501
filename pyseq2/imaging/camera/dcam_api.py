@@ -1,12 +1,12 @@
 import os
 import threading
-from ctypes import c_int32, pointer
+from ctypes import c_char_p, c_int32, c_uint32, pointer
 from enum import IntEnum
 from functools import wraps
 from logging import getLogger
 from typing import Callable, ParamSpec, TypeVar
 
-from pyseq2.utils.utils import IS_FAKE
+from pyseq2.utils.utils import IS_FAKE, Singleton
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -48,7 +48,10 @@ def check_if_failed(f: Callable[P, R]) -> Callable[P, R]:
             res = f(*args, **kwargs)
         # Literally the only function that returns int32 instead of BOOL.
         if res != 1 and f.__name__ != "dcam_getlasterror":
-            raise DCAMReturnedZero(f"{f.__name__} did not return NOERR.")
+            err: int = CheckedDCAMAPI().dcam_getlasterror(args[0], c_char_p(0), c_uint32(0))
+            raise DCAMReturnedZero(
+                f"{f.__name__} did not return NOERR. Error code: {err}. See https://github.com/chaichontat/pyseq2501/blob/402cb09d67c095786df4fdd4ae700c89ee17bdc7/archive/reverseengineerapi/dcamapi.h for key."
+            )
 
         if f.__name__ not in IGNORE:
             logger.debug(f"{f.__name__} [green]OK")
@@ -57,7 +60,7 @@ def check_if_failed(f: Callable[P, R]) -> Callable[P, R]:
     return wrapper
 
 
-class CheckedDCAMAPI(DCAMAPI):  # type: ignore
+class CheckedDCAMAPI(DCAMAPI, metaclass=Singleton):  # type: ignore
     def __getitem__(self, name: str) -> Callable[..., bool]:
         f: Callable[..., bool] = super().__getitem__(name)
         return check_if_failed(f)
