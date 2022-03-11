@@ -5,6 +5,7 @@ from typing import AsyncGenerator, Literal
 
 from pyseq2.base.instruments import FPGAControlled
 from pyseq2.com.async_com import COM, CmdParse
+from pyseq2.utils.log import init_log
 from pyseq2.utils.utils import ok_if_match, λ_int
 
 logger = getLogger(__name__)
@@ -47,7 +48,7 @@ class Filter(FPGAControlled):
     def __init__(self, fpga_com: COM, id_: Literal[0, 1], lock: asyncio.Lock) -> None:
         super().__init__(fpga_com)
         self.lock = lock
-        self.id_ = id_
+        self.name = id_
         self.vals = OD_GREEN if id_ == 0 else OD_RED
         self._pos = 0.0
 
@@ -55,8 +56,9 @@ class Filter(FPGAControlled):
     async def pos(self) -> float:
         return self._pos
 
+    @init_log(logger, "Filter")
     async def initialize(self) -> None:
-        await self.com.send(OpticCmd.HOME_OD(self.id_ + 1))
+        await self.com.send(OpticCmd.HOME_OD(self.name + 1))
         await self.move(0)
 
     async def open(self) -> None:
@@ -68,7 +70,7 @@ class Filter(FPGAControlled):
     async def move(self, od: float) -> None:
         async with self.lock:
             try:
-                await self.com.send(OpticCmd.SET_OD(self.vals[f"{od:.1f}"], self.id_ + 1))
+                await self.com.send(OpticCmd.SET_OD(self.vals[f"{od:.1f}"], self.name + 1))
                 self._pos = float(od)
             except KeyError:
                 raise KeyError(f"Invalid OD. Only {list(self.vals.keys())} allowed.")

@@ -10,6 +10,7 @@ from pyseq2.base.instruments import Movable, UsesSerial
 from pyseq2.base.instruments_types import ValveName
 from pyseq2.com.async_com import COM, CmdParse
 from pyseq2.config import CONFIG
+from pyseq2.utils.log import init_log
 from pyseq2.utils.utils import IS_FAKE, ok_re, λ_int
 
 logger = logging.getLogger(__name__)
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 # fmt: off
 class ValveCmd:
     ID          = CmdParse("ID", ok_re(r"ID = (.+)", lambda x: x))
+    CLEAR_ID    = f"*ID*"
     SET_POS     = λ_int(lambda x: f"GO{x}")
     GET_POS     = CmdParse("CP", ok_re(r"Position is  = (\d+)", int))
     GET_N_PORTS = CmdParse("NP", ok_re(r"NP = (\d+)", int))
@@ -26,11 +28,19 @@ class ValveCmd:
 class _Valve(Movable, UsesSerial):
     @classmethod
     async def ainit(cls, name: ValveName, port_tx: str) -> _Valve:
-        self = cls(name)
+        n_ports = 24 if CONFIG.machine == "HiSeq2500" and name.startswith("valve_b") else 10
+        self = cls(name, n_ports)
         self.com = await COM.ainit(name, port_tx)  # VICI hates \n 🙄.
+
+        async with self.com.big_lock:
+            await self.com.send(ValveCmd.CLEAR_ID)
+            if await self.com.send(ValveCmd.ID) != "not used":
+                raise Exception(f"Already cleared ID but ID is still here.")
+            assert await self.com.send(ValveCmd.GET_N_PORTS) == self.n_ports
+
         return self
 
-    def __init__(self, name: ValveName) -> None:
+    def __init__(self, name: ValveName, n_ports: Literal[10, 24]) -> None:
         self.com: COM
         self.name = name
 
@@ -42,13 +52,7 @@ class _Valve(Movable, UsesSerial):
         self.t_lastcmd = 0.0
 
     async def initialize(self) -> None:
-        async with self.com.big_lock:
-            logger.info(f"Initializing {self.name}.")
-            if (id_ := await self.com.send(ValveCmd.ID)) != "not used":
-                raise Exception(f"ID for {self.name} is {id_}. Need to add prefix.")
-            # All valves seem to have 10 ports (at least on the 2000).
-            assert await self.com.send(ValveCmd.GET_N_PORTS) == self.n_ports
-            logger.info(f"{self.name} initialized.")
+        ...
 
     @property
     async def pos(self) -> int:
@@ -88,8 +92,10 @@ class Valves(Movable):
     def __getitem__(self, i: Literal[0, 1]) -> _Valve:
         return self.v[i]
 
+    @init_log(logger, "Valve")
     async def initialize(self) -> None:
         async with self.lock:
+            # Valve initialization is intentionally empty.
             await asyncio.gather(self.v[0].initialize(), self.v[1].initialize())
             if CONFIG.machine == "HiSeq2500":
                 await self.set_fc_inlet(8)

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 from logging import getLogger
-from typing import Awaitable
 
 from .led import LED
 from .optics import Optics
@@ -11,6 +10,7 @@ from .z_obj import ZObj
 from .z_tilt import ZTilt
 from pyseq2.base.instruments import UsesSerial
 from pyseq2.com.async_com import COM, CmdParse
+from pyseq2.utils.log import init_log
 from pyseq2.utils.utils import ok_if_match
 
 logger = getLogger(__name__)
@@ -44,6 +44,7 @@ class FPGA(UsesSerial):
         self.z_obj: ZObj
         self.z_tilt: ZTilt
 
+    @init_log(logger)
     async def initialize(self) -> None:
         async with self.com.big_lock:
             await self.reset()

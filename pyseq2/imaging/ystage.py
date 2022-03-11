@@ -7,6 +7,7 @@ from typing import Any, Callable, Literal, Optional
 
 from pyseq2.base.instruments import Movable, UsesSerial
 from pyseq2.com.async_com import COM, CmdParse
+from pyseq2.utils.log import init_log
 from pyseq2.utils.utils import chkrng, ok_if_match, ok_re, λ_float, λ_int, λ_str
 
 logger = logging.getLogger(__name__)
@@ -111,9 +112,9 @@ class YStage(UsesSerial, Movable):
         self.com: COM
         self._mode: Optional[ModeName] = None
 
+    @init_log(logger)
     async def initialize(self) -> None:
         async with self.com.big_lock:
-            logger.info("Initializing y-stage.")
             await self.com.send(YCmd.RESET)
             await asyncio.sleep(2)  # Otherwise, the return of the next command will get cut midway.
             [
@@ -132,7 +133,6 @@ class YStage(UsesSerial, Movable):
                     YCmd.RETURN_WHEN_MOVE_DONE,
                 )
             ]
-            logger.info("Completed y-stage initialization.")
 
     async def move(self, pos: int, *, slowly: bool = False) -> None:
         async with self.com.big_lock:

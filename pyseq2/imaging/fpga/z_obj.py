@@ -30,24 +30,6 @@ class ObjCmd:
     SWYZ        = CmdParse(                 "SWYZ_POS 1", ok_if_match("SWYZ_POS"))
     # fmt: on
 
-    @staticmethod
-    def handle_fake(s: str) -> str:
-        match s:
-            case "ZDACR" | "ZADCR" as e:
-                return e + " 0"
-            case _:
-                ...
-
-        match s.split():
-            case ["ZSTEP" as e, _] | ["ZDACW" as e, _] | ["ZTRG" as e, _] | ["SWYZ_POS" as e, _]:
-                return e
-            case ["ZYT" as e, _, _]:
-                return e
-            case ["ZMV", _]:
-                return "@LOG Trigger Camera\nZMV"
-            case _:
-                return "what?"
-
 
 class ZObj(FPGAControlled, Movable):
     STEPS_PER_UM = 262

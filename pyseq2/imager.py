@@ -19,6 +19,7 @@ from .imaging.fpga import FPGA
 from .imaging.laser import Laser, Lasers
 from .imaging.xstage import XStage
 from .imaging.ystage import YStage
+from .utils.log import init_log
 from .utils.utils import IS_FAKE, Singleton
 
 logger = getLogger(__name__)
@@ -93,17 +94,20 @@ class Imager(metaclass=Singleton):
         self.cams = cams
         self.lock = asyncio.Lock()
 
+    @init_log(logger, info=True)
     async def initialize(self) -> None:
+        todos = (
+            self.x.initialize(),
+            self.y.initialize(),
+            self.z_tilt.initialize(),
+            self.z_obj.initialize(),
+            self.optics.initialize(),
+        )
+
         async with self.lock:
-            logger.info("Starting imager initialization.")
-            await asyncio.gather(
-                self.x.initialize(),
-                self.y.initialize(),
-                self.z_tilt.initialize(),
-                self.z_obj.initialize(),
-                self.optics.initialize(),
-            )
-            logger.info("Imager initialization completed.")
+            for i, f in enumerate(asyncio.as_completed(todos), 1):
+                await f
+                logger.info(f"Imager initialization [{i}/{len(todos)}] completed.")
 
     @property
     async def pos(self) -> Position:
@@ -188,7 +192,7 @@ class Imager(metaclass=Singleton):
         self,
         n_bundles: int,
         dark: bool = False,
-        channels: list[L[0, 1, 2, 3]] = [0, 1, 2, 3],
+        channels: list[int] = [0, 1, 2, 3],
         move_back_to_start: bool = True,
         event_queue: tuple[asyncio.Queue[T], Callable[[int], T]] | None = None,
     ) -> tuple[UInt16Array, State]:

@@ -5,6 +5,7 @@ from typing import Any
 
 from pyseq2.base.instruments import Movable, UsesSerial
 from pyseq2.com.async_com import COM, CmdParse
+from pyseq2.utils.log import init_log
 from pyseq2.utils.utils import chkrng, ok_if_match, ok_re, λ_int
 
 logger = logging.getLogger(__name__)
@@ -56,10 +57,10 @@ class XStage(UsesSerial, Movable):
             await self.com.send(XCmd.SET_POS(int(pos)))
             logger.info("Move done.")
 
+    @init_log(logger)
     async def initialize(self) -> None:
         """Initialize the xstage."""
         async with self.com.big_lock:
-            logger.info("Initializing x-stage.")
 
             def echo(s: str) -> CmdParse[Any, bool]:
                 return CmdParse(s, ok_if_match(f">{s}"))
@@ -94,5 +95,3 @@ class XStage(UsesSerial, Movable):
                     CmdParse("EX 1", ok_if_match(">EX 1\n>"), n_lines=2, timeout=30),
                 )
             ]
-
-            logger.info("Completed x-stage initialization.")

@@ -1,7 +1,8 @@
 import logging
 from datetime import datetime
-from logging import FileHandler, Formatter, Handler
+from logging import FileHandler, Formatter, Handler, Logger
 from pathlib import Path
+from typing import Callable, Coroutine, ParamSpec, TypeVar
 
 from rich.logging import RichHandler
 from rich.traceback import install
@@ -26,3 +27,30 @@ def setup_logger(*, set_root: bool = False, save: bool = False, level: str = "IN
     logger.setLevel(level)
     logger.handlers = handlers
     logger.propagate = False
+
+
+P, R = ParamSpec("P"), TypeVar("R")
+
+
+def init_log(
+    logger: Logger, prefix: str | None = None, info: bool = False
+) -> Callable[[Callable[P, Coroutine[None, None, R]]], Callable[P, Coroutine[None, None, R]]]:
+    def inner(f: Callable[P, Coroutine[None, None, R]]) -> Callable[P, Coroutine[None, None, R]]:
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            try:
+                name = args[0].name  # type: ignore
+            except AttributeError:
+                name = type(args[0]).__name__
+
+            if prefix is not None:
+                name = f"{prefix} {name}"
+
+            g = logger.info if info else logger.debug
+            g(f"Starting {name} initialization.")
+            res = await f(*args, **kwargs)
+            g(f"Finished {name} initialization.")
+            return res
+
+        return wrapper
+
+    return inner

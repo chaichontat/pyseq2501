@@ -35,7 +35,9 @@ def test_compile(n: int):
     if cond:
         return
 
-    ops: list[Cmd] = [Pump(reagent="water"), Pump(reagent="gr"), Goto(step=1, n=n - 1)]
+    ops: list[Cmd] = [Pump(reagent="water"), Pump(reagent="gr")]
+    if n > 1:
+        ops.append(Goto(step=1, n=n - 1))
     experiment_auto = Experiment(name="experiment", fc=False, path=".", cmds=ops, reagents=mix)
 
     ops = []

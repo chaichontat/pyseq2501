@@ -58,7 +58,7 @@ class CmdParse(Generic[P, T]):
     parser: Callable[[str], T] | None
     delayed_parser: Callable[[str], T] | None = None
     n_lines: int = 1
-    timeout: float | None = 5.0
+    timeout: float | None = 60
     # If you're adding some new variables don't forget to add them to __call__.
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> CmdParse[P, T]:
@@ -212,8 +212,9 @@ class COM:
                         break
                 else:
                     if not self.FIRST_LINES.search(buffer):
+                        temp = rbuffer
                         buffer, rbuffer = "", b""
-                        raise InvalidResponse(f"{buffer}")
+                        raise InvalidResponse(f"{temp}")
 
             except (CancelledError, RuntimeError) as e:
                 raise e

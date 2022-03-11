@@ -7,6 +7,7 @@ from typing import Any, AsyncGenerator, Callable, Literal, ParamSpec, TypeVar, c
 
 from pyseq2.base.instruments import UsesSerial
 from pyseq2.com.async_com import COM, CmdParse
+from pyseq2.utils.log import init_log
 from pyseq2.utils.utils import chkrng, ok_if_match, ok_re, λ_float, λ_int
 
 logger = logging.getLogger(__name__)
@@ -71,9 +72,9 @@ class ARM9Chem(UsesSerial):
     def __init__(self) -> None:
         self.com: COM
 
+    @init_log(logger)
     async def initialize(self) -> None:
         async with self.com.big_lock:
-            logger.info("Initializing temperature control.")
             await self.com.send(ARM9Cmd.INIT)
             fc = (
                 self.com.send(ARM9Cmd.SET_FC_PIDSF(cast(Literal[0, 1], i), cast(PIDSF, param), v))
@@ -87,7 +88,6 @@ class ARM9Chem(UsesSerial):
             )
             await asyncio.gather(*fc, *tec)
             await asyncio.gather(*(self.com.send(ARM9Cmd.FC_OFF(i)) for i in (0, 1)))
-            logger.info("Temperature control initialized.")
 
     async def fc_temp(self, i: Literal[0, 1]) -> float:
         return await self.com.send(ARM9Cmd.GET_FC_TEMP(i))
