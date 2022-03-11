@@ -11,7 +11,7 @@ class Config(BaseSettings):
     logLevel: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
 
-def load_config(path: Path | str = "~/pyseq.yml") -> Config:
+def load_config(path: Path | str = "~/.pyseq/pyseq.yml") -> Config:
     if isinstance(path, str):
         path = Path(path)
     if not path.exists():
