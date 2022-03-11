@@ -32,12 +32,14 @@ def fake_y(s: str) -> str:
         return f"1R({r[1]}\n*+0"
 
     match s:
-        case x if x.startswith("D"):
-            return "1D0"
-        case x if x.startswith("V"):
-            return "V0"
+        case "Z":
+            return "1Z\n*ViX250IH-Servo Drive\n*REV 2.4 Jul 07 2005 10:08:34\n*Copyright 2003 Parker-Hannifin"
+        case x if x.startswith("D") and x[1:].isnumeric():
+            return f"1{x}"
+        case x if x.startswith("V") and x[1:].isnumeric():
+            return f"1{x}"
         case x if x.startswith("GAINS"):
-            return "GAINS(5,10,7,1.5,0)"
+            return "1GAINS(5,10,7,1.5,0)"
         case "GOTO(CHKMV)":
             return "1GOTO(CHKMV)\nMove Done"
         case x:
@@ -82,6 +84,10 @@ def fake_fpga(s: str) -> str:
 
         case ["T1MOVETO" as e, _] | ["T2MOVETO" as e, _] | ["T3MOVETO" as e, _]:
             return f"{e} 0"
+        case ["T1VL" as e, _] | ["T2VL" as e, _] | ["T3VL" as e, _]:
+            return e
+        case ["T1CUR" as e, _] | ["T2CUR" as e, _] | ["T3CUR" as e, _]:
+            return e
 
         case ["SWLSRSHUT", _]:
             return "SWLSRSHUT"
@@ -110,10 +116,6 @@ def fake_fpga(s: str) -> str:
         case "T1HM" | "T2HM" | "T3HM" as e:
             return f"@TILTPOS{e[1]} -1\nT{e[1]}HM" + e
         case "T1CR" | "T2CR" | "T3CR" as e:
-            return e
-        case "T1VL" | "T2VL" | "T3VL" as e:
-            return e
-        case "T1CUR" | "T2CUR" | "T3CUR" as e:
             return e
         case "EM2I" | "EM2O" as e:
             return e

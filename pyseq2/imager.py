@@ -188,7 +188,7 @@ class Imager(metaclass=Singleton):
         self,
         n_bundles: int,
         dark: bool = False,
-        channels: list[L[0, 1, 2, 3]] = [0, 1, 2, 3],
+        channels: list[int] = [0, 1, 2, 3],
         move_back_to_start: bool = True,
         event_queue: tuple[asyncio.Queue[T], Callable[[int], T]] | None = None,
     ) -> tuple[UInt16Array, State]:
