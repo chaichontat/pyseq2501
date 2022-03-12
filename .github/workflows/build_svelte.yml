@@ -52,7 +52,7 @@ jobs:
         with:
           path: ~/conda_pkgs_dir
           key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
-            hashFiles('.github/ci_env.yml') }}
+            hashFiles('environment.yml') }}
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
@@ -60,6 +60,10 @@ jobs:
           environment-file: environment.yml
           activate-environment: pyseq
           use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+
+      - name: Install dev tools
+        run: |
+          conda env update -n pyseq -f .github/ci_env.yml
 
       - name: Install with Poetry
         run: |
