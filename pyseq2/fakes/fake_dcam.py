@@ -1,9 +1,9 @@
-from ctypes import POINTER, Array, c_char, c_char_p, c_double, c_int32, c_ubyte, c_uint32, c_void_p, pointer
+from ctypes import Array, c_char, c_char_p, c_double, c_int32, c_ubyte, c_uint32, c_void_p, pointer
 from typing import Any, Generic, Optional, TypeVar
 
 import numpy as np
 
-from .dcam_types import DCAM_PARAM_PROPERTYATTR, DCAM_PARAM_PROPERTYVALUETEXT, Handle
+from pyseq2.imaging.camera.dcam_types import DCAM_PARAM_PROPERTYATTR, DCAM_PARAM_PROPERTYVALUETEXT, Handle
 
 DCAM_DEFAULT_ARG = c_int32(0)
 DCAM_DEFAULT_ARG_p = pointer(DCAM_DEFAULT_ARG)
@@ -29,6 +29,9 @@ class FakeAPI:
 
     def dcam_open(self, h: pointer[Handle], index: c_int32, reserved: Optional[pointer[Any]]) -> bool:
         return True
+
+    def dcam_getlasterror(self, h: Handle, buf: c_char_p, bytesize: c_uint32) -> int:
+        return 5
 
     # /*** --- parameters --- ***/
     def dcam_queryupdate(self, h: Handle, pFlag: pointer[c_int32], reserved: pointer[c_int32]) -> bool:

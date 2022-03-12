@@ -20,7 +20,7 @@ if not IS_FAKE():
             super().__init__("dcamapi.dll")
 
 else:
-    from .fake_dcam import FakeAPI as DCAMAPI
+    from ...fakes.fake_dcam import FakeAPI as DCAMAPI
 
 
 DCAM_DEFAULT_ARG = c_int32(0)
