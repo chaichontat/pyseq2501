@@ -4,7 +4,7 @@ from ctypes import c_char_p, c_int32, c_uint32, pointer
 from enum import IntEnum
 from functools import wraps
 from logging import getLogger
-from typing import Callable, ParamSpec, TypeVar
+from typing import Any, Callable, ParamSpec, TypeVar
 
 from pyseq2.utils.utils import IS_FAKE, Singleton
 
@@ -61,9 +61,11 @@ def check_if_failed(f: Callable[P, R]) -> Callable[P, R]:
 
 
 class CheckedDCAMAPI(DCAMAPI, metaclass=Singleton):  # type: ignore
-    def __getitem__(self, name: str) -> Callable[..., bool]:
-        f: Callable[..., bool] = super().__getitem__(name)
-        return check_if_failed(f)
+    def __getattribute__(self, __name: str) -> Any:
+        f: Callable[..., bool] = super().__getattribute__(__name)
+        if __name.startswith("dcam"):
+            return check_if_failed(f)
+        return f
 
 
 class DCAMException(Exception):
