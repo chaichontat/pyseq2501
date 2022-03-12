@@ -24,3 +24,21 @@ async def test_take(imager: Imager, c: int):
     with pytest.raises(ValueError) if not len(channels) else nullcontext():
         img, _ = await imager.take(1, channels=channels)
         assert img.shape[0] == len(channels)
+        await imager.save("test.tif", img)
+
+
+async def test_move(imager: Imager):
+    await imager.move(
+        x=10000,
+        y=0,
+        z_obj=0,
+        z_tilt=0,
+        lasers=(0, 0),
+        laser_onoff=(True, True),
+        shutter=False,
+        od=(0, 0),
+    )
+
+
+async def test_autofocus(imager: Imager):
+    await imager.autofocus(1)
