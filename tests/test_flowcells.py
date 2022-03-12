@@ -1,5 +1,3 @@
-from contextlib import nullcontext
-
 import pytest
 import pytest_asyncio
 
@@ -29,3 +27,11 @@ async def test_valves(fcs: FlowCells):
 
     with pytest.raises(NotImplementedError):
         await fcs.A.v.set_fc_inlet(8)
+
+
+async def test_arm9chem(fcs: FlowCells):
+    await fcs.arm9chem.fc_temp(0)
+    await fcs.arm9chem.chiller_temp(0)
+    await fcs.arm9chem.set_fc_temp(0, 25)
+    await fcs.arm9chem.set_chiller_temp(0, 5)
+    await fcs.arm9chem.set_vacuum(False)

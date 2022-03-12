@@ -39,10 +39,10 @@ def parse_chiller(a: str, b: str, c: str) -> tuple[float, float, float]:
 class ARM9Cmd:
     INIT        = CmdParse("INIT", ok_if_match(("A1", "N1")))
     GET_VERSION = CmdParse("?IDN", ok_re(r"Illumina,Bruno Fluidics Controller,0,v2\.[\d+]:A1"))
-    GET_FC_TEMP = CmdParse(λ_float(lambda i: f"?FCTEMP:{i}"), ok_re(r"[\.\d]+C:A1", float))
+    GET_FC_TEMP = CmdParse(λ_float(lambda i: f"?FCTEMP:{i}"), ok_re(r"([\.\d]+)C:A1", float))
     GET_CHILLER_TEMP = CmdParse(
         "?RETEMP:3",
-        ok_re(r"(\d\.\d{3})C:(\d\.\d{3})C:(\d\.\d{3}):A1", parse_chiller),
+        ok_re(r"([\d\.]+)C:([\d\.]+)C:([\d\.]+):A1", parse_chiller),
     )
     GET_SHUTOFF_VALVE = CmdParse("?asyphon:0", ok_re(r"([01]):A1"))
     SET_SHUTOFF_VALVE = CmdParse(λ_int(check01(lambda i: f"asyphon:0:{i}")), ok_if_match("A1"))
@@ -51,9 +51,9 @@ class ARM9Cmd:
     FC_ON         = CmdParse(λ_int(check01(lambda i:     f"FCTEC:{i}:1")), ok_if_match("A1"))
     SET_FC_PIDSF  = CmdParse(build_fc_pidsf, ok_if_match("A1"))
     SET_TEC_PIDSF = CmdParse(build_tec_pidsf, ok_if_match("A1"))
-    SET_FC_TEMP   = CmdParse(λ_float(chkrng(lambda i, x: f"FCTEMP:{i}:{x}", *FC_RANGE)), ok_if_match("A1"))
+    SET_FC_TEMP   = CmdParse(λ_float(chkrng(lambda i, x: f"FCTEMP:{i}:{x}", *FC_RANGE,argnum=1)), ok_if_match("A1"))
     SET_CHILLER_TEMP = CmdParse(
-        λ_float(chkrng(lambda i, x: f"RETEMP:{i}:{x}", *CHILLER_RANGE)), ok_if_match("A1")
+        λ_float(chkrng(lambda i, x: f"RETEMP:{i}:{x}", *CHILLER_RANGE, argnum=1)), ok_if_match("A1")
     )
     SET_VACUUM    = CmdParse(λ_int(check01(lambda i: f"VACUUM:{i}")), ok_if_match("A1"))
 # fmt: on
@@ -72,7 +72,7 @@ class ARM9Chem(UsesSerial):
     def __init__(self) -> None:
         self.com: COM
 
-    @init_log(logger)
+    @init_log(logger, info=True)
     async def initialize(self) -> None:
         async with self.com.big_lock:
             await self.com.send(ARM9Cmd.INIT)

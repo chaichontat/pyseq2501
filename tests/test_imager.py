@@ -10,8 +10,7 @@ from pyseq2.utils.ports import get_ports
 @pytest_asyncio.fixture(scope="module")
 async def imager() -> Imager:
     ports = await get_ports()
-    imager = await Imager.ainit(ports)
-    return imager
+    return await Imager.ainit(ports)
 
 
 async def test_initialize(imager: Imager):

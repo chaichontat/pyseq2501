@@ -64,5 +64,6 @@ addopts = "--cov=pyseq2 --cov-report=html --cov-report=xml"
 asyncio_mode = "auto"
 log_cli = 1
 # log_cli_level = "DEBUG"
+env = ["FAKE_HISEQ = 1"]
 minversion = "7.0"
 testpaths = ["tests"]
