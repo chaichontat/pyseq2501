@@ -19,3 +19,13 @@ async def test_initialize(fcs: FlowCells):
 
 async def test_pump(fcs: FlowCells):
     await fcs.A.flow(1, wait=0.1)
+
+
+async def test_valves(fcs: FlowCells):
+    await fcs.A.v.pos
+
+    async with fcs.A.v.move_port(10):
+        ...
+
+    with pytest.raises(NotImplementedError):
+        await fcs.A.v.set_fc_inlet(8)
