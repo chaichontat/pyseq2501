@@ -134,7 +134,7 @@ class DCAMDict(MutableMapping[Props, float]):
         logger.debug("DCAMProp refreshed.")
 
     @staticmethod
-    def to_snake_case(s: bytes) -> str:
+    def to_snake_case(s: bytes) -> str:  # pragma: no cover
         return s.lower().decode("utf-8").replace(" ", "_")
 
     @staticmethod
