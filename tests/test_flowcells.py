@@ -1,6 +1,9 @@
+import asyncio
+
 import pytest
 import pytest_asyncio
 
+from pyseq2.config import CONFIG
 from pyseq2.flowcell import FlowCells
 from pyseq2.utils.ports import get_ports
 
@@ -25,8 +28,16 @@ async def test_valves(fcs: FlowCells):
     async with fcs.A.v.move_port(10):
         ...
 
+    await asyncio.gather(*[fcs.A.v._move(p) for p in (0, 1, 10)])
+
     with pytest.raises(NotImplementedError):
         await fcs.A.v.set_fc_inlet(8)
+
+    CONFIG.machine = "HiSeq2500"
+    await fcs.A.v.pos
+    await fcs.A.v.set_fc_inlet(8)
+    await asyncio.gather(*[fcs.A.v._move(p) for p in (0, 1, 10)])
+    CONFIG.machine = "HiSeq2000"
 
 
 async def test_arm9chem(fcs: FlowCells):

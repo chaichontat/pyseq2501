@@ -12,7 +12,7 @@ from pyseq2.utils.ports import get_ports
 
 @pytest_asyncio.fixture(scope="module")
 async def fcs() -> FlowCells:
-    ports = await get_ports()
+    ports = await get_ports(show_all=True)
     return await FlowCells.ainit(ports)
 
 
