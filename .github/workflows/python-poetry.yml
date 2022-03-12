@@ -59,3 +59,9 @@ jobs:
       - name: Test with Pytest
         run: |
           poetry run pytest -rP
+
+      - name: Upload coverage to Codecov
+        if: ${{ matrix.python-version }} == 3.10 && ${{ matrix.os }} == ubuntu-latest
+        uses: codecov/codecov-action@v2
+        with:
+          file: coverage.xml
