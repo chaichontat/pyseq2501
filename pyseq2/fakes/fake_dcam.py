@@ -200,13 +200,13 @@ class FakeAPI:
         return False
 
     def dcam_getpropertyattr(self, h: Handle, param: pointer[DCAM_PARAM_PROPERTYATTR]) -> bool:
-        return False
+        return True
 
     def dcam_getpropertyvalue(self, h: Handle, iProp: c_int32, pValue: pointer[c_double]) -> bool:
-        return False
+        return True
 
     def dcam_setpropertyvalue(self, h: Handle, iProp: c_int32, fValue: c_double) -> bool:
-        return False
+        return True
 
     def dcam_setgetpropertyvalue(
         self,
@@ -215,7 +215,7 @@ class FakeAPI:
         pValue: pointer[c_double],
         option: c_int32 = DCAM_DEFAULT_ARG,
     ) -> bool:
-        return False
+        return True
 
     def dcam_querypropertyvalue(
         self,
@@ -224,20 +224,20 @@ class FakeAPI:
         pValue: pointer[c_double],
         option: c_int32 = DCAM_DEFAULT_ARG,
     ) -> bool:
-        return False
+        return True
 
     def dcam_getnextpropertyid(
         self, h: Handle, pProp: pointer[c_int32], option: c_int32 = DCAM_DEFAULT_ARG
     ) -> bool:
-        return False
+        return True
 
     def dcam_getpropertyname(
         self, h: Handle, iProp: c_int32, text: Array[c_char], textbytes: c_int32
     ) -> bool:
-        return False
+        return True
 
     def dcam_getpropertyvaluetext(self, h: Handle, param: pointer[DCAM_PARAM_PROPERTYVALUETEXT]) -> bool:
-        return False
+        return True
 
     def return_false(self):
         return False

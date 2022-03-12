@@ -18,7 +18,7 @@ async def test_initialize(imager: Imager):
     await imager.initialize()
 
 
-@pytest.mark.parametrize("c", range(16))
+@pytest.mark.parametrize("c", (0, 1, 3, 10, 15))
 async def test_take(imager: Imager, c: int):
     channels = [i for i, x in enumerate([c & 1, c & 2, c & 4, c & 8]) if x]
     with pytest.raises(ValueError) if not len(channels) else nullcontext():
