@@ -45,6 +45,7 @@ reportMissingTypeStubs = false
 reportPrivateUsage = false
 reportPropertyTypeMismatch = false
 reportUnknownMemberType = false
+reportUntypedBaseClass = false
 reportUntypedFunctionDecorator = false
 reportUnusedImport = false
 reportUnusedVariable = "warning"
