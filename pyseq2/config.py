@@ -10,6 +10,7 @@ class Config(BaseSettings):
     machine: Literal["HiSeq2000", "HiSeq2500"] = "HiSeq2000"
     logPath: str = str(pyseq_path / 'logs')
     logLevel: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+    enabled_ports: [1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18,19]
 
 
 def load_config(path: Path | str = pyseq_path / 'pyseq.yml') -> Config:
