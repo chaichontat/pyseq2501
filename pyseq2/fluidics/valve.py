@@ -112,8 +112,8 @@ class Valves(Movable):
             return p1
 
         elif CONFIG.machine == "HiSeq2500":
-            if p1 == 6:
-                return 0
+            # if p1 == 6:
+            #     return 0
             return p2
 
         else:
