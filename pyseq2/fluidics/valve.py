@@ -28,7 +28,7 @@ class ValveCmd:
 class _Valve(Movable, UsesSerial):
     @classmethod
     async def ainit(cls, name: ValveName, port_tx: str) -> _Valve:
-        n_ports = 24 if CONFIG.machine == "HiSeq2500" and name.startswith("valve_b") else 10
+        # n_ports = 24 if CONFIG.machine == "HiSeq2500" and name.startswith("valve_b") else 10
         self = cls(name, n_ports)
         self.com = await COM.ainit(name, port_tx)  # VICI hates \n 🙄.
 
@@ -36,7 +36,8 @@ class _Valve(Movable, UsesSerial):
             await self.com.send(ValveCmd.CLEAR_ID)
             if await self.com.send(ValveCmd.ID) != "not used":
                 raise Exception(f"Already cleared ID but ID is still here.")
-            assert await self.com.send(ValveCmd.GET_N_PORTS) == self.n_ports
+            # assert await self.com.send(ValveCmd.GET_N_PORTS) == self.n_ports
+            self.n_ports = await self.com.send(ValveCmd.GET_N_PORTS)
 
         return self
 
@@ -44,10 +45,10 @@ class _Valve(Movable, UsesSerial):
         self.com: COM
         self.name = name
 
-        if CONFIG.machine == "HiSeq2500" and name[-1] == '2':
-            self.n_ports = 24
-        else:
-            self.n_ports = 10
+        # if CONFIG.machine == "HiSeq2500" and name[-1] == '2':
+        #     self.n_ports = 24
+        # else:
+        #     self.n_ports = 10
 
         self.t_lastcmd = 0.0
 
