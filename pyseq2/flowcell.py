@@ -10,7 +10,7 @@ from .fluidics.pump import Pump
 from .fluidics.valve import Valves
 from .utils.log import init_log
 from .utils.utils import Singleton
-from config import CONFIG
+import config
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +76,7 @@ class AFlowCell:
         wait: Seconds = 26,
     ) -> None:
 
-        if not (1 <= port <= 19) and port != 9:
+        if not in self.enabled_ports:
             raise ValueError("Invalid port number.")
 
         async with self.arm9chem.shutoff_valve(), self.v.move_port(port), self.lock:
