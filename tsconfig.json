@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "moduleResolution": "node",
-    "module": "es2020",
+    "module": "es2022",
     "lib": ["es2021", "DOM"],
     "target": "es2021",
     "strict": true,

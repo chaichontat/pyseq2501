@@ -258,7 +258,24 @@
           "const": "takeimage"
         }
       },
-      "required": ["channels", "laser_onoff", "lasers", "name", "od", "op", "overlap", "path", "save", "xy0", "xy1", "z_from", "z_obj", "z_spacing", "z_tilt", "z_to"]
+      "required": [
+        "channels",
+        "laser_onoff",
+        "lasers",
+        "name",
+        "od",
+        "op",
+        "overlap",
+        "path",
+        "save",
+        "xy0",
+        "xy1",
+        "z_from",
+        "z_obj",
+        "z_spacing",
+        "z_tilt",
+        "z_to"
+      ]
     },
     "Autofocus": {
       "type": "object",
