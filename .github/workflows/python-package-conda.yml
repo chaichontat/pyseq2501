@@ -40,20 +40,22 @@ jobs:
           activate-environment: pyseq
           use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
 
-      # - uses: pre-commit/action@v2.0.3
+      - name: Update env with conda
+        run: |
+          conda env update -f environment.yml
 
       - name: Install with Poetry
         run: |
           poetry install
 
+      - name: Type check with Pyright
+        run: |
+          npm i -g pyright
+          pyright pyseq2 --warnings
+
       - name: Test with Pytest
         run: |
-          pytest -rP
-      #       - name: Type check with Pyright
-      #         run: |
-      #           npm i -g pyright
-      #           pyright --warnings
-
+          poetry run pytest -rP
       #       - name: Debug with tmate
       #         uses: mxschmitt/action-tmate@v3
 
@@ -71,38 +73,38 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./site
 
-  tox:
-    runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: bash -l {0}
-    strategy:
-      matrix:
-        os: ["ubuntu-latest", "windows-latest"]
-      max-parallel: 5
-    env:
-      FAKE_HISEQ: 1
+  # tox:
+  #   runs-on: ${{ matrix.os }}
+  #   defaults:
+  #     run:
+  #       shell: bash -l {0}
+  #   strategy:
+  #     matrix:
+  #       os: ["ubuntu-latest", "windows-latest"]
+  #     max-parallel: 5
+  #   env:
+  #     FAKE_HISEQ: 1
 
-    steps:
-      - uses: actions/checkout@v2
+  #   steps:
+  #     - uses: actions/checkout@v2
 
-      - name: Cache conda
-        uses: actions/cache@v2
-        env:
-          # Increase this value to reset cache if etc/example-environment.yml has not changed
-          CACHE_NUMBER: 0
-        with:
-          path: ~/conda_pkgs_dir
-          key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
-            hashFiles('.github/ci_env.yml') }}
+  #     - name: Cache conda
+  #       uses: actions/cache@v2
+  #       env:
+  #         # Increase this value to reset cache if etc/example-environment.yml has not changed
+  #         CACHE_NUMBER: 0
+  #       with:
+  #         path: ~/conda_pkgs_dir
+  #         key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+  #           hashFiles('.github/ci_env.yml') }}
 
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          miniforge-version: latest
-          environment-file: .github/ci_env.yml
-          activate-environment: pyseq
-          use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+  #     - uses: conda-incubator/setup-miniconda@v2
+  #       with:
+  #         miniforge-version: latest
+  #         environment-file: .github/ci_env.yml
+  #         activate-environment: pyseq
+  #         use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
 
-      - name: Test with Tox
-        run: |
-          tox -vv
+  #     - name: Test with Tox
+  #       run: |
+  #         tox -vv
