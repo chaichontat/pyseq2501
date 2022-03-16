@@ -51,7 +51,7 @@ jobs:
       - name: Type check with Pyright
         run: |
           npm i -g pyright
-          pyright pyseq2 --warnings
+          pyright pyseq2
 
       - name: Test with Pytest
         run: |
