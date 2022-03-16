@@ -5,12 +5,12 @@ import logging
 from typing import Annotated, Literal, Optional, Type, TypeVar
 
 from .base.instruments_types import SerialPorts
+from .config import CONFIG
 from .fluidics.arm9chem import ARM9Chem
 from .fluidics.pump import Pump
 from .fluidics.valve import Valves
 from .utils.log import init_log
 from .utils.utils import Singleton
-from .config import CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +19,10 @@ logger = logging.getLogger(__name__)
 Seconds = Annotated[float, "s"]
 
 T = TypeVar("T")
+
+BPL = CONFIG.barrels_per_lane
+MAX_SPEED = 2000 * BPL  # TODO: Verify
+MAX_VOL = Pump.BARREL_VOL * BPL
 
 
 class AFlowCell:
@@ -45,8 +49,6 @@ class AFlowCell:
         self.v = valves
         self.p = pump
         self.arm9chem = arm9chem
-        self.enabled_ports = CONFIG.enabled_ports
-        self.config = CONFIG
         return self
 
     def __init__(self, name: Literal["A", "B"]) -> None:
@@ -69,19 +71,19 @@ class AFlowCell:
     async def flow(
         self,
         port: int,
-        vol_barrel: μL = 250,
+        vol: μL = 250,
         *,
         v_pull: μLpermin = 250,
         v_push: μLpermin = 2000,
         wait: Seconds = 26,
     ) -> None:
 
-        if port not in self.enabled_ports:
+        if port not in CONFIG.enabled_ports:
             raise ValueError("Invalid port number.")
 
         async with self.arm9chem.shutoff_valve(), self.v.move_port(port), self.lock:
             await self.p.pump(
-                vol=self.steps_from_vol(vol_barrel),
+                vol=self.steps_from_vol(vol),
                 v_pull=self.sps_from_μLpermin(v_pull),
                 v_push=self.sps_from_μLpermin(v_push),
                 wait=wait,
@@ -100,17 +102,15 @@ class AFlowCell:
     @staticmethod
     def steps_from_vol(vol: μL) -> int:
         """Per Lane."""
-        max_volume = CONFIG.barrels_per_lane * Pump.BARREL_VOL
-        if not 0 < vol <= max_volume:
-            raise ValueError(f"Invalid barrel volume. Range is (0, {max_volume}] μL.")
-        return int((vol / CONFIG.barrels_per_lane / Pump.BARREL_VOL) * Pump.STEPS)
+        if not 0 < vol <= MAX_VOL:
+            raise ValueError(f"Invalid volume. Range is (0, {MAX_VOL}] μL for {BPL} barrels/lane.")
+        return int((vol / MAX_VOL) * Pump.STEPS)
 
     @staticmethod
     def sps_from_μLpermin(speed: μLpermin) -> int:
-        max_speed = 2000 * CONFIG.barrels_per_lane
-        if not 0 < speed <= max_speed:
-            raise ValueError(f"Invalid barrel speed. Range is (0, {max_speed}] μL/min.")
-        return int((speed / Pump.BARREL_VOL / CONFIG.barrels_per_lane) * Pump.STEPS / 60)
+        if not 0 < speed <= MAX_SPEED:
+            raise ValueError(f"Invalid speed. Range is (0, {MAX_SPEED}] μL/min for {BPL} barrels/lane.")
+        return int((speed / MAX_VOL) * Pump.STEPS / 60)
 
 
 class FlowCells(metaclass=Singleton):
