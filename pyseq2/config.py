@@ -1,15 +1,19 @@
+from logging import getLogger
 from pathlib import Path
 from typing import Any, Literal
 
 import yaml
 from pydantic import BaseSettings, validator
 
-pyseq_path = Path.home() / Path(".pyseq")
+PATH = Path.home() / ".pyseq2"
+PATH.mkdir(exist_ok=True)
+
+logger = getLogger(__name__)
 
 
 class Config(BaseSettings):
     machine: Literal["HiSeq2000", "HiSeq2500"] = "HiSeq2000"
-    logPath: str = str(pyseq_path / "logs")
+    logPath: str = (PATH / "logs").as_posix()
     logLevel: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     barrels_per_lane: Literal[1, 2, 4, 8] = 1
 
@@ -27,13 +31,11 @@ class Config(BaseSettings):
                 raise ValueError("Invalid machine.")
 
 
-def load_config(path: Path | str = pyseq_path / "pyseq.yml") -> Config:
+def load_config(path: Path | str = PATH / "pyseq.yml") -> Config:
     if isinstance(path, str):
-        print("Found path")
         path = Path(path)
-        print(path)
     if not path.exists():
-        print("Can't find path")
+        logger.info("Config file not found. Using defaults.")
         return Config()
     return Config(**yaml.safe_load(path.read_text()))
 
