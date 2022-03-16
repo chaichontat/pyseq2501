@@ -11,6 +11,7 @@ class Config(BaseSettings):
     logPath: str = str(pyseq_path / 'logs')
     logLevel: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     enabled_ports: list[int] = [1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18,19]
+    barrels_per_lane: Literal[1,2,4,8] = 1
 
 
 def load_config(path: Path | str = pyseq_path / 'pyseq.yml') -> Config:
