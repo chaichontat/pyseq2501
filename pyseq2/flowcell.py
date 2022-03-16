@@ -10,6 +10,7 @@ from .fluidics.pump import Pump
 from .fluidics.valve import Valves
 from .utils.log import init_log
 from .utils.utils import Singleton
+from config import CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,8 @@ class AFlowCell:
         self.v = valves
         self.p = pump
         self.arm9chem = arm9chem
+        self.enabled_ports = CONFIG.enabled_ports
+        self.config = CONFIG
         return self
 
     def __init__(self, name: Literal["A", "B"]) -> None:

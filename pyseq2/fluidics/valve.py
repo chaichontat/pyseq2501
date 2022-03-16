@@ -44,7 +44,6 @@ class _Valve(Movable, UsesSerial):
     def __init__(self, name: ValveName) -> None:
         self.com: COM
         self.name = name
-        self.enabled_ports = CONFIG.enabled_ports
 
         # if CONFIG.machine == "HiSeq2500" and name[-1] == '2':
         #     self.n_ports = 24
@@ -134,9 +133,11 @@ class Valves(Movable):
                         raise ValueError("Invalid port number. Range is [1, 18], excluding 9.")
 
             elif CONFIG.machine == "HiSeq2500":
+
                 match p:
                     case 0:
-                        await self[0].move(6)
+                        #await self[].move(6)
+                        pass
                     case x if 1 <= x <= 24:
                         await self[1].move(p)
                     case _:
