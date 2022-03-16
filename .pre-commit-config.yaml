@@ -1,6 +1,9 @@
 default_language_version:
     python: python3.10
 
+ci:
+  skip: [pyright]
+
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.1.0
@@ -14,3 +17,12 @@ repos:
   rev: 22.1.0
   hooks:
   - id: black
+
+- repo: local
+  hooks:
+  - id: pyright
+    name: pyright
+    entry: pyright
+    language: node
+    types: [python]
+    additional_dependencies: ['pyright@1.1.230']

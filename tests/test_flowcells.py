@@ -33,6 +33,7 @@ async def test_valves(fcs: FlowCells):
     with pytest.raises(NotImplementedError):
         await fcs.A.v.set_fc_inlet(8)
 
+    CONFIG.Config.allow_mutation = True  # Triple very bad. Don't do in production.
     CONFIG.machine = "HiSeq2500"
     await fcs.A.v.pos
     await fcs.A.v.set_fc_inlet(8)

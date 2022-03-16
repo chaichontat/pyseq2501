@@ -1,3 +1,4 @@
+# pyright: reportIncompatibleVariableOverride = false
 from logging import getLogger
 from pathlib import Path
 from typing import Any, Literal
@@ -12,6 +13,9 @@ logger = getLogger(__name__)
 
 
 class Config(BaseSettings):
+    class Config:
+        allow_mutation = False
+
     machine: Literal["HiSeq2000", "HiSeq2500"] = "HiSeq2000"
     logPath: str = (PATH / "logs").as_posix()
     logLevel: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"

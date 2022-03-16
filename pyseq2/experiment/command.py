@@ -229,7 +229,7 @@ class TakeImage(BaseModel, AbstractCommand):
             for iz, z in enumerate(zs):
                 logger.info(f"Imaging [{iz+1}/{len(zs)}z {ix+1}/{len(xs)}x] at {x=} y={y_start} {z=}.")
                 await imager.move(x=x, y=y_start, z_obj=z, z_tilt=self.z_tilt)
-                img, state = await imager.take(
+                img, _ = await imager.take(
                     n_bundles,
                     channels=channels,
                     event_queue=None if q is None else (q, lambda i: (i, iz, ix)),
