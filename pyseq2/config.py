@@ -16,7 +16,6 @@ class Config(BaseSettings):
     logPath: str = (PATH / "logs").as_posix()
     logLevel: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     barrels_per_lane: Literal[1, 2, 4, 8] = 1
-
     enabled_ports: tuple[int, ...] = None  # type: ignore
 
     # Hack until https://github.com/samuelcolvin/pydantic/pull/2625 is merged.
