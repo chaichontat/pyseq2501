@@ -1,7 +1,9 @@
+from ctypes import c_void_p
+
 import pytest
 
-from pyseq2.imaging.camera.dcam import TwoProps
-from pyseq2.imaging.camera.dcam_api import DCAM_CAPTURE_MODE, DCAMException, check_if_failed
+from pyseq2.imaging.camera.dcam import API, TwoProps
+from pyseq2.imaging.camera.dcam_api import DCAMException
 
 
 def test_two_props():
@@ -13,3 +15,9 @@ def test_two_props():
     t["diff"]
     t["same"] = -1
     assert t["same"] == -1
+
+
+def test_error():
+    handle = c_void_p(0)
+    with pytest.raises(DCAMException, match="Error code: 5."):
+        API.dcam_unlockbits(handle)  # Proxy for return 1.

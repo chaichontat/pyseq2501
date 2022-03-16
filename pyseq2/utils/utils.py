@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import asyncio
 import os
 import re
-from typing import Any, Awaitable, Callable, Container, Literal, ParamSpec, Sequence, TypeVar, cast, overload
+from typing import Any, Callable, Container, Literal, ParamSpec, Sequence, TypeVar, cast, overload
 
 FlowCell = Literal["A", "B"]
 IS_FAKE = lambda: os.name != "nt" or os.environ.get("FAKE_HISEQ", "0") == "1"
@@ -41,12 +40,6 @@ def ok_if_match(expected: Container[str] | str, exception_on_fail: bool = True) 
     return wrapped
 
 
-def check_none(x: T | None) -> T:
-    if x is None:
-        raise InvalidResponse()
-    return x
-
-
 def ok_re(target: str, f: Callable[..., T] = bool) -> Callable[[str], T]:
     """f is your responsibility."""
     r = re.compile(target)
@@ -62,11 +55,11 @@ def ok_re(target: str, f: Callable[..., T] = bool) -> Callable[[str], T]:
     return inner
 
 
-def chkrng(f: Callable[P, T], min_: float, max_: float) -> Callable[P, T]:
+def chkrng(f: Callable[P, T], min_: float, max_: float, argnum: int = 0) -> Callable[P, T]:
     """Check the (x := first argument) of a function if min_ <= x <= max."""
 
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-        x = cast(float, args[0])
+        x = cast(float, args[argnum])
         if not (min_ <= x <= max_):
             raise ValueError(f"Invalid value for {f.__name__}: Got {x}. Expected [{min_}, {max_}].")
         return f(*args, **kwargs)
@@ -74,17 +67,17 @@ def chkrng(f: Callable[P, T], min_: float, max_: float) -> Callable[P, T]:
     return wrapper
 
 
-async def until(
-    cond: Callable[[], Awaitable[bool]],
-    attempts: int = 120,
-    gap: float = 1,
-) -> None:
-    for _ in range(attempts):
-        if await cond():
-            return
-        await asyncio.sleep(gap)
-    else:
-        raise ParamChangeTimeout(f"Timeout after {attempts} attempts.")
+# async def until(
+#     cond: Callable[[], Awaitable[bool]],
+#     attempts: int = 120,
+#     gap: float = 1,
+# ) -> None:
+#     for _ in range(attempts):
+#         if await cond():
+#             return
+#         await asyncio.sleep(gap)
+#     else:
+#         raise ParamChangeTimeout(f"Timeout after {attempts} attempts.")
 
 
 @overload

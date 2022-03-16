@@ -120,14 +120,15 @@ class FlowCells(metaclass=Singleton):
         ports: dict[SerialPorts, str],
     ) -> FlowCells:
         self = cls()
-        arm9chem = await ARM9Chem.ainit(ports["arm9chem"])
+        self.arm9chem = await ARM9Chem.ainit(ports["arm9chem"])
         self.fcs = (
-            await AFlowCell.ainit("A", ports, arm9chem),
-            await AFlowCell.ainit("B", ports, arm9chem),
+            await AFlowCell.ainit("A", ports, self.arm9chem),
+            await AFlowCell.ainit("B", ports, self.arm9chem),
         )
         return self
 
     def __init__(self) -> None:
+        self.arm9chem: ARM9Chem
         self.fcs: tuple[AFlowCell, AFlowCell]
 
     def __getitem__(self, i: Literal[0, 1]) -> AFlowCell:
@@ -144,4 +145,4 @@ class FlowCells(metaclass=Singleton):
 
     @init_log(logger, info=True)
     async def initialize(self) -> None:
-        await asyncio.gather(self[0].initialize(), self[1].initialize())
+        await asyncio.gather(self[0].initialize(), self[1].initialize(), self.arm9chem.initialize())

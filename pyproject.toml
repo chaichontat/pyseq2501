@@ -27,6 +27,7 @@ isort = "^5.10.1"
 pre-commit = "^2.17.0"
 pytest = "^7.0.1"
 pytest-asyncio = "^0.18.2"
+pytest-cov = "^3.0.0"
 
 [build-system]
 build-backend = "poetry.core.masonry.api"
@@ -44,6 +45,7 @@ reportMissingTypeStubs = false
 reportPrivateUsage = false
 reportPropertyTypeMismatch = false
 reportUnknownMemberType = false
+reportUntypedBaseClass = false
 reportUntypedFunctionDecorator = false
 reportUnusedImport = false
 reportUnusedVariable = "warning"
@@ -58,8 +60,10 @@ py_version = 310
 src_paths = ["pyseq2", "tests", "scripts"]
 
 [tool.pytest.ini_options]
+addopts = "--cov=pyseq2 --cov-report=html --cov-report=xml"
 asyncio_mode = "auto"
 log_cli = 1
 # log_cli_level = "DEBUG"
+env = ["FAKE_HISEQ = 1"]
 minversion = "7.0"
 testpaths = ["tests"]

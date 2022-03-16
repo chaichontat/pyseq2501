@@ -1,4 +1,3 @@
-#%%
 from __future__ import annotations
 
 import asyncio
@@ -281,10 +280,3 @@ class Goto(BaseModel, AbstractCommand):
 
 
 Cmd = Annotated[Pump | Prime | Temp | Hold | Autofocus | TakeImage | Goto, Field(discriminator="op")]
-
-#%%
-if __name__ == "__main__":
-    t = TakeImage.default()
-    t.calc_pos(False)
-
-# %%

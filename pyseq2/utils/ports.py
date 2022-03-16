@@ -33,7 +33,7 @@ serial_names: dict[SerialPorts, str] = dict(
 FAKE_PORTS: dict[SerialPorts, str] = {name: "COMX" for name in serial_names}
 
 
-async def get_ports(timeout: float = 1, show_all: bool = False) -> dict[SerialPorts, str]:
+async def get_ports(show_all: bool = False) -> dict[SerialPorts, str]:
     """
     See https://pyserial.readthedocs.io/en/latest/tools.html for more details.
 
@@ -42,18 +42,22 @@ async def get_ports(timeout: float = 1, show_all: bool = False) -> dict[SerialPo
     """
     if IS_FAKE():
         logger.warning("Using fake ports.")
-        return FAKE_PORTS
 
-    ports = cast(
-        dict[str, str],
-        {
-            dev.serial_number: dev.name
-            for dev in await asyncio.get_running_loop().run_in_executor(
-                None, serial.tools.list_ports.comports  # type: ignore
-            )
-            if dev.serial_number is not None
-        },
+    ports = (
+        cast(
+            dict[str, str],
+            {
+                dev.serial_number: dev.name  # {serial_number: ports}
+                for dev in await asyncio.get_running_loop().run_in_executor(
+                    None, serial.tools.list_ports.comports  # type: ignore
+                )
+                if dev.serial_number is not None
+            },
+        )
+        if not IS_FAKE()
+        else {id_: "COMX" for id_ in serial_names.values()}
     )
+
     try:
         res = {name: ports[id_] for name, id_ in serial_names.items()}
         if show_all:
@@ -65,77 +69,3 @@ async def get_ports(timeout: float = 1, show_all: bool = False) -> dict[SerialPo
             f"Cannot find {missing[0]}. If you are running a fake HiSeq, set the environment variable FAKE_HISEQ=1.",
             e.args[0],
         )
-
-
-if __name__ == "__main__":
-    print(asyncio.run(get_ports(show_all=True)))
-
-# REGEX_COM = re.compile(r"\((COM\d{1,2})\)")
-# REGEX_ID = re.compile(r"\+(\w+)\\")
-
-
-# def find_ports() -> Ports:
-#     import wmi
-
-#     devices = wmi.WMI().CIM_LogicalDevice()
-#     com_ports = {
-#         REGEX_ID.search(d.deviceid).group(1): REGEX_COM.search(d.caption).group(1)  # type: ignore[union-attr]
-#         for d in devices
-#         if d.caption is not None and "USB Serial Port" in d.caption
-#     }
-
-#     res = {name: com_ports[id_] for name, id_ in name_map.items()}
-#     return Ports.from_raw(res)
-
-
-# # @unique
-# # class Valve(Enum):
-# #     A24 = auto()
-# #     A10 = auto()
-# #     B24 = auto()
-# #     B10 = auto()
-
-
-# # @dataclass(frozen=True)
-# # class Ports:
-# #     x: str
-# #     y: str
-# #     pumps: tuple[str, str]
-# #     valves: dict[Valve, str]
-# #     fpga: tuple[str, str]
-# #     lasers: tuple[str, str]
-# #     arm9chem: str
-
-# #     def __post_init__(self):
-# #         for name, obj in asdict(self).items():
-# #             if isinstance(obj, dict):
-# #                 [self.check(x, name) for x in obj.values()]
-# #             elif isinstance(obj, tuple):
-# #                 [self.check(x, name) for x in obj]
-# #             else:
-# #                 self.check(obj, name)
-
-# #     @staticmethod
-# #     def check(x: str, name: str):
-# #         if not x.startswith("COM"):
-# #             raise ValueError(f"What kind of sorcery is this port {x} for {name}")
-
-
-# # ports = {
-# #     "xstage": "COM9",
-# #     "ystage": "COM10",
-# #     "pumpa": "COM19",
-# #     "pumpb": "COM22",
-# #     "valvea24": "COM20",
-# #     "valvea10": "COM18",
-# #     "valveb24": "COM23",
-# #     "valveb10": "COM21",
-# #     "fpgacommand": "COM11",
-# #     "fpgaresponse": "COM13",
-# #     "laser1": "COM14",
-# #     "laser2": "COM17",
-# #     "arm9chem": "COM8",
-# # }
-# #%%
-
-# %%

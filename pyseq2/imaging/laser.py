@@ -79,7 +79,7 @@ class Laser(UsesSerial):
             tol (int): [description]. Defaults to 3.
         """
         async with self.lock:
-            assert all((int(power) == power and power > 0, tol > 0))
+            assert all((int(power) == power, tol > 0))
             if not self.on:
                 await self.set_onoff(True)
             await self.com.send(LaserCmd.SET_POWER(int(power)))

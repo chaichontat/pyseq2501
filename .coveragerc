@@ -1,0 +1,12 @@
+[run]
+omit =
+    pyseq2/fakes/fake_handlers.py
+    pyseq2/fakes/fake_dcam.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    @abstract
+    __str__
+    __repr__
+    \.\.\.

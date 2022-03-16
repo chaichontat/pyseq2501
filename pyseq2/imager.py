@@ -258,7 +258,7 @@ class Imager(metaclass=Singleton):
         return int(n_px_y * Imager.UM_PER_PX * YStage.STEPS_PER_UM)
 
     async def autofocus(
-        self, channel: L[0, 1, 2, 3] = 1
+        self, channel: L[0, 1, 2, 3] = 1, use_laplacian: bool = True
     ) -> tuple[int, np.ndarray[L[259], np.dtype[np.float64]], UInt16Array]:
         """Moves to z_max and takes 232 (2048 × 5) images while moving to z_min.
         Returns the z position of maximum intensity and the images.
@@ -291,13 +291,17 @@ class Imager(metaclass=Singleton):
             stack: UInt16Array = np.reshape(img[CHANNEL[channel] - 2 * cam], (n_bundles, height, 2048))
             if IS_FAKE() and (path := Path(__file__).parent / "imaging" / "afdata.npy").exists():
                 stack = np.load(path)
-            var_laplacian = np.var(self.laplacian(stack), axis=(1, 2))
 
-            target = int(z_max - ((z_max - z_min) * np.argmax(var_laplacian) / n_bundles))  # type: ignore
+            if use_laplacian:
+                measure = np.var(self.laplacian(stack), axis=(1, 2))
+            else:
+                measure = np.mean(stack, axis=(1, 2))
+
+            target = int(z_max - ((z_max - z_min) * np.argmax(measure) / n_bundles))  # type: ignore
             logger.info(f"Done autofocus. Optimum={target}")
             if not 10000 < target < 50000:
                 logger.info(f"Target too close to edge, considering moving the tilt motors.")
-            return (target, var_laplacian, stack)
+            return (target, measure, stack)
 
     @staticmethod
     def laplacian(img: UInt16Array) -> UInt16Array:

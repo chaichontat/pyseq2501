@@ -93,24 +93,23 @@ class DCAMDict(MutableMapping[Props, float]):
         return self._dict[name].value
 
     def __setitem__(self, name: Props, value: float) -> None:
-        if IS_FAKE():
-            return
 
         with LOCK:
             prop = self._dict[name]
             # TODO: Check writable.
             min_val: float = prop.attr.valuemin
             max_val: float = prop.attr.valuemax
-            if not (min_val <= value <= max_val):
+            if not IS_FAKE() and not (min_val <= value <= max_val):
                 raise ValueError(f"Out of range for {name}. Given {value}, range is [{min_val}, {max_val}].")
 
             to_set = ctypes.c_double(value)
             API.dcam_setgetpropertyvalue(self.handle, prop.id_, pointer(to_set), c_int32(DCAM_DEFAULT_ARG))
             logger.info(f"Set {name} to {value}.")
             self.refresh()
-            assert np.allclose(
-                self[name], value
-            ), f"Value in DCAM not same as target. Expected {value}, got {self[name]}."
+            if not IS_FAKE():
+                assert np.allclose(
+                    self[name], value
+                ), f"Value in DCAM not same as target. Expected {value}, got {self[name]}."
 
     def __delitem__(self, _: Props) -> NoReturn:
         raise Exception("Cannot remove properties!")
@@ -134,7 +133,7 @@ class DCAMDict(MutableMapping[Props, float]):
         logger.debug("DCAMProp refreshed.")
 
     @staticmethod
-    def to_snake_case(s: bytes) -> str:
+    def to_snake_case(s: bytes) -> str:  # pragma: no cover
         return s.lower().decode("utf-8").replace(" ", "_")
 
     @staticmethod
