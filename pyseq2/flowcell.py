@@ -33,7 +33,6 @@ class AFlowCell:
         if name not in ("A", "B"):
             raise ValueError("Invalid name.")
 
-        self = cls(name)
         if valves is None:
             v = ("valve_a1", "valve_a2") if name == "A" else ("valve_b1", "valve_b2")
             valves = await Valves.ainit(name, ports[v[0]], ports[v[1]])
@@ -41,20 +40,16 @@ class AFlowCell:
             p = "pumpa" if name == "A" else "pumpb"
             pump = await Pump.ainit(p, ports[p])
 
+        return cls(name, valves, pump, arm9chem)
+
+    def __init__(self, name: Literal["A", "B"], valves: Valves, pump: Pump, arm9chem: ARM9Chem) -> None:
+        if name not in ("A", "B"):
+            raise ValueError("Invalid name.")
+        self.name = name
+        self.id_: Literal[0, 1] = 0 if self.name == "A" else 1
         self.v = valves
         self.p = pump
         self.arm9chem = arm9chem
-        return self
-
-    def __init__(self, name: Literal["A", "B"]) -> None:
-        if name not in ("A", "B"):
-            raise ValueError("Invalid name.")
-
-        self.name = name
-        self.id_: Literal[0, 1] = 0 if self.name == "A" else 1
-        self.v: Valves
-        self.p: Pump
-        self.arm9chem: ARM9Chem
         self.lock = asyncio.Lock()
 
     async def initialize(self) -> None:

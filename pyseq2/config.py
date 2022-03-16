@@ -1,3 +1,5 @@
+# pyright: reportIncompatibleVariableOverride = false
+
 from pathlib import Path
 from typing import Literal
 

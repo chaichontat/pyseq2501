@@ -49,7 +49,7 @@ async def get_ports(show_all: bool = False) -> dict[SerialPorts, str]:
             {
                 dev.serial_number: dev.name  # {serial_number: ports}
                 for dev in await asyncio.get_running_loop().run_in_executor(
-                    None, serial.tools.list_ports.comports  # type: ignore
+                    None, serial.tools.list_ports.comports
                 )
                 if dev.serial_number is not None
             },

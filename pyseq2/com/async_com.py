@@ -128,12 +128,13 @@ class COM:
             test_params = FakeOptions()
         self = cls(name, test_params, min_spacing, no_check)
 
+        Streams = tuple[StreamReader, StreamWriter]
         if not IS_FAKE():  # Real instrument
             if port_rx is not None:
                 assert name == "fpga"
                 # Name and test_params is for fakeserial. Ignored in the real thing.
-                srx = await open_serial_connection(url=port_rx, baudrate=baudrate)
-                stx = await open_serial_connection(url=port_tx, baudrate=baudrate)
+                srx: Streams = await open_serial_connection(url=port_rx, baudrate=baudrate)
+                stx: Streams = await open_serial_connection(url=port_tx, baudrate=baudrate)
                 self._serial = Channel(reader=srx[0], writer=stx[1])
                 logger.info(f"{self.name}Started listening to ports {port_tx} and {port_rx}.")
             else:
