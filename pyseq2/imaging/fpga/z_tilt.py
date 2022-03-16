@@ -42,10 +42,13 @@ class ZTilt(FPGAControlled):
     def __init__(self, fpga_com: COM) -> None:
         super().__init__(fpga_com)
         self.lock = asyncio.Lock()
-        self.max_tries = 3
 
     async def all_z(self, cmd: Callable[[int], CmdParse[Any, T]]) -> tuple[T, T, T]:
         return await asyncio.gather(self.com.send(cmd(1)), self.com.send(cmd(3)), self.com.send(cmd(2)))
+
+    async def _home(self) -> None:
+        await self.all_z(TiltCmd.GO_HOME)
+        await self.all_z(TiltCmd.CLEAR_REGISTER)
 
     @init_log(logger)
     async def initialize(self) -> None:
@@ -54,8 +57,7 @@ class ZTilt(FPGAControlled):
                 self.all_z(lambda i: TiltCmd.SET_CURRENT(i, 35)),
                 self.all_z(lambda i: TiltCmd.SET_VELO(i, 62500)),
             )
-            await self.all_z(TiltCmd.GO_HOME)
-            await self.all_z(TiltCmd.CLEAR_REGISTER)
+            await self._home()
 
     async def move(self, pos: int | tuple[int, int, int]) -> tuple[int, int, int]:
         async with self.lock:
@@ -73,16 +75,11 @@ class ZTilt(FPGAControlled):
     @property
     async def pos(self) -> tuple[int, int, int]:
         async with self.lock:
-            for i in range(self.max_tries):
+            for i in range(1, 4):
                 resp = await self.all_z(TiltCmd.READ_POS)
-                all_good = all(map(lambda x: x >= 0, resp))
-                if all_good:
-                    break
-                elif not all_good and i < self.max_tries:
-                    # Try rehoming tilt motors
-                    logger.info(f"Invalid Z position. Homing attempt {i}.")
-                    await self.all_z(TiltCmd.GO_HOME)
-                    await self.all_z(TiltCmd.CLEAR_REGISTER)
-                else:
-                    raise Exception("Invalid Z position. Unable to home.")
-            return resp
+                if all(map(lambda x: x >= 0, resp)):
+                    return resp
+                logger.info(f"Negative Z position {resp}. Homing attempt {i}.")
+                await self._home()
+
+            raise Exception("Negative Z position after 3 homing attempts.")
