@@ -6,6 +6,11 @@ on:
       - main
   pull_request:
   release:
+  workflow_dispatch:
+    inputs:
+      reason:
+          description: Reason for the workflow dispatch.
+          required: true
 
 jobs:
   build:
