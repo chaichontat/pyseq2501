@@ -6,6 +6,9 @@ from pydantic import BaseSettings
 
 
 class Config(BaseSettings):
+    class Config:
+        allow_mutation = False
+
     machine: Literal["HiSeq2000", "HiSeq2500"] = "HiSeq2000"
     logPath: str = "~/pyseq2/logs"
     logLevel: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
