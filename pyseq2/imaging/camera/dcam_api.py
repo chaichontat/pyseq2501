@@ -12,7 +12,7 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 if not IS_FAKE():  # pragma: no cover
-    from ctypes import WinDLL
+    from ctypes import WinDLL  # type: ignore
 
     # Ignore because in Windows, Pylance would complain that WinDLL is not a base class.
     class DCAMAPI(WinDLL):  # type: ignore

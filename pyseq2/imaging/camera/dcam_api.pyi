@@ -6,7 +6,7 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 if not IS_FAKE():
-    from ctypes import WinDLL
+    from ctypes import WinDLL  # type: ignore
 else:
     class WinDLL:
         def __init__(self, name: str) -> None: ...
