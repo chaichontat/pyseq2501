@@ -29,7 +29,7 @@ class _Valve(Movable, UsesSerial):
     @classmethod
     async def ainit(cls, name: ValveName, port_tx: str) -> _Valve:
         # n_ports = 24 if CONFIG.machine == "HiSeq2500" and name.startswith("valve_b") else 10
-        self = cls(name, n_ports)
+        self = cls(name)
         self.com = await COM.ainit(name, port_tx)  # VICI hates \n 🙄.
 
         async with self.com.big_lock:
@@ -41,7 +41,7 @@ class _Valve(Movable, UsesSerial):
 
         return self
 
-    def __init__(self, name: ValveName, n_ports: Literal[10, 24]) -> None:
+    def __init__(self, name: ValveName) -> None:
         self.com: COM
         self.name = name
         self.enabled_ports = CONFIG.enabled_ports
