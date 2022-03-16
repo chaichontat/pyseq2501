@@ -78,7 +78,7 @@ class ZTilt(FPGAControlled):
                 all_good = all(map(lambda x: x >= 0, resp))
                 if all_good:
                     break
-                elif not all_good and  i < self.max_tries:
+                elif not all_good and i < self.max_tries:
                     # Try rehoming tilt motors
                     logger.info(f"Invalid Z position. Homing attempt {i}.")
                     await self.all_z(TiltCmd.GO_HOME)
