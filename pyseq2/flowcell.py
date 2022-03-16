@@ -99,16 +99,18 @@ class AFlowCell:
 
     @staticmethod
     def steps_from_vol(vol: μL) -> int:
-        """Per barrel."""
-        if not 0 < vol <= 250:
-            raise ValueError("Invalid barrel volume. Range is (0, 250] μL.")
-        return int((vol / Pump.BARREL_VOL) * Pump.STEPS)
+        """Per Lane."""
+        max_volume = CONFIG.barrels_per_lane*Pump.BARREL_VOL
+        if not 0 < vol <= max_volume:
+            raise ValueError(f"Invalid barrel volume. Range is (0, {max_volume}] μL.")
+        return int((vol/ CONFIG.barrels_per_lane / Pump.BARREL_VOL) * Pump.STEPS)
 
     @staticmethod
     def sps_from_μLpermin(speed: μLpermin) -> int:
-        if not 0 < speed <= 2000:
-            raise ValueError("Invalid barrel speed. Range is (0, 2000] μL/min.")
-        return int((speed / Pump.BARREL_VOL) * Pump.STEPS / 60)
+        max_speed = 2000*CONFIG.barrels_per_lane
+        if not 0 < speed <= max_speed:
+            raise ValueError(f"Invalid barrel speed. Range is (0, {max_speed}] μL/min.")
+        return int((speed / Pump.BARREL_VOL/CONFIG.barrels_per_lane) * Pump.STEPS / 60)
 
 
 class FlowCells(metaclass=Singleton):
