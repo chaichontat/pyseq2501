@@ -148,6 +148,15 @@ async function firstLoad() {
 
 if (browser) firstLoad();
 
+export type Config = {
+  machine: "HiSeq2000" | "HiSeq2500";
+  logPath: string;
+  logLevel: "DEBUG" | "INFO" | "WARNING" | "ERROR" | "CRITICAL";
+};
+
+export const config: Readonly<Config> = browser
+  ? await fetch(`http://${window.location.hostname}:8000/config`).then((response: Response) => response.json())
+  : { machine: "HiSeq2000", logPath: "", logLevel: "DEBUG" };
 // function genSSE(): EventSource {
 //   const sse = new EventSource(`http://${ window.location.hostname }:8000/status`);
 //   sse.onopen = () => (connected = true);
