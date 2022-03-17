@@ -18,7 +18,7 @@
 
 <button
   type="button"
-  class={`px-4 py-1 text-sm font-semibold rounded-lg white-button transition-all duration-100 ${colorMap[color]} disabled:bg-gray-50 disabled:hover:bg-gray-50 disabled:active:bg-gray-50 disabled:text-gray-500 ${cl}`}
+  class={`white-button rounded-lg px-4 py-1 text-sm font-semibold transition-all duration-100 ${colorMap[color]} disabled:bg-gray-50 disabled:text-gray-500 disabled:hover:bg-gray-50 disabled:active:bg-gray-50 ${cl}`}
   tabindex="0"
   on:click={() => dispatch("click")}
   {disabled}
@@ -34,6 +34,6 @@
 
 <style lang="postcss">
   .blue {
-    @apply text-blue-800 border-blue-300 hover:bg-blue-100 active:bg-blue-200 bg-blue-50;
+    @apply border-blue-300 bg-blue-50 text-blue-800 hover:bg-blue-100 active:bg-blue-200;
   }
 </style>

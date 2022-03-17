@@ -19,7 +19,7 @@
 
 <style lang="postcss">
   .dot {
-    @apply absolute text-sm w-16 leading-4;
+    @apply absolute w-16 text-sm leading-4;
   }
 
   p {
@@ -31,6 +31,6 @@
   }
 
   .left {
-    @apply text-right float-right right-40;
+    @apply right-40 float-right text-right;
   }
 </style>

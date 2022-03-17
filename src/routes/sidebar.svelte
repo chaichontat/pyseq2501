@@ -19,20 +19,20 @@
 
 <div class="drawer drawer-side">
   <label for="main-menu" class="drawer-overlay" />
-  <aside class="flex flex-col overflow-y-auto border-r border-gray-300 w-[26rem] bg-base-100">
-    <div class="sticky inset-x-0 top-0 z-40 hidden w-full h-16 transition duration-200 ease-in-out bg-white shadow-sm lg:block ring-1 ring-gray-900 ring-opacity-5">
+  <aside class="flex w-[26rem] flex-col overflow-y-auto border-r border-gray-300 bg-base-100">
+    <div class="sticky inset-x-0 top-0 z-40 hidden h-16 w-full bg-white shadow-sm ring-1 ring-gray-900 ring-opacity-5 transition duration-200 ease-in-out lg:block">
       <Logo />
     </div>
 
-    <div class="w-full mt-2 tabs">
-      <button class="font-medium tab tab-lg tab-lifted" on:click={() => (tab = "imaging")} class:tab-active={tab === "imaging"} class:text-gray-800={tab === "imaging"}>Imaging</button>
-      <button class="font-medium tab tab-lg tab-lifted" on:click={() => (tab = "fluidics")} class:tab-active={tab === "fluidics"} class:text-gray-800={tab === "fluidics"}>Fluidics</button>
-      <button class="font-medium tab tab-lg tab-lifted" on:click={() => (tab = "misc")} class:tab-active={tab === "misc"} class:text-gray-800={tab === "misc"}>Misc.</button>
-      <div class="flex-1 cursor-default tab tab-lifted" />
+    <div class="tabs mt-2 w-full">
+      <button class="tab tab-lifted tab-lg font-medium" on:click={() => (tab = "imaging")} class:tab-active={tab === "imaging"} class:text-gray-800={tab === "imaging"}>Imaging</button>
+      <button class="tab tab-lifted tab-lg font-medium" on:click={() => (tab = "fluidics")} class:tab-active={tab === "fluidics"} class:text-gray-800={tab === "fluidics"}>Fluidics</button>
+      <button class="tab tab-lifted tab-lg font-medium" on:click={() => (tab = "misc")} class:tab-active={tab === "misc"} class:text-gray-800={tab === "misc"}>Misc.</button>
+      <div class="tab tab-lifted flex-1 cursor-default" />
     </div>
 
     <section class:hidden={tab !== "imaging"} class="relative">
-      <ol class="p-2 menu ">
+      <ol class="menu p-2 ">
         <Division name="Map">
           <Map />
         </Division>
@@ -40,7 +40,7 @@
         <Division name="Lasers">
           <Lasers />
           <li>
-            <span class="self-center mt-2 text-lg">
+            <span class="mt-2 self-center text-lg">
               Shutter:&nbsp; <p class="font-mono font-bold">
                 {$ss.shutter ? "OPENED" : "CLOSED"}
               </p>
@@ -51,7 +51,7 @@
     </section>
 
     <section class:hidden={tab !== "fluidics"} class="relative">
-      <ol class="p-2 overflow-auto menu">
+      <ol class="menu overflow-auto p-2">
         <Division name="Ports">
           <Fluidics />
         </Division>
@@ -59,10 +59,10 @@
     </section>
 
     <section class:hidden={tab !== "misc"} class="relative">
-      <ol class="p-2 menu ">
+      <ol class="menu p-2 ">
         <Division name="Miscellaneous">
           <div class="flex flex-col items-center gap-4 p-2">
-            <button type="button" class="justify-center w-[80%] py-2 font-medium text-center text-gray-900 rounded-lg white-button" disabled={!$localStore.connected}>Reinitialize</button>
+            <button type="button" class="white-button w-[80%] justify-center rounded-lg py-2 text-center font-medium text-gray-900" disabled={!$localStore.connected}>Reinitialize</button>
           </div>
         </Division>
       </ol>

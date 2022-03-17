@@ -21,20 +21,20 @@
   $: if (browser) blockControls(document.getElementById("control"), Boolean($ss.block));
 </script>
 
-<div class="box-border sticky z-40 -mx-10 px-10 pb-6 shadow-md bg-white/[0.95] border-b top-16 ">
-  <div class="w-full h-4" />
+<div class="sticky top-16 z-40 -mx-10 box-border border-b bg-white/[0.95] px-10 pb-6 shadow-md ">
+  <div class="h-4 w-full" />
   <ProgressManual bind:stats on:autofocus={() => (tab = "autofocus")} />
 </div>
 
-<p class="mt-6 title">Capture Parameters</p>
+<p class="title mt-6">Capture Parameters</p>
 <Takeimage inAuto={false} bind:params={$us.image_params} bind:stats />
 
 <!-- <p class="title">Preview</p> -->
-<div class="w-full mt-8 tabs">
-  <div class="-ml-10 cursor-default tab tab-lifted" />
-  <button class="font-medium tab tab-lg tab-lifted" on:click={() => (tab = "preview")} class:tab-active={tab === "preview"} class:text-gray-800={tab === "preview"}>Preview</button>
-  <button class="font-medium tab tab-lg tab-lifted" on:click={() => (tab = "autofocus")} class:tab-active={tab === "autofocus"} class:text-gray-800={tab === "autofocus"}>Autofocus</button>
-  <div class="flex-1 cursor-default tab tab-lifted" />
+<div class="tabs mt-8 w-full">
+  <div class="tab tab-lifted -ml-10 cursor-default" />
+  <button class="tab tab-lifted tab-lg font-medium" on:click={() => (tab = "preview")} class:tab-active={tab === "preview"} class:text-gray-800={tab === "preview"}>Preview</button>
+  <button class="tab tab-lifted tab-lg font-medium" on:click={() => (tab = "autofocus")} class:tab-active={tab === "autofocus"} class:text-gray-800={tab === "autofocus"}>Autofocus</button>
+  <div class="tab tab-lifted flex-1 cursor-default" />
 </div>
 
 <section class:hidden={tab !== "preview"} class="relative">

@@ -12,13 +12,13 @@
   <slot name="buttons" />
 
   <!-- Big box -->
-  <content class="flex-grow px-4 py-2 border rounded-lg border-base-300 bg-white/60">
+  <content class="flex-grow rounded-lg border border-base-300 bg-white/60 px-4 py-2">
     <slot />
 
     <!-- Lower bar -->
 
     <div class="mt-1">
-      <progress class="relative w-full h-2 overflow-hidden rounded-lg shadow appearance-none" value={$progress} />
+      <progress class="relative h-2 w-full appearance-none overflow-hidden rounded-lg shadow" value={$progress} />
     </div>
   </content>
 </span>
@@ -37,6 +37,6 @@
   }
 
   progress::-webkit-progress-value {
-    @apply bg-gradient-to-r from-indigo-600 to-blue-500 rounded;
+    @apply rounded bg-gradient-to-r from-indigo-600 to-blue-500;
   }
 </style>

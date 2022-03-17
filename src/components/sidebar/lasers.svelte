@@ -4,7 +4,7 @@
 </script>
 
 <li>
-  <table class="w-full -mt-6">
+  <table class="-mt-6 w-full">
     <colgroup>
       <col style="width:30%" />
       <col style="width:30%" />
@@ -14,8 +14,8 @@
     <thead class="text-right">
       <tr class="uppercase ">
         <th style="background:transparent" />
-        <th class="text-sm text-center bg-gray-200 border-r rounded-l-lg border-r-gray-200">Target</th>
-        <th class="text-sm text-center bg-gray-200 rounded-r-lg">Actual</th>
+        <th class="rounded-l-lg border-r border-r-gray-200 bg-gray-200 text-center text-sm">Target</th>
+        <th class="rounded-r-lg bg-gray-200 text-center text-sm">Actual</th>
         <th style="background:transparent" />
       </tr>
     </thead>

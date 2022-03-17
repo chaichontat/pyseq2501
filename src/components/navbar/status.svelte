@@ -40,7 +40,7 @@
     {/if}
   </div>
   <!-- Text -->
-  <code class=" px-2 py-2 mx-1 overflow-hidden rounded-lg overflow-ellipsis whitespace-nowrap" bind:this={div}>
+  <code class=" mx-1 overflow-hidden overflow-ellipsis whitespace-nowrap rounded-lg px-2 py-2" bind:this={div}>
     {@html Prism.highlight(message, Prism.languages.javascript, "javascript")}
   </code>
 

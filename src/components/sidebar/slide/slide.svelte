@@ -36,7 +36,7 @@
 
 <!-- <svelte:window on:keydown={handleKey} /> -->
 
-<div class="box-border relative flex self-center justify-center border border-gray-400 shadow bg-light-200 slide">
+<div class="bg-light-200 slide relative box-border flex justify-center self-center border border-gray-400 shadow">
   <RulerX />
   <RulerY />
   <Locator {x} {y} />
@@ -60,12 +60,12 @@
   }
 
   .label-line {
-    @apply absolute border-b border-gray-400 w-full box-border z-10;
+    @apply absolute z-10 box-border w-full border-b border-gray-400;
     bottom: calc(6rem - 1px);
   }
 
   .name {
-    @apply text-center font-semibold absolute top-1/4 opacity-20;
+    @apply absolute top-1/4 text-center font-semibold opacity-20;
     font-size: 4rem;
   }
 </style>

@@ -25,21 +25,21 @@
   <div class="inline-block min-w-full py-2 sm:px-6 lg:px-8">
     <div class="overflow-hidden">
       <table class="min-w-full">
-        <thead class="bg-white border-gray-400 border-y">
+        <thead class="border-y border-gray-400 bg-white">
           <tr>
             <th scope="col" class="px-6 py-2 font-medium text-gray-900">Port #</th>
             <th scope="col" class="px-6 py-2 font-medium text-gray-900">Name</th>
-            <th scope="col" class="px-6 py-2 font-medium text-center text-gray-900">Prime pull speed (μl/min)</th>
-            <th scope="col" class="px-6 py-2 font-medium text-center text-gray-900">Aspiration speed (μl/min)</th>
-            <th scope="col" class="px-6 py-2 font-medium text-center text-gray-900">Push speed (μl/min)</th>
-            <th scope="col" class="px-6 py-2 font-medium text-center text-gray-900">Hold time (s)</th>
+            <th scope="col" class="px-6 py-2 text-center font-medium text-gray-900">Prime pull speed (μl/min)</th>
+            <th scope="col" class="px-6 py-2 text-center font-medium text-gray-900">Aspiration speed (μl/min)</th>
+            <th scope="col" class="px-6 py-2 text-center font-medium text-gray-900">Push speed (μl/min)</th>
+            <th scope="col" class="px-6 py-2 text-center font-medium text-gray-900">Hold time (s)</th>
             <th scope="col" class="px-6 py-2 font-medium text-gray-900" />
           </tr>
         </thead>
 
         <tbody class="border-b" use:dndzone={{ items: $us.exps[fc_].reagents, dropTargetStyle: { outline: "none" }, flipDurationMs }} on:consider={handleDndConsider} on:finalize={handleDndFinalize}>
           {#each $us.exps[fc_].reagents as { uid, reagent }, i (uid)}
-            <tr animate:flip={{ duration: flipDurationMs }} in:fade={{ duration: 150, easing: cubicInOut }} class="bg-white border-gray-300 border-y hover:bg-gray-50">
+            <tr animate:flip={{ duration: flipDurationMs }} in:fade={{ duration: 150, easing: cubicInOut }} class="border-y border-gray-300 bg-white hover:bg-gray-50">
               <Reagentrow
                 {fc_}
                 bind:reagent
@@ -52,24 +52,24 @@
           {/each}
 
           <tr class="cursor-pointer">
-            <td colspan="8" class="h-16 px-0 py-0 mx-0 font-medium transition-all">
+            <td colspan="8" class="mx-0 h-16 px-0 py-0 font-medium transition-all">
               <div class="flex h-full divide-x">
                 <!-- Add group -->
                 <button
-                  class="inline-flex items-center justify-center w-1/2 font-medium align-middle rounded-bl whitespace-nowrap white-clickable hover:font-semibold"
+                  class="white-clickable inline-flex w-1/2 items-center justify-center whitespace-nowrap rounded-bl align-middle font-medium hover:font-semibold"
                   on:click={() => ($us.exps[fc_].reagents = [...$us.exps[fc_].reagents, { uid: $us.max_uid++, reagent: { name: "" } }])}
                 >
-                  <svg stroke-width="1.75" class="-ml-2 mr-0.5 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <svg stroke-width="1.75" class="-ml-2 mr-0.5 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                   Add Group
                 </button>
                 <!-- Add reagent -->
                 <button
-                  class="inline-flex items-center justify-center w-1/2 font-medium rounded-br align-middlewhitespace-nowrap white-clickable hover:font-semibold"
+                  class="align-middlewhitespace-nowrap white-clickable inline-flex w-1/2 items-center justify-center rounded-br font-medium hover:font-semibold"
                   on:click={() => ($us.exps[fc_].reagents = [...$us.exps[fc_].reagents, { uid: $us.max_uid++, reagent: { ...reagentDefault, port: 1 } }])}
                 >
-                  <svg stroke-width="1.75" class="-ml-2 mr-0.5 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <svg stroke-width="1.75" class="-ml-2 mr-0.5 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                   Add Reagent

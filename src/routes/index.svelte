@@ -22,5 +22,5 @@
 
 <!-- End line -->
 <div class="flex h-36">
-  <div class="self-center w-2/5 mx-auto border-t border-gray-200" />
+  <div class="mx-auto w-2/5 self-center border-t border-gray-200" />
 </div>

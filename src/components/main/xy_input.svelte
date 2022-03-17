@@ -21,7 +21,7 @@
 <!-- XY Input -->
 <div class="flex gap-x-2">
   <div class="flex font-medium">
-    <span class="flex items-center border-l rounded-l-lg color-group" class:span-disabled={$ss.block}>X</span>
+    <span class="color-group flex items-center rounded-l-lg border-l" class:span-disabled={$ss.block}>X</span>
     <input
       bind:value={xy[0]}
       on:change={() => dispatch("change")}
@@ -30,10 +30,10 @@
       max="30"
       step="0.01"
       use:checkRange={[-5, 30]}
-      class="z-10 w-24 h-10 text-center rounded-none pretty"
+      class="pretty z-10 h-10 w-24 rounded-none text-center"
       {disabled}
     />
-    <span class="flex items-center color-group" class:span-disabled={$ss.block}>Y</span>
+    <span class="color-group flex items-center" class:span-disabled={$ss.block}>Y</span>
     <input
       bind:value={xy[1]}
       on:change={() => dispatch("change")}
@@ -42,18 +42,18 @@
       max="80"
       use:checkRange={[-5, 80]}
       step="0.01"
-      class="z-10 w-24 h-10 text-center rounded-l-none rounded-r-lg pretty"
+      class="pretty z-10 h-10 w-24 rounded-l-none rounded-r-lg text-center"
       {disabled}
     />
   </div>
 
   <button
     type="button"
-    class="px-3 py-1 text-sm font-medium text-gray-900 rounded-lg white-button disabled:bg-gray-50 disabled:hover:bg-gray-50 disabled:active:bg-gray-50 disabled:text-gray-500"
+    class="white-button rounded-lg px-3 py-1 text-sm font-medium text-gray-900 disabled:bg-gray-50 disabled:text-gray-500 disabled:hover:bg-gray-50 disabled:active:bg-gray-50"
     {disabled}
     on:click={copyCurrent}
   >
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg xmlns="http://www.w3.org/2000/svg" class="mr-1 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path
         stroke-linecap="round"
         stroke-linejoin="round"
@@ -76,6 +76,6 @@
 
 <style lang="postcss">
   .span-disabled {
-    @apply text-gray-500 bg-gray-50 border-gray-200;
+    @apply border-gray-200 bg-gray-50 text-gray-500;
   }
 </style>

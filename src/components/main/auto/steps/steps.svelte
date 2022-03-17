@@ -18,8 +18,8 @@
   }
 </script>
 
-<div class="w-full my-8">
-  <p class="py-3 mt-6 text-2xl font-bold text-gray-600 border-b">Steps</p>
+<div class="my-8 w-full">
+  <p class="mt-6 border-b py-3 text-2xl font-bold text-gray-600">Steps</p>
 
   <section use:dndzone={{ items: $us.exps[fc_].cmds, dropTargetStyle: { outline: "none" }, flipDurationMs }} on:consider={handleDndConsider} on:finalize={handleDndFinalize}>
     {#each $us.exps[fc_].cmds as { uid, cmd }, i (uid)}
@@ -32,11 +32,11 @@
   <!-- Add step -->
   <button
     id="add"
-    class="inline-flex items-center justify-center w-full h-16 text-lg font-medium transition-all border-gray-300 border-y hover:font-semibold white-clickable"
+    class="white-clickable inline-flex h-16 w-full items-center justify-center border-y border-gray-300 text-lg font-medium transition-all hover:font-semibold"
     on:click={() => ($us.exps[fc_].cmds = [...$us.exps[fc_].cmds, { uid: $us.max_uid++, cmd: { ...cmdDefaults.takeimage } }])}
   >
     <span class="inline-flex">
-      <svg id="inner" stroke-width="1.5" class="-ml-2 mr-1 w-6 h-6 transition-all my-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <svg id="inner" stroke-width="1.5" class="my-0.5 -ml-2 mr-1 h-6 w-6 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
       </svg>
       Add Step

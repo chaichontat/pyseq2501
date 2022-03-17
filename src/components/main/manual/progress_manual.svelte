@@ -54,7 +54,7 @@
   <div slot="buttons" class="grid w-40 grid-flow-row">
     <button
       type="button"
-      class="text-lg text-white focus:ring-4 shadow-lg font-medium rounded-lg px-5 py-2.5 text-center mr-2 mb-2"
+      class="mr-2 mb-2 rounded-lg px-5 py-2.5 text-center text-lg font-medium text-white shadow-lg focus:ring-4"
       class:focus:ring-blue-300={captureState === "ok"}
       class:focus:ring-orange-300={captureState === "stop"}
       class:start={captureState === "ok"}
@@ -63,9 +63,9 @@
       on:click={handleCapture}
       disabled={captureState !== "ok" || !$localStore.connected}
     >
-      <div class="flex items-center h-12 text-lg cursor-pointer">
+      <div class="flex h-12 cursor-pointer items-center text-lg">
         {#if $ss.block === "capturing" || $ss.block === "previewing"}
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" class="mr-1 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
           </svg>
@@ -83,13 +83,13 @@
     <button
       type="button"
       id="preview"
-      class="text-lg mt-2 text-white focus:ring-4 focus:ring-sky-300 font-medium rounded-lg shadow px-4 py-2.5 text-center inline-flex items-center mr-2"
+      class="mt-2 mr-2 inline-flex items-center rounded-lg px-4 py-2.5 text-center text-lg font-medium text-white shadow focus:ring-4 focus:ring-sky-300"
       disabled={Boolean($ss.block) || !$localStore.connected}
       use:tooltip={"See the autofocus pane."}
       on:click={() => dispatch("autofocus")}
     >
       <div class="flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" class="mr-1 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
@@ -102,7 +102,7 @@
     </button>
   </div>
 
-  <div class="grid max-w-4xl grid-cols-4 mt-1">
+  <div class="mt-1 grid max-w-4xl grid-cols-4">
     <!-- N Bundles -->
     <section class="flex flex-col gap-y-1">
       <div class="flex items-center">
@@ -146,14 +146,14 @@
 
 <style lang="postcss">
   .start {
-    @apply transition-all bg-gradient-to-r from-blue-500 to-blue-700 shadow-blue-500/50 hover:from-blue-600 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 active:from-blue-700 disabled:text-gray-400 disabled:from-gray-50 disabled:via-gray-100 disabled:to-gray-200 disabled:shadow-gray-400/50 disabled:shadow-sm;
+    @apply bg-gradient-to-r from-blue-500 to-blue-700 shadow-blue-500/50 transition-all hover:from-blue-600 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 active:from-blue-700 disabled:from-gray-50 disabled:via-gray-100 disabled:to-gray-200 disabled:text-gray-400 disabled:shadow-sm disabled:shadow-gray-400/50;
   }
 
   .stop {
-    @apply transition-all bg-gradient-to-r from-orange-500 to-orange-700 shadow-orange-500/50 hover:from-orange-600 hover:to-orange-800 active:from-orange-700 focus:ring-orange-300 disabled:text-gray-400 disabled:from-gray-50 disabled:via-gray-100 disabled:to-gray-200 disabled:shadow-gray-400/50 disabled:shadow-sm;
+    @apply bg-gradient-to-r from-orange-500 to-orange-700 shadow-orange-500/50 transition-all hover:from-orange-600 hover:to-orange-800 focus:ring-orange-300 active:from-orange-700 disabled:from-gray-50 disabled:via-gray-100 disabled:to-gray-200 disabled:text-gray-400 disabled:shadow-sm disabled:shadow-gray-400/50;
   }
 
   #preview {
-    @apply transition-all bg-gradient-to-r from-sky-400 to-sky-600 shadow-sky-500/50 hover:from-sky-500 hover:to-sky-700 active:from-sky-600 disabled:text-gray-400 disabled:from-gray-50 disabled:via-gray-100 disabled:to-gray-200 disabled:shadow-gray-400/50;
+    @apply bg-gradient-to-r from-sky-400 to-sky-600 shadow-sky-500/50 transition-all hover:from-sky-500 hover:to-sky-700 active:from-sky-600 disabled:from-gray-50 disabled:via-gray-100 disabled:to-gray-200 disabled:text-gray-400 disabled:shadow-gray-400/50;
   }
 </style>

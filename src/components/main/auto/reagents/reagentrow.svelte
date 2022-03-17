@@ -32,12 +32,12 @@
 
 {#if !("port" in reagent)}
   <!-- Reagent group -->
-  <td colspan="7" class="h-12 px-4 mx-4 text-xl font-medium transition-colors bg-violet-50 hover:bg-violet-100">
-    Group <input bind:value={reagent.name} class:invalid={nameInvalid(reagent.name)} type="text" class="w-32 m-2 text-xl pretty bg-orange-50" required />
+  <td colspan="7" class="mx-4 h-12 bg-violet-50 px-4 text-xl font-medium transition-colors hover:bg-violet-100">
+    Group <input bind:value={reagent.name} class:invalid={nameInvalid(reagent.name)} type="text" class="pretty m-2 w-32 bg-orange-50 text-xl" required />
   </td>
   <!-- Close -->
   <td class="bg-violet-50 hover:bg-violet-100" on:click={() => dispatch("delete")}>
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 ml-2 cursor-pointer" viewBox="0 0 20 20" fill="currentColor">
+    <svg xmlns="http://www.w3.org/2000/svg" class="ml-2 h-4 w-4 cursor-pointer" viewBox="0 0 20 20" fill="currentColor">
       <path
         fill-rule="evenodd"
         d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -96,14 +96,14 @@
 
 <style lang="postcss">
   .indigo {
-    @apply shadow-indigo-500/50 text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-300 active:bg-indigo-800;
+    @apply bg-indigo-600 text-white shadow-indigo-500/50 hover:bg-indigo-700 focus:ring-indigo-300 active:bg-indigo-800;
   }
 
   .purple {
-    @apply shadow-purple-500/50 text-white bg-purple-600 hover:bg-purple-700 focus:ring-purple-300 active:bg-purple-800;
+    @apply bg-purple-600 text-white shadow-purple-500/50 hover:bg-purple-700 focus:ring-purple-300 active:bg-purple-800;
   }
 
   .green {
-    @apply shadow-green-500/50 text-white bg-green-600 hover:bg-green-700 focus:ring-green-300 active:bg-green-800;
+    @apply bg-green-600 text-white shadow-green-500/50 hover:bg-green-700 focus:ring-green-300 active:bg-green-800;
   }
 </style>

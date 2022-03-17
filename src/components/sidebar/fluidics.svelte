@@ -69,8 +69,8 @@
   $: buttonState = isDisabled($ss, fcs);
 </script>
 
-<div class="flex items-center mt-2 ml-6 gap-x-6">
-  <select multiple class="min-h-[550px] rounded-lg overflow-y-auto text-center px-0 py-0" bind:value={selected} bind:this={portList}>
+<div class="mt-2 ml-6 flex items-center gap-x-6">
+  <select multiple class="min-h-[550px] overflow-y-auto rounded-lg px-0 py-0 text-center" bind:value={selected} bind:this={portList}>
     {#each ports as port}
       <option class="px-6 py-1" value={port}>
         {port}
@@ -79,49 +79,49 @@
   </select>
 
   <div class="flex flex-col gap-y-5">
-    <span class="flex flex-col items-center pt-1 pb-2 font-medium text-gray-800 rounded-lg bg-sky-200/30 gap-y-1" bind:this={fcdiv}>
+    <span class="flex flex-col items-center gap-y-1 rounded-lg bg-sky-200/30 pt-1 pb-2 font-medium text-gray-800" bind:this={fcdiv}>
       <p>Flowcell</p>
       <span class="flex justify-center space-x-4 ">
         <label>
-          <input type="checkbox" bind:checked={fcs[0]} class="bg-transparent mr-0.5 text-indigo-600 rounded focus:ring-indigo-600" />
+          <input type="checkbox" bind:checked={fcs[0]} class="mr-0.5 rounded bg-transparent text-indigo-600 focus:ring-indigo-600" />
           A
         </label>
         <label>
-          <input type="checkbox" bind:checked={fcs[1]} class="bg-transparent mr-0.5 text-purple-600 rounded focus:ring-purple-600" />
+          <input type="checkbox" bind:checked={fcs[1]} class="mr-0.5 rounded bg-transparent text-purple-600 focus:ring-purple-600" />
           B
         </label>
       </span>
     </span>
 
     <div class="flex flex-col gap-y-1">
-      <button type="button" on:click={() => (selected = [...ports])} class="justify-center px-4 py-1 text-sm font-medium text-gray-900 rounded-lg white-button">
+      <button type="button" on:click={() => (selected = [...ports])} class="white-button justify-center rounded-lg px-4 py-1 text-sm font-medium text-gray-900">
         <span>Select All</span>
       </button>
-      <button type="button" on:click={() => (selected = [])} class="justify-center px-4 py-1 text-sm font-medium text-gray-900 rounded-lg white-button">
+      <button type="button" on:click={() => (selected = [])} class="white-button justify-center rounded-lg px-4 py-1 text-sm font-medium text-gray-900">
         <span>Select None</span>
       </button>
     </div>
 
-    <div class="flex flex-col font-medium gap-y-1">
+    <div class="flex flex-col gap-y-1 font-medium">
       Pull speed (μL/min)
-      <input type="number" min="1" max="60000" step="1" bind:value={v_pull} use:checkRange={[1, 2500]} class="pr-2 text-right pretty" />
+      <input type="number" min="1" max="60000" step="1" bind:value={v_pull} use:checkRange={[1, 2500]} class="pretty pr-2 text-right" />
     </div>
-    <div class="flex flex-col font-medium gap-y-1">
+    <div class="flex flex-col gap-y-1 font-medium">
       Push speed (μL/min)
-      <input type="number" min="1" max="60000" step="1" bind:value={v_push} use:checkRange={[1, 2500]} class="pr-2 text-right pretty" />
+      <input type="number" min="1" max="60000" step="1" bind:value={v_push} use:checkRange={[1, 2500]} class="pretty pr-2 text-right" />
     </div>
-    <div class="flex flex-col font-medium gap-y-1">
+    <div class="flex flex-col gap-y-1 font-medium">
       Wait time (s)
-      <input type="number" min="1" max="60000" step="1" bind:value={wait} use:checkRange={[0, 60000]} class="pr-2 text-right pretty" />
+      <input type="number" min="1" max="60000" step="1" bind:value={wait} use:checkRange={[0, 60000]} class="pretty pr-2 text-right" />
     </div>
-    <div class="flex flex-col font-medium gap-y-1">
+    <div class="flex flex-col gap-y-1 font-medium">
       Volume (μL)
-      <input type="number" min="1" max="60000" step="1" bind:value={vol} use:checkRange={[0, 60000]} class="pr-2 text-right pretty" />
+      <input type="number" min="1" max="60000" step="1" bind:value={vol} use:checkRange={[0, 60000]} class="pretty pr-2 text-right" />
     </div>
 
     <button
       type="button"
-      class="px-4 py-1 text-lg font-semibold transition-all duration-100 rounded-lg white-button disabled:bg-gray-50 disabled:hover:bg-gray-50 disabled:active:bg-gray-50 disabled:text-gray-500"
+      class="white-button rounded-lg px-4 py-1 text-lg font-semibold transition-all duration-100 disabled:bg-gray-50 disabled:text-gray-500 disabled:hover:bg-gray-50 disabled:active:bg-gray-50"
       class:blue={buttonState === "ok"}
       class:orange={buttonState === "stop"}
       tabindex="0"
@@ -141,13 +141,13 @@
 
 <style lang="postcss">
   .run {
-    @apply transition-all bg-gradient-to-r from-blue-500 to-blue-700 shadow-blue-500/50 hover:from-blue-600 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 active:from-blue-700 disabled:text-gray-400 disabled:from-gray-50 disabled:via-gray-100 disabled:to-gray-200 disabled:shadow-gray-400/50 disabled:shadow-sm;
+    @apply bg-gradient-to-r from-blue-500 to-blue-700 shadow-blue-500/50 transition-all hover:from-blue-600 hover:to-blue-800 focus:ring-4 focus:ring-blue-300 active:from-blue-700 disabled:from-gray-50 disabled:via-gray-100 disabled:to-gray-200 disabled:text-gray-400 disabled:shadow-sm disabled:shadow-gray-400/50;
   }
   .blue {
-    @apply text-blue-800 border-blue-300 hover:bg-blue-100 active:bg-blue-200 bg-blue-50;
+    @apply border-blue-300 bg-blue-50 text-blue-800 hover:bg-blue-100 active:bg-blue-200;
   }
 
   .orange {
-    @apply text-orange-900 border-orange-400 hover:bg-orange-300 active:bg-orange-400 bg-orange-200;
+    @apply border-orange-400 bg-orange-200 text-orange-900 hover:bg-orange-300 active:bg-orange-400;
   }
 </style>

@@ -10,7 +10,7 @@
 </script>
 
 <div
-  class="absolute z-20 transition-all rounded-sm ring-2 ring-sky-200 ring-opacity-70 bg-sky-300/40"
+  class="absolute z-20 rounded-sm bg-sky-300/40 ring-2 ring-sky-200 ring-opacity-70 transition-all"
   style="
   top:calc({Math.min(...real_y)}%;
   left:calc({Math.min(...real_x)}%);

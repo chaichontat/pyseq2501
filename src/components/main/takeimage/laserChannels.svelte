@@ -29,13 +29,13 @@
   <!-- Green -->
   <span class:text-gray-400={!params.laser_onoff[i]} class="flex items-center gap-x-2">
     <label>
-      <input type="checkbox" class={`rounded mr-1 ${i ? "text-red-600 rounded focus:ring-red-300" : "text-lime-500 focus:ring-lime-300"}`} bind:checked={params.laser_onoff[i]} />
+      <input type="checkbox" class={`mr-1 rounded ${i ? "rounded text-red-600 focus:ring-red-300" : "text-lime-500 focus:ring-lime-300"}`} bind:checked={params.laser_onoff[i]} />
       <div class="inline font-semibold" class:text-green-800={params.laser_onoff[i] && !i} class:text-red-800={params.laser_onoff[i] && i}>{Boolean(i) ? 660 : 532} nm</div>
     </label>
 
     <input
       type="number"
-      class="w-[4.5rem] h-8 pr-2 pretty"
+      class="pretty h-8 w-[4.5rem] pr-2"
       class:pretty-disabled={!params.laser_onoff[0]}
       bind:value={params.lasers[i]}
       min="0"
@@ -59,19 +59,19 @@
     >
   </span>
 
-  <label class="rounded-lg channel ring-red-500">
+  <label class="channel rounded-lg ring-red-500">
     <input type="checkbox" class={`mr-1 rounded ${i ? "text-rose-700 focus:ring-rose-500" : "text-green-500 focus:ring-green-300"}`} bind:checked={params.channels[2 * i]} />
     Channel {2 * i}
   </label>
 
   <label class="channel">
-    <input type="checkbox" class={`mr-1 rounded ${i ? "text-amber-900 focus:ring-amber-700" : "text-orange-600 rounded focus:ring-orange-300"}`} bind:checked={params.channels[2 * i + 1]} />
+    <input type="checkbox" class={`mr-1 rounded ${i ? "text-amber-900 focus:ring-amber-700" : "rounded text-orange-600 focus:ring-orange-300"}`} bind:checked={params.channels[2 * i + 1]} />
     Channel {2 * i + 1}
   </label>
 
-  <span class="ml-8 font-normal opacity-85">
+  <span class="opacity-85 ml-8 font-normal">
     Filter OD
-    <select class="py-1 text-sm border-gray-400 rounded-lg disabled:border-gray-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" on:change={transformOD}>
+    <select class="rounded-lg border-gray-400 py-1 text-sm focus:ring focus:ring-blue-200 focus:ring-opacity-50 disabled:border-gray-300" on:change={transformOD}>
       {#if i == 0}
         <option>Open</option>
         <option>1.0</option>
@@ -98,6 +98,6 @@
 
 <style lang="postcss">
   .channel {
-    @apply text-base ml-8;
+    @apply ml-8 text-base;
   }
 </style>

@@ -66,13 +66,13 @@
 
 <!-- Somehow mx-auto is centering -->
 <!-- Image -->
-<div id="frame" bind:this={panSpace} class="relative z-10 w-11/12 mx-auto mt-4 border border-gray-300 rounded-md resize-y min-h-[60vh]">
+<div id="frame" bind:this={panSpace} class="relative z-10 mx-auto mt-4 min-h-[60vh] w-11/12 resize-y rounded-md border border-gray-300">
   <canvas id="canvas" bind:this={canvas} width={2048} height={128} on:wheel={pz.zoomWithWheel} on:click={() => (currChannel = 1)} />
 
   <!-- Tabs -->
-  <div class="absolute z-40 w-2/5 h-10 top-4 left-4">
+  <div class="absolute top-4 left-4 z-40 h-10 w-2/5">
     <TabGroup on:change={(idx) => (currChannel = idx.detail)}>
-      <TabList class="grid grid-cols-4 p-1 space-x-1 bg-white shadow rounded-xl opacity-90">
+      <TabList class="grid grid-cols-4 space-x-1 rounded-xl bg-white p-1 opacity-90 shadow">
         <Tab disabled={!$ls.img.channels[0]} let:selected><button class:bg-green-600={selected} class={genTabClass("green", selected, $ls.img.channels[0])}>Channel 0</button></Tab>
         <Tab disabled={!$ls.img.channels[1]} let:selected><button class:bg-orange-500={selected} class={genTabClass("orange", selected, $ls.img.channels[1])}>Channel 1</button></Tab>
         <Tab disabled={!$ls.img.channels[2]} let:selected><button class:bg-rose-600={selected} class={genTabClass("rose", selected, $ls.img.channels[2])}>Channel 2</button></Tab>
@@ -82,7 +82,7 @@
   </div>
 
   <button
-    class="absolute z-40 inline-flex items-center h-10 px-4 font-medium bg-white border rounded-lg shadow-lg top-4 right-56 opacity-90 white-button"
+    class="white-button absolute top-4 right-56 z-40 inline-flex h-10 items-center rounded-lg border bg-white px-4 font-medium opacity-90 shadow-lg"
     on:click={() => {
       // pz.pan(-1024 + (panSpace.clientWidth - 1024), -(panSpace.clientHeight + canvas.height) / 2);
       pz.pan(0, 0); // TODO Deal with with origin = 50 50
@@ -92,25 +92,25 @@
   </button>
 
   <!-- Show Histogram -->
-  <div class="absolute z-40 inline-flex items-center h-10 bg-white border rounded-lg shadow-lg top-4 right-8 opacity-90">
-    <label class="mx-4 font-medium cursor-pointer">
-      <input type="checkbox" class="mr-1 text-blue-500 rounded focus:ring-blue-300" bind:checked={showHistogram} on:click={() => (showHistogram = !showHistogram)} />
+  <div class="absolute top-4 right-8 z-40 inline-flex h-10 items-center rounded-lg border bg-white opacity-90 shadow-lg">
+    <label class="mx-4 cursor-pointer font-medium">
+      <input type="checkbox" class="mr-1 rounded text-blue-500 focus:ring-blue-300" bind:checked={showHistogram} on:click={() => (showHistogram = !showHistogram)} />
       Show Histogram
     </label>
   </div>
 
-  <div class:hidden={!showHistogram} id="histogram" class="absolute z-30 p-6 pb-3 bg-white rounded-lg shadow-lg shadow-gray-500 bottom-8 right-8 opacity-90 w-[400px] h-[300px]">
+  <div class:hidden={!showHistogram} id="histogram" class="absolute bottom-8 right-8 z-30 h-[300px] w-[400px] rounded-lg bg-white p-6 pb-3 opacity-90 shadow-lg shadow-gray-500">
     <Hist hist={$ls.img.hist[currChannel]} />
   </div>
 </div>
 
 <style lang="postcss">
   .tab-button {
-    @apply transition-all duration-100 w-full py-2 text-sm  rounded-lg focus:outline-none focus:ring-2;
+    @apply w-full rounded-lg py-2 text-sm transition-all  duration-100 focus:outline-none focus:ring-2;
   }
 
   #canvas {
-    @apply shadow-lg  bg-gray-700 rounded-xl ring-4 ring-gray-600 ring-opacity-50;
+    @apply rounded-xl  bg-gray-700 shadow-lg ring-4 ring-gray-600 ring-opacity-50;
     background-size: 10rem 10rem;
     background-image: linear-gradient(to right, #ccc 1px, transparent 1px), linear-gradient(to bottom, #ccc 1px, transparent 1px);
   }

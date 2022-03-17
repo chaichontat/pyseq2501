@@ -56,8 +56,8 @@
 <div id="control" class="grid gap-y-6" style="grid-template-columns: minmax(500px, 1fr) 1fr;">
   <section class="flex flex-col text-lg font-medium">
     <p class="mt-1 text-lg">Name</p>
-    <div class="flex-grow flex gap-x-2 max-w-[470px]">
-      <input type="text" class="flex-grow h-12 mb-4 text-lg pretty" bind:value={params.name} class:invalid={isInvalid(params.name)} />
+    <div class="flex max-w-[470px] flex-grow gap-x-2">
+      <input type="text" class="pretty mb-4 h-12 flex-grow text-lg" bind:value={params.name} class:invalid={isInvalid(params.name)} />
       <!-- {#if inAuto}
         <Go color="sky" cl="text-lg font-semibold shadow-md shadow-sky-700/10 h-12">Preview</Go>
       {/if} -->
@@ -65,14 +65,14 @@
 
     {#if !inAuto}
       <p class="text-lg">Image Path</p>
-      <input type="text" class="flex-grow max-w-[470px] mb-4 pretty" bind:value={params.path} class:invalid={!params.path} />
+      <input type="text" class="pretty mb-4 max-w-[470px] flex-grow" bind:value={params.path} class:invalid={!params.path} />
     {/if}
   </section>
 
   <!-- Optics -->
   <section class="font-medium leading-10 ">
     <h2>Laser and Channels</h2>
-    <div class="grid grid-cols-2 min-w-[600px]" class:opacity-70={$ss.block}>
+    <div class="grid min-w-[600px] grid-cols-2" class:opacity-70={$ss.block}>
       <LaserChannels bind:params i={0} />
       <LaserChannels bind:params i={1} />
     </div>
@@ -93,7 +93,7 @@
       <div class="flex gap-8">
         <div>
           <p>X-Overlap</p>
-          <input type="number" class="w-20 pr-2 pretty" bind:value={params.overlap} step="0.01" min="0" max="0.99" use:checkRange={[0.01, 0.99]} />
+          <input type="number" class="pretty w-20 pr-2" bind:value={params.overlap} step="0.01" min="0" max="0.99" use:checkRange={[0.01, 0.99]} />
           (0-1)
         </div>
         <div class="flex flex-col justify-center font-normal">
@@ -118,14 +118,14 @@
         <div>
           <p>Z Tilt</p>
           <div class="flex gap-2">
-            <input type="number" class="w-28 pretty" bind:value={params.z_tilt} min="0" max="25000" use:checkRange={[0, 25000]} />
+            <input type="number" class="pretty w-28" bind:value={params.z_tilt} min="0" max="25000" use:checkRange={[0, 25000]} />
             <Go on:click={() => ($cmdStore = { move: { z_tilt: params.z_tilt } })} disabled={$ss.block} />
           </div>
         </div>
         <div>
           <p>Z Objective</p>
           <span class="flex gap-2">
-            <input type="number" class="w-28 pretty" bind:value={params.z_obj} min="0" max="60000" use:checkRange={[0, 60000]} />
+            <input type="number" class="pretty w-28" bind:value={params.z_obj} min="0" max="60000" use:checkRange={[0, 60000]} />
             <Go on:click={() => ($cmdStore = { move: { z_obj: params.z_obj } })} disabled={$ss.block} />
           </span>
         </div>
@@ -137,7 +137,7 @@
           <div class="flex divide-x-2">
             <div class="pr-2" class:font-medium={z_stack}>Z-Stack</div>
             {#if z_stack}
-              <div class="px-2 font-base">
+              <div class="font-base px-2">
                 {stats.n_z} Z step{#if stats.n_z > 1}s{/if} from {params.z_obj + params.z_from * params.z_spacing} to {params.z_obj + params.z_to * params.z_spacing}
               </div>
               <div class="px-2 font-semibold">Total time: {stats.n_z ? genTime(stats.n_z * stats.time) : genTime(stats.time)}.</div>
@@ -145,7 +145,7 @@
           </div>
         </label>
         <div class="flex font-medium" id="zBox">
-          <span class="flex items-center border-l rounded-l-lg color-group" class:span-disabled={$ss.block || !z_stack} use:tooltip={"Nyquist is 232."}>Spacing</span>
+          <span class="color-group flex items-center rounded-l-lg border-l" class:span-disabled={$ss.block || !z_stack} use:tooltip={"Nyquist is 232."}>Spacing</span>
           <input
             type="number"
             min="1"
@@ -153,11 +153,11 @@
             step="1"
             bind:value={params.z_spacing}
             use:checkRange={[1, 60000]}
-            class="z-10 h-10 text-center rounded-none pretty w-28"
+            class="pretty z-10 h-10 w-28 rounded-none text-center"
             class:disabled={$ss.block || !z_stack}
             disabled={$ss.block || !z_stack}
           />
-          <span use:tooltip={"Multiple of Spacing"} class="flex items-center color-group" class:span-disabled={$ss.block || !z_stack}>From</span>
+          <span use:tooltip={"Multiple of Spacing"} class="color-group flex items-center" class:span-disabled={$ss.block || !z_stack}>From</span>
           <input
             type="number"
             min="-100"
@@ -165,11 +165,11 @@
             step="1"
             bind:value={params.z_from}
             use:checkRange={[-100, 100]}
-            class="z-10 w-16 h-10 text-center rounded-none pretty"
+            class="pretty z-10 h-10 w-16 rounded-none text-center"
             class:disabled={$ss.block || !z_stack}
             disabled={$ss.block || !z_stack}
           />
-          <span use:tooltip={"Multiple of Spacing"} class="flex items-center color-group" class:span-disabled={$ss.block || !z_stack}>To</span>
+          <span use:tooltip={"Multiple of Spacing"} class="color-group flex items-center" class:span-disabled={$ss.block || !z_stack}>To</span>
           <input
             type="number"
             min="-100"
@@ -177,7 +177,7 @@
             step="1"
             bind:value={params.z_to}
             use:checkRange={[-100, 100]}
-            class="z-10 w-16 h-10 text-center rounded-l-none rounded-r-lg pretty"
+            class="pretty z-10 h-10 w-16 rounded-l-none rounded-r-lg text-center"
             class:disabled={$ss.block || !z_stack}
             disabled={$ss.block || !z_stack}
           />
@@ -197,6 +197,6 @@
   }
 
   .span-disabled {
-    @apply text-gray-500 bg-gray-50 border-gray-200 shadow-none;
+    @apply border-gray-200 bg-gray-50 text-gray-500 shadow-none;
   }
 </style>

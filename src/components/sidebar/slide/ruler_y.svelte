@@ -5,7 +5,7 @@
   const mm = len % 10;
 </script>
 
-<div class="absolute text-sm box-border left-0" style="transform: translateY(-0.5px); height: calc(100% + 1px);">
+<div class="absolute left-0 box-border text-sm" style="transform: translateY(-0.5px); height: calc(100% + 1px);">
   {#each [...Array(cm).keys()] as c}
     <div class="cm" style="height: {1000 / len}%; top:{(1000 * c) / len}%;">
       <div class="text">{c}</div>
@@ -33,7 +33,7 @@
   }
 
   .cm {
-    @apply text-right absolute font-mono h-4;
+    @apply absolute h-4 text-right font-mono;
     transform: translateY(-0.25rem);
   }
 

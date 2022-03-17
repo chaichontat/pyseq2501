@@ -28,12 +28,12 @@
 <Switch
   on:change={() => (checked = !checked)}
   class={`${genColor($ls.mode)} ${$ls.mode.startsWith("editing") ? "opacity-40" : ""}
-    relative inline-flex flex-shrink-0 h-[24px] w-[48px] border-2 border-transparent rounded-full cursor-pointer transition-all ease-in-out duration-200 focus:outline-none focus-visible:ring-2  focus-visible:ring-white focus-visible:ring-opacity-75`}
+    relative inline-flex h-[24px] w-[48px] flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-all duration-200 ease-in-out focus:outline-none focus-visible:ring-2  focus-visible:ring-white focus-visible:ring-opacity-75`}
   disabled={$ls.mode.startsWith("editing")}
 >
   <span
     aria-hidden="true"
-    class={`${checked ? "translate-x-6" : "translate-x-0"} thing pointer-events-none inline-block h-[20px] w-[20px] bg-white shadow transform ring-0 transition ease-in-out duration-200`}
+    class={`${checked ? "translate-x-6" : "translate-x-0"} thing pointer-events-none inline-block h-[20px] w-[20px] transform bg-white shadow ring-0 transition duration-200 ease-in-out`}
     style="border-radius: 50%;"
   />
 </Switch>

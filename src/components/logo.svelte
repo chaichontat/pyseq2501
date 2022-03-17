@@ -7,12 +7,12 @@
   })();
 </script>
 
-<div class="z-50 mx-auto space-x-1 navbar max-w-none">
-  <div class="flex items-center flex-none">
-    <span aria-label="Homepage" class="px-2 flex-0 md:px-4 ">
+<div class="navbar z-50 mx-auto max-w-none space-x-1">
+  <div class="flex flex-none items-center">
+    <span aria-label="Homepage" class="flex-0 px-2 md:px-4 ">
       <div class="inline-block text-3xl">
         <span class="font-light normal-case">PySeq</span>
-        <span class="font-semibold grad" class:grad2500={is2500}>{is2500 ? 2501 : 2001}</span>
+        <span class="grad font-semibold" class:grad2500={is2500}>{is2500 ? 2501 : 2001}</span>
       </div>
     </span>
   </div>

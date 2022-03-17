@@ -26,9 +26,9 @@
   };
 </script>
 
-<li class={`relative flex py-4 pb-6 pl-2 transition-all ease-in-out border-t-2 hover:bg-gray-50 ${borderColor[cmd.op]}`}>
+<li class={`relative flex border-t-2 py-4 pb-6 pl-2 transition-all ease-in-out hover:bg-gray-50 ${borderColor[cmd.op]}`}>
   <!-- Close -->
-  <svg xmlns="http://www.w3.org/2000/svg" class="absolute w-5 h-5 -mt-1 cursor-pointer right-2" viewBox="0 0 20 20" fill="currentColor" on:click={() => dispatch("delete")}>
+  <svg xmlns="http://www.w3.org/2000/svg" class="absolute right-2 -mt-1 h-5 w-5 cursor-pointer" viewBox="0 0 20 20" fill="currentColor" on:click={() => dispatch("delete")}>
     <path
       fill-rule="evenodd"
       d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -38,23 +38,23 @@
 
   <!-- n -->
   <div class="mr-8">
-    <span class="flex items-center justify-center text-lg font-bold bg-blue-100 rounded-full w-14 h-14">
+    <span class="flex h-14 w-14 items-center justify-center rounded-full bg-blue-100 text-lg font-bold">
       <div>{n}</div>
     </span>
   </div>
 
-  <div class="w-full mr-8">
+  <div class="mr-8 w-full">
     <span class="flex items-center gap-x-16">
       <div><Dropdown bind:cmd /></div>
 
       <!-- Hold -->
       {#if cmd.op === "hold"}
         <p>
-          Time <input type="number" class="w-16 py-1 ml-3 mr-1 font-medium pretty" bind:value={cmd.time} use:checkRange={[0, 99]} min="0" max="99" />
+          Time <input type="number" class="pretty ml-3 mr-1 w-16 py-1 font-medium" bind:value={cmd.time} use:checkRange={[0, 99]} min="0" max="99" />
           h
-          <input type="number" class="w-16 py-1 ml-3 mr-1 font-medium pretty" bind:value={cmd.time} use:checkRange={[0, 59]} min="0" max="59" />
+          <input type="number" class="pretty ml-3 mr-1 w-16 py-1 font-medium" bind:value={cmd.time} use:checkRange={[0, 59]} min="0" max="59" />
           m
-          <input type="number" class="w-16 py-1 ml-3 mr-1 font-medium pretty" bind:value={cmd.time} use:checkRange={[0, 59]} min="0" max="59" />
+          <input type="number" class="pretty ml-3 mr-1 w-16 py-1 font-medium" bind:value={cmd.time} use:checkRange={[0, 59]} min="0" max="59" />
           s
         </p>
 
@@ -136,7 +136,7 @@
 
     <!-- Those that require more space. -->
     {#if cmd.op === "takeimage"}
-      <div class="grid grid-cols-4 mt-2 font-medium divide-x clump gap-x-4">
+      <div class="clump mt-2 grid grid-cols-4 gap-x-4 divide-x font-medium">
         <span class="col-span-4 my-2"><Takeimage bind:params={cmd} inAuto={true} {fc_} /></span>
       </div>
       <!-- content here -->
@@ -158,10 +158,10 @@
   }
 
   p {
-    @apply font-medium text-lg;
+    @apply text-lg font-medium;
   }
 
   .minor-box {
-    @apply w-24 py-1 mx-2;
+    @apply mx-2 w-24 py-1;
   }
 </style>

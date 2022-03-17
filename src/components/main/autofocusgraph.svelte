@@ -20,22 +20,22 @@
   }
 </script>
 
-<div class="box-border h-48 chart w-[400px]">
+<div class="chart box-border h-48 w-[400px]">
   <Pancake.Chart x1={z_min} x2={z_max} y1={min} y2={max}>
     <Pancake.Box x1={z_min} x2={z_max} y1={min} y2={max}>
-      <div class="absolute w-full h-full border-b border-l border-gray-400" />
+      <div class="absolute h-full w-full border-b border-l border-gray-400" />
     </Pancake.Box>
 
     <!-- X-axis -->
     <Pancake.Grid vertical count={5} let:value>
-      <div class="relative top-0 block border-r border-dashed h-[105%] border-r-gray-400 x label">
-        <span class="absolute text-sm text-gray-600 -right-1 -bottom-6">{value}</span>
+      <div class="x label relative top-0 block h-[105%] border-r border-dashed border-r-gray-400">
+        <span class="absolute -right-1 -bottom-6 text-sm text-gray-600">{value}</span>
       </div>
     </Pancake.Grid>
 
     <!-- Y-axis -->
     <Pancake.Grid horizontal count={3} let:value>
-      <span class="absolute text-sm text-right text-gray-600 -left-12">{value}</span>
+      <span class="absolute -left-12 text-right text-sm text-gray-600">{value}</span>
     </Pancake.Grid>
 
     <Pancake.Svg>
@@ -45,7 +45,7 @@
     </Pancake.Svg>
 
     <Pancake.Point x={points[curr].x} y={points[curr].y}>
-      <span class="absolute translate-x-[-50%] translate-y-[-50%] rounded-[50%] bg-orange-400 w-3 h-3 opacity-90" />
+      <span class="absolute h-3 w-3 translate-x-[-50%] translate-y-[-50%] rounded-[50%] bg-orange-400 opacity-90" />
       <!-- <div class="absolute text-sm rounded bottom-4 whitespace-nowrap" style="transform: translate(-{100 * ((points[curr].x - z_min) / (z_max - z_min))}%,0)">
         <span>{points[curr].x} years</span>
       </div> -->
@@ -55,7 +55,7 @@
 
 <style lang="postcss">
   .horizontal {
-    @apply w-full border-b left-0;
+    @apply left-0 w-full border-b;
   }
 
   .y.label {

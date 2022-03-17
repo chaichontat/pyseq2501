@@ -34,7 +34,7 @@
 
 <li>
   <!-- Toggle -->
-  <span class="flex items-center justify-center mb-4 space-x-2 text-lg -translate-y-6 monomedium">
+  <span class="monomedium mb-4 flex -translate-y-6 items-center justify-center space-x-2 text-lg">
     <div class="text-gray-500 transition-all" class:text-gray-800={!$us.image_params.fc} class:font-semibold={!$us.image_params.fc}>A</div>
     <Toggle bind:checked={$us.image_params.fc} />
     <div class="text-gray-500 transition-all" class:text-gray-800={$us.image_params.fc} class:font-semibold={$us.image_params.fc}>B</div>
@@ -43,14 +43,14 @@
   <Slide name={$us.image_params.fc ? "B" : "A"} x={xy.x} y={xy.y} />
 
   <!-- Z Objective -->
-  <section class="flex self-center flex-grow mt-4 space-x-8">
+  <section class="mt-4 flex flex-grow space-x-8 self-center">
     <BigZ name="All Tilt" value={`${($ss.z_tilt.reduce((a, b) => a + b) / $ss.z_tilt.length).toFixed(0)} ± ${(Math.max(...$ss.z_tilt) - Math.min(...$ss.z_tilt)) / 2}`} />
     <BigZ name="Objective Z" value={$ss.z_obj} />
   </section>
 
   <!-- Eject button -->
   <button
-    class="self-center w-16 h-8 mt-2 text-white transition-colors bg-gray-500 border rounded-lg shadow-md shadow-gray-300 pretty hover:bg-gray-600 active:bg-gray-700 disabled:bg-gray-200 disabled:shadow-gray-200 focus:ring-gray-400"
+    class="pretty mt-2 h-8 w-16 self-center rounded-lg border bg-gray-500 text-white shadow-md shadow-gray-300 transition-colors hover:bg-gray-600 focus:ring-gray-400 active:bg-gray-700 disabled:bg-gray-200 disabled:shadow-gray-200"
     disabled={Boolean($ss.block)}
     on:click={() => {
       $ss.block = "moving";
@@ -58,7 +58,7 @@
     }}
   >
     <svg
-      class="w-4 h-4 mx-auto fill-white"
+      class="mx-auto h-4 w-4 fill-white"
       version="1.1"
       viewBox="0 0 300.02 300.02"
       style="enable-background:new 0 0 300.02 300.02; border-top-right-radius:initial; border-bottom-right-radius:initial;"
@@ -104,7 +104,7 @@
   } */
 
   input:invalid {
-    @apply border-red-600 border-2;
+    @apply border-2 border-red-600;
   }
 
   input:valid {

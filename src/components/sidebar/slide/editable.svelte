@@ -39,11 +39,11 @@
 
 <style lang="postcss">
   .input-smaller {
-    @apply text-sm font-medium leading-none h-6 px-2;
+    @apply h-6 px-2 text-sm font-medium leading-none;
   }
 
   .input-normal {
-    @apply text-lg font-medium leading-none h-6 px-2;
+    @apply h-6 px-2 text-lg font-medium leading-none;
     /* font-size: 1.06125rem; */
   }
 
