@@ -5,37 +5,37 @@
 
 @layer components {
   .pretty {
-    @apply text-black border-gray-400 h-10 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 disabled:border-gray-200 disabled:text-gray-500 disabled:shadow-none;
+    @apply h-10 rounded-md border-gray-400 text-black shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 disabled:border-gray-200 disabled:text-gray-500 disabled:shadow-none;
   }
 
   .drop {
-    @apply mx-2 font-medium border-gray-400 h-10 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50;
+    @apply mx-2 h-10 rounded-md border-gray-400 font-medium shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50;
   }
 
   .white-clickable {
-    @apply transition-all duration-100 border-gray-300 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 disabled:text-gray-500 disabled:border-gray-200 disabled:hover:bg-gray-50 disabled:active:bg-gray-50 focus:ring focus:ring-gray-200 focus:ring-opacity-50;
+    @apply border-gray-300 bg-gray-50 transition-all duration-100 hover:bg-gray-100 focus:ring focus:ring-gray-200 focus:ring-opacity-50 active:bg-gray-200 disabled:border-gray-200 disabled:text-gray-500 disabled:hover:bg-gray-50 disabled:active:bg-gray-50;
     /* dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 */
   }
 
   .disabled {
-    @apply text-gray-500 border-gray-200 hover:bg-gray-50 active:bg-gray-50 shadow-none;
+    @apply border-gray-200 text-gray-500 shadow-none hover:bg-gray-50 active:bg-gray-50;
   }
 
   .white-button {
-    @apply flex items-center border border-gray-300 shadow-sm white-clickable;
+    @apply white-clickable flex items-center border border-gray-300 shadow-sm;
   }
 
   .title {
-    @apply pb-2 mt-8 mb-4 text-2xl font-bold text-gray-600 border-b;
+    @apply mt-8 mb-4 border-b pb-2 text-2xl font-bold text-gray-600;
   }
 
   .color-group {
-    @apply px-3 text-gray-800 bg-gray-100 border-y border-gray-400 content-center h-10;
+    @apply h-10 content-center border-y border-gray-400 bg-gray-100 px-3 text-gray-800;
   }
 }
 
 @layer utilities {
   .invalid {
-    @apply border-red-500 focus:border-red-500 bg-red-50 focus:ring-red-500 focus:ring-opacity-50;
+    @apply border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500 focus:ring-opacity-50;
   }
 }
