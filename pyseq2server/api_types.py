@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import Literal, Sequence
+from typing import Annotated, Any, Sequence
 
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, Field, root_validator
 
 from pyseq2.experiment import Experiment
-from pyseq2.experiment.command import *
+from pyseq2.experiment.command import Autofocus, Goto, Hold, Prime, Pump, TakeImage, Temp
 from pyseq2.experiment.reagent import Reagent, ReagentGroup
-from pyseq2.imager import State
+from pyseq2.imager import Imager
 from pyseq2.utils.coords import mm_to_raw
 
 

@@ -6,7 +6,7 @@ import numpy as np
 from PIL import Image
 from pydantic import BaseModel
 
-from pyseq2.imager import UInt16Array
+from pyseq2.imaging.camera.dcam import UInt16Array
 
 
 class Hist(BaseModel):
@@ -33,7 +33,7 @@ def update_afimg(stack: UInt16Array, laplacian: list[float]) -> AFImg:
 
 
 def update_img(arr: UInt16Array, channels: tuple[bool, bool, bool, bool]) -> Img:
-    img = [process_img(i) for i in arr]
+    img: list[str] = [process_img(i) for i in arr]
     hist = [gen_hist(i) for i in arr]
     return Img(n=arr.shape[1] // 128, img=img, hist=hist, channels=channels, dim=arr.shape[1:])
 

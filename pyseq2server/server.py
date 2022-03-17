@@ -34,7 +34,7 @@ def gen_server(init: bool = True):
 
     async def setup_backend(init: bool = True) -> None:
         try:
-            ports = await get_ports(60)
+            ports = await get_ports()
         except RuntimeError as e:
             raise RuntimeError(
                 f"Cannot find instrument {e.args[1]}. If you are running a fake HiSeq, make sure to add --fake to the run argument."
@@ -52,7 +52,7 @@ def gen_server(init: bool = True):
         app.state.fast_refresh = asyncio.Event()
 
         state = await imager.state
-        xy = tuple(map(lambda x: round(x, 2), raw_to_mm(False, x=state.x, y=state.y)))
+        xy = tuple(round(x, 2) for x in raw_to_mm(False, x=state.x, y=state.y))
         user = UserSettings.default()
         user.image_params = user.image_params.copy(
             update=dict(

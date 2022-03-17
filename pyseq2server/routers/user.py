@@ -23,5 +23,5 @@ async def user_endpoint(ws: WebSocket) -> None:
 
 
 @router.get("/usersettings", response_model=UserSettings)
-async def get_user(request: Request):
+async def get_user(request: Request) -> Request:
     return request.app.state.user_settings
