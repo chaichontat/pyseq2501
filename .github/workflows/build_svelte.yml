@@ -69,6 +69,11 @@ jobs:
         run: |
           poetry install
 
+      - name: Type check with Pyright
+        run: |
+          npm i -g pyright
+          pyright pyseq2server/
+
       - name: Test with Pytest
         run: |
           pytest -rP

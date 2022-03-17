@@ -47,14 +47,18 @@ py_version = 310
 src_paths = ["pyseq2server"]
 
 [tool.pyright]
+include = ["pyseq2server"]
 pythonVersion = "3.10"
 reportMissingTypeStubs = false
+reportPrivateUsage = false
+reportPropertyTypeMismatch = false
+reportUnknownArgumentType = "warning"
 reportUnknownMemberType = false
+reportUnknownVariableType = "warning"
+reportUntypedBaseClass = false
 reportUntypedFunctionDecorator = false
-reportUnusedFunction = false
 reportUnusedImport = false
-reportUnusedVariable = false
-reportWildcardImportFromLibrary = false
+reportUnusedVariable = "warning"
 typeCheckingMode = "strict"
 
 [tool.pytest.ini_options]
