@@ -58,7 +58,7 @@ class CmdParse(Generic[P, T]):
     parser: Callable[[str], T] | None
     delayed_parser: Callable[[str], T] | None = None
     n_lines: int = 1
-    timeout: float | None = 60
+    timeout: float | None = 5
     # If you're adding some new variables don't forget to add them to __call__.
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> CmdParse[P, T]:
