@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { cmdStore, statusStore as ss, userStore as us, XY } from "$src/stores/store";
+  import { cmdStore, statusStore as ss, userStore as us } from "$src/stores/store";
   import { raw_to_local } from "../../coords";
   import BigZ from "./slide/big_z.svelte";
   import Slide from "./slide/slide.svelte";
@@ -9,7 +9,7 @@
     el.focus;
   };
 
-  let xy: XY = { x: 0, y: 0 };
+  let xy = { x: 0, y: 0 };
   $: {
     xy = raw_to_local($us.image_params.fc, $ss.x, $ss.y);
   }

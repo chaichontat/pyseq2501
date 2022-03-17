@@ -1,11 +1,16 @@
 import { browser } from "$app/env";
 import type { Writable } from "svelte/store";
 import { writable } from "svelte/store";
-import { cmdDefaults, TakeImage } from "./command";
-import { genExperimentDefault, NExperiment } from "./experiment";
-import { AFImg, Img, imgDefault } from "./imaging";
-import { Status, statusDefault } from "./status";
-import writableWebSocket, { AsymWritable, asymWritableWebSocket, readableWebSocket } from "./ws_store";
+import type { TakeImage } from "./command";
+import { cmdDefaults } from "./command";
+import type { NExperiment } from "./experiment";
+import { genExperimentDefault } from "./experiment";
+import type { AFImg, Img } from "./imaging";
+import { imgDefault } from "./imaging";
+import type { Status } from "./status";
+import { statusDefault } from "./status";
+import type { AsymWritable } from "./ws_store";
+import writableWebSocket, { asymWritableWebSocket, readableWebSocket } from "./ws_store";
 
 let try_connect: boolean = true; // Check if in GitHub Actions.
 
@@ -154,9 +159,9 @@ export type Config = {
   logLevel: "DEBUG" | "INFO" | "WARNING" | "ERROR" | "CRITICAL";
 };
 
-export const config: Readonly<Config> = browser
-  ? await fetch(`http://${window.location.hostname}:8000/config`).then((response: Response) => response.json())
-  : { machine: "HiSeq2000", logPath: "", logLevel: "DEBUG" };
+export const config: Promise<Readonly<Config>> = browser
+  ? fetch(`http://${window.location.hostname}:8000/config`).then((response: Response) => response.json())
+  : new Promise(() => ({ machine: "HiSeq2000", logPath: "", logLevel: "DEBUG" }));
 // function genSSE(): EventSource {
 //   const sse = new EventSource(`http://${ window.location.hostname }:8000/status`);
 //   sse.onopen = () => (connected = true);

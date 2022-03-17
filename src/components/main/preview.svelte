@@ -1,7 +1,8 @@
 <script lang="ts">
   import { browser } from "$app/env";
   import { localStore as ls } from "$src/stores/store";
-  import Panzoom, { PanzoomObject } from "@panzoom/panzoom";
+  import type { PanzoomObject } from "@panzoom/panzoom";
+  import Panzoom from "@panzoom/panzoom";
   import { Tab, TabGroup, TabList } from "@rgossiaux/svelte-headlessui";
   import { onMount } from "svelte";
   import Hist from "./hist.svelte";

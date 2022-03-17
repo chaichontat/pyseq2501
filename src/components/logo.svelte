@@ -1,7 +1,10 @@
 <script lang="ts">
   import { config } from "$src/stores/store";
   let is2500 = false;
-  $: is2500 = config.machine === "HiSeq2500";
+
+  (async () => {
+    if ((await config).machine === "HiSeq2500") is2500 = true;
+  })();
 </script>
 
 <div class="z-50 mx-auto space-x-1 navbar max-w-none">

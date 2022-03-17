@@ -1,17 +1,17 @@
 <script lang="ts">
-  import ProgressAuto from "./progress_auto.svelte";
   import Reagents from "$comps/main/auto/reagents/reagents.svelte";
   import Steps from "$comps/main/auto/steps/steps.svelte";
-  import { Experiment, genExperimentDefault, fromExperiment, NExperiment, toExperiment } from "$src/stores/experiment";
+  import type { Experiment, NExperiment } from "$src/stores/experiment";
+  import { fromExperiment, genExperimentDefault, toExperiment } from "$src/stores/experiment";
   import rawExperimentSchema from "$src/stores/experiment_schema.json";
-  import { userStore as us, localStore as ls } from "$src/stores/store";
+  import { localStore as ls, userStore as us } from "$src/stores/store";
   import { Menu, MenuButton, MenuItem, MenuItems } from "@rgossiaux/svelte-headlessui";
   import Ajv from "ajv";
   import yaml from "js-yaml";
   import { cubicInOut } from "svelte/easing";
   import { fade } from "svelte/transition";
+  import ProgressAuto from "./progress_auto.svelte";
 
-  // let files: FileList;
   export let fc_: 0 | 1 = 0;
 
   const ajv = new Ajv();
@@ -157,30 +157,6 @@
 <Reagents {fc_} />
 <Steps {fc_} />
 
-<!-- <Preview /> -->
-
-<!-- Editor -->
-<!-- {:else} -->
-<!-- New or Upload -->
-<!-- <div class="flex items-center justify-center w-full h-[50vh]">
-    <div class="inline-flex text-2xl rounded-md shadow-sm" role="group">
-      <button type="button" class="px-8 py-6 font-medium rounded-l-lg white-button" on:click={() => ($us.exps[fc] = { ...recipeDefault })}>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
-        New Experiment
-      </button>
-
-      <button type="button" class="px-8 py-6 font-medium border-l-0 rounded-r-lg white-button ">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-        </svg>
-        Upload
-      </button>
-    </div>
-  </div> -->
-
-<!-- {/if} -->
 <style lang="postcss">
   svg {
     @apply mr-1;

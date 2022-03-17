@@ -1,5 +1,7 @@
-import { AbstractCmd, cmdDefaults, Cmd } from "./command";
-import { Reagent, reagentDefault, ReagentGroup } from "./reagent";
+import type { Cmd } from "./command";
+import { cmdDefaults } from "./command";
+import type { Reagent, ReagentGroup } from "./reagent";
+import { reagentDefault } from "./reagent";
 
 export type NReagent = { uid: number; reagent: Reagent | ReagentGroup };
 export type NCmd = { uid: number; cmd: Cmd };
