@@ -55,7 +55,8 @@ jobs:
 
       - name: Test with Pytest
         run: |
-          poetry run pytest -rP
+          pip install pytest pytest-cov pytest-asyncio hypothesis
+          pytest -rP
       #       - name: Debug with tmate
       #         uses: mxschmitt/action-tmate@v3
 
