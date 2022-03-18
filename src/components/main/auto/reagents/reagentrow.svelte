@@ -5,10 +5,10 @@
   import { userStore as us } from "$src/stores/store";
   const dispatch = createEventDispatcher();
 
-  export let primed: boolean = false;
+  export let primed = false;
   export let reagent: Reagent | ReagentGroup;
   export let fc_: 0 | 1;
-  export let invalid: boolean = false;
+  export let invalid = false;
 
   function nameInvalid(s: string) {
     if (!s) return true;

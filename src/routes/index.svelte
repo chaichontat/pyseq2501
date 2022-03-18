@@ -7,7 +7,7 @@
   import Details from "$src/components/main/auto/details.svelte";
   import MainManual from "./main_manual.svelte";
 
-  const duration: number = 150;
+  const duration = 150;
 </script>
 
 {#if $ls.mode !== "manual"}

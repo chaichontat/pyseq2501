@@ -3,8 +3,8 @@
   import { cubicInOut } from "svelte/easing";
   import { fade } from "svelte/transition";
   export let title = "";
-  let open: boolean = false;
-  let clickClose: boolean = true;
+  let open = false;
+  let clickClose = true;
 </script>
 
 <div class="flex items-center justify-center">

@@ -7,7 +7,7 @@
   import { checkRange, count } from "$src/utils";
   import Go from "../go.svelte";
   import LaserChannels from "./laserChannels.svelte";
-  export let inAuto: boolean = true;
+  export let inAuto = true;
   export let params: TakeImage;
   export let stats = { height: 0, width: 0, n_cols: 0, n_bundles: 0, n_z: 1, time: 0 };
   export let z_stack = false;

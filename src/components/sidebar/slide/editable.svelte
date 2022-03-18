@@ -1,11 +1,11 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
 
-  export let editing: boolean = false;
+  export let editing = false;
   export let value: number | string = 0;
-  export let userValue: number = 0;
-  export let clInp: string = "text-center self-center";
-  export let clDisp: string = "text-center self-center";
+  export let userValue = 0;
+  export let clInp = "text-center self-center";
+  export let clDisp = "text-center self-center";
 
   const dispatch = createEventDispatcher();
   const focus = (el: HTMLInputElement) => {

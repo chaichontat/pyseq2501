@@ -7,7 +7,7 @@
 
   let step: [number, number, number] = [0, 0, 0];
   let progress: Tweened<number>;
-  let running: boolean = false;
+  let running = false;
   let n_steps = 1;
 
   // export let stats: { height: number; width: number; n_cols: number; n_bundles: number; n_z: number; time: number };
@@ -23,7 +23,7 @@
   }
 
   let interval: ReturnType<typeof setInterval> | undefined;
-  let t: number = 0;
+  let t = 0;
 
   $: startState = running ? "stop" : "ok";
   $: if (!running && interval) clearInterval(interval);

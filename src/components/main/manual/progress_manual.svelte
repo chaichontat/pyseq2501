@@ -27,7 +27,7 @@
   let captureState: "ok" | "gray" | "stop" = "ok";
   let previewState: "ok" | "gray" | "stop" = "ok";
   let interval: ReturnType<typeof setInterval> | undefined;
-  let t: number = 0;
+  let t = 0;
 
   $: captureState = $ss.block === "capturing" ? "stop" : "ok";
   $: previewState = $ss.block === "previewing" ? "stop" : "ok";

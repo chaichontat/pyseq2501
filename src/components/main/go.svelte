@@ -1,10 +1,10 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
   import Spinning from "../spinning.svelte";
-  export let disabled: boolean = false;
-  export let spin: boolean = false;
+  export let disabled = false;
+  export let spin = false;
   export let color: "blue" | "indigo" | "green" | "sky" = "indigo";
-  export let cl: string = "";
+  export let cl = "";
 
   const dispatch = createEventDispatcher();
 

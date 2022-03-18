@@ -3,7 +3,7 @@
   import Logo from "$comps/logo.svelte";
   import Division from "$src/components/sidebar/division.svelte";
   import Lasers from "$comps/sidebar/lasers.svelte";
-  import Map from "$src/components/sidebar/map.svelte";
+  import Mapp from "$src/components/sidebar/mapp.svelte";
   import Fluidics from "$src/components/sidebar/fluidics.svelte";
 
   // onMount(() => {
@@ -34,7 +34,7 @@
     <section class:hidden={tab !== "imaging"} class="relative">
       <ol class="menu p-2 ">
         <Division name="Map">
-          <Map />
+          <Mapp />
         </Division>
 
         <Division name="Lasers">

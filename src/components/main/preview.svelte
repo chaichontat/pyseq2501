@@ -12,7 +12,7 @@
   let imgFrame: HTMLImageElement;
   let pz: PanzoomObject;
   let ctx: CanvasRenderingContext2D | null;
-  let showHistogram: boolean = true;
+  let showHistogram = true;
   let currChannel: 0 | 1 | 2 | 3 = 0;
   let activeChannels: number[] = [0, 1, 2, 3];
 

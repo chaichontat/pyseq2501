@@ -1,6 +1,6 @@
 <script lang="ts">
-  export let name: string = "";
-  export let path: string = "";
+  export let name = "";
+  export let path = "";
 </script>
 
 <div class="flex flex-col text-lg font-medium">

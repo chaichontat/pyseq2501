@@ -5,30 +5,30 @@ import type { LocalInfo } from "./store";
 
 type ValidType = string; // | ArrayBufferLike | Blob | ArrayBufferView;
 
-export type wsConfig = {
-  f?: (x: ValidType) => any;
+type Sendable = object | string | number | Array<object> | Array<string> | Array<number>;
+
+export type wsConfig<T extends Sendable | Set<Sendable>> = {
+  f?: (x: ValidType) => T;
   onOpen?: () => Promise<void>;
   localStore?: Writable<LocalInfo>;
   sendOnSet?: boolean;
 };
 
-type Sendable = object | string | number | Array<object> | Array<string> | Array<number>;
-
 export function writableWebSocket<T extends Sendable | Set<Sendable>>(
   url: string,
   initialValue: T,
-  { f = JSON.parse, onOpen, localStore, sendOnSet = true }: wsConfig = {}
+  { f = JSON.parse, onOpen, localStore, sendOnSet = true }: wsConfig<T> = {}
 ): Writable<T> {
   let socket: WebSocket;
   let timeout: ReturnType<typeof setTimeout> | null;
   const { set: setStore, subscribe, update } = writable(initialValue);
 
-  async function _open() {
+  function _open() {
     console.log("Connecting");
     timeout = null;
 
     socket = new WebSocket(url);
-    socket.onmessage = (event: MessageEvent): void => setStore(f(event.data));
+    socket.onmessage = (event: MessageEvent): void => setStore(f(event.data as string));
 
     socket.onopen = async () => {
       if (onOpen) await onOpen();
@@ -61,7 +61,7 @@ export function writableWebSocket<T extends Sendable | Set<Sendable>>(
   };
 }
 
-export function readableWebSocket<T extends object | string>(url: string, initialValue: T, wsc: wsConfig = {}): Readable<T> {
+export function readableWebSocket<T extends object | string>(url: string, initialValue: T, wsc: wsConfig<T> = {}): Readable<T> {
   return {
     subscribe: writableWebSocket(url, initialValue, wsc).subscribe,
   };
@@ -95,7 +95,7 @@ export function asymWritableWebSocket<FromBack extends Sendable, ToBack extends 
     if (browser) {
       if (socket) socket.close();
       socket = new WebSocket(url);
-      socket.onmessage = (event: MessageEvent): void => setFromBack(f(event.data));
+      socket.onmessage = (event: MessageEvent): void => setFromBack(f(event.data as string));
 
       socket.onopen = () => {
         if (localStore) localStore.update((curr) => ({ ...curr, connected: true }));
@@ -107,13 +107,14 @@ export function asymWritableWebSocket<FromBack extends Sendable, ToBack extends 
 
       socket.onclose = () => {
         if (localStore) localStore.update((curr) => ({ ...curr, connected: false }));
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         if (!timeout) timeout = setTimeout(_open, 2000);
         console.error("Connection closed.");
       };
     }
   }
 
-  _open();
+  _open().catch((e) => console.error(e));
 
   return {
     set(v: ToBack) {

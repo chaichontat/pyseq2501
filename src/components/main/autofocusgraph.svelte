@@ -3,7 +3,7 @@
   import * as Pancake from "@sveltejs/pancake";
 
   let points: { x: number; y: number }[] = [];
-  export let curr: number = 0;
+  export let curr = 0;
 
   const z_max = 60292;
   const z_min = 2621;

@@ -10,9 +10,7 @@ import { imgDefault } from "./imaging";
 import type { Status } from "./status";
 import { statusDefault } from "./status";
 import type { AsymWritable } from "./ws_store";
-import writableWebSocket, { asymWritableWebSocket, readableWebSocket } from "./ws_store";
-
-let try_connect: boolean = true; // Check if in GitHub Actions.
+import writableWebSocket, { asymWritableWebSocket } from "./ws_store";
 
 export type XY = {
   x: number;
@@ -48,17 +46,15 @@ export const localStore: Writable<LocalInfo> = writable({
   afimg: { afimg: Array(259).fill(""), laplacian: Array(259).fill(0) },
 });
 
-export const statusStore: Writable<Status> =
-  try_connect && browser
-    ? writableWebSocket(`ws://${window.location.hostname}:8000/status`, { ...statusDefault }, { localStore, onOpen: firstLoad, sendOnSet: false })
-    : writable({ ...statusDefault });
+export const statusStore: Writable<Status> = browser
+  ? writableWebSocket(`ws://${window.location.hostname}:8000/status`, { ...statusDefault }, { localStore, onOpen: firstLoad, sendOnSet: false })
+  : writable({ ...statusDefault });
 
 export const userStore: Writable<UserSettings> = writable({ ...userDefault });
 
-const user_ws: Writable<UserSettings> =
-  try_connect && browser
-    ? writableWebSocket(`ws://${window.location.hostname}:8000/user`, { ...userDefault }, { onOpen: initial_get })
-    : writable({ ...userDefault });
+const user_ws: Writable<UserSettings> = browser
+  ? writableWebSocket(`ws://${window.location.hostname}:8000/user`, { ...userDefault }, { onOpen: initial_get })
+  : writable({ ...userDefault });
 
 export type MoveManual = {
   xy0: [number?, number?];
@@ -81,7 +77,7 @@ export const cmdStore: AsymWritable<Partial<CommandResponse>, Partial<CommandWeb
 
 export async function initial_get() {
   if (browser) {
-    while (true) {
+    for (;;) {
       try {
         const raw = await fetch(`http://${window.location.hostname}:8000/usersettings`);
         const us = (await raw.json()) as UserSettings;
@@ -100,7 +96,7 @@ function updateUserSettings() {
   let timeout = setTimeout(() => undefined, 1000);
 
   userStore.subscribe((us) => {
-    let t = Date.now();
+    const t = Date.now();
     const f = () => {
       user_ws.set(us);
       t0 = Date.now();
@@ -140,18 +136,18 @@ function updateImg(c: CommandResponse) {
 cmdStore.subscribe(updateImg);
 
 async function firstLoad() {
-  fetch(`http://${window.location.hostname}:8000/img`)
+  await fetch(`http://${window.location.hostname}:8000/img`)
     .then((response: Response) => response.json())
     .then((img: Img) => localStore.update((l) => ({ ...l, img })))
-    .catch(() => {});
+    .catch(() => undefined);
 
-  fetch(`http://${window.location.hostname}:8000/afimg`)
+  await fetch(`http://${window.location.hostname}:8000/afimg`)
     .then((response: Response) => response.json())
     .then((afimg: AFImg) => localStore.update((l) => ({ ...l, afimg })))
-    .catch(() => {});
+    .catch(() => undefined);
 }
 
-if (browser) firstLoad();
+if (browser) firstLoad().catch(() => undefined);
 
 export type Config = {
   machine: "HiSeq2000" | "HiSeq2500";
@@ -160,7 +156,7 @@ export type Config = {
 };
 
 export const config: Promise<Readonly<Config>> = browser
-  ? fetch(`http://${window.location.hostname}:8000/config`).then((response: Response) => response.json())
+  ? fetch(`http://${window.location.hostname}:8000/config`).then((response: Response): Promise<Config> => response.json())
   : new Promise(() => ({ machine: "HiSeq2000", logPath: "", logLevel: "DEBUG" }));
 // function genSSE(): EventSource {
 //   const sse = new EventSource(`http://${ window.location.hostname }:8000/status`);

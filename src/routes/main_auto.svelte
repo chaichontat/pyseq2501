@@ -1,7 +1,6 @@
 <script lang="ts">
   import Editor from "$src/components/main/auto/editor.svelte";
   import FlowcellCard from "$src/components/main/auto/flowcell_card.svelte";
-  import Modal from "$src/components/modal.svelte";
   import { localStore as ls } from "$src/stores/store";
 </script>
 

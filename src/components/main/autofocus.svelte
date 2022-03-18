@@ -10,7 +10,7 @@
   let imgFrame: HTMLImageElement;
   let ctx: CanvasRenderingContext2D | null;
 
-  let step: number = 0;
+  let step = 0;
   const z_max = 60292;
   const z_min = 2621;
   const n_stack = 259;

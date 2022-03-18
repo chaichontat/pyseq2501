@@ -30,7 +30,7 @@
   <span class:text-gray-400={!params.laser_onoff[i]} class="flex items-center gap-x-2">
     <label>
       <input type="checkbox" class={`mr-1 rounded ${i ? "rounded text-red-600 focus:ring-red-300" : "text-lime-500 focus:ring-lime-300"}`} bind:checked={params.laser_onoff[i]} />
-      <div class="inline font-semibold" class:text-green-800={params.laser_onoff[i] && !i} class:text-red-800={params.laser_onoff[i] && i}>{Boolean(i) ? 660 : 532} nm</div>
+      <div class="inline font-semibold" class:text-green-800={params.laser_onoff[i] && !i} class:text-red-800={params.laser_onoff[i] && i}>{i ? 660 : 532} nm</div>
     </label>
 
     <input

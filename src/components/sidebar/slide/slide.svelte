@@ -6,7 +6,7 @@
   import Shade from "./shade.svelte";
   import Tilt from "./tilt.svelte";
 
-  export let name: string = "";
+  export let name = "";
   export let x: number;
   export let y: number;
 

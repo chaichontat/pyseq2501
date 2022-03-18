@@ -1,7 +1,7 @@
 <script lang="ts">
-  export let size: string = "1rem";
-  export let color: string = "blue";
-  export let duration: string = "1.5s";
+  export let size = "1rem";
+  export let color = "blue";
+  export let duration = "1.5s";
 </script>
 
 <div class="circle transition-all" style="--size: {size}; --color: {color}; --duration: {duration}" />

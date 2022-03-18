@@ -38,7 +38,7 @@ export function checkRange(el: HTMLInputElement, minmax: [number, number] = [0, 
 }
 
 export function notEmpty(el: HTMLInputElement): { update: () => void; destroy: () => void } {
-  const handleValueChange = (e?: InputEvent) => {
+  const handleValueChange = () => {
     if (el.value) {
       el.classList.remove("invalid");
     } else {

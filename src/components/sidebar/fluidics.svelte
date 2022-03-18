@@ -6,10 +6,10 @@
 
   const ports = [...Array(20).keys()].filter((x) => x != 0 && x != 9);
   let selected: number[] = [];
-  let v_pull: number = 250;
-  let v_push: number = 2000;
-  let wait: number = 26;
-  let vol: number = 250;
+  let v_pull = 250;
+  let v_push = 2000;
+  let wait = 26;
+  let vol = 250;
   let fcs: [boolean, boolean] = [false, false];
 
   let fcdiv: HTMLSpanElement;

@@ -1,9 +1,9 @@
 <script lang="ts">
   export let x: number;
   export let y: number;
-  export let line: boolean = true;
-  export let legend: boolean = true;
-  export let char: string = "×";
+  export let line = true;
+  export let legend = true;
+  export let char = "×";
   export let offset: [number, number] = [0.5, 1.2];
 
   let real_x: number;
