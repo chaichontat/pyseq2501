@@ -42,7 +42,7 @@ def run(port: int, host: str, fake: bool, open: bool, donothost: bool, loglevel:
             app.mount("/", StaticFiles(directory=Path(__file__).parent.parent / "build", html=True))
         except RuntimeError as e:
             raise RuntimeError(
-                f"Most likely, the system cannot find the built interface. Run `npm run build` to build."
+                "Most likely, the system cannot find the built interface. Run `npm run build` to build."
             ) from e
 
     setup_web_logger(q_log, q_log2, level=loglevel.upper())

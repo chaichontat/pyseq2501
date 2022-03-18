@@ -7,7 +7,6 @@ from contextlib import contextmanager
 from logging import getLogger
 from typing import Any, Literal
 
-import numpy as np
 from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
