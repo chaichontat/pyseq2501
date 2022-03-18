@@ -7,7 +7,7 @@ from logging import getLogger
 from pathlib import Path
 from typing import Any, Awaitable, Callable
 from typing import Literal as L
-from typing import Optional, TypeVar, cast
+from typing import TypeVar, cast
 
 import numpy as np
 from pydantic import BaseModel
@@ -159,14 +159,14 @@ class Imager(metaclass=Singleton):
     async def move(
         self,
         *,
-        x: Optional[int] = None,
-        y: Optional[int] = None,
-        z_obj: Optional[int] = None,
-        z_tilt: Optional[int | tuple[int, int, int]] = None,
-        lasers: Optional[tuple[int | None, int | None]] = None,
-        laser_onoff: Optional[tuple[bool | None, bool | None]] = None,
-        shutter: Optional[bool] = None,
-        od: Optional[tuple[float | None, float | None]] = None,
+        x: int | None = None,
+        y: int | None = None,
+        z_obj: int | None = None,
+        z_tilt: int | tuple[int, int, int] | None = None,
+        lasers: tuple[int | None, int | None] | None = None,
+        laser_onoff: tuple[bool | None, bool | None] | None = None,
+        shutter: bool | None = None,
+        od: tuple[float | None, float | None] | None = None,
     ) -> None:
         async with self.lock:
             cmds: list[Awaitable[Any]] = []
@@ -192,11 +192,13 @@ class Imager(metaclass=Singleton):
         self,
         n_bundles: int,
         dark: bool = False,
-        channels: list[int] = [0, 1, 2, 3],
+        channels: tuple[int, ...] = (0, 1, 2, 3),
         move_back_to_start: bool = True,
         event_queue: tuple[asyncio.Queue[T], Callable[[int], T]] | None = None,
     ) -> tuple[UInt16Array, State]:
-        assert self.cams is not None
+        if self.cams is None:
+            raise RuntimeError("Camera is not initialized. Initialize Imager with init_cam=True.")
+
         if self.lock.locked():
             logger.info("Waiting for the previous imaging operation to complete.")
 
@@ -231,7 +233,8 @@ class Imager(metaclass=Singleton):
             n_px_y = n_bundles * self.cams.BUNDLE_HEIGHT
             # Need overshoot for TDI to function properly.
             end_y_pos = pos - self.calc_delta_pos(n_px_y) - 100000
-            assert end_y_pos > -7e6
+            if end_y_pos < -6e6:
+                raise ValueError("End y position out of range.")
 
             await asyncio.gather(self.tdi.prepare_for_imaging(n_px_y, pos), self.y.set_mode("IMAGING"))
             cap = self.cams.capture(
@@ -244,7 +247,7 @@ class Imager(metaclass=Singleton):
                 async with self.optics.open_shutter():
                     imgs = await cap
 
-            logger.info(f"Done taking an image.")
+            logger.info("Done taking an image.")
 
             await self.y.move(pos if move_back_to_start else end_y_pos + 100000)  # Correct for overshoot.
             imgs = np.clip(np.flip(imgs, axis=1), 0, 4096)
@@ -263,7 +266,9 @@ class Imager(metaclass=Singleton):
         """Moves to z_max and takes 232 (2048 × 5) images while moving to z_min.
         Returns the z position of maximum intensity and the images.
         """
-        assert self.cams is not None
+        if self.cams is None:
+            raise RuntimeError("Camera is not initialized. Initialize Imager with init_cam=True.")
+
         if self.lock.locked():
             logger.info("Waiting for previous imaging operation to complete.")
 
@@ -300,7 +305,7 @@ class Imager(metaclass=Singleton):
             target = int(z_max - ((z_max - z_min) * np.argmax(measure) / n_bundles))  # type: ignore
             logger.info(f"Done autofocus. Optimum={target}")
             if not 10000 < target < 50000:
-                logger.info(f"Target too close to edge, considering moving the tilt motors.")
+                logger.info("Target too close to edge, considering moving the tilt motors.")
             return (target, measure, stack)
 
     @staticmethod
@@ -313,7 +318,7 @@ class Imager(metaclass=Singleton):
         return np.einsum("pq,pqbmn->bmn", k, M)
 
     @staticmethod
-    def _save(path: str | Path, img: UInt16Array, state: Optional[State] = None) -> None:
+    def _save(path: str | Path, img: UInt16Array, state: State | None = None) -> None:
         with TiffWriter(path, ome=True) as tif:
             tif.write(
                 img,
@@ -323,7 +328,7 @@ class Imager(metaclass=Singleton):
             )
 
     @staticmethod
-    async def save(path: str | Path, img: UInt16Array, state: Optional[State] = None) -> None:
+    async def save(path: str | Path, img: UInt16Array, state: State | None = None) -> None:
         """
         Based on 2016-06
         http://www.openmicroscopy.org/Schemas/Documentation/Generated/OME-2016-06/ome.html

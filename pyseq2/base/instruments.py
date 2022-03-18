@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import Annotated, Any, ClassVar, Sequence
+from typing import Annotated, ClassVar
 
 from pyseq2.com.async_com import COM
 

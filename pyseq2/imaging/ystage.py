@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass
-from typing import Any, Callable, Literal, Optional
+from typing import Any, Callable, Literal
 
 from pyseq2.base.instruments import Movable, UsesSerial
 from pyseq2.com.async_com import COM, CmdParse
@@ -110,7 +110,7 @@ class YStage(UsesSerial, Movable):
 
     def __init__(self) -> None:
         self.com: COM
-        self._mode: Optional[ModeName] = None
+        self._mode: ModeName | None = None
 
     @init_log(logger)
     async def initialize(self) -> None:

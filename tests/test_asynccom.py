@@ -42,7 +42,7 @@ async def test_delayed_response():
         "GOTO(CHKMV)", ok_if_match("1GOTO(CHKMV)"), delayed_parser=ok_if_match("Move Done"), timeout=1
     )
     task = asyncio.create_task(com.send(cmd))
-    assert await asyncio.create_task(com.send(CmdParse("G", ok_if_match(f"1G"))))
+    assert await asyncio.create_task(com.send(CmdParse("G", ok_if_match("1G"))))
     assert await task
 
 
@@ -51,7 +51,7 @@ async def test_gibberish():
     logger.error("Testing for unknown response. Errors expected here.")
     f = FakeOptions()
     com = await COM.ainit("y", "COMX", min_spacing=0, test_params=f)
-    task = asyncio.create_task(com.send(CmdParse("G", ok_if_match(f"meh"), timeout=1)))
-    await asyncio.create_task(com.send(CmdParse("OK", ok_if_match(f"1OK"), timeout=1)))
+    task = asyncio.create_task(com.send(CmdParse("G", ok_if_match("meh"), timeout=1)))
+    await asyncio.create_task(com.send(CmdParse("OK", ok_if_match("1OK"), timeout=1)))
     with pytest.raises(asyncio.TimeoutError):
         await task

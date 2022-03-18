@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # fmt: off
 class ValveCmd:
     ID          = CmdParse("ID", ok_re(r"ID = (.+)", lambda x: x))
-    CLEAR_ID    = f"*ID*"
+    CLEAR_ID    = "*ID*"
     SET_POS     = λ_int(lambda x: f"GO{x}")
     GET_POS     = CmdParse("CP", ok_re(r"Position is  = (\d+)", int))
     GET_N_PORTS = CmdParse("NP", ok_re(r"NP = (\d+)", int))
@@ -35,7 +35,7 @@ class _Valve(Movable, UsesSerial):
         async with self.com.big_lock:
             await self.com.send(ValveCmd.CLEAR_ID)
             if await self.com.send(ValveCmd.ID) != "not used":
-                raise Exception(f"Already cleared ID but ID is still here.")
+                raise Exception("Already cleared ID but ID is still here.")
             assert await self.com.send(ValveCmd.GET_N_PORTS) == self.n_ports
 
         return self
@@ -112,7 +112,7 @@ class Valves(Movable):
             return p2
 
         else:
-            assert False
+            raise AssertionError
 
     async def _move(self, p: int) -> None:
         async with self.lock:
@@ -136,7 +136,7 @@ class Valves(Movable):
                     case _:
                         raise ValueError("Invalid port number. Range is [1, 24].")
             else:
-                assert False
+                raise AssertionError
 
         if not IS_FAKE():
             assert await self.pos == p
@@ -162,4 +162,4 @@ class Valves(Movable):
             case "B":
                 await self[0].move(4 if n == 2 else 5)
             case _:
-                assert False
+                raise AssertionError

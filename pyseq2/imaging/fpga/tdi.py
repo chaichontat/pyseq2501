@@ -25,7 +25,7 @@ class TDICmd:
 # TDIYPOS == Set when to send first trigger aka starting position
 
 # TDIYARM2 2816 Number of lines to capture. 22 frames V=0.115 Also with ZARM and ZYT ZFREQCL 10000
-# Seems like Y scan with Z step occuring every end of scan.
+# Seems like Y scan with Z step occurring every end of scan.
 
 # TDIYWAIT then immediately send Y move commands Seems to block thread until done.
 #

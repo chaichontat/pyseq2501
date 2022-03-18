@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import ctypes
-import os
 import threading
 from ctypes import c_double, c_int32, pointer
 from dataclasses import dataclass
@@ -129,7 +128,8 @@ class DCAMDict(MutableMapping[Props, float]):
         return self._dict == __o._dict
 
     def refresh(self) -> None:
-        [v.refresh(self.handle) for v in self._dict.values()]
+        for v in self._dict.values():
+            v.refresh(self.handle)
         logger.debug("DCAMProp refreshed.")
 
     @staticmethod

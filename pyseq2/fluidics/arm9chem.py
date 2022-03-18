@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Callable, Literal, ParamSpec, TypeVar, cast
+from typing import AsyncGenerator, Callable, Literal, ParamSpec, TypeVar, cast
 
 from pyseq2.base.instruments import UsesSerial
 from pyseq2.com.async_com import COM, CmdParse

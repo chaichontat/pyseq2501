@@ -98,11 +98,11 @@ class Optics(FPGAControlled):
         return self.filters[k]
 
     async def initialize(self) -> None:
-        logger.info(f"Initializing optics.")
+        logger.info("Initializing optics.")
         await self.filters[0].initialize()
         await self.filters[1].initialize()
         await self._close()
-        logger.info(f"Done initializing optics.")
+        logger.info("Done initializing optics.")
 
     @asynccontextmanager
     async def open_shutter(self) -> AsyncGenerator[None, None]:

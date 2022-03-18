@@ -4,7 +4,7 @@ import asyncio
 from logging import getLogger
 from typing import Any, Callable, Iterable, Literal, TypeVar, cast
 
-from pyseq2.base.instruments import FPGAControlled, Movable
+from pyseq2.base.instruments import FPGAControlled
 from pyseq2.com.async_com import COM, CmdParse
 from pyseq2.utils.log import init_log
 from pyseq2.utils.utils import chkrng, ok_re, λ_int

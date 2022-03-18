@@ -1,6 +1,7 @@
 # PySeq2501
 
 [![GitHub Actions](https://github.com/chaichontat/goff-rotation/actions/workflows/python-package-conda.yml/badge.svg)](https://github.com/chaichontat/goff-rotation/actions/workflows/python-package-conda.yml)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/chaichontat/pyseq2501/main.svg)](https://results.pre-commit.ci/latest/github/chaichontat/pyseq2501/main)
 [![codecov](https://codecov.io/gh/chaichontat/pyseq2501/branch/main/graph/badge.svg?token=4HLU7IHSIT)](https://codecov.io/gh/chaichontat/pyseq2501)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
