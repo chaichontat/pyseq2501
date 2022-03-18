@@ -44,9 +44,9 @@ jobs:
         run: |
           conda env update -f environment.yml
 
-      - name: Install with Poetry
+      - name: Install with pip
         run: |
-          poetry install
+          pip install .
 
       - name: Type check with Pyright
         run: |
