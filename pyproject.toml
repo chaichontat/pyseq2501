@@ -3,7 +3,7 @@
 authors = ["Chaichontat Sriworarat <34997334+chaichontat@users.noreply.github.com>"]
 description = ""
 include = ["build/**/*"]
-license = "GPL"
+license = "GPL-3.0-or-later"
 name = "pyseq2501-web"
 packages = [
   {include = "pyseq2server"},

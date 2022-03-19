@@ -1,0 +1,15 @@
+channels:
+  - conda-forge
+dependencies:
+  - black
+  - conda-lock
+  - flake8
+  - hypothesis
+  - isort
+  - nodejs
+  - poetry
+  - pytest
+  - pytest-cov
+  - pytest-asyncio
+  - tox
+category: dev
