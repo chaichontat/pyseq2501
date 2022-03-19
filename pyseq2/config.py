@@ -27,7 +27,7 @@ class Config(BaseSettings):
     def set_enabled_ports(cls, v: tuple[int, ...], values: dict[str, Any]) -> tuple[int, ...]:
         match values["machine"]:
             case "HiSeq2000":
-                return tuple((i for i in range(1, 20) if i != 9))
+                return tuple(i for i in range(1, 20) if i != 9)
             case "HiSeq2500":
                 return tuple(range(1, 25))
             case _:

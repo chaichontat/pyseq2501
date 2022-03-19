@@ -1,4 +1,3 @@
-import importlib
 from pathlib import Path
 
 from pyseq2.config import load_config
