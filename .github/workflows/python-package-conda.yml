@@ -1,11 +1,18 @@
-name: Python Package using Conda and Docs Deployment
+name: Conda
 
 on:
   push:
     branches:
       - main
   pull_request:
+    branches:
+      - main
   release:
+  workflow_dispatch:
+    inputs:
+      reason:
+          description: Reason for the workflow dispatch.
+          required: true
 
 jobs:
   build:
@@ -30,8 +37,7 @@ jobs:
           CACHE_NUMBER: 0
         with:
           path: ~/conda_pkgs_dir
-          key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
-            hashFiles('.github/ci_env.yml') }}
+          key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('.github/ci_env.yml') }}-${{ hashFiles('conda-lock.yml') }}
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
@@ -42,7 +48,7 @@ jobs:
 
       - name: Update env with conda
         run: |
-          conda env update -f environment.yml
+          conda-lock install -n pyseq conda-lock.yml
 
       - name: Install with pip
         run: |
@@ -55,7 +61,6 @@ jobs:
 
       - name: Test with Pytest
         run: |
-          pip install pytest pytest-cov pytest-asyncio hypothesis
           pytest -rP
       #       - name: Debug with tmate
       #         uses: mxschmitt/action-tmate@v3
