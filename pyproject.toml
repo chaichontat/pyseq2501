@@ -61,6 +61,7 @@ reportUntypedFunctionDecorator = false
 reportUnusedImport = false
 reportUnusedVariable = "warning"
 typeCheckingMode = "strict"
+useLibraryCodeForTypes = true
 
 [tool.pytest.ini_options]
 addopts = "--cov=pyseq2 --cov-report=html --cov-report=xml"
