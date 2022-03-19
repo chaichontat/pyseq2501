@@ -28,7 +28,7 @@ class ValveCmd:
 class _Valve(Movable, UsesSerial):
     @classmethod
     async def ainit(cls, name: ValveName, port_tx: str) -> _Valve:
-        n_ports = 24 if CONFIG.machine == "HiSeq2500" and name.startswith("valve_b") else 10
+        n_ports = 24 if CONFIG.machine == "HiSeq2500" and name[-1] == "2" else 10
         self = cls(name, n_ports, await COM.ainit(name, port_tx))
 
         async with self.com.big_lock:
