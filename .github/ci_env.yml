@@ -2,5 +2,4 @@ channels:
   - "conda-forge"
 dependencies:
   - python=3.10
-  - poetry
-  - tox
+  - conda-lock
