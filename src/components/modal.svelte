@@ -3,12 +3,12 @@
   import { cubicInOut } from "svelte/easing";
   import { fade } from "svelte/transition";
   export let title = "";
-  let open = false;
+  let opened = false;
   let clickClose = true;
 </script>
 
 <div class="flex items-center justify-center">
-  <div on:click={() => (open = true)}>
+  <div on:click={() => (opened = true)}>
     <slot name="button">
       <button
         type="button"
@@ -20,13 +20,13 @@
   </div>
 </div>
 
-<Dialog class="fixed inset-0 z-10 overflow-y-auto" bind:open on:cl={() => (open = false)}>
+<Dialog class="fixed inset-0 z-10 overflow-y-auto" bind:open={opened} on:cl={() => (opened = false)}>
   <div class="min-h-screen px-4 text-center">
     <div transition:fade={{ duration: 100, easing: cubicInOut }}>
       <DialogOverlay
         class="fixed inset-0 cursor-pointer bg-black opacity-40 transition-all"
         on:click={() => {
-          if (clickClose) open = false;
+          if (clickClose) opened = false;
         }}
       />
     </div>

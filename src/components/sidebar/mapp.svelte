@@ -5,10 +5,6 @@
   import Slide from "./slide/slide.svelte";
   import Toggle from "./toggle.svelte";
 
-  const focus = (el: HTMLElement) => {
-    el.focus;
-  };
-
   let xy = { x: 0, y: 0 };
   $: {
     xy = raw_to_local($us.image_params.fc, $ss.x, $ss.y);
@@ -40,12 +36,12 @@
     <div class="text-gray-500 transition-all" class:text-gray-800={$us.image_params.fc} class:font-semibold={$us.image_params.fc}>B</div>
   </span>
   <div class="-mt-4" />
-  <Slide name={$us.image_params.fc ? "B" : "A"} x={xy.x} y={xy.y} />
+  <Slide name_={$us.image_params.fc ? "B" : "A"} x={xy.x} y={xy.y} />
 
   <!-- Z Objective -->
   <section class="mt-4 flex flex-grow space-x-8 self-center">
-    <BigZ name="All Tilt" value={`${($ss.z_tilt.reduce((a, b) => a + b) / $ss.z_tilt.length).toFixed(0)} ± ${(Math.max(...$ss.z_tilt) - Math.min(...$ss.z_tilt)) / 2}`} />
-    <BigZ name="Objective Z" value={$ss.z_obj} />
+    <BigZ name_="All Tilt" value={`${($ss.z_tilt.reduce((a, b) => a + b) / $ss.z_tilt.length).toFixed(0)} ± ${(Math.max(...$ss.z_tilt) - Math.min(...$ss.z_tilt)) / 2}`} />
+    <BigZ name_="Objective Z" value={$ss.z_obj} />
   </section>
 
   <!-- Eject button -->

@@ -1,10 +1,7 @@
 <script lang="ts">
-  import Preview from "$comps/main/preview.svelte";
   import { localStore as ls } from "$src/stores/store";
-  import ProgressManual from "$src/components/main/manual/progress_manual.svelte";
   import { fade } from "svelte/transition";
   import MainAuto from "./main_auto.svelte";
-  import Details from "$src/components/main/auto/details.svelte";
   import MainManual from "./main_manual.svelte";
 
   const duration = 150;

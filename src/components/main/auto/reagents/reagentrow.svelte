@@ -10,14 +10,14 @@
   export let fc_: 0 | 1;
   export let invalid = false;
 
-  function nameInvalid(s: string) {
+  function nameInvalid(s: string): boolean {
     if (!s) return true;
     const names = $us.exps[fc_].reagents.map((r) => r.reagent.name);
     if (count(names)[s] > 1) return true;
     return false;
   }
 
-  function portInvalid(p: number) {
+  function portInvalid(p: number): boolean {
     if (p < 1 || p > 19 || p === 9) return true;
     const ports = $us.exps[fc_].reagents.filter((r) => "port" in r.reagent).map((r) => (r.reagent as Reagent).port);
     if (count(ports)[p] > 1) return true;

@@ -33,11 +33,11 @@
 
     <section class:hidden={tab !== "imaging"} class="relative">
       <ol class="menu p-2 ">
-        <Division name="Map">
+        <Division name_="Map">
           <Mapp />
         </Division>
 
-        <Division name="Lasers">
+        <Division name_="Lasers">
           <Lasers />
           <li>
             <span class="mt-2 self-center text-lg">
@@ -52,7 +52,7 @@
 
     <section class:hidden={tab !== "fluidics"} class="relative">
       <ol class="menu overflow-auto p-2">
-        <Division name="Ports">
+        <Division name_="Ports">
           <Fluidics />
         </Division>
       </ol>
@@ -60,7 +60,7 @@
 
     <section class:hidden={tab !== "misc"} class="relative">
       <ol class="menu p-2 ">
-        <Division name="Miscellaneous">
+        <Division name_="Miscellaneous">
           <div class="flex flex-col items-center gap-4 p-2">
             <button type="button" class="white-button w-[80%] justify-center rounded-lg py-2 text-center font-medium text-gray-900" disabled={!$localStore.connected}>Reinitialize</button>
           </div>

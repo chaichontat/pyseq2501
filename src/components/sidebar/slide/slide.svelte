@@ -6,7 +6,7 @@
   import Shade from "./shade.svelte";
   import Tilt from "./tilt.svelte";
 
-  export let name = "";
+  export let name_ = "";
   export let x: number;
   export let y: number;
 
@@ -46,7 +46,7 @@
   <Tilt />
 
   <span class="name">
-    {name}
+    {name_}
   </span>
 
   <!-- White part of the slide -->

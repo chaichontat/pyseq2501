@@ -4,7 +4,7 @@
 
   (async () => {
     if ((await config).machine === "HiSeq2500") is2500 = true;
-  })();
+  })().catch(console.error);
 </script>
 
 <div class="navbar z-50 mx-auto max-w-none space-x-1">

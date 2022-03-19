@@ -1,6 +1,6 @@
 <script lang="ts">
   import { raw_to_local } from "$src/coords";
-  import { cmdStore, statusStore as status, userStore as us, statusStore as ss } from "$src/stores/store";
+  import { cmdStore, statusStore as ss, userStore as us } from "$src/stores/store";
   import { checkRange } from "$src/utils";
   import { createEventDispatcher } from "svelte";
   import Go from "./go.svelte";
@@ -10,7 +10,7 @@
   export let xy: [number, number] = [-1, -1];
 
   function copyCurrent() {
-    const { x, y } = raw_to_local($us.image_params.fc, $status.x, $status.y);
+    const { x, y } = raw_to_local($us.image_params.fc, $ss.x, $ss.y);
     xy[0] = Math.round((x + Number.EPSILON) * 100) / 100; // How is it possible that there are no better ways to round??
     xy[1] = Math.round((y + Number.EPSILON) * 100) / 100;
   }

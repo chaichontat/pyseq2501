@@ -8,6 +8,7 @@
   const z_max = 60292;
   const z_min = 2621;
   const n_stack = 259;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const real_steps = [...Array(n_stack)].map((_, i) => Math.round(z_max - ((z_max - z_min) * i) / n_stack));
 
   let min = 0;

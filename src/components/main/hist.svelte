@@ -5,12 +5,6 @@
   export let hist: Hist;
   let max: number;
 
-  function range(a, b, step) {
-    const array = [];
-    for (; a <= b; a += step) array.push(a);
-    return array;
-  }
-
   function gen_xy(bin_edges: number[], counts: number[]): { x: number; y: number }[] {
     return bin_edges.map((x: number, i: number) => ({ x, y: counts[i] }));
   }

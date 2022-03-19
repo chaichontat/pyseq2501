@@ -4,7 +4,7 @@ default_language_version:
 exclude: ^package.json|package-lock.json/
 
 ci:
-  skip: [pyright]
+  skip: [pyright, prettier, eslint]
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -70,7 +70,9 @@ repos:
     rev: v2.6.0
     hooks:
       - id: prettier
-        additional_dependencies: ["prettier@2.6.0", "prettier-plugin-tailwindcss@0.1.8"]
+        additional_dependencies:
+          - prettier@2.6.0
+          - prettier-plugin-tailwindcss@0.1.8
 
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v8.11.0

@@ -1,9 +1,8 @@
 <script lang="ts">
-  export let name: string;
+  export let name_: string;
   export let color: string;
   export let userPower: number;
   export let power: number;
-  import { userStore as us } from "$src/stores/store";
 
   function update() {
     // Update only when focus lost.
@@ -23,7 +22,7 @@
         clip-rule="evenodd"
       />
     </svg>
-    {name}
+    {name_}
   </th>
 
   <td class="h-10 text-center align-middle font-bold text-gray-600" on:blur={update}>{pow}</td>

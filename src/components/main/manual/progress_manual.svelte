@@ -13,14 +13,14 @@
 
   export function resetProgress() {
     step = [0, 0, 0];
-    progress.set(0);
+    progress.set(0).catch(console.error);
   }
 
   $: {
     if (progress && $cmdStore?.step) {
       step = $cmdStore.step;
       const percent = (step[2] * (stats.n_z * stats.n_bundles) + step[1] * stats.n_bundles + step[0]) / (stats.n_bundles * stats.n_cols * stats.n_z);
-      if (percent) progress.set(percent > 1 ? 1 : percent);
+      if (percent) progress.set(percent > 1 ? 1 : percent).catch(console.error);
     }
   }
 

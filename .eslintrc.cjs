@@ -14,6 +14,7 @@ module.exports = {
     ecmaVersion: "es2021",
     sourceType: "module",
     tsconfigRootDir: __dirname,
+    extraFileExtensions: [".svelte"],
     project: ["./tsconfig.json"],
   },
   extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended", "plugin:@typescript-eslint/recommended-requiring-type-checking"],
@@ -22,6 +23,13 @@ module.exports = {
     {
       files: ["*.svelte"],
       processor: "svelte3/svelte3",
+      rules: {
+        "@typescript-eslint/restrict-template-expressions": "off",
+        "@typescript-eslint/no-unsafe-argument": "off",
+        "@typescript-eslint/no-unsafe-assignment": "off",
+        "@typescript-eslint/no-unsafe-member-access": "off",
+        "@typescript-eslint/no-unsafe-return": "off",
+      },
     },
   ],
   settings: {

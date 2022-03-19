@@ -8,7 +8,7 @@
   export let clDisp = "text-center self-center";
 
   const dispatch = createEventDispatcher();
-  const focus = (el: HTMLInputElement) => {
+  const setFocus = (el: HTMLInputElement) => {
     el.focus();
     el.select();
   };
@@ -30,7 +30,7 @@
 </script>
 
 {#if editing}
-  <input type="number" class={clInp} bind:value={userValue} on:keypress={handleInput} on:blur={focuslost} use:focus />
+  <input type="number" class={clInp} bind:value={userValue} on:keypress={handleInput} on:blur={focuslost} use:setFocus />
 {:else}
   <div class={clDisp} on:dblclick={() => (editing = true)}>
     {value}

@@ -9,10 +9,13 @@
   export let fc_: 0 | 1;
 
   const flipDurationMs = 200;
+
+  // eslint-disable-next-line no-undef
   function handleDndConsider(e: CustomEvent<DndEvent>) {
     $us.exps[fc_].cmds = e.detail.items as NCmd[];
   }
 
+  // eslint-disable-next-line no-undef
   function handleDndFinalize(e: CustomEvent<DndEvent>) {
     $us.exps[fc_].cmds = e.detail.items as NCmd[];
   }
