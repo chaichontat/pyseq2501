@@ -25,26 +25,31 @@ class ValveCmd:
 # fmt: on
 
 
+class ValveError(Exception):
+    ...
+
+
 class _Valve(Movable, UsesSerial):
     @classmethod
     async def ainit(cls, name: ValveName, port_tx: str) -> _Valve:
-        n_ports = 24 if CONFIG.machine == "HiSeq2500" and name.startswith("valve_b") else 10
-        self = cls(name, n_ports)
-        self.com = await COM.ainit(name, port_tx)  # VICI hates \n 🙄.
+        n_ports = 24 if CONFIG.machine == "HiSeq2500" and name[-1] == "2" else 10
+        self = cls(name, n_ports, await COM.ainit(name, port_tx))
 
         async with self.com.big_lock:
             await self.com.send(ValveCmd.CLEAR_ID)
             if await self.com.send(ValveCmd.ID) != "not used":
-                raise Exception("Already cleared ID but ID is still here.")
-            assert await self.com.send(ValveCmd.GET_N_PORTS) == self.n_ports
+                raise ValveError(f"{name}: Already cleared ID but ID is still here.")
+            if (n := await self.com.send(ValveCmd.GET_N_PORTS)) != self.n_ports:
+                raise ValveError(
+                    f"{name}: Number of ports is not {self.n_ports} as expected but {n}. Incorrect machine setting?"
+                )
 
         return self
 
-    def __init__(self, name: ValveName, n_ports: Literal[10, 24]) -> None:
-        self.com: COM
-        self.name = name
+    def __init__(self, name: ValveName, n_ports: Literal[10, 24], com: COM) -> None:
+        self.com = com
         self.n_ports = n_ports
-
+        self.name = name
         self.t_lastcmd = 0.0
 
     async def initialize(self) -> None:
@@ -84,6 +89,7 @@ class Valves(Movable):
         self.v: tuple[_Valve, _Valve]
         self.name = name
         self.lock = asyncio.Lock()
+        self.fc_inlet: Literal[2, 8] = 8
 
     def __getitem__(self, i: Literal[0, 1]) -> _Valve:
         return self.v[i]
@@ -107,9 +113,13 @@ class Valves(Movable):
             return p1
 
         elif CONFIG.machine == "HiSeq2500":
-            if p1 == 6:
-                return 0
-            return p2
+            match p1:
+                case 2 | 3 if self.name == "A":
+                    return p2
+                case 4 | 5 if self.name == "B":
+                    return p2
+                case _:
+                    return 0  # In blocked position.
 
         else:
             raise AssertionError
@@ -130,16 +140,16 @@ class Valves(Movable):
             elif CONFIG.machine == "HiSeq2500":
                 match p:
                     case 0:
-                        await self[0].move(6)
+                        await self[0].move(6)  # Blocked position.
                     case x if 1 <= x <= 24:
-                        await self[1].move(p)
+                        await asyncio.gather(self.set_fc_inlet(self.fc_inlet), self[1].move(p))
                     case _:
                         raise ValueError("Invalid port number. Range is [1, 24].")
             else:
                 raise AssertionError
 
-        if not IS_FAKE():
-            assert await self.pos == p
+        if not IS_FAKE() and (p_ := await self.pos) != p:
+            raise ValveError(f"Valve did not move to {p}, stuck at {p_}.")
 
     async def move(self, pos: int) -> None:
         raise NotImplementedError("Use the async context manager move_port instead.")
@@ -163,3 +173,5 @@ class Valves(Movable):
                 await self[0].move(4 if n == 2 else 5)
             case _:
                 raise AssertionError
+
+        self.fc_inlet = n

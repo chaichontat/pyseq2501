@@ -46,6 +46,10 @@ class ZTilt(FPGAControlled):
     async def all_z(self, cmd: Callable[[int], CmdParse[Any, T]]) -> tuple[T, T, T]:
         return await asyncio.gather(self.com.send(cmd(1)), self.com.send(cmd(3)), self.com.send(cmd(2)))
 
+    async def _home(self) -> None:
+        await self.all_z(TiltCmd.GO_HOME)
+        await self.all_z(TiltCmd.CLEAR_REGISTER)
+
     @init_log(logger)
     async def initialize(self) -> None:
         async with self.lock:
@@ -53,8 +57,7 @@ class ZTilt(FPGAControlled):
                 self.all_z(lambda i: TiltCmd.SET_CURRENT(i, 35)),
                 self.all_z(lambda i: TiltCmd.SET_VELO(i, 62500)),
             )
-            await self.all_z(TiltCmd.GO_HOME)
-            await self.all_z(TiltCmd.CLEAR_REGISTER)
+            await self._home()
 
     async def move(self, pos: int | tuple[int, int, int]) -> tuple[int, int, int]:
         async with self.lock:
@@ -72,7 +75,11 @@ class ZTilt(FPGAControlled):
     @property
     async def pos(self) -> tuple[int, int, int]:
         async with self.lock:
-            resp = await self.all_z(TiltCmd.READ_POS)
-            if not all(map(lambda x: x >= 0, resp)):
-                raise Exception("Invalid Z position. Initialize first.")
-            return resp
+            for i in range(1, 4):
+                resp = await self.all_z(TiltCmd.READ_POS)
+                if all(map(lambda x: x >= 0, resp)):
+                    return resp
+                logger.info(f"Negative Z position {resp}. Homing attempt {i}.")
+                await self._home()
+
+            raise Exception("Negative Z position after 3 homing attempts.")

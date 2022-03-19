@@ -5,6 +5,7 @@ import logging
 from typing import Annotated, Literal, TypeVar
 
 from .base.instruments_types import SerialPorts
+from .config import CONFIG
 from .fluidics.arm9chem import ARM9Chem
 from .fluidics.pump import Pump
 from .fluidics.valve import Valves
@@ -18,6 +19,10 @@ logger = logging.getLogger(__name__)
 Seconds = Annotated[float, "s"]
 
 T = TypeVar("T")
+
+BPL = CONFIG.barrels_per_lane
+MAX_SPEED = 2000 * BPL  # TODO: Verify
+MAX_VOL = Pump.BARREL_VOL * BPL
 
 
 class AFlowCell:
@@ -61,19 +66,19 @@ class AFlowCell:
     async def flow(
         self,
         port: int,
-        vol_barrel: μL = 250,
+        vol: μL = 250,
         *,
         v_pull: μLpermin = 250,
         v_push: μLpermin = 2000,
         wait: Seconds = 26,
     ) -> None:
 
-        if not (1 <= port <= 19) and port != 9:
+        if port not in CONFIG.enabled_ports:
             raise ValueError("Invalid port number.")
 
         async with self.arm9chem.shutoff_valve(), self.v.move_port(port), self.lock:
             await self.p.pump(
-                vol=self.steps_from_vol(vol_barrel),
+                vol=self.steps_from_vol(vol),
                 v_pull=self.sps_from_μLpermin(v_pull),
                 v_push=self.sps_from_μLpermin(v_push),
                 wait=wait,
@@ -91,16 +96,16 @@ class AFlowCell:
 
     @staticmethod
     def steps_from_vol(vol: μL) -> int:
-        """Per barrel."""
-        if not 0 < vol <= 250:
-            raise ValueError("Invalid barrel volume. Range is (0, 250] μL.")
-        return int((vol / Pump.BARREL_VOL) * Pump.STEPS)
+        """Per Lane."""
+        if not 0 < vol <= MAX_VOL:
+            raise ValueError(f"Invalid volume. Range is (0, {MAX_VOL}] μL for {BPL} barrels/lane.")
+        return int((vol / MAX_VOL) * Pump.STEPS)
 
     @staticmethod
     def sps_from_μLpermin(speed: μLpermin) -> int:
-        if not 0 < speed <= 2000:
-            raise ValueError("Invalid barrel speed. Range is (0, 2000] μL/min.")
-        return int((speed / Pump.BARREL_VOL) * Pump.STEPS / 60)
+        if not 0 < speed <= MAX_SPEED:
+            raise ValueError(f"Invalid speed. Range is (0, {MAX_SPEED}] μL/min for {BPL} barrels/lane.")
+        return int((speed / MAX_VOL) * Pump.STEPS / 60)
 
 
 class FlowCells(metaclass=Singleton):
