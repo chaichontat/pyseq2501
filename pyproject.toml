@@ -69,3 +69,6 @@ log_cli = 1
 env = ["FAKE_HISEQ = 1"]
 minversion = "7.0"
 testpaths = ["tests"]
+
+[tool.bandit]
+skips = ["B101", "B601"]

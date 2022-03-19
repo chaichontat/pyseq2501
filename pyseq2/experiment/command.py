@@ -6,7 +6,7 @@ import os
 from abc import abstractmethod
 from logging import getLogger
 from pathlib import Path
-from typing import Annotated, Any, Literal, Type, TypeVar, cast
+from typing import Annotated, Any, Literal, TypeVar, cast
 
 import numpy as np
 from pydantic import BaseModel, Field, validator
@@ -29,7 +29,7 @@ class AbstractCommand:
 
     @classmethod
     @abstractmethod
-    def default(cls: Type[T]) -> T:
+    def default(cls: type[T]) -> T:
         ...
 
 
@@ -214,7 +214,7 @@ class TakeImage(BaseModel, AbstractCommand):
         if not (n_bundles and len(xs) and len(zs)):
             raise ValueError("Invalid number of bundles, x, or z.")
 
-        channels = cast(list[Literal[0, 1, 2, 3]], list(i for i, c in enumerate(self.channels) if c))
+        channels = tuple(i for i, c in enumerate(self.channels) if c)
 
         path = Path(self.path) / self.name
         paths = [path.parent / f"{path.stem}_{i}.tif" for i in range(len(xs))]

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Annotated, Literal, Optional, Type, TypeVar
+from typing import Annotated, Literal, TypeVar
 
 from .base.instruments_types import SerialPorts
 from .config import CONFIG
@@ -28,12 +28,12 @@ MAX_VOL = Pump.BARREL_VOL * BPL
 class AFlowCell:
     @classmethod
     async def ainit(
-        cls: Type[T],
+        cls: type[T],
         name: Literal["A", "B"],
         ports: dict[SerialPorts, str],
         arm9chem: ARM9Chem,
-        valves: Optional[Valves] = None,
-        pump: Optional[Pump] = None,
+        valves: Valves | None = None,
+        pump: Pump | None = None,
     ) -> T:
         if name not in ("A", "B"):
             raise ValueError("Invalid name.")
@@ -61,7 +61,7 @@ class AFlowCell:
         async with self.lock:
             for i, f in enumerate((self.v.initialize(), self.p.initialize()), 1):
                 await f
-                logger.info(f"Flowcell {self.name} init [{i}/2] completed.")
+                logger.info("Flowcell %s init [%i/2] completed.", self.name, i)
 
     async def flow(
         self,

@@ -24,7 +24,8 @@ def v_get_status(resp: str) -> bool:
 
 
 def v_get_power(resp: str) -> int:
-    assert resp.endswith("mW")
+    if not resp.endswith("mW"):
+        raise LaserException(f"Invalid power response: {resp}.")
     return int(resp[:4])
 
 

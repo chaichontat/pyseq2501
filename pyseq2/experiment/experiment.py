@@ -84,7 +84,7 @@ class Experiment(BaseModel):
         for cmd in cmds:
             if isinstance(cmd, Pump | Prime):
                 if not isinstance(r := cmd.reagent, str):
-                    raise ValueError(f"Reagent in Experiment must be str.")
+                    raise ValueError("Reagent in Experiment must be str.")
                 if r not in reagents_name:
                     raise ValueError(f"Unknown reagent {r} at {cmd} not in reagent manifest.")
 

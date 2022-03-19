@@ -18,8 +18,8 @@ class XCmd:
     `PR $VAR`   : Print selected data or text
     `$VAR=$VAL` : Set $VAR to $VAL
     """
-    IS_MOVING   = CmdParse("PR MV", ok_re(fr"\??PR MV\n(\-?\d+)", lambda x: bool(int(x))), n_lines=2)
-    GET_POS     = CmdParse("PR P" , ok_re(fr"\??PR P\n(\-?\d+)", int), n_lines=2)
+    IS_MOVING   = CmdParse("PR MV", ok_re(r"\??PR MV\n(\-?\d+)", lambda x: bool(int(x))), n_lines=2)
+    GET_POS     = CmdParse("PR P" , ok_re(r"\??PR P\n(\-?\d+)", int), n_lines=2)
     SET_POS     = CmdParse(chkrng(λ_int(lambda x: f"MA {x},1"), *RANGE), ok_re(r"\??MA (\d+),1"), delayed_parser=ok_if_match(("?!", ">!")), timeout=60)  # Set mode and move to abs. position.
     # SET_POS_REL = lambda x: f"MR {x}"  # Set mode and move to rel. position.
     RESET       = CmdParse("\x03", ok_re(r".*(Copyright© 2010 Schneider Electric Motion USA|Copyright© 2001-2009 by Intelligent Motion Systems, Inc.)"), timeout=10)

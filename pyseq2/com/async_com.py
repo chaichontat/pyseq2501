@@ -6,18 +6,7 @@ import time
 from asyncio import CancelledError, Future, StreamReader, StreamWriter
 from dataclasses import dataclass
 from logging import getLogger
-from typing import (
-    Annotated,
-    Any,
-    Callable,
-    Generic,
-    NamedTuple,
-    NoReturn,
-    Optional,
-    ParamSpec,
-    TypeVar,
-    overload,
-)
+from typing import Annotated, Any, Callable, Generic, NamedTuple, NoReturn, ParamSpec, TypeVar, overload
 
 from serial_asyncio import open_serial_connection
 
@@ -58,7 +47,7 @@ class CmdParse(Generic[P, T]):
     parser: Callable[[str], T] | None
     delayed_parser: Callable[[str], T] | None = None
     n_lines: int = 1
-    timeout: float | None = 60
+    timeout: float | None = 5
     # If you're adding some new variables don't forget to add them to __call__.
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> CmdParse[P, T]:
@@ -117,11 +106,11 @@ class COM:
         cls,
         name: SerialInstruments,
         port_tx: str,
-        port_rx: Optional[str] = None,
+        port_rx: str | None = None,
         *,
         min_spacing: Annotated[float, "s"] = 0.01,
         no_check: bool = False,
-        test_params: Optional[FakeOptions] = None,
+        test_params: FakeOptions | None = None,
     ):
         baudrate = 115200 if name in ("fpga", "arm9chem", "arm9pe") else 9600
         if test_params is None:

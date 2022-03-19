@@ -1,4 +1,3 @@
-import os
 import threading
 from ctypes import c_char_p, c_int32, c_uint32, pointer
 from enum import IntEnum

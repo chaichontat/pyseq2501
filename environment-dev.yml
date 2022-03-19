@@ -1,0 +1,11 @@
+channels:
+  - conda-forge
+dependencies:
+  - conda-lock
+  - hypothesis
+  - poetry
+  - pytest
+  - pytest-cov
+  - pytest-asyncio
+  - tox
+category: dev

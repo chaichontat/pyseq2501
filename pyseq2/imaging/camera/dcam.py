@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import asyncio
-import os
-import pickle
+import pickle  # noqa: S403
 import time
-from asyncio import Future
 from contextlib import contextmanager
 from ctypes import c_char_p, c_int32, c_uint32, c_void_p, pointer, sizeof
-from enum import Enum, IntEnum
+from enum import IntEnum
 from logging import getLogger
 from pathlib import Path
 from typing import (
@@ -21,7 +19,6 @@ from typing import (
     Literal,
     Mapping,
     MutableMapping,
-    Optional,
     TypeVar,
     cast,
     get_args,
@@ -91,9 +88,7 @@ class _Camera:
         )
         return cls(id_, handle, properties)
 
-    def __init__(
-        self, id_: ID, handle: Optional[c_void_p] = None, properties: Optional[DCAMDict] = None
-    ) -> None:
+    def __init__(self, id_: ID, handle: c_void_p | None = None, properties: DCAMDict | None = None) -> None:
         assert id_ in get_args(ID)
         self.id_ = id_
 
@@ -112,7 +107,10 @@ class _Camera:
     @staticmethod
     def init_properties(handle: c_void_p) -> DCAMDict:
         if IS_FAKE():
-            return DCAMDict(handle, pickle.loads((Path(__file__).parent / "saved_props.pk").read_bytes()))
+            return DCAMDict(
+                handle,
+                pickle.loads((Path(__file__).parent / "saved_props.pk").read_bytes()),  # noqa: S301
+            )
         else:
             return DCAMDict.from_dcam(handle)
 
@@ -251,7 +249,7 @@ class Cameras:
         [x.initialize() for x in self]
 
     def n_frames_taken(self, cam: Cam) -> int:
-        return min([c.n_frames_taken for c in self]) if cam == 2 else self[cam].n_frames_taken
+        return min(c.n_frames_taken for c in self) if cam == 2 else self[cam].n_frames_taken
 
     @overload
     @contextmanager

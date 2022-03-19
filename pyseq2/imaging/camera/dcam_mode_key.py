@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from ctypes import c_double, c_int32, pointer
 from logging import getLogger
-from typing import Optional, cast
+from typing import cast
 
 from . import API
 from .dcam_api import DCAMReturnedZero
@@ -18,7 +18,7 @@ logger = getLogger(__name__)
 DCAMPROP_ATTR_HASVALUETEXT = int("0x10000000", 0)
 
 
-MODE_KEY: dict[Props, Optional[dict[str, int]]] = {
+MODE_KEY: dict[Props, dict[str, int] | None] = {
     "sensor_mode": {"AREA": 1, "LINE": 3, "TDI": 4, "PARTIAL AREA": 6},
     "sensor_mode_line_bundle_height": None,
     "colortype": {"B/W": 1},
@@ -63,7 +63,7 @@ MODE_KEY: dict[Props, Optional[dict[str, int]]] = {
 }
 
 
-def get_mode_key(handle: Handle, prop_attr: DCAMParamPropertyAttr) -> Optional[dict[str, int]]:
+def get_mode_key(handle: Handle, prop_attr: DCAMParamPropertyAttr) -> dict[str, int] | None:
     if not (prop_attr.attribute & DCAMPROP_ATTR_HASVALUETEXT):
         return None
 

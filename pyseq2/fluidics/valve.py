@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # fmt: off
 class ValveCmd:
     ID          = CmdParse("ID", ok_re(r"ID = (.+)", lambda x: x))
-    CLEAR_ID    = f"*ID*"
+    CLEAR_ID    = "*ID*"
     SET_POS     = λ_int(lambda x: f"GO{x}")
     GET_POS     = CmdParse("CP", ok_re(r"Position is  = (\d+)", int))
     GET_N_PORTS = CmdParse("NP", ok_re(r"NP = (\d+)", int))
@@ -28,28 +28,21 @@ class ValveCmd:
 class _Valve(Movable, UsesSerial):
     @classmethod
     async def ainit(cls, name: ValveName, port_tx: str) -> _Valve:
-        # n_ports = 24 if CONFIG.machine == "HiSeq2500" and name.startswith("valve_b") else 10
-        self = cls(name)
-        self.com = await COM.ainit(name, port_tx)  # VICI hates \n 🙄.
+        n_ports = 24 if CONFIG.machine == "HiSeq2500" and name.startswith("valve_b") else 10
+        self = cls(name, n_ports, await COM.ainit(name, port_tx))
 
         async with self.com.big_lock:
             await self.com.send(ValveCmd.CLEAR_ID)
             if await self.com.send(ValveCmd.ID) != "not used":
-                raise Exception(f"Already cleared ID but ID is still here.")
-            # assert await self.com.send(ValveCmd.GET_N_PORTS) == self.n_ports
-            self.n_ports = await self.com.send(ValveCmd.GET_N_PORTS)
+                raise Exception("Already cleared ID but ID is still here.")
+            assert await self.com.send(ValveCmd.GET_N_PORTS) == self.n_ports
 
         return self
 
-    def __init__(self, name: ValveName) -> None:
-        self.com: COM
+    def __init__(self, name: ValveName, n_ports: Literal[10, 24], com: COM) -> None:
+        self.com = com
+        self.n_ports = n_ports
         self.name = name
-
-        # if CONFIG.machine == "HiSeq2500" and name[-1] == '2':
-        #     self.n_ports = 24
-        # else:
-        #     self.n_ports = 10
-
         self.t_lastcmd = 0.0
 
     async def initialize(self) -> None:
@@ -117,7 +110,7 @@ class Valves(Movable):
             return p2
 
         else:
-            assert False
+            raise AssertionError
 
     async def _move(self, p: int) -> None:
         async with self.lock:
@@ -143,7 +136,7 @@ class Valves(Movable):
                     case _:
                         raise ValueError("Invalid port number. Range is [1, 24].")
             else:
-                assert False
+                raise AssertionError
 
         if not IS_FAKE():
             assert await self.pos == p
@@ -169,4 +162,4 @@ class Valves(Movable):
             case "B":
                 await self[0].move(4 if n == 2 else 5)
             case _:
-                assert False
+                raise AssertionError
