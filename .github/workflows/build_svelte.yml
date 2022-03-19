@@ -28,6 +28,7 @@ jobs:
       #   run: npx eslint src/
 
       - name: Run Prettier
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: npx prettier -c .
 
       - name: Build Svelte

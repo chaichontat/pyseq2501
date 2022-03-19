@@ -55,8 +55,12 @@ jobs:
 
       - name: Install with Poetry
         run: |
-          poetry config virtualenvs.in-project true
           poetry install
+
+      - name: Type check with Pyright
+        run: |
+          npm i -g pyright
+          pyright pyseq2server/
 
       - name: Test with Pytest
         run: |
@@ -100,21 +104,9 @@ jobs:
           activate-environment: pyseq
           use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
 
-      - name: Install dev tools
-        run: |
-          conda env update -n pyseq -f .github/ci_env.yml
-
-      - name: Install with Poetry
-        run: |
-          poetry install
-
-      - name: Type check with Pyright
-        run: |
-          npm i -g pyright
-          pyright pyseq2server/
-
       - name: Test with Pytest
         run: |
+          pip install pytest pytest-cov pytest-asyncio hypothesis
           pytest -rP
 
   # test-tox:
