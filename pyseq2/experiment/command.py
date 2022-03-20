@@ -16,6 +16,7 @@ from pyseq2.flowcell import FlowCells, Seconds, μL
 from pyseq2.imager import Imager, UInt16Array
 from pyseq2.utils import coords
 
+__all__ = ["Pump", "Prime", "Temp", "Hold", "Autofocus", "TakeImage", "Goto"]
 logger = getLogger(__name__)
 
 T = TypeVar("T")

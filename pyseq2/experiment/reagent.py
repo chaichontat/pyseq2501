@@ -8,6 +8,8 @@ from pydantic import BaseModel, validator
 
 from pyseq2.flowcell import Seconds, μLpermin
 
+__all__ = ["Reagent", "ReagentGroup"]
+
 
 class Reagent(BaseModel):
     name: str

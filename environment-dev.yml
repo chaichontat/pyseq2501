@@ -1,8 +1,11 @@
 channels:
   - conda-forge
 dependencies:
+  - black
   - conda-lock
+  - flake8
   - hypothesis
+  - isort
   - poetry
   - pytest
   - pytest-cov
