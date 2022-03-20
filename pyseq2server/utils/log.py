@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from pyseq2.utils.log import setup_logger
+from pyseq2 import setup_logger
 
 
 class AsyncQueueStream:

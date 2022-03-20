@@ -3,10 +3,11 @@ from io import BytesIO
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 from PIL import Image
 from pydantic import BaseModel
 
-from pyseq2.imaging.camera.dcam import UInt16Array
+UInt16Array = npt.NDArray[np.uint16]
 
 
 class Hist(BaseModel):

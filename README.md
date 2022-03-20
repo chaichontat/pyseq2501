@@ -57,6 +57,56 @@ Options:
 
 The interface should be waiting for you at `http://localhost:8000/`!
 
+## Dependencies
+
+```mermaid
+graph LR
+  subgraph pyseq2_
+    pyseq2
+    .config
+    .experiment
+    .imager
+    .utils
+    .utils.coords
+  end
+
+  pyseq2 --> ps2s.api.types
+  pyseq2 --> ps2s.routers.mancommand
+  pyseq2 --> ps2s.routers.status
+  pyseq2 --> ps2s.server
+  pyseq2 --> ps2s.utils.log
+  .config --> pyseq2
+  .config --> ps2s.routers.status
+  .experiment --> ps2s.api.types
+  .experiment --> ps2s.routers.mancommand
+  .imager --> pyseq2
+  .imager --> ps2s.routers.status
+  .utils --> pyseq2
+  .utils --> .imager
+  .utils --> ps2s.api.types
+  .utils --> ps2s.server
+  .utils.coords --> ps2s.api.types
+  .utils.coords --> ps2s.server
+
+  subgraph pyseq2server
+    ps2s.api.types --> ps2s.routers.mancommand
+    ps2s.api.types --> ps2s.routers.user
+    ps2s.api.types --> ps2s.server
+    ps2s.imaging --> ps2s.routers.mancommand
+    ps2s.imaging --> ps2s.server
+    ps2s.routers --> ps2s.server
+    ps2s.routers.mancommand --> ps2s.server
+    ps2s.routers.status --> ps2s.routers.mancommand
+    ps2s.routers.status --> ps2s.server
+    ps2s.routers.user --> ps2s.server
+    ps2s.server --> ps2s.__main__
+    ps2s.utils --> ps2s.__main__
+    ps2s.utils --> ps2s.routers.mancommand
+    ps2s.utils.log --> ps2s.__main__
+    ps2s.utils.utils --> ps2s.routers.mancommand
+  end
+```
+
 ## Sequence
 
 ```mermaid

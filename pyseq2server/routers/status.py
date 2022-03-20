@@ -10,8 +10,9 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from websockets.exceptions import ConnectionClosedOK
 
+from pyseq2 import Imager
 from pyseq2.config import CONFIG, Config
-from pyseq2.imager import Imager, State
+from pyseq2.imager import State
 
 logger = logging.getLogger(__name__)
 

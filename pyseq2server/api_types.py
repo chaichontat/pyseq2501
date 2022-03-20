@@ -4,10 +4,19 @@ from typing import Annotated, Any, Sequence
 
 from pydantic import BaseModel, Field, root_validator
 
-from pyseq2.experiment import Experiment
-from pyseq2.experiment.command import Autofocus, Goto, Hold, Prime, Pump, TakeImage, Temp
-from pyseq2.experiment.reagent import Reagent, ReagentGroup
-from pyseq2.imager import Imager
+from pyseq2 import Imager
+from pyseq2.experiment import (
+    Autofocus,
+    Experiment,
+    Goto,
+    Hold,
+    Prime,
+    Pump,
+    Reagent,
+    ReagentGroup,
+    TakeImage,
+    Temp,
+)
 from pyseq2.utils.coords import mm_to_raw
 
 
