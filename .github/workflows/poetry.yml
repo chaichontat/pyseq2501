@@ -59,7 +59,7 @@ jobs:
         run: |
           poetry config virtualenvs.in-project true
           poetry install
-          poetry update pyseq2501
+          pip install git+https://github.com/chaichontat/pyseq2501
 
       - name: Test with Pytest
         run: |
