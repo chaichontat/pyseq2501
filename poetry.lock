@@ -463,7 +463,7 @@ tifffile = "^2022.2.9"
 type = "git"
 url = "https://github.com/chaichontat/pyseq2501"
 reference = "main"
-resolved_reference = "e5737f9c9036d2823726d52d5d9570a652a311e2"
+resolved_reference = "c94c300111ded9aa70733ce566ef5586166f3765"
 
 [[package]]
 name = "pyserial"
