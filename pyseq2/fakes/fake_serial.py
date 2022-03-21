@@ -1,26 +1,26 @@
 import asyncio
 from asyncio import CancelledError, StreamReader, StreamWriter
 from logging import getLogger
-from typing import Callable, Literal, NoReturn
+from typing import Literal, NoReturn
 
 from pydantic import BaseModel
 
 from pyseq2.base.instruments_types import SEPARATOR, SerialInstruments
-from pyseq2.fakes.fake_handlers import fake_arm9, fake_fpga, fake_laser, fake_pump, fake_valve, fake_x, fake_y
+from pyseq2.fakes.fake_handlers import FakeARM9, FakeFPGA, FakeLaser, FakePump, Fakes, FakeValve, FakeX, FakeY
 
-handlers: dict[SerialInstruments, Callable[[str], str]] = {
-    "x": fake_x,
-    "y": fake_y,
-    "laser_g": fake_laser,
-    "laser_r": fake_laser,
-    "arm9chem": fake_arm9,
-    "pumpa": fake_pump,
-    "pumpb": fake_pump,
-    "valve_a1": fake_valve,
-    "valve_a2": fake_valve,
-    "valve_b1": fake_valve,
-    "valve_b2": fake_valve,
-    "fpga": fake_fpga,
+handlers: dict[SerialInstruments, Fakes] = {
+    "x": FakeX(),
+    "y": FakeY(),
+    "laser_g": FakeLaser(),
+    "laser_r": FakeLaser(),
+    "arm9chem": FakeARM9(),
+    "pumpa": FakePump(),
+    "pumpb": FakePump(),
+    "valve_a1": FakeValve(),
+    "valve_a2": FakeValve(),
+    "valve_b1": FakeValve(),
+    "valve_b2": FakeValve(),
+    "fpga": FakeFPGA(),
 }
 
 logger = getLogger(__name__)
