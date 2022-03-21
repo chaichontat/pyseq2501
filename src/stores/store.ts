@@ -153,11 +153,13 @@ export type Config = {
   machine: "HiSeq2000" | "HiSeq2500";
   logPath: string;
   logLevel: "DEBUG" | "INFO" | "WARNING" | "ERROR" | "CRITICAL";
+  barrelsPerLane: 1 | 2 | 4 | 8;
+  ports: number[];
 };
 
 export const config: Promise<Readonly<Config>> = browser
   ? fetch(`http://${window.location.hostname}:8000/config`).then((response: Response): Promise<Config> => response.json())
-  : new Promise(() => ({ machine: "HiSeq2000", logPath: "", logLevel: "DEBUG" }));
+  : new Promise(() => ({ machine: "HiSeq2000", logPath: "", logLevel: "DEBUG", barrelsPerLane: 1, ports: [] }));
 // function genSSE(): EventSource {
 //   const sse = new EventSource(`http://${ window.location.hostname }:8000/status`);
 //   sse.onopen = () => (connected = true);
