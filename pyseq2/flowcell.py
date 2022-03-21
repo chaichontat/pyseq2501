@@ -20,7 +20,7 @@ Seconds = Annotated[float, "s"]
 
 T = TypeVar("T")
 
-BPL = CONFIG.barrels_per_lane
+BPL = CONFIG.barrelsPerLane
 MAX_SPEED = 2000 * BPL  # TODO: Verify
 MAX_VOL = Pump.BARREL_VOL * BPL
 
@@ -73,7 +73,7 @@ class AFlowCell:
         wait: Seconds = 26,
     ) -> None:
 
-        if port not in CONFIG.enabled_ports:
+        if port not in CONFIG.ports:
             raise ValueError("Invalid port number.")
 
         async with self.arm9chem.shutoff_valve(), self.v.move_port(port), self.lock:
