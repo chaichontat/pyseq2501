@@ -34,7 +34,7 @@ class Config(BaseSettings):
                 raise ValueError("Invalid machine.")
 
 
-def load_config(paths: tuple[Path | str, ...] = ("pyseq.yml", PATH / "pyseq.yml")) -> Config:
+def load_config(paths: tuple[Path | str, ...] = (PATH / "pyseq.yml",)) -> Config:
     for path in paths:
         if isinstance(path, str):
             path = Path(path)

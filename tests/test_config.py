@@ -1,11 +1,12 @@
 from pathlib import Path
 
-from pyseq2.config import load_config
+import pyseq2
 
 
 def test_load_config():
-    p = Path("temp.yml")
+    p = Path("._pyseq.yml")
     p.write_text("machine: HiSeq2500")
-    config = load_config((p,))
-    assert config.ports == tuple(range(1, 25))
+    cf = pyseq2.config.load_config((p,))
+    assert cf.machine == "HiSeq2500"
+    assert cf.ports == tuple(range(1, 25))
     p.unlink()
