@@ -6,6 +6,7 @@ from copy import deepcopy
 
 from pydantic import BaseModel, validator
 
+from pyseq2.config import CONFIG
 from pyseq2.flowcell import Seconds, μLpermin
 
 __all__ = ["Reagent", "ReagentGroup"]
@@ -21,7 +22,7 @@ class Reagent(BaseModel):
 
     @validator("v_pull", "v_prime", "v_push")
     def v_check(cls, v: μLpermin) -> μLpermin:
-        assert 2.5 <= v <= 2000
+        assert 2.5 * CONFIG.barrelsPerLane <= v <= 2000 * CONFIG.barrelsPerLane
         return v
 
     @validator("wait")
@@ -31,8 +32,7 @@ class Reagent(BaseModel):
 
     @validator("port")
     def port_check(cls, port: int) -> int:
-        assert 1 <= port <= 19
-        assert port != 9
+        assert port in CONFIG.ports
         return port
 
     @classmethod
