@@ -2,13 +2,16 @@
   import type { Reagent, ReagentGroup } from "$src/stores/reagent";
   import { createEventDispatcher } from "svelte";
   import { checkRange, count } from "$src/utils";
-  import { userStore as us } from "$src/stores/store";
+  import { userStore as us, localStore as ls } from "$src/stores/store";
   const dispatch = createEventDispatcher();
 
   export let primed = false;
   export let reagent: Reagent | ReagentGroup;
   export let fc_: 0 | 1;
   export let invalid = false;
+
+  let validPorts = [-1, 2, 3, 4];
+  $: validPorts = $ls.config.ports;
 
   function nameInvalid(s: string): boolean {
     if (!s) return true;
@@ -18,7 +21,7 @@
   }
 
   function portInvalid(p: number): boolean {
-    if (p < 1 || p > 19 || p === 9) return true;
+    if (!validPorts.includes(p)) return true;
     const ports = $us.exps[fc_].reagents.filter((r) => "port" in r.reagent).map((r) => (r.reagent as Reagent).port);
     if (count(ports)[p] > 1) return true;
     return false;
@@ -49,7 +52,7 @@
 {:else}
   <!-- Reagent proper -->
   <td class="px-6 py-2 text-gray-900 whitespace-nowrap ">
-    <input bind:value={reagent.port} type="number" class:invalid={portInvalid(reagent.port)} class="w-16 font-semibold pretty" min="1" max="19" required />
+    <input bind:value={reagent.port} type="number" class:invalid={portInvalid(reagent.port)} class="w-16 font-semibold pretty" min="1" max={Math.max(...validPorts)} required />
   </td>
   <td class="px-4 text-gray-900 whitespace-nowrap">
     <input bind:value={reagent.name} class:invalid={nameInvalid(reagent.name)} type="text" class="w-full font-medium pretty" required />

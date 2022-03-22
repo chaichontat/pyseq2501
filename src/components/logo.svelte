@@ -1,10 +1,7 @@
 <script lang="ts">
-  import { config } from "$src/stores/store";
+  import { localStore as ls } from "$src/stores/store";
   let is2500 = false;
-
-  (async () => {
-    if ((await config).machine === "HiSeq2500") is2500 = true;
-  })().catch(console.error);
+  $: is2500 = $ls.config.machine === "HiSeq2500";
 </script>
 
 <div class="navbar z-50 mx-auto max-w-none space-x-1">

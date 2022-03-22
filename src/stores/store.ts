@@ -38,12 +38,21 @@ export type FCCmd = {
   cmd: "start" | "validate" | "stop";
 };
 
-export type LocalInfo = { mode: "automatic" | "editingA" | "editingB" | "manual"; connected: boolean; img: Img; afimg: AFImg };
+export type Config = {
+  machine: "HiSeq2000" | "HiSeq2500";
+  logPath: string;
+  logLevel: "DEBUG" | "INFO" | "WARNING" | "ERROR" | "CRITICAL";
+  barrelsPerLane: 1 | 2 | 4 | 8;
+  ports: number[];
+};
+
+export type LocalInfo = { mode: "automatic" | "editingA" | "editingB" | "manual"; connected: boolean; img: Img; afimg: AFImg; config: Config };
 export const localStore: Writable<LocalInfo> = writable({
   mode: "automatic",
   connected: false,
   img: { ...imgDefault },
   afimg: { afimg: Array(259).fill(""), laplacian: Array(259).fill(0) },
+  config: { machine: "HiSeq2000", logPath: "", logLevel: "DEBUG", barrelsPerLane: 1, ports: [] },
 });
 
 export const statusStore: Writable<Status> = browser
@@ -147,21 +156,12 @@ async function firstLoad() {
     .then((response: Response) => response.json())
     .then((afimg: AFImg) => localStore.update((l) => ({ ...l, afimg })))
     .catch(() => undefined);
+
+  await fetch(`http://${window.location.hostname}:8000/config`)
+    .then((response: Response): Promise<Config> => response.json())
+    .then((c) => localStore.update((l) => ({ ...l, config: c })));
 }
 
-if (browser) firstLoad().catch(() => undefined);
-
-export type Config = {
-  machine: "HiSeq2000" | "HiSeq2500";
-  logPath: string;
-  logLevel: "DEBUG" | "INFO" | "WARNING" | "ERROR" | "CRITICAL";
-  barrelsPerLane: 1 | 2 | 4 | 8;
-  ports: number[];
-};
-
-export const config: Promise<Readonly<Config>> = browser
-  ? fetch(`http://${window.location.hostname}:8000/config`).then((response: Response): Promise<Config> => response.json())
-  : new Promise(() => ({ machine: "HiSeq2000", logPath: "", logLevel: "DEBUG", barrelsPerLane: 1, ports: [] }));
 // function genSSE(): EventSource {
 //   const sse = new EventSource(`http://${ window.location.hostname }:8000/status`);
 //   sse.onopen = () => (connected = true);

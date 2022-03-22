@@ -1,11 +1,11 @@
 <script lang="ts">
   import type { NCmd, NExperiment, NReagent } from "$src/stores/experiment";
   import type { Status } from "$src/stores/status";
-  import { cmdStore, statusStore as ss, userStore as us, config } from "$src/stores/store";
+  import { cmdStore, statusStore as ss, userStore as us, localStore as ls } from "$src/stores/store";
   import { checkRange, flash } from "$src/utils";
 
   let ports = [-1, 2, 3, 4];
-  config.then((c) => (ports = c.ports)).catch(console.error);
+  $: ports = $ls.config.ports;
 
   let selected: number[] = [];
   let v_pull = 250;
