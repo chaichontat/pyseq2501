@@ -12,6 +12,8 @@ from fastapi.staticfiles import StaticFiles
 from .server import gen_server, q_log, q_log2
 from .utils.log import setup_web_logger
 
+logger = logging.getLogger(__name__)
+
 
 @click.command()
 @click.option("--port", "-p", type=int, default=8000, help="Port to run the server on (default: 8000).")
@@ -39,7 +41,9 @@ def run(port: int, host: str, fake: bool, open: bool, donothost: bool, loglevel:
 
     if not donothost:
         try:
-            app.mount("/", StaticFiles(directory=Path(__file__).parent.parent / "build", html=True))
+            directory = Path(__file__).parent.parent / "build"
+            logger.info(f"Looking for interface at {directory}.")
+            app.mount("/", StaticFiles(directory=directory, html=True))
         except RuntimeError as e:
             raise RuntimeError(
                 "Most likely, the system cannot find the built interface. Run `npm run build` to build."
