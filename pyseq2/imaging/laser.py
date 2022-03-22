@@ -12,6 +12,7 @@ from pyseq2.utils.utils import chkrng, ok_if_match, λ_int
 
 logger = getLogger(__name__)
 POWER_RANGE = (0, 500)
+mW = Annotated[int, "mW"]
 
 
 class LaserException(Exception):
@@ -23,7 +24,7 @@ def v_get_status(resp: str) -> bool:
     return {"DISABLED": False, "ENABLED": True}.get(resp, False)
 
 
-def v_get_power(resp: str) -> int:
+def v_get_power(resp: str) -> mW:
     if not resp.endswith("mW"):
         raise LaserException(f"Invalid power response: {resp}.")
     return int(resp[:4])
@@ -59,7 +60,7 @@ class Laser(UsesSerial):
     async def initialize(self) -> None:
         await self.com.send(LaserCmd.VERSION)
 
-    async def set_onoff(self, state: bool, attempts: int = 3) -> None:
+    async def set_onoff(self, state: bool) -> None:
         async with self.lock:
             await self.com.send({False: LaserCmd.OFF, True: LaserCmd.ON}[state])
         #     while (resp := self.status.result(5)) is None:
@@ -72,7 +73,7 @@ class Laser(UsesSerial):
         #     )
         # return resp
 
-    async def set_power(self, power: Annotated[int, "mW"], tol: Annotated[int, "mW"] = 3) -> None:
+    async def set_power(self, power: mW, tol: mW = 3) -> None:
         """Laser can take a while to warm up.
 
         Args:
@@ -104,7 +105,7 @@ class Laser(UsesSerial):
         return await self.set_onoff(False)
 
     @property
-    async def power(self) -> int:
+    async def power(self) -> mW:
         async with self.lock:
             return await self.com.send(LaserCmd.GET_POWER)
 
@@ -115,7 +116,7 @@ class Lasers:
     r: Laser
 
     @property
-    async def power(self) -> tuple[int, int]:
+    async def power(self) -> tuple[mW, mW]:
         return await asyncio.gather(self.g.power, self.r.power)
 
     def __iter__(self) -> Iterator[Laser]:

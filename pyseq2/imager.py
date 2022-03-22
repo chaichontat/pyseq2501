@@ -5,7 +5,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Awaitable, Callable
+from typing import Annotated, Any, Awaitable, Callable
 from typing import Literal as L
 from typing import TypeVar, cast
 
@@ -25,6 +25,7 @@ from .utils.utils import IS_FAKE, Singleton
 __all__ = ["Imager", "State"]
 logger = getLogger(__name__)
 executor = ThreadPoolExecutor()
+mW = Annotated[float, "mW"]
 
 
 class Position(BaseModel):
@@ -40,7 +41,7 @@ class Position(BaseModel):
 
 class OpticState(BaseModel):
     laser_onoff: tuple[bool, bool]
-    lasers: tuple[int, int]
+    lasers: tuple[mW, mW]
     shutter: bool
     od: tuple[float, float]
 

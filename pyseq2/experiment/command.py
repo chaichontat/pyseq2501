@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import math
 import os
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from logging import getLogger
 from pathlib import Path
 from typing import Annotated, Any, Literal, TypeVar, cast
@@ -12,8 +12,8 @@ import numpy as np
 from pydantic import BaseModel, Field, validator
 
 from pyseq2.experiment.reagent import Reagent
-from pyseq2.flowcell import FlowCells, Seconds, μL
-from pyseq2.imager import Imager, UInt16Array
+from pyseq2.flowcell import Celsius, FlowCells, Seconds, μL
+from pyseq2.imager import Imager, UInt16Array, mW
 from pyseq2.utils import coords
 
 __all__ = ["Pump", "Prime", "Temp", "Hold", "Autofocus", "TakeImage", "Goto"]
@@ -21,10 +21,13 @@ logger = getLogger(__name__)
 
 T = TypeVar("T")
 
+mm = Annotated[float, "mm"]
 
-class AbstractCommand:
+
+class AbstractCommand(metaclass=ABCMeta):
     op: str
 
+    @abstractmethod
     async def run(self, fcs: FlowCells, i: bool, imager: Imager) -> Any:
         ...
 
@@ -87,10 +90,10 @@ class Prime(BaseModel, AbstractCommand):
 
 
 class Temp(BaseModel, AbstractCommand):
-    temp: float
+    temp: Celsius
     wait: bool = False
-    tol: float = 3.0
-    timeout: float = 60.0
+    tol: Celsius = 3.0
+    timeout: Seconds = 60.0
     op: Literal["temp"] = "temp"
 
     async def run(self, fcs: FlowCells, i: bool, imager: Imager) -> None:
@@ -126,7 +129,7 @@ class Hold(BaseModel, AbstractCommand):
 class Autofocus(BaseModel, AbstractCommand):
     channel: Literal[0, 1, 2, 3]
     laser_onoff: bool
-    laser: int
+    laser: mW
     od: float
     op: Literal["autofocus"] = "autofocus"
 
@@ -146,14 +149,14 @@ class Autofocus(BaseModel, AbstractCommand):
 class TakeImage(BaseModel, AbstractCommand):
     name: str
     path: str
-    xy0: tuple[float, float]
-    xy1: tuple[float, float]
+    xy0: tuple[mm, mm]
+    xy1: tuple[mm, mm]
     overlap: float
     channels: tuple[bool, bool, bool, bool]
     z_tilt: int | tuple[int, int, int]
     z_obj: int
     laser_onoff: tuple[bool, bool]
-    lasers: tuple[int, int]
+    lasers: tuple[mW, mW]
     od: tuple[float, float]
     save: bool
     z_spacing: int = 232
@@ -264,6 +267,9 @@ class Goto(BaseModel, AbstractCommand):
     step: int
     n: int
     op: Literal["goto"] = "goto"
+
+    async def run(self, fcs: FlowCells, i: bool, imager: Imager) -> None:
+        raise NotImplementedError("Goto cannot run.")
 
     @classmethod
     def default(cls) -> Goto:

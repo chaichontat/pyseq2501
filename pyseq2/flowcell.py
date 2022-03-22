@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 μL = Annotated[float, "μL"]
 μLpermin = Annotated[float, "μL/min"]
 Seconds = Annotated[float, "s"]
+Celsius = Annotated[float, "Celsius"]
 
 T = TypeVar("T")
 
