@@ -50,7 +50,8 @@
     disabled={Boolean($ss.block)}
     on:click={() => {
       $ss.block = "moving";
-      $cmdStore = { move: { xy0: [0, -7.5] } };
+      // pyseq2.utils.coords.raw_to_mm(False, -6.5e6)
+      $cmdStore = { move: { xy0: [0, -63.2] } };
     }}
   >
     <svg
