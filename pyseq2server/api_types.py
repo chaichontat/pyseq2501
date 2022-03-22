@@ -19,10 +19,12 @@ from pyseq2.experiment import (
 )
 from pyseq2.utils.coords import mm_to_raw
 
+mm = Annotated[float, "mm"]
+
 
 class MoveManual(BaseModel):
-    xy0: tuple[float, float] | None = None
-    xy1: tuple[float, float] | None = None
+    xy0: tuple[mm, mm] | None = None
+    xy1: tuple[mm, mm] | None = None
     z_tilt: int | tuple[int, int, int] | None = None
     z_obj: int | None = None
     laser_onoff: tuple[bool | None, bool | None] | None = None

@@ -56,9 +56,11 @@ const user_ws: Writable<UserSettings> = browser
   ? writableWebSocket(`ws://${window.location.hostname}:8000/user`, { ...userDefault }, { onOpen: initial_get })
   : writable({ ...userDefault });
 
+export type mm = number;
+
 export type MoveManual = {
-  xy0: [number?, number?];
-  xy1: [number?, number?];
+  xy0: [mm?, mm?];
+  xy1: [mm?, mm?];
   z_tilt: number | [number?, number?, number?];
   laser_onoff: [boolean?, boolean?];
   lasers: [number?, number?];
