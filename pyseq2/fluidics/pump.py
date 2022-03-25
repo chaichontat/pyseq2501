@@ -31,7 +31,7 @@ T = TypeVar("T")
 parser = ok_re(r"/0([`@])", status_byte)
 
 
-def check_range(prefix: Literal["pull", "push"]) -> Callable[[Step, Sps], str]:
+def check_range(prefix: Literal["pull", "push"], reverse: bool = False) -> Callable[[Step, Sps], str]:
     def inner(pos: Step, sps: Sps = 8000) -> str:
         if not 60 <= sps <= 8000:
             raise ValueError("Invalid speed. Range is [60, 8000].")
@@ -39,9 +39,15 @@ def check_range(prefix: Literal["pull", "push"]) -> Callable[[Step, Sps], str]:
             raise ValueError("Invalid position. Range is [0, 48000].")
 
         if prefix == "pull":
-            return f"V{sps}IA{pos}R"
+            if reverse:
+                return f"V{sps}OA{pos}R"
+            else:
+                return f"V{sps}IA{pos}R"
         elif prefix == "push":
-            return f"V{sps}OA{pos}R"
+            if reverse:
+                return f"V{sps}IA{pos}R"
+            else:
+                return f"V{sps}OA{pos}R"
         else:
             raise ValueError("Invalid command.")
 
@@ -113,7 +119,7 @@ class Pump(UsesSerial):
         await self.com.send(PumpCmd.CLOSE)
 
     async def _pushpull(
-        self, cmd: Literal["push", "pull"], target: int, *, speed: int = 8000, retries: int = 10
+        self, cmd: Literal["push", "pull"], target: int, *, speed: int = 8000, retries: int = 10, reverse: bool = False
     ) -> None:
         async with self.com.big_lock:
             pos = await self.pos
@@ -139,7 +145,7 @@ class Pump(UsesSerial):
         await self.wait(retries=retries)
 
     @asynccontextmanager
-    async def _pump(self, vol: Step, *, v_pull: Sps = 400, v_push: Sps = 6400) -> AsyncGenerator[None, None]:
+    async def _pump(self, vol: Step, *, v_pull: Sps = 400, v_push: Sps = 6400, reverse: bool = False) -> AsyncGenerator[None, None]:
         try:
             logger.info(f"Pump {self.name}: Pulling.")
             await self._pushpull("pull", vol, speed=v_pull)
@@ -152,11 +158,11 @@ class Pump(UsesSerial):
             logger.info(f"Pump {self.name}: Push completed.")
 
     async def pump(
-        self, vol: Step, *, v_pull: Sps = 400, v_push: Sps = 6400, wait: Annotated[float, "s"] = 26
+        self, vol: Step, *, v_pull: Sps = 400, v_push: Sps = 6400, wait: Annotated[float, "s"] = 26, reverse: bool = False
     ) -> None:
         if (pos := await self.pos) != 0:
             logger.warning(f"Pump {self.name} was not fully pulled out at start but at pos {pos}.")
 
-        async with self._pump(vol, v_pull=v_pull, v_push=v_push):
+        async with self._pump(vol, v_pull=v_pull, v_push=v_push, reverse=reverse):
             logger.info(f"Pump {self.name}: Waiting for {wait} s.")
             await asyncio.sleep(wait)  # From HiSeq log. Wait for pressure to equalize.
