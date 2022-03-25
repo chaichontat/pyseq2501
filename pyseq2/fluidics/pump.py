@@ -65,6 +65,7 @@ class PumpCmd:
     PULL = CmdParse(check_range("pull"), parser)
     PUSH = CmdParse(check_range("push"), parser)
     STOP = CmdParse("T", parser)
+    CLOSE = CmdParse("OR", parser)
 
 
 class Pump(UsesSerial):
@@ -108,6 +109,9 @@ class Pump(UsesSerial):
     async def status(self) -> bool:
         return await self.com.send(PumpCmd.STATUS)
 
+    async def _close(self) -> None:
+        await self.com.send(PumpCmd.CLOSE)
+
     async def _pushpull(
         self, cmd: Literal["push", "pull"], target: int, *, speed: int = 8000, retries: int = 10
     ) -> None:
@@ -144,6 +148,7 @@ class Pump(UsesSerial):
         finally:
             logger.info(f"Pump {self.name}: Pushing.")
             await self._pushpull("push", 0, speed=v_push)
+            await self._close()
             logger.info(f"Pump {self.name}: Push completed.")
 
     async def pump(
