@@ -119,7 +119,13 @@ class Pump(UsesSerial):
         await self.com.send(PumpCmd.CLOSE)
 
     async def _pushpull(
-        self, cmd: Literal["push", "pull"], target: int, *, speed: int = 8000, retries: int = 10, reverse: bool = False
+        self,
+        cmd: Literal["push", "pull"],
+        target: int,
+        *,
+        speed: int = 8000,
+        retries: int = 10,
+        reverse: bool = False,
     ) -> None:
         async with self.com.big_lock:
             pos = await self.pos
@@ -145,7 +151,9 @@ class Pump(UsesSerial):
         await self.wait(retries=retries)
 
     @asynccontextmanager
-    async def _pump(self, vol: Step, *, v_pull: Sps = 400, v_push: Sps = 6400, reverse: bool = False) -> AsyncGenerator[None, None]:
+    async def _pump(
+        self, vol: Step, *, v_pull: Sps = 400, v_push: Sps = 6400, reverse: bool = False
+    ) -> AsyncGenerator[None, None]:
         try:
             logger.info(f"Pump {self.name}: Pulling.")
             await self._pushpull("pull", vol, speed=v_pull)
@@ -158,7 +166,13 @@ class Pump(UsesSerial):
             logger.info(f"Pump {self.name}: Push completed.")
 
     async def pump(
-        self, vol: Step, *, v_pull: Sps = 400, v_push: Sps = 6400, wait: Annotated[float, "s"] = 26, reverse: bool = False
+        self,
+        vol: Step,
+        *,
+        v_pull: Sps = 400,
+        v_push: Sps = 6400,
+        wait: Annotated[float, "s"] = 26,
+        reverse: bool = False,
     ) -> None:
         if (pos := await self.pos) != 0:
             logger.warning(f"Pump {self.name} was not fully pulled out at start but at pos {pos}.")
