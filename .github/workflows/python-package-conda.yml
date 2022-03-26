@@ -2,8 +2,6 @@ name: Conda
 
 on:
   push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
@@ -30,25 +28,12 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Cache conda
-        uses: actions/cache@v2
-        env:
-          # Increase this value to reset cache if etc/example-environment.yml has not changed
-          CACHE_NUMBER: 0
+      - name: Install Conda environment from environment.yml
+        uses: mamba-org/provision-with-micromamba@main
         with:
-          path: ~/conda_pkgs_dir
-          key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('.github/ci_env.yml') }}-${{ hashFiles('conda-lock.yml') }}
-
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          miniforge-version: latest
-          environment-file: .github/ci_env.yml
-          activate-environment: pyseq
-          use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
-
-      - name: Update env with conda
-        run: |
-          conda-lock install -n pyseq conda-lock.yml
+          environment-file: conda-lock.yml
+          environment-name: pyseq
+          cache-env: true
 
       - name: Install with pip
         run: |
@@ -62,13 +47,11 @@ jobs:
       - name: Test with Pytest
         run: |
           pytest -rP
-      #       - name: Debug with tmate
-      #         uses: mxschmitt/action-tmate@v3
 
       - name: Build docs
         if: ${{ matrix.os == 'ubuntu-latest'}}
         run: |
-          conda install mkdocs mkdocs-material
+          mamba install mkdocs mkdocs-material
           pip install mkdocstrings[python] mkdocs-git-revision-date-localized-plugin
           mkdocs build
 
@@ -78,39 +61,3 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./site
-
-  # tox:
-  #   runs-on: ${{ matrix.os }}
-  #   defaults:
-  #     run:
-  #       shell: bash -l {0}
-  #   strategy:
-  #     matrix:
-  #       os: ["ubuntu-latest", "windows-latest"]
-  #     max-parallel: 5
-  #   env:
-  #     FAKE_HISEQ: 1
-
-  #   steps:
-  #     - uses: actions/checkout@v2
-
-  #     - name: Cache conda
-  #       uses: actions/cache@v2
-  #       env:
-  #         # Increase this value to reset cache if etc/example-environment.yml has not changed
-  #         CACHE_NUMBER: 0
-  #       with:
-  #         path: ~/conda_pkgs_dir
-  #         key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
-  #           hashFiles('.github/ci_env.yml') }}
-
-  #     - uses: conda-incubator/setup-miniconda@v2
-  #       with:
-  #         miniforge-version: latest
-  #         environment-file: .github/ci_env.yml
-  #         activate-environment: pyseq
-  #         use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
-
-  #     - name: Test with Tox
-  #       run: |
-  #         tox -vv
