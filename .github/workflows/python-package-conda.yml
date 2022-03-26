@@ -52,8 +52,7 @@ jobs:
       - name: Build docs
         if: ${{ matrix.os == 'ubuntu-latest'}}
         run: |
-          mamba install mkdocs mkdocs-material
-          pip install mkdocstrings[python] mkdocs-git-revision-date-localized-plugin
+          pip install mkdocs mkdocs-material mkdocstrings[python] mkdocs-git-revision-date-localized-plugin
           mkdocs build
 
       - name: Deploy docs
