@@ -1,3 +1,4 @@
+import re
 from typing import Protocol
 
 
@@ -138,9 +139,16 @@ class FakeFPGA:
 
 
 class FakePump:
+    def __init__(self) -> None:
+        self.pos = 0
+        self.re = re.compile(r"\/1V(\d+)(I|O)A(\d+)R")
+
     def __call__(self, s: str) -> str:
         if s == "/1?":
-            return "/0`1"  # Position
+            return f"/0`{self.pos}"  # Position
+        if match := self.re.match(s):
+            self.pos = int(match.group(3))
+            print(self.pos)
         return "/0`"
 
 

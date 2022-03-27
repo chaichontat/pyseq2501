@@ -72,6 +72,7 @@ class AFlowCell:
         v_pull: μLpermin = 250,
         v_push: μLpermin = 2000,
         wait: Seconds = 26,
+        reverse: bool = False,
     ) -> None:
 
         if port not in CONFIG.ports:
@@ -83,6 +84,7 @@ class AFlowCell:
                 v_pull=self.sps_from_μLpermin(v_pull),
                 v_push=self.sps_from_μLpermin(v_push),
                 wait=wait,
+                reverse=reverse,
             )
 
     @property
