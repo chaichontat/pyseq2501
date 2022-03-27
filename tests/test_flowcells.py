@@ -22,6 +22,10 @@ async def test_pump(fcs: FlowCells):
     await fcs.A.flow(1, wait=0.1)
 
 
+async def test_pump_reverse(fcs: FlowCells):
+    await fcs.A.flow(1, wait=0.1, reverse=True)
+
+
 async def test_valves(fcs: FlowCells):
     await fcs.A.v.pos
 
