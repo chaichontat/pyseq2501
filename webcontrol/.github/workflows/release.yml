@@ -1,0 +1,51 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: Reason for the workflow dispatch.
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "17"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Svelte
+        run: npm run build
+
+      - name: Set up ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+
+      - name: Install poetry
+        run: |
+          curl -sSL "https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py" | python
+
+      - name: Update PATH
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Build
+        run: poetry build -f wheel -nvv
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          files: |
+            LICENSE
+            dist/*.whl

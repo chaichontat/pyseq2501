@@ -1,0 +1,42 @@
+name: Example Svelte Deployment
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  release:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "windows-latest"]
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # - name: Run ESLint
+      #   run: npx eslint src/
+
+      - name: Run Prettier
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: npx prettier -c .
+
+      - name: Build Svelte
+        run: npm run build
+
+      - name: Deploy docs
+        uses: peaceiris/actions-gh-pages@v3
+        if: ${{ github.ref == 'refs/heads/main' }}
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build

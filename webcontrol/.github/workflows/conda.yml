@@ -1,0 +1,65 @@
+name: Conda
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  release:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: Reason for the workflow dispatch.
+        required: true
+
+jobs:
+  build-conda:
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -l {0}
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "windows-latest"]
+      max-parallel: 5
+    env:
+      FAKE_HISEQ: 1
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Cache conda
+        uses: actions/cache@v2
+        env:
+          # Increase this value to reset cache if etc/example-environment.yml has not changed
+          CACHE_NUMBER: 0
+        with:
+          path: ~/conda_pkgs_dir
+          key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('.github/ci_env.yml') }}-${{ hashFiles('conda-lock.yml') }}
+
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniforge-version: latest
+          environment-file: .github/ci_env.yml
+          activate-environment: pyseq
+          use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+
+      - name: Update env with conda
+        run: |
+          conda-lock install -n pyseq conda-lock.yml
+
+      - name: Install with pip
+        run: |
+          pip install .
+
+      - name: Type check with Pyright
+        run: |
+          npm i -g pyright
+          pyright pyseq2server
+
+      - name: Test with Pytest
+        run: |
+          pip install pytest pytest-cov pytest-asyncio hypothesis
+          pytest -rP

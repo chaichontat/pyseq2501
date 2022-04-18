@@ -1,0 +1,9 @@
+.svelte-kit
+.tox
+
+htmlcov
+pyseq2server
+build
+node_modules
+package.json
+package-lock.json

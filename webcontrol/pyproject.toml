@@ -1,0 +1,72 @@
+
+[tool.poetry]
+authors = ["Chaichontat Sriworarat <34997334+chaichontat@users.noreply.github.com>"]
+description = ""
+include = ["build/**/*"]
+license = "GPL-3.0-or-later"
+name = "pyseq2501-web"
+packages = [
+  {include = "pyseq2server"},
+]
+version = "0.1.0"
+
+[tool.poetry.dependencies]
+click = "^8.0.4"
+fastapi = "^0.75.0"
+matplotlib = "^3.5.1"
+pyseq2501 = {git = "https://github.com/chaichontat/pyseq2501", branch = "main"}
+python = "^3.10"
+uvicorn = "^0.17.5"
+websockets = "^10.2"
+
+[tool.poetry.dev-dependencies]
+black = "^22.1.0"
+hypothesis = "^6.39.1"
+isort = "^5.10.1"
+pre-commit = "^2.17.0"
+pytest = "^7.0.1"
+pytest-asyncio = "^0.18.2"
+pytest-cov = "^3.0.0"
+
+[tool.poetry.scripts]
+pyseq2server = 'pyseq2server.__main__:run'
+
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0"]
+
+[tool.black]
+include = 'pyseq2server'
+line-length = 110
+target-version = ['py310']
+
+[tool.isort]
+known_first_party = ["pyseq2", "pyseq2server"]
+line_length = 110
+profile = "black"
+py_version = 310
+src_paths = ["pyseq2server"]
+
+[tool.pyright]
+include = ["pyseq2server"]
+pythonVersion = "3.10"
+reportMissingTypeStubs = false
+reportPrivateUsage = false
+reportPropertyTypeMismatch = false
+reportUnknownArgumentType = "warning"
+reportUnknownMemberType = false
+reportUnknownVariableType = "warning"
+reportUntypedBaseClass = false
+reportUntypedFunctionDecorator = false
+reportUnusedImport = false
+reportUnusedVariable = "warning"
+typeCheckingMode = "strict"
+useLibraryCodeForTypes = true
+
+[tool.pytest.ini_options]
+addopts = "--cov=pyseq2 --cov-report=html --cov-report=xml"
+asyncio_mode = "auto"
+log_cli = 1
+# log_cli_level = "DEBUG"
+minversion = "7.0"
+testpaths = ["tests"]
