@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { cmdStore, statusStore as ss, userStore as us } from "$src/stores/store";
+  import { cmdStore, statusStore as ss, userStore as us, localStore as ls } from "$src/stores/store";
   import { raw_to_local } from "../../coords";
   import BigZ from "./slide/big_z.svelte";
   import Slide from "./slide/slide.svelte";
@@ -32,7 +32,7 @@
   <!-- Toggle -->
   <span class="monomedium mb-4 flex -translate-y-6 items-center justify-center space-x-2 text-lg">
     <div class="text-gray-500 transition-all" class:text-gray-800={!$us.image_params.fc} class:font-semibold={!$us.image_params.fc}>A</div>
-    <Toggle bind:checked={$us.image_params.fc} />
+    <Toggle bind:checked={$us.image_params.fc} disabled={$ls.mode.startsWith("editing")} />
     <div class="text-gray-500 transition-all" class:text-gray-800={$us.image_params.fc} class:font-semibold={$us.image_params.fc}>B</div>
   </span>
   <div class="-mt-4" />
