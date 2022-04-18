@@ -48,16 +48,8 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         run: echo "$APPDATA\Python\Scripts" >> $GITHUB_PATH
 
-      - name: Set up cache
-        uses: actions/cache@v2
-        with:
-          path: .venv
-          key: venv-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
-          restore-keys: venv-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
-
       - name: Install with Poetry
         run: |
-          poetry config virtualenvs.in-project true
           poetry install
 
       - name: Test with Pytest
