@@ -54,3 +54,7 @@ export function notEmpty(el: HTMLInputElement): { update: () => void; destroy: (
     },
   };
 }
+
+export function joinClass(...classes: (false | null | undefined | string)[]): string {
+  return classes.filter(Boolean).join(" ");
+}

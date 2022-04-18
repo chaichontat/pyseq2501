@@ -1,8 +1,10 @@
 <script lang="ts">
   import type { NCmd, NExperiment, NReagent } from "$src/stores/experiment";
   import type { Status } from "$src/stores/status";
-  import { cmdStore, statusStore as ss, userStore as us, localStore as ls } from "$src/stores/store";
+  import { cmdStore, localStore as ls, statusStore as ss, userStore as us } from "$src/stores/store";
+  import tooltip from "$src/tooltip";
   import { checkRange, flash } from "$src/utils";
+  import { onMount } from "svelte";
 
   let ports = [-1, 2, 3, 4];
   $: ports = $ls.config.ports;
@@ -15,6 +17,7 @@
   let fcs: [boolean, boolean] = [false, false];
 
   let fcdiv: HTMLSpanElement;
+  let inletDiv: HTMLSpanElement;
   let portList: HTMLSelectElement;
 
   let buttonState: "ok" | "stop" | "disabled" = "ok";
@@ -69,6 +72,12 @@
 
   $: currExp = [genExperiment(selected, fcs, 0), genExperiment(selected, fcs, 1)];
   $: buttonState = isDisabled($ss, fcs);
+
+  onMount(() => {
+    if ($ls.config.machine === "HiSeq2000") {
+      tooltip(inletDiv, "Inlet selection only available on the HiSeq 2500.");
+    }
+  });
 </script>
 
 <div class="mt-2 ml-6 flex items-center gap-x-6">
@@ -80,9 +89,9 @@
     {/each}
   </select>
 
-  <div class="flex flex-col gap-y-5">
+  <section class="flex flex-col gap-y-4">
     <span class="flex flex-col items-center gap-y-1 rounded-lg bg-sky-200/30 pt-1 pb-2 font-medium text-gray-800" bind:this={fcdiv}>
-      <p>Flowcell</p>
+      <legend>Flowcell</legend>
       <span class="flex justify-center space-x-4 ">
         <label>
           <input type="checkbox" bind:checked={fcs[0]} class="mr-0.5 rounded bg-transparent text-indigo-600 focus:ring-indigo-600" />
@@ -91,6 +100,24 @@
         <label>
           <input type="checkbox" bind:checked={fcs[1]} class="mr-0.5 rounded bg-transparent text-purple-600 focus:ring-purple-600" />
           B
+        </label>
+      </span>
+    </span>
+
+    <span
+      bind:this={inletDiv}
+      class={`${$ls.config.machine === "HiSeq2500" ? "bg-sky-200/30" : "bg-gray-200/30 text-gray-300"} -mt-2 flex flex-col items-center gap-y-1 rounded-lg pt-1 pb-2 font-medium text-gray-800`}
+    >
+      <legend>Inlet</legend>
+      <span class="flex -translate-x-1 justify-center space-x-6">
+        <label class="ml-2 block text-sm font-medium">
+          <input type="radio" name="inlet" value="2" class="h-4 w-4 border-gray-300 focus:ring-2 focus:ring-blue-300 focus:ring-offset-0" disabled={$ls.config.machine === "HiSeq2000"} />
+          2
+        </label>
+
+        <label class="ml-2 block text-sm font-medium">
+          <input type="radio" name="inlet" value="8" class="h-4 w-4 border-gray-300 focus:ring-2 focus:ring-blue-300 focus:ring-offset-0" disabled={$ls.config.machine === "HiSeq2000"} checked />
+          8
         </label>
       </span>
     </span>
@@ -138,7 +165,7 @@
         {/if}
       </div>
     </button>
-  </div>
+  </section>
 </div>
 
 <style lang="postcss">
@@ -151,5 +178,17 @@
 
   .orange {
     @apply border-orange-400 bg-orange-200 text-orange-900 hover:bg-orange-300 active:bg-orange-400;
+  }
+
+  input[type="radio"] {
+    @apply cursor-pointer;
+  }
+
+  input[type="radio"][disabled] {
+    @apply cursor-default border-gray-200;
+  }
+
+  input[type="radio"][disabled]:checked {
+    @apply bg-gray-200;
   }
 </style>
