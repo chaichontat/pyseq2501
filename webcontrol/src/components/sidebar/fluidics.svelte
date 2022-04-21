@@ -14,6 +14,8 @@
   let v_push = 2000;
   let wait = 26;
   let vol = 250;
+  let inlet: 2 | 8 = 8;
+  let reverse = false;
   let fcs: [boolean, boolean] = [false, false];
 
   let fcdiv: HTMLSpanElement;
@@ -27,7 +29,7 @@
     if (!fcs[i]) return null;
 
     const raw = selected.map((p): NReagent => ({ uid: p, reagent: { name: p.toString(10), port: p, v_pull: v_pull, v_prime: 2000, v_push: v_push, wait: wait } }));
-    const cmds: NCmd[] = [{ uid: 0, cmd: { op: "pump", reagent: "group", volume: vol } }];
+    const cmds: NCmd[] = [{ uid: 0, cmd: { op: "pump", reagent: "group", volume: vol, inlet, reverse } }];
     if (raw.length > 1) cmds.push({ uid: 1, cmd: { op: "goto", step: 1, n: raw.length - 1 } });
 
     const reagents: NReagent[] = [{ uid: 0, reagent: { name: "group" } }, ...raw];
@@ -60,6 +62,7 @@
       setTimeout(() => ($cmdStore = { fccmd: { fc: Boolean(i), cmd: "start" } }), 400); // For usersettings to sync to server.
       $ss.fcs[i].running = true;
     }
+    reverse = false;
   }
 
   function isDisabled(s: Status, f: [boolean, boolean]): "ok" | "stop" | "disabled" {
@@ -89,6 +92,7 @@
     {/each}
   </select>
 
+  <!-- A/B -->
   <section class="flex flex-col gap-y-4">
     <span class="flex flex-col items-center gap-y-1 rounded-lg bg-sky-200/30 pt-1 pb-2 font-medium text-gray-800" bind:this={fcdiv}>
       <legend>Flowcell</legend>
@@ -104,18 +108,21 @@
       </span>
     </span>
 
+    <button on:click={() => ($ls.config.machine = "HiSeq2500")}>Hi</button>
+
+    <!-- Inlet -->
     <span
       bind:this={inletDiv}
       class={`${$ls.config.machine === "HiSeq2500" ? "bg-sky-200/30" : "bg-gray-200/30 text-gray-300"} -mt-2 flex flex-col items-center gap-y-1 rounded-lg pt-1 pb-2 font-medium text-gray-800`}
     >
       <legend>Inlet</legend>
       <span class="flex -translate-x-1 justify-center space-x-6">
-        <label class="ml-2 block text-sm font-medium">
+        <label class="ml-2 block text-sm font-medium" on:click={() => (inlet = 2)}>
           <input type="radio" name="inlet" value="2" class="h-4 w-4 border-gray-300 focus:ring-2 focus:ring-blue-300 focus:ring-offset-0" disabled={$ls.config.machine === "HiSeq2000"} />
           2
         </label>
 
-        <label class="ml-2 block text-sm font-medium">
+        <label class="ml-2 block text-sm font-medium" on:click={() => (inlet = 8)}>
           <input type="radio" name="inlet" value="8" class="h-4 w-4 border-gray-300 focus:ring-2 focus:ring-blue-300 focus:ring-offset-0" disabled={$ls.config.machine === "HiSeq2000"} checked />
           8
         </label>
@@ -165,6 +172,27 @@
         {/if}
       </div>
     </button>
+
+    <button
+      type="button"
+      class="white-button mx-auto mt-12 w-1/2 rounded-lg px-4 py-1 text-sm font-semibold transition-all duration-100 disabled:bg-gray-50 disabled:text-gray-500 disabled:hover:bg-gray-50 disabled:active:bg-gray-50"
+      class:rose={buttonState === "ok"}
+      class:orange={buttonState === "stop"}
+      tabindex="0"
+      on:click={() => {
+        reverse = true;
+        runExperiment();
+      }}
+      disabled={buttonState === "disabled"}
+    >
+      <div class="mx-auto">
+        {#if buttonState === "stop"}
+          Stop
+        {:else}
+          Reverse Pump
+        {/if}
+      </div>
+    </button>
   </section>
 </div>
 
@@ -174,6 +202,10 @@
   }
   .blue {
     @apply border-blue-300 bg-blue-50 text-blue-800 hover:bg-blue-100 active:bg-blue-200;
+  }
+
+  .rose {
+    @apply border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100 active:bg-rose-200;
   }
 
   .orange {

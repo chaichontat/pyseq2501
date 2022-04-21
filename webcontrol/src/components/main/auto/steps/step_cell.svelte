@@ -2,7 +2,7 @@
   import Takeimage from "$src/components/main/takeimage/takeimage.svelte";
   import Modal from "$src/components/modal.svelte";
   import type { Cmd, Ops } from "$src/stores/command";
-  import { userStore as us } from "$src/stores/store";
+  import { localStore, userStore as us } from "$src/stores/store";
   import { checkRange } from "$src/utils";
   import { createEventDispatcher } from "svelte";
   import Preview from "../../preview.svelte";
@@ -49,30 +49,30 @@
 
       <!-- Hold -->
       {#if cmd.op === "hold"}
-        <p>
+        <span>
           Time <input type="number" class="pretty ml-3 mr-1 w-16 py-1 font-medium" bind:value={cmd.time} use:checkRange={[0, 99]} min="0" max="99" />
           h
           <input type="number" class="pretty ml-3 mr-1 w-16 py-1 font-medium" bind:value={cmd.time} use:checkRange={[0, 59]} min="0" max="59" />
           m
           <input type="number" class="pretty ml-3 mr-1 w-16 py-1 font-medium" bind:value={cmd.time} use:checkRange={[0, 59]} min="0" max="59" />
           s
-        </p>
+        </span>
 
         <!--  Goto considered harmful -->
       {:else if cmd.op === "goto"}
-        <p>
+        <span>
           Go to <input type="number" class="w-16 py-1 mx-2 font-medium pretty" bind:value={cmd.step} use:checkRange={[1, n]} min="1" max={n} />
           for
           <input type="number" class="w-16 py-1 mx-2 font-medium pretty" bind:value={cmd.n} use:checkRange={[1, Infinity]} min="1" />
           times.
-        </p>
+        </span>
 
         <!-- Wash -->
       {:else if cmd.op === "pump"}
-        <p>
-          <span>
+        <span class="flex gap-x-6">
+          <div>
             Reagent
-            <select class="mx-2 pretty">
+            <select class="text-sm drop" bind:value={cmd.reagent}>
               {#each $us.exps[fc_].reagents as { uid, reagent }}
                 {#if "port" in reagent}
                   <option>{`${reagent.port} - ${reagent.name}`}</option>
@@ -81,39 +81,57 @@
                 {/if}
               {/each}
             </select>
-          </span>
+          </div>
 
-          <span class="ml-4">
+          <div>
             Volume <input type="number" class="w-24 py-1 mx-2 font-medium pretty" use:checkRange={[1, 2000]} min="1" max="2000" bind:value={cmd.volume} />
             μl
-          </span>
-        </p>
+          </div>
+
+          <div class:text-gray-500={$localStore.config.machine !== "HiSeq2500"}>
+            Inlet
+            <select class="text-sm drop" disabled={$localStore.config.machine !== "HiSeq2500"} bind:value={cmd.inlet}>
+              <option>2</option>
+              <option selected>8</option>
+            </select>
+          </div>
+        </span>
 
         <!-- Prime -->
       {:else if cmd.op === "prime"}
-        <p>
-          Reagent
-          <select class="text-sm drop">
-            {#each $us.exps[fc_].reagents as { uid, reagent }}
-              {#if "port" in reagent}
-                <option>{`${reagent.port} - ${reagent.name}`}</option>
-              {:else}
-                <option>{`Group ${reagent.name}`}</option>
-              {/if}
-            {/each}
-          </select>
+        <span class="flex gap-x-6">
+          <div>
+            Reagent
+            <select class="text-sm drop" bind:value={cmd.reagent}>
+              {#each $us.exps[fc_].reagents as { uid, reagent }}
+                {#if "port" in reagent}
+                  <option>{`${reagent.port} - ${reagent.name}`}</option>
+                {:else}
+                  <option>{`Group ${reagent.name}`}</option>
+                {/if}
+              {/each}
+            </select>
+          </div>
 
-          <span>
+          <div>
             Volume <input type="number" class="w-24 py-1 mx-2 font-medium pretty" use:checkRange={[1, 2000]} min="1" max="2000" bind:value={cmd.volume} />
             μl
-          </span>
-        </p>
+          </div>
+
+          <div class:text-gray-500={$localStore.config.machine !== "HiSeq2500"}>
+            Inlet
+            <select class="text-sm drop" disabled={$localStore.config.machine !== "HiSeq2500"} bind:value={cmd.inlet}>
+              <option>2</option>
+              <option selected>8</option>
+            </select>
+          </div>
+        </span>
         <!-- Temp -->
       {:else if cmd.op === "temp"}
-        <p>
+        <span>
           Temperature <input type="number" class="w-24 py-1 mx-2 font-medium pretty" use:checkRange={[10, 60]} min="10" max="60" bind:value={cmd.temp} />
           °C
-        </p>
+        </span>
         <!-- Image -->
       {:else if cmd.op === "takeimage"}
         <Modal>
@@ -157,7 +175,7 @@
     @apply mb-2 ml-8 font-normal;
   }
 
-  p {
+  span {
     @apply text-lg font-medium;
   }
 
