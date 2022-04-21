@@ -8,12 +8,11 @@ from fastapi import FastAPI
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 
-from pyseq2 import FlowCells, Imager, get_ports
-from pyseq2.utils.coords import raw_to_mm
-
 from .api_types import UserSettings
 from .imaging import update_afimg, update_img
 from .routers import mancommand, status, user
+from pyseq2 import FlowCells, Imager, get_ports
+from pyseq2.utils.coords import raw_to_mm
 
 q_log: asyncio.Queue[str] = asyncio.Queue()
 q_log2: asyncio.Queue[str] = asyncio.Queue()
