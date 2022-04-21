@@ -73,10 +73,14 @@ class AFlowCell:
         v_push: μLpermin = 2000,
         wait: Seconds = 26,
         reverse: bool = False,
+        inlet: Literal[2, 8] = 8,
     ) -> None:
 
         if port not in CONFIG.ports:
             raise ValueError("Invalid port number.")
+
+        if CONFIG.machine == "HiSeq2500":
+            await self.v.set_fc_inlet(inlet)
 
         async with self.arm9chem.shutoff_valve(), self.v.move_port(port), self.lock:
             await self.p.pump(

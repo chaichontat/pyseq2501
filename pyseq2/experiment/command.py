@@ -56,6 +56,7 @@ async def pump_prime(fcs: FlowCells, i: bool, cmd: Pump | Prime):
 class Pump(BaseModel, AbstractCommand):
     reagent: str | Reagent
     volume: μL = 250
+    inlet: Literal[2, 8] = 8
     op: Literal["pump"] = "pump"
 
     async def run(self, fcs: FlowCells, i: bool, imager: Imager) -> None:
@@ -74,6 +75,7 @@ class Pump(BaseModel, AbstractCommand):
 class Prime(BaseModel, AbstractCommand):
     reagent: str | Reagent
     volume: μL = 250
+    inlet: Literal[2, 8] = 8
     op: Literal["prime"] = "prime"
 
     async def run(self, fcs: FlowCells, i: bool, imager: Imager) -> None:

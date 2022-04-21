@@ -154,7 +154,12 @@ class Pump(UsesSerial):
 
     @asynccontextmanager
     async def _pump(
-        self, vol: Step, *, v_pull: Sps = 400, v_push: Sps = 6400, reverse: bool = False
+        self,
+        vol: Step,
+        *,
+        v_pull: Sps = 400,
+        v_push: Sps = 6400,
+        reverse: bool = False,
     ) -> AsyncGenerator[None, None]:
         try:
             logger.info(f"Pump {self.name}:{' Reverse' if reverse else ''} Pulling. ")

@@ -163,8 +163,10 @@ class Valves(Movable):
             await self._move(0)  # "Safe" position.
 
     async def set_fc_inlet(self, n: Literal[2, 8]) -> None:
-        if CONFIG.machine == "HiSeq2000":
-            raise NotImplementedError("This option is not valid for the HiSeq 2000.")
+        if CONFIG.machine != "HiSeq2500":
+            raise NotImplementedError("This option is only valid for the HiSeq 2500.")
+        if n == self.fc_inlet:
+            return
 
         match self.name:
             case "A":
