@@ -5,12 +5,16 @@ export interface AbstractCmd {
 export type Pump = AbstractCmd & {
   reagent: string;
   volume: number;
+  reverse?: boolean;
+  inlet?: 2 | 8;
   op: "pump";
 };
 
 export type Prime = AbstractCmd & {
   reagent: string;
   volume: number;
+  reverse?: boolean;
+  inlet?: 2 | 8;
   op: "prime";
 };
 
@@ -64,8 +68,8 @@ export type Ops = Cmd["op"];
 export type CmdDefaults = { pump: Pump; prime: Prime; temp: Temp; hold: Hold; takeimage: TakeImage; autofocus: Autofocus; goto: Goto };
 
 export const cmdDefaults: Readonly<CmdDefaults> = {
-  pump: { reagent: "", volume: 0, op: "pump" },
-  prime: { reagent: "", volume: 0, op: "prime" },
+  pump: { reagent: "", volume: 0, reverse: false, inlet: 8, op: "pump" },
+  prime: { reagent: "", volume: 0, reverse: false, inlet: 8, op: "prime" },
   temp: { temp: 25, wait: true, op: "temp" },
   hold: { time: 0, op: "hold" },
   takeimage: {
