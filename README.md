@@ -9,8 +9,6 @@
 
 Control your HiSeq 2000/2500 with ease.
 
-**Web control (under development) available [here](https://github.com/chaichontat/pyseq2501-web).**
-
 ## Usage
 
 Example scripts are in the [`scripts/`](scripts) folder. The showcase is `take_image.py`(scripts/take_image.py) which demonstrates fast image capture and autofocus.
