@@ -36,9 +36,10 @@ class _Valve(Movable, UsesSerial):
         self = cls(name, n_ports, await COM.ainit(name, port_tx))
 
         async with self.com.big_lock:
-            await self.com.send(ValveCmd.CLEAR_ID)
             if await self.com.send(ValveCmd.ID) != "not used":
-                raise ValveError(f"{name}: Already cleared ID but ID is still here.")
+                await self.com.send(ValveCmd.CLEAR_ID)
+                if await self.com.send(ValveCmd.ID) != "not used":
+                    raise ValveError(f"{name}: Already cleared ID but ID is still here.")
             if not IS_FAKE() and (n := await self.com.send(ValveCmd.GET_N_PORTS)) != self.n_ports:
                 raise ValveError(
                     f"{name}: Number of ports is not {self.n_ports} as expected but {n}. Incorrect machine setting?"
