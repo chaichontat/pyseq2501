@@ -464,10 +464,8 @@ rich = "^11.2.0"
 tifffile = "^2022.2.9"
 
 [package.source]
-type = "git"
-url = "https://github.com/chaichontat/pyseq2501"
-reference = "main"
-resolved_reference = "7c8377a7316b9c9ffcd2fe2a44b947e63a584f2f"
+type = "directory"
+url = ".."
 
 [[package]]
 name = "pyserial"

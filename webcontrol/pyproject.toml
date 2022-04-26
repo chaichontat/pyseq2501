@@ -14,10 +14,10 @@ version = "0.1.0"
 click = "^8.0.4"
 fastapi = "^0.75.0"
 matplotlib = "^3.5.1"
-pyseq2501 = {git = "https://github.com/chaichontat/pyseq2501", branch = "main"}
 python = "^3.10"
 uvicorn = "^0.17.5"
 websockets = "^10.2"
+pyseq2501 = {path = "..", develop = true }
 
 [tool.poetry.dev-dependencies]
 black = "^22.1.0"
