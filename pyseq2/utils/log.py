@@ -21,7 +21,7 @@ def setup_logger(*, set_root: bool = False, save: bool = False, level: str = "IN
         path = Path(f"./logs/{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
         path.parent.mkdir(parents=True, exist_ok=True)
         file = open(path, mode="w", encoding="utf-8")
-        console = Console(file=file, force_terminal=True)
+        console = Console(file=file)
         handler = RichHandler(rich_tracebacks=True, markup=True, console=console)
         handler.setFormatter(formatter)
         handlers.append(handler)
