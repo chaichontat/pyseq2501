@@ -42,14 +42,17 @@ poetry run pyseq2server --fake
 Usage: pyseq2server [OPTIONS]
 
 Options:
-  -p, --port INTEGER  Port to run the server on (default: 8000).
-  -h, --host TEXT     Hostname to bind to (default: localhost). Set 0.0.0.0
-                      for network access.
-  -o, --open          Open a web browser
-  --fake              Use fake machine interface.
-  --donothost         Only host the websocket, not the interface. Useful when
-                      developing Svelte.
-  --help              Show this message and exit.
+  -p, --port INTEGER              Port to run the server on (default: 8000).
+  -h, --host TEXT                 Hostname to bind to (default: localhost).
+                                  Set 0.0.0.0 for network access.
+  -o, --open                      Open a web browser
+  --fake                          Use fake machine interface.
+  --donothost                     Only host the websocket, not the interface.
+                                  Useful when developing Svelte.
+  --loglevel [debug|info|warning|error|critical]
+  --logtofile                     Write logs to ./logs/ directory.
+  --help                          Show this message and exit.
+
 ```
 
 The interface should be waiting for you at `http://localhost:8000/`!
