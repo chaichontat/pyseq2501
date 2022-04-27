@@ -1,11 +1,12 @@
 import logging
 from datetime import datetime
-from logging import FileHandler, Formatter, Handler, Logger
+from logging import Formatter, Handler, Logger
 from pathlib import Path
 from typing import Callable, Coroutine, ParamSpec, TypeVar
 
 from rich.logging import RichHandler
 from rich.traceback import install
+from rich.console import Console
 
 
 def setup_logger(*, set_root: bool = False, save: bool = False, level: str = "INFO") -> None:
@@ -13,12 +14,17 @@ def setup_logger(*, set_root: bool = False, save: bool = False, level: str = "IN
 
     install()
     handlers: list[Handler] = [RichHandler(rich_tracebacks=True, markup=True)]
-    handlers[0].setFormatter(Formatter("[yellow]%(name)-10s[/] %(message)s", datefmt="[%H:%M:%S] "))
+    formatter = Formatter("[yellow]%(name)-10s[/] %(message)s", datefmt="[%H:%M:%S] ")
+    handlers[0].setFormatter(formatter)
 
     if save:
         path = Path(f"./logs/{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
         path.parent.mkdir(parents=True, exist_ok=True)
-        handlers.append(FileHandler(path))
+        file = open(path, mode='w', encoding='utf-8')
+        console = Console(file=file, force_terminal=True)
+        handler = RichHandler(rich_tracebacks=True, markup=True, console=console)
+        handler.setFormatter(formatter)
+        handlers.append(handler)
 
     if set_root:
         logging.basicConfig(level="CRITICAL", handlers=handlers)
