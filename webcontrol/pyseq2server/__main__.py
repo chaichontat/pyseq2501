@@ -34,7 +34,9 @@ logger = logging.getLogger(__name__)
     "--loglevel", type=click.Choice(["debug", "info", "warning", "error", "critical"]), default="info"
 )
 @click.option("--logtofiles", help="Write logs to ./logs/ directory.", is_flag=True, default=False)
-def run(port: int, host: str, fake: bool, open: bool, donothost: bool, loglevel: str, logtofiles: bool) -> None:
+def run(
+    port: int, host: str, fake: bool, open: bool, donothost: bool, loglevel: str, logtofiles: bool
+) -> None:
     if os.name == "nt" and fake:
         os.environ["FAKE_HISEQ"] = "1"
 
