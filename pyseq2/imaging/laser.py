@@ -37,7 +37,7 @@ class LaserCmd:
     SET_POWER  = λ_int(chkrng(lambda x: f"POWER={x}", *POWER_RANGE))
     GET_POWER  = CmdParse("POWER?"  , v_get_power)
     GET_STATUS = CmdParse("STAT?"   , v_get_status)
-    VERSION    = CmdParse("VERSION?", ok_if_match(("SMD-G-1.1.2", "SMD-G-1.1.1")))
+    VERSION    = CmdParse("VERSION?", ok_if_match(("SMD-G-1.1.2", "SMD-G-1.1.1", "SMD12/6H-3.1.0")))
     # fmt: on
 
 
