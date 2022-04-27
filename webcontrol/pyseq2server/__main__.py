@@ -33,7 +33,8 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--loglevel", type=click.Choice(["debug", "info", "warning", "error", "critical"]), default="info"
 )
-def run(port: int, host: str, fake: bool, open: bool, donothost: bool, loglevel: str) -> None:
+@click.option("--logtofiles", help="Write logs to ./logs/ directory.", is_flag=True, default=False)
+def run(port: int, host: str, fake: bool, open: bool, donothost: bool, loglevel: str, logtofiles: bool) -> None:
     if os.name == "nt" and fake:
         os.environ["FAKE_HISEQ"] = "1"
 
@@ -49,7 +50,7 @@ def run(port: int, host: str, fake: bool, open: bool, donothost: bool, loglevel:
                 "Most likely, the system cannot find the built interface. Run `npm run build` to build."
             ) from e
 
-    setup_web_logger(q_log, q_log2, level=loglevel.upper())
+    setup_web_logger(q_log, q_log2, level=loglevel.upper(), save=logtofiles)
 
     for _log in ["uvicorn", "uvicorn.access", "uvicorn.error", "fastapi"]:
         logging.getLogger(_log).handlers = logging.getLogger("pyseq2").handlers if _log == "fastapi" else []
