@@ -4,9 +4,10 @@ import time
 
 import pytest
 import uvicorn
-from pyseq2server.routers.status import WebState
-from pyseq2server.server import gen_server
 from websockets.client import connect
+
+from pyseq2.server.routers.status import WebState
+from pyseq2.server.server import gen_server
 
 
 # https://github.com/encode/uvicorn/issues/742#issuecomment-674411676

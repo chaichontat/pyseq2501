@@ -29,7 +29,7 @@ def setup_web_logger(
 
     ps2 = logging.getLogger("pyseq2")
     ps2e = logging.getLogger("pyseq2.experiment")
-    ps2s = logging.getLogger("pyseq2server")
+    ps2s = logging.getLogger("pyseq2.server")
 
     web_handlers = [logging.StreamHandler(AsyncQueueStream(q)) for q in (q1, q2)]
     for web_handler in web_handlers:
