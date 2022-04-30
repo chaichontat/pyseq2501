@@ -28,8 +28,9 @@ repos:
   hooks:
     - id: codespell
       args:
-      - --skip="*/.*,./archive,./scratch,./htmlcov"
-      - --ignore-words-list="hist"
+        - -L
+        - mapp,hist
+        - --skip="*/.*,package.json,package-lock.json,*/.*,./archive,./scratch,./htmlcov"
 
 - repo: https://github.com/psf/black
   rev: 22.3.0
