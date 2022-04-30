@@ -57,7 +57,7 @@ jobs:
 
       - name: Install with Poetry
         run: |
-          poetry install
+          poetry install -E webcontrol
 
       - name: Test with Pytest
         run: |

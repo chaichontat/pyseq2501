@@ -49,6 +49,7 @@ jobs:
       - name: Update env with conda
         run: |
           conda-lock install -n pyseq conda-lock.yml
+          conda env update -f environment-web.yml
 
       - name: Install with pip
         run: |
