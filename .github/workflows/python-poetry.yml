@@ -11,8 +11,8 @@ on:
   workflow_dispatch:
     inputs:
       reason:
-          description: Reason for the workflow dispatch.
-          required: true
+        description: Reason for the workflow dispatch.
+        required: true
 
 jobs:
   build:
@@ -57,7 +57,6 @@ jobs:
 
       - name: Install with Poetry
         run: |
-          poetry config virtualenvs.in-project true
           poetry install
 
       - name: Test with Pytest

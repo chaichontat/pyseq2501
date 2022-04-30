@@ -11,8 +11,8 @@ on:
   workflow_dispatch:
     inputs:
       reason:
-          description: Reason for the workflow dispatch.
-          required: true
+        description: Reason for the workflow dispatch.
+        required: true
 
 jobs:
   build:
@@ -54,10 +54,10 @@ jobs:
         run: |
           pip install .
 
-      - name: Type check with Pyright
-        run: |
-          npm i -g pyright
-          pyright pyseq2
+      # - name: Type check with Pyright
+      #   run: |
+      #     npm i -g pyright
+      #     pyright pyseq2
 
       - name: Test with Pytest
         run: |
