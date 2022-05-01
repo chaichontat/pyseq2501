@@ -20,7 +20,8 @@ Then,
 ```sh
 git clone https://github.com/chaichontat/pyseq2501
 poetry install -E webcontrol
-npm i
+cd webcontrol
+npm ci
 npm run build
 ```
 
