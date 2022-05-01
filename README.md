@@ -9,7 +9,7 @@
 
 Control your HiSeq 2000/2500 with ease.
 
-**Web control (under development) available [here](https://github.com/chaichontat/pyseq2501-web).**
+**Web control available. See instructions [here](/webcontrol/).****
 
 ## Usage
 
