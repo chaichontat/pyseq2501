@@ -6,6 +6,14 @@ This is the web interface and the communication system.
 
 ![2022-01-10 20 04 44](https://user-images.githubusercontent.com/34997334/148863230-8b66ae28-5212-4e1e-a74c-33ebe695be9f.gif)
 
+## Installation
+
+If you are using `conda`, you need to add more packages as listed in
+
+```
+conda env update -n pyseq -f ../environment-web.yml
+```
+
 ### For development
 
 - Install [`npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
