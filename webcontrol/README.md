@@ -1,6 +1,6 @@
 # PySeq 2501 Web Interface
 
-This is the web interface and the communication system for [PySeq 2501](https://github.com/chaichontat/pyseq2501). Click on the badge above to see an example site!
+This is the web interface and the communication system.
 
 ## Usage
 
@@ -19,7 +19,7 @@ Then,
 
 ```sh
 git clone https://github.com/chaichontat/pyseq2501
-poetry install
+poetry install -E webcontrol
 npm i
 npm run build
 ```
