@@ -10,7 +10,7 @@ packages = [
 version = "0.1.0"
 
 [tool.poetry.dependencies]
-Pillow = "^9.0.1"
+Pillow = "^9.1.1"
 PyYAML = "^6.0"
 imagecodecs = "^2022.2.22"
 numpy = "^1.22.2"
