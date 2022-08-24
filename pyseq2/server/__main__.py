@@ -44,7 +44,7 @@ def run(
 
     if not donothost:
         try:
-            directory = Path(__file__).parent.parent / "build"
+            directory = Path(__file__).parent.parent.parent / "webcontrol" / "build"
             logger.info(f"Looking for interface at {directory}.")
             app.mount("/", StaticFiles(directory=directory, html=True))
         except RuntimeError as e:

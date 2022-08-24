@@ -7,8 +7,9 @@ dependencies:
   - hypothesis
   - isort
   - poetry
+  - pre-commit
   - pytest
-  - pytest-cov
   - pytest-asyncio
+  - pytest-cov
   - tox
 category: dev

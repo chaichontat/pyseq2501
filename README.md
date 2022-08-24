@@ -32,23 +32,21 @@ The only required custom driver is the Illumina/ActiveSilicon [driver](https://g
 
 You can install everything from the PyPI repository `pip install git+https://github.com/chaichontat/pyseq2501` but that seems more error-prone. A safer way would be to use `conda` to setup most of the packages then use `pip` to install. We have a dependency that is not in `conda-forge`, which prevents this package fromm being deployed to `conda-forge`.
 
-### Conda
-
-**Download https://raw.githubusercontent.com/chaichontat/pyseq2501/main/conda-lock.yml**
 ```sh
-conda install conda-lock
-conda-lock install --no-dev -n {NAME_CHANGE_ME} conda-lock.yml
-pip install git+https://github.com/chaichontat/pyseq2501
+git clone https://github.com/chaichontat/pyseq2501
+cd pyseq2501
+conda env install -n pyseq -f environment.yml
+conda env update -n pyseq -f environment-web.yml
+conda activate pyseq
+pip install .
 ```
+
 #### Test
-```sh
-pytest -rP
-```
 
-### For development
 ```sh
-conda install poetry
-poetry install
+conda env update -n pyseq -f environment-dev.yml
+conda activate pyseq
+pytest -rP
 ```
 
 or you could use a [`tox`](https://tox.wiki/en/latest/) environment.

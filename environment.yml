@@ -6,11 +6,11 @@ dependencies:
   - numpy
   - pillow
   - pip
+  - pydantic
   - pyserial
+  - pyyaml
   - rich
   - setuptools
-  - pydantic
-  - pyyaml
   - tifffile
   - pip:
       - pyserial-asyncio

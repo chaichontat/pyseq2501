@@ -42,13 +42,12 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniforge-version: latest
-          environment-file: .github/ci_env.yml
+          environment-file: environment.yml
           activate-environment: pyseq
           use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
 
       - name: Update env with conda
         run: |
-          conda-lock install -n pyseq conda-lock.yml
           conda env update -f environment-web.yml
 
       - name: Install with pip
@@ -62,6 +61,7 @@ jobs:
 
       - name: Test with Pytest
         run: |
+          conda env update -f environment-dev.yml
           pytest -rP
       #       - name: Debug with tmate
       #         uses: mxschmitt/action-tmate@v3
