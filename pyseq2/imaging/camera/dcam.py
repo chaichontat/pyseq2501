@@ -114,8 +114,7 @@ class _Camera:
         else:
             return DCAMDict.from_dcam(handle)
 
-    def initialize(self) -> None:
-        ...
+    def initialize(self) -> None: ...
 
     @property
     def capture_mode(self) -> DCAM_CAPTURE_MODE:
@@ -255,15 +254,13 @@ class Cameras:
     @contextmanager
     def _attach(
         self, n_bundles: int, dim: tuple[int, int], cam: Literal[0, 1] = ...
-    ) -> Generator[UInt16Array, None, None]:
-        ...
+    ) -> Generator[UInt16Array, None, None]: ...
 
     @overload
     @contextmanager
     def _attach(
         self, n_bundles: int, dim: tuple[int, int], cam: Literal[2] = ...
-    ) -> Generator[tuple[UInt16Array, UInt16Array], None, None]:
-        ...
+    ) -> Generator[tuple[UInt16Array, UInt16Array], None, None]: ...
 
     @contextmanager
     def _attach(
