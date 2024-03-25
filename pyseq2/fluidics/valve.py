@@ -25,8 +25,7 @@ class ValveCmd:
 # fmt: on
 
 
-class ValveError(Exception):
-    ...
+class ValveError(Exception): ...
 
 
 class _Valve(Movable, UsesSerial):
@@ -53,8 +52,7 @@ class _Valve(Movable, UsesSerial):
         self.name = name
         self.t_lastcmd = 0.0
 
-    async def initialize(self) -> None:
-        ...
+    async def initialize(self) -> None: ...
 
     @property
     async def pos(self) -> int:
